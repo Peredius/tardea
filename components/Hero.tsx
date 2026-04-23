@@ -7,7 +7,7 @@ export function Hero() {
         <div>
           <span className="badge mb-6">Agenda premium de tardeo en Madrid</span>
           <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-white md:text-6xl">
-            Encuentra el mejor tardeo de Madrid por fecha, música, zona y ambiente.
+            Descubre los mejores planes de tarde en Madrid.
           </h1>
           <p className="mt-6 max-w-2xl text-lg text-slate-300">
             Una plataforma pensada para descubrir rooftops, afterworks, brunches y eventos de tarde con filtros útiles, diseño cuidado y fichas listas para reservar.
