@@ -11,7 +11,7 @@ export function Navbar() {
             alt="TARDEA"
             width={140}
             height={40}
-            className="h-12 w-auto"
+            className="h-14 w-auto"
           />
         </Link>
 
