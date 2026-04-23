@@ -7,7 +7,7 @@ export function Navbar() {
       <div className="container-page flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center">
           <Image
-            src="/logo-tardea-web.png"
+            src="/logo-tardea.png"
             alt="TARDEA"
             width={140}
             height={40}
