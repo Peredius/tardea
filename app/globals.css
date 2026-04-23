@@ -41,3 +41,10 @@ body {
 .btn-secondary {
   @apply inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 py-3 font-semibold text-white transition hover:bg-white/10;
 }
+input[type="date"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
