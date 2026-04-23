@@ -4,9 +4,15 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/80 backdrop-blur">
       <div className="container-page flex h-16 items-center justify-between">
-        <Link href="/" className="text-lg font-bold tracking-tight text-white">
-          <span className="text-xl font-semibold tracking-wide">
-  TARDEA<span className="text-brand-500">.</span>
+        import Image from 'next/image';<Link href="/" className="flex items-center">
+  <Image 
+    src="/logo-tardea.png" 
+    alt="TARDEA" 
+    width={140} 
+    height={40} 
+    className="h-8 w-auto"
+  />
+</Link>
 </span>
         </Link>
         <nav className="hidden gap-8 text-sm text-slate-300 md:flex">
