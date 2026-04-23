@@ -5,7 +5,7 @@ export function Navbar() {
     <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/80 backdrop-blur">
       <div className="container-page flex h-16 items-center justify-between">
         <Link href="/" className="text-lg font-bold tracking-tight text-white">
-          TARDEA <span className="text-brand-500">Madrid</span>
+          TARDEA
         </Link>
         <nav className="hidden gap-8 text-sm text-slate-300 md:flex">
           <a href="#explorar" className="hover:text-white">Explorar</a>
