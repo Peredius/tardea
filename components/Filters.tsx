@@ -48,7 +48,7 @@ export function Filters() {
 
       <div className="card p-5">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-          <label className="space-y-2 text-sm">
+          <label className="block w-full space-y-2 text-sm">
             <span className="inline-flex items-center gap-2 text-slate-300"><CalendarDays className="h-4 w-4" /> Fecha</span>
             <input className="input w-full min-w-0" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </label>
