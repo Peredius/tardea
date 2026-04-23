@@ -18,7 +18,7 @@ export type EventItem = {
 };
 
 export const areas = ['Salamanca', 'Chamberí', 'Malasaña', 'La Latina', 'Centro', 'Chamartín'];
-export const eventTypes = ['Todos', 'Tardeo', 'Brunch', 'Rooftop', 'Afterwork', 'Fiesta temática'];
+export const eventTypes = ['Todos', 'Tardeo', 'Brunch', 'Rooftop', 'Fitness Party', 'Afterwork', 'Fiesta temática'];
 export const musicTypes = ['Todas', 'Reggaetón', 'House', 'Pop', 'Indie', 'Flamenco', 'Techno'];
 export const audienceTypes = ['Todas', '18-25', '25-35', '30+', 'Mixto'];
 export const priceRanges = ['Todos', 'Gratis', '0-15€', '15-30€', '30€+'];
