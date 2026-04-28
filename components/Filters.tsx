@@ -25,13 +25,36 @@ export function Filters() {
   const [dbEvents, setDbEvents] = useState(events);
   useEffect(() => {
   const fetchEvents = async () => {
-    const { data, error } = await supabase.from('events').select('*');
+   const { data, error } = await supabase
+  .from('events')
+  .select('*')
+  .eq('published', true)
+  .order('date', { ascending: true });
 
-    if (error) {
-      console.error(error);
-    } else {
-      setDbEvents(data);
-    }
+if (error) {
+  console.error(error);
+} else {
+  const mappedEvents = data.map((event) => ({
+    slug: event.slug,
+    title: event.title,
+    venue: event.venue,
+    area: event.area,
+    address: event.address,
+    date: event.date,
+    startTime: event.start_time,
+    endTime: event.end_time,
+    type: event.type,
+    music: event.music || [],
+    audience: event.audience,
+    priceFrom: event.price_from,
+    cover: event.cover,
+    featured: event.featured,
+    description: event.description,
+    perks: event.perks || []
+  }));
+
+  setDbEvents(mappedEvents);
+}
   };
 
   fetchEvents();
