@@ -127,8 +127,7 @@ export const events: EventItem[] = [
     cover: 'https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?auto=format&fit=crop&w=1200&q=80',
     description: 'Domingos de terraceo con fusión flamenca, formato sofisticado y un público que busca un plan con personalidad.',
     perks: ['Show en vivo', 'Mesa reservada', 'Cócteles especiales']
-  }
-];
+  },
 {
   id: 'evt_riu_360',
   slug: 'riu-360-rooftop-madrid',
