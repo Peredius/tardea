@@ -50,7 +50,7 @@ export default function AdminPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    let imageUrl = previewUrl || '';
+   let imageUrl = editingEvent?.cover || '';
 
     if (cover) {
       const fileName = `${Date.now()}-${cover.name}`;
