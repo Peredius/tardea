@@ -48,3 +48,11 @@ input[type="date"] {
   min-width: 0;
   max-width: 100%;
 }
+input[type="time"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
