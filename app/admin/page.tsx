@@ -91,11 +91,30 @@ async function fetchEvents() {
       published: true
     };
 
+    let error;
+
+if (editingEvent) {
+  const { error: updateError } = await supabase
+    .from('events')
+    .update(eventData)
+    .eq('id', editingEvent.id);
+
+  error = updateError;
+} else {
+  const { error: insertError } = await supabase
+    .from('events')
+    .insert(eventData);
+
+  error = insertError;
+}
+
     if (error) {
       setMessage('Error al crear evento');
       console.error(error);
     } else {
       setMessage('Evento creado correctamente');
+      setEditingEvent(null);
+fetchEvents();
       setTitle('');
       setVenue('');
       setArea('');
