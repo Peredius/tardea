@@ -30,7 +30,10 @@ export function Filters() {
   .select('*')
   .eq('published', true)
   .order('date', { ascending: true });
-
+    
+console.log('SUPABASE DATA:', data);
+console.log('SUPABASE ERROR:', error);
+    
 if (error) {
   console.error(error);
 } else {
