@@ -49,7 +49,7 @@ export function Filters() {
       if (area !== 'Todas' && event.area !== area) return false;
       return true;
     });
-  }, [area, audience, date, music, price, type]);
+ }, [area, audience, date, music, price, type, dbEvents]);
 
   return (
     <section id="explorar" className="container-page py-16">
