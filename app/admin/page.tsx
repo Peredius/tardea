@@ -9,12 +9,12 @@ export default function AdminPage() {
   const [venue, setVenue] = useState('');
   const [area, setArea] = useState('');
   const [date, setDate] = useState('');
-  const [type, setType] = useState('Tardeo');
+  const [type, setType] = useState('');
   const [address, setAddress] = useState('');
 const [startTime, setStartTime] = useState('17:00');
 const [endTime, setEndTime] = useState('23:00');
-const [priceFrom, setPriceFrom] = useState('0');
-const [music, setMusic] = useState('Pop');
+const [priceFrom, setPriceFrom] = useState('');
+const [music, setMusic] = useState('');
 const [cover, setCover] = useState('');
 const [description, setDescription] = useState('');
 const [perks, setPerks] = useState('');
