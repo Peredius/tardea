@@ -31,6 +31,23 @@ export default function AdminPage() {
   const [perks, setPerks] = useState('');
   const [events, setEvents] = useState<any[]>([]);
 
+  useEffect(() => {
+  fetchEvents();
+}, []);
+
+async function fetchEvents() {
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .order('date', { ascending: true });
+
+  if (error) {
+    console.error(error);
+  } else {
+    setEvents(data || []);
+  }
+}
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
