@@ -96,14 +96,15 @@ if (cover && typeof cover !== 'string') {
       <form onSubmit={handleSubmit} className="card mt-8 max-w-2xl space-y-4 p-6">
         <input className="input" placeholder="Nombre del evento" value={title} onChange={(e) => setTitle(e.target.value)} />
 
-        <select className="select" value={type} onChange={(e) => setType(e.target.value)}>
-          <option>Tardeo</option>
-          <option>Rooftop</option>
-          <option>Brunch</option>
-          <option>Fitness Party</option>
-          <option>Afterwork</option>
-          <option>Fiesta temática</option>
-        </select>
+      <select className="select" value={type} onChange={(e) => setType(e.target.value)}>
+  <option value="">Tipo de evento</option>
+  <option value="Tardeo">Tardeo · plan social de tarde</option>
+  <option value="Rooftop">Rooftop · terraza con vistas</option>
+  <option value="Brunch">Brunch · comida + música</option>
+  <option value="Fitness Party">Fitness Party · deporte + música</option>
+  <option value="Afterwork">Afterwork · plan después del trabajo</option>
+  <option value="Fiesta temática">Fiesta temática · evento especial</option>
+</select>
 
         <select className="select" value={music} onChange={(e) => setMusic(e.target.value)}>
   <option value="">Estilo musical</option>
