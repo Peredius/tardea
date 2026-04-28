@@ -38,7 +38,7 @@ const [perks, setPerks] = useState('');
 
 if (cover && typeof cover !== 'string') {
   const file = cover as File;
-  const fileName = `${Date.now()}-${cover.name}`;
+  const fileName = `${Date.now()}-${file.name}`;
 
   const { data, error: uploadError } = await supabase.storage
     .from('events')
