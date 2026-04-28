@@ -141,8 +141,7 @@ export default function AdminPage() {
 
         <input className="input" placeholder="Precio desde (€)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
 
-        <input type="file" accept="image/*" onChange={(e) => setCover(e.target.files?.[0] || null)} />
-
+        <input className="input" placeholder="Lugar / venue" value={venue} onChange={(e) => setVenue(e.target.value)} />
 
         <input className="input" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} />
 
@@ -150,7 +149,7 @@ export default function AdminPage() {
 
         <input className="input" placeholder="Extras, ventajas (coma separados)" value={perks} onChange={(e) => setPerks(e.target.value)} />
 
-        <input className="input" placeholder="Lugar / venue" value={venue} onChange={(e) => setVenue(e.target.value)} />
+       <input type="file" accept="image/*" onChange={(e) => setCover(e.target.files?.[0] || null)} />
 
         <button className="btn-primary" type="submit">
           Crear evento
