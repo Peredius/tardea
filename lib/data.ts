@@ -127,8 +127,8 @@ export const events: EventItem[] = [
     cover: 'https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?auto=format&fit=crop&w=1200&q=80',
     description: 'Domingos de terraceo con fusión flamenca, formato sofisticado y un público que busca un plan con personalidad.',
     perks: ['Show en vivo', 'Mesa reservada', 'Cócteles especiales']
-  },
-{
+ },
+  {
   slug: 'riu-360-rooftop-madrid',
   title: '360º Rooftop Bar RIU Madrid',
   venue: 'Hotel RIU Plaza España',
@@ -145,7 +145,7 @@ export const events: EventItem[] = [
   featured: true,
   description: 'Rooftop con vistas panorámicas de Madrid, ambiente de tarde, copas y una de las mejores puestas de sol de la ciudad.',
   perks: ['Vistas 360º', 'Atardecer', 'Copas', 'Música']
-};
+}
 
 export function getEventBySlug(slug: string) {
   return events.find((event) => event.slug === slug);
