@@ -34,6 +34,27 @@ const [perks, setPerks] = useState('');
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    let imageUrl = '';
+
+if (cover && typeof cover !== 'string') {
+  const fileName = `${Date.now()}-${cover.name}`;
+
+  const { data, error: uploadError } = await supabase.storage
+    .from('events')
+    .upload(fileName, cover);
+
+  if (uploadError) {
+    console.error(uploadError);
+  } else {
+    const { data: publicUrl } = supabase
+      .storage
+      .from('events')
+      .getPublicUrl(fileName);
+
+    imageUrl = publicUrl.publicUrl;
+  }
+}
+
   const { error } = await supabase.from('events').insert({
   title,
   slug: generateSlug(title, date),
@@ -47,7 +68,7 @@ const [perks, setPerks] = useState('');
   music: music ? [music] : [],
   audience: '25-35',
   price_from: Number(priceFrom),
-  cover,
+  cover: imageUrl,
   featured: false,
   description,
   perks: perks ? perks.split(',').map(p => p.trim()) : [],
@@ -109,7 +130,11 @@ const [perks, setPerks] = useState('');
   <option>Indie</option>
 </select>
 
-<input className="input" placeholder="URL imagen (cover)" value={cover} onChange={(e) => setCover(e.target.value)} />
+<input
+  type="file"
+  accept="image/*"
+  onChange={(e) => setCover(e.target.files?.[0] || '')}
+/>
 
 <textarea
   className="input"
