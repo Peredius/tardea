@@ -155,6 +155,7 @@ export const events: EventItem[] = [
   seoDescription: 'Descubre el 360º Rooftop Bar del Hotel RIU Plaza España, un plan de tarde con vistas panorámicas, copas y música en Madrid.',
   coordinates: { lat: 40.4237, lng: -3.7122 }
 },
+ }; 
 
 export function getEventBySlug(slug: string) {
   return events.find((event) => event.slug === slug);
