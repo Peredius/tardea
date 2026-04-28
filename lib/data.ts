@@ -163,7 +163,7 @@ export const events: EventItem[] = [
   featured: true,
   description: 'Uno de los tardeos más exclusivos de Madrid con DJ en directo, copas premium y ambiente elegante.',
   perks: ['Rooftop', 'DJ', 'Copas premium', 'Ambiente elegante']
-},
+}
 ];
 
 export function getEventBySlug(slug: string) {
