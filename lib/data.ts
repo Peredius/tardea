@@ -129,12 +129,10 @@ export const events: EventItem[] = [
     perks: ['Show en vivo', 'Mesa reservada', 'Cócteles especiales']
   },
 {
-  id: 'evt_riu_360',
   slug: 'riu-360-rooftop-madrid',
   title: '360º Rooftop Bar RIU Madrid',
   venue: 'Hotel RIU Plaza España',
   area: 'Centro',
-  district: 'Plaza de España',
   address: 'Calle Gran Vía, 84',
   date: '2026-05-24',
   startTime: '17:00',
@@ -143,19 +141,11 @@ export const events: EventItem[] = [
   music: ['House', 'Pop'],
   audience: '25-35',
   priceFrom: 10,
-  priceTo: 20,
   cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80',
   featured: true,
-  description: 'Rooftop con vistas panorámicas de Madrid, ambiente de tarde, música en directo, copas y una de las mejores puestas de sol de la ciudad.',
-  perks: ['Vistas 360º', 'Atardecer', 'Copas', 'Música en directo'],
-  status: 'published',
-  capacity: 200,
-  ticketsUrl: 'https://www.riu360rooftopbar.com/',
-  seoTitle: '360º Rooftop Bar RIU Madrid | Tardeo con vistas en Madrid',
-  seoDescription: 'Descubre el 360º Rooftop Bar del Hotel RIU Plaza España, un plan de tarde con vistas panorámicas, copas y música en Madrid.',
-  coordinates: { lat: 40.4237, lng: -3.7122 }
+  description: 'Rooftop con vistas panorámicas de Madrid, ambiente de tarde, copas y una de las mejores puestas de sol de la ciudad.',
+  perks: ['Vistas 360º', 'Atardecer', 'Copas', 'Música']
 },
- }; 
 
 export function getEventBySlug(slug: string) {
   return events.find((event) => event.slug === slug);
