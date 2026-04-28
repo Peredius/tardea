@@ -26,7 +26,7 @@ const [startTime, setStartTime] = useState('17:00');
 const [endTime, setEndTime] = useState('23:00');
 const [priceFrom, setPriceFrom] = useState('');
 const [music, setMusic] = useState('');
-const [cover, setCover] = useState('');
+const [cover, setCover] = useState<File | null>(null);
 const [description, setDescription] = useState('');
 const [perks, setPerks] = useState('');
   const [message, setMessage] = useState('');
@@ -38,7 +38,7 @@ const [perks, setPerks] = useState('');
 
 if (cover && typeof cover !== 'string') {
   const file = cover as File;
-  const fileName = `${Date.now()}-${file.name}`;
+  const fileName = `${Date.now()}-${cover.name}`;
 
   const { data, error: uploadError } = await supabase.storage
     .from('events')
@@ -149,7 +149,7 @@ if (cover && typeof cover !== 'string') {
 <input
   type="file"
   accept="image/*"
-  onChange={(e) => setCover(e.target.files?.[0] || '')}
+  onChange={(e) => setCover(e.target.files?.[0] || null)}
 />
 
 <textarea
