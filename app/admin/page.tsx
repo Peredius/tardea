@@ -50,29 +50,25 @@ export default function AdminPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-   let imageUrl = editingEvent?.cover || '';
+    let imageUrl = editingEvent?.cover || '';
 
     if (cover) {
-  const fileName = `${Date.now()}-${cover.name}`;
+      const fileName = `${Date.now()}-${cover.name}`;
 
-  const { data: uploadData, error: uploadError } = await supabase.storage
-    .from('events')
-    .upload(fileName, cover);
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('events')
+        .upload(fileName, cover);
 
-  console.log('UPLOAD DATA:', uploadData);
-  console.log('UPLOAD ERROR:', uploadError);
+      console.log('UPLOAD DATA:', uploadData);
+      console.log('UPLOAD ERROR:', uploadError);
 
-  if (uploadError) {
-    setMessage(`Error subiendo imagen: ${uploadError.message}`);
-    return;
-  }
+      if (uploadError) {
+        setMessage(`Error subiendo imagen: ${uploadError.message}`);
+        return;
+      }
 
-  const { data } = supabase.storage
-    .from('events')
-    .getPublicUrl(fileName);
-
-  imageUrl = data.publicUrl;
-}
+      const { data } = supabase.storage.from('events').getPublicUrl(fileName);
+      imageUrl = data.publicUrl;
     }
 
     const eventData = {
@@ -102,22 +98,20 @@ export default function AdminPage() {
         .from('events')
         .update(eventData)
         .eq('id', editingEvent.id);
+
       error = updateError;
     } else {
       const { error: insertError } = await supabase
         .from('events')
         .insert(eventData);
+
       error = insertError;
     }
 
     if (error) {
       setMessage('Error al guardar evento');
     } else {
-      setMessage(
-        editingEvent
-          ? 'Evento actualizado correctamente'
-          : 'Evento creado correctamente'
-      );
+      setMessage(editingEvent ? 'Evento actualizado correctamente' : 'Evento creado correctamente');
       setEditingEvent(null);
       fetchEvents();
 
@@ -135,9 +129,9 @@ export default function AdminPage() {
       setCover(null);
       setPreviewUrl('');
       setDescription('');
-     setPerks('');
-}
-}
+      setPerks('');
+    }
+  }
 
   return (
     <main className="container-page py-16">
@@ -145,7 +139,6 @@ export default function AdminPage() {
       <p className="mt-3 text-slate-400">Crear y editar eventos</p>
 
       <form onSubmit={handleSubmit} className="card mt-8 max-w-2xl space-y-6 p-6">
-
         <input className="input" placeholder="Nombre del evento" value={title} onChange={(e) => setTitle(e.target.value)} />
 
         <select className="select" value={type} onChange={(e) => setType(e.target.value)}>
@@ -202,7 +195,7 @@ export default function AdminPage() {
         />
 
         {previewUrl && (
-          <img src={previewUrl} className="h-56 w-full rounded-xl object-cover" />
+          <img src={previewUrl} alt="Preview del evento" className="h-56 w-full rounded-xl object-cover" />
         )}
 
         <button className="btn-primary w-full" type="submit">
@@ -227,22 +220,25 @@ export default function AdminPage() {
             <button
               className="text-sm text-brand-500"
               onClick={() => {
+                const cleanCover = event.cover?.startsWith('blob:') ? '' : event.cover;
+
                 setEditingEvent({
-  ...event,
-  cover: event.cover?.startsWith('blob:') ? '' : event.cover
-});
-                setTitle(event.title);
-                setVenue(event.venue);
-                setArea(event.area);
-                setDate(event.date);
-                setStartTime(event.start_time);
-                setEndTime(event.end_time);
-                setType(event.type);
+                  ...event,
+                  cover: cleanCover
+                });
+
+                setTitle(event.title || '');
+                setVenue(event.venue || '');
+                setArea(event.area || '');
+                setDate(event.date || '');
+                setStartTime(event.start_time || '17:00');
+                setEndTime(event.end_time || '23:00');
+                setType(event.type || '');
                 setMusic(event.music?.[0] || '');
                 setPriceFrom(event.price_from?.toString() || '');
-                setPreviewUrl(event.cover?.startsWith('blob:') ? '' : event.cover);
+                setPreviewUrl(cleanCover || '');
                 setCover(null);
-                setDescription(event.description);
+                setDescription(event.description || '');
                 setPerks(event.perks?.join(', ') || '');
               }}
             >
