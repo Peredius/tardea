@@ -151,9 +151,10 @@ export default function AdminPage() {
 
         <select className="select" value={music} onChange={(e) => setMusic(e.target.value)}>
           <option value="">Estilo musical</option>
+          <option>Indie</option>
           <option>Pop</option>
           <option>House</option>
-          <option>Reggaetón</option>
+          <option>Urbano</option>
           <option>Techno</option>
         </select>
 
