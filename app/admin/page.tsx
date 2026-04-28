@@ -29,7 +29,7 @@ export default function AdminPage() {
   const [previewUrl, setPreviewUrl] = useState('');
   const [description, setDescription] = useState('');
   const [perks, setPerks] = useState('');
-  const [message, setMessage] = useState('');
+  const [events, setEvents] = useState<any[]>([]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
