@@ -98,12 +98,12 @@ if (cover && typeof cover !== 'string') {
 
       <select className="select" value={type} onChange={(e) => setType(e.target.value)}>
   <option value="">Tipo de evento</option>
-  <option value="Tardeo">Tardeo · plan social de tarde</option>
-  <option value="Rooftop">Rooftop · terraza con vistas</option>
-  <option value="Brunch">Brunch · comida + música</option>
-  <option value="Fitness Party">Fitness Party · deporte + música</option>
-  <option value="Afterwork">Afterwork · plan después del trabajo</option>
-  <option value="Fiesta temática">Fiesta temática · evento especial</option>
+  <option value="Tardeo">Tardeo</option>
+  <option value="Rooftop">Rooftop</option>
+  <option value="Brunch">Brunch</option>
+  <option value="Fitness Party">Fitness Party</option>
+  <option value="Afterwork">Afterwork</option>
+  <option value="Fiesta temática">Fiesta temática</option>
 </select>
 
         <select className="select" value={music} onChange={(e) => setMusic(e.target.value)}>
