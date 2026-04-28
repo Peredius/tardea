@@ -39,7 +39,7 @@ const [perks, setPerks] = useState('');
   cover,
   featured: false,
   description,
-  perks: perks.split(',').map(p => p.trim()),
+  perks: perks ? perks.split(',').map(p => p.trim()) : [],
   published: true
 });
 
