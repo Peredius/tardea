@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { CalendarDays, Clock3, Euro, MapPin, Music4, Users } from 'lucide-react';
 import { audienceTypes, eventTypes, events, musicTypes, priceRanges } from '@/lib/data';
+import { supabase } from '@/lib/supabase';
 
 function matchesPrice(range: string, price: number) {
   if (range === 'Todos') return true;
