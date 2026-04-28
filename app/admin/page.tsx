@@ -68,7 +68,7 @@ if (cover && typeof cover !== 'string') {
   type,
   music: music ? [music] : [],
   audience: '25-35',
-  price_from: Number(priceFrom),
+  price_from: priceFrom ? Number(priceFrom) : 0,
   cover: imageUrl,
   featured: false,
   description,
