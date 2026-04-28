@@ -134,10 +134,22 @@ export default function AdminPage() {
           <input className="input" placeholder="Escribe la zona" value={customArea} onChange={(e) => setCustomArea(e.target.value)} />
         )}
 
-        <input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        <label className="space-y-2 text-sm text-slate-300">
+  <span>Fecha del evento</span>
+  <input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+</label>
 
-        <input className="input" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-        <input className="input" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+        <div className="grid gap-4 md:grid-cols-2">
+  <label className="space-y-2 text-sm text-slate-300">
+    <span>Hora inicio</span>
+    <input className="input" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+  </label>
+
+  <label className="space-y-2 text-sm text-slate-300">
+    <span>Hora fin</span>
+    <input className="input" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+  </label>
+</div>
 
         <input className="input" placeholder="Precio desde (€)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
 
