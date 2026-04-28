@@ -38,13 +38,13 @@ const [perks, setPerks] = useState('');
   title,
   slug: generateSlug(title, date),
   venue,
-  area,
+  area: area === 'Otra' ? customArea : area,
   address,
   date,
   start_time: startTime,
   end_time: endTime,
   type,
-  music: [music],
+  music: music ? [music] : [],
   audience: '25-35',
   price_from: Number(priceFrom),
   cover,
@@ -60,7 +60,6 @@ const [perks, setPerks] = useState('');
     } else {
       setMessage('Evento creado correctamente');
       setTitle('');
-      setSlug('');
       setVenue('');
       setArea('');
       setDate('');
