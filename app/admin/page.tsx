@@ -121,8 +121,6 @@ export default function AdminPage() {
           <option>Indie</option>
         </select>
 
-        <input className="input" placeholder="Lugar / venue" value={venue} onChange={(e) => setVenue(e.target.value)} />
-
         <select className="select" value={area} onChange={(e) => setArea(e.target.value)}>
           <option value="">Selecciona zona</option>
           <option>Centro</option>
@@ -137,7 +135,6 @@ export default function AdminPage() {
         )}
 
         <input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        <input className="input" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} />
 
         <input className="input" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
         <input className="input" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
@@ -146,9 +143,13 @@ export default function AdminPage() {
 
         <input type="file" accept="image/*" onChange={(e) => setCover(e.target.files?.[0] || null)} />
 
+        <input className="input" placeholder="Lugar / venue" value={venue} onChange={(e) => setVenue(e.target.value)} />
+
+        <input className="input" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} />
+
         <textarea className="input" placeholder="Descripción" value={description} onChange={(e) => setDescription(e.target.value)} />
 
-        <input className="input" placeholder="Perks (coma separados)" value={perks} onChange={(e) => setPerks(e.target.value)} />
+        <input className="input" placeholder="Extras, ventajas (coma separados)" value={perks} onChange={(e) => setPerks(e.target.value)} />
 
         <button className="btn-primary" type="submit">
           Crear evento
