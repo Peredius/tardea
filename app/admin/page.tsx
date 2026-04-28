@@ -151,10 +151,11 @@ export default function AdminPage() {
 
        <div className="space-y-4">
   <input
-    type="file"
-    accept="image/*"
-    onChange={(e) => setCover(e.target.files?.[0] || null)}
-  />
+  type="file"
+  accept="image/*"
+  className="input"
+  onChange={(e) => setCover(e.target.files?.[0] || null)}
+/>
 
   <button className="btn-primary w-full" type="submit">
     Crear evento
