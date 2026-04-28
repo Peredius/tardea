@@ -219,7 +219,10 @@ export default function AdminPage() {
             <button
               className="text-sm text-brand-500"
               onClick={() => {
-                setEditingEvent(event);
+                setEditingEvent({
+  ...event,
+  cover: event.cover?.startsWith('blob:') ? '' : event.cover
+});
                 setTitle(event.title);
                 setVenue(event.venue);
                 setArea(event.area);
@@ -229,7 +232,8 @@ export default function AdminPage() {
                 setType(event.type);
                 setMusic(event.music?.[0] || '');
                 setPriceFrom(event.price_from?.toString() || '');
-                setPreviewUrl(event.cover);
+                setPreviewUrl(event.cover?.startsWith('blob:') ? '' : event.cover);
+                setCover(null);
                 setDescription(event.description);
                 setPerks(event.perks?.join(', ') || '');
               }}
