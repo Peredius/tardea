@@ -22,13 +22,13 @@ export default function AdminPage() {
   const [date, setDate] = useState('');
   const [type, setType] = useState('');
   const [address, setAddress] = useState('');
-const [startTime, setStartTime] = useState('17:00');
-const [endTime, setEndTime] = useState('23:00');
-const [priceFrom, setPriceFrom] = useState('');
-const [music, setMusic] = useState('');
-const [cover, setCover] = useState<File | null>(null);
-const [description, setDescription] = useState('');
-const [perks, setPerks] = useState('');
+  const [startTime, setStartTime] = useState('17:00');
+  const [endTime, setEndTime] = useState('23:00');
+  const [priceFrom, setPriceFrom] = useState('');
+  const [music, setMusic] = useState('');
+  const [cover, setCover] = useState<File | null>(null);
+  const [description, setDescription] = useState('');
+  const [perks, setPerks] = useState('');
   const [message, setMessage] = useState('');
 
   async function handleSubmit(e: React.FormEvent) {
@@ -36,45 +36,40 @@ const [perks, setPerks] = useState('');
 
     let imageUrl = '';
 
-if (cover && typeof cover !== 'string') {
-  const file = cover as File;
-  const fileName = `${Date.now()}-${file.name}`;
+    if (cover) {
+      const fileName = `${Date.now()}-${cover.name}`;
 
-  const { data, error: uploadError } = await supabase.storage
-    .from('events')
-    .upload(fileName, file);
+      const { error: uploadError } = await supabase.storage
+        .from('events')
+        .upload(fileName, cover);
 
-  if (uploadError) {
-    console.error(uploadError);
-  } else {
-    const { data: publicUrl } = supabase
-      .storage
-      .from('events')
-      .getPublicUrl(fileName);
+      if (uploadError) {
+        console.error(uploadError);
+      } else {
+        const { data } = supabase.storage.from('events').getPublicUrl(fileName);
+        imageUrl = data.publicUrl;
+      }
+    }
 
-    imageUrl = publicUrl.publicUrl;
-  }
-}
-
-  const { error } = await supabase.from('events').insert({
-  title,
-  slug: generateSlug(title, date),
-  venue,
-  area: area === 'Otra' ? customArea : area,
-  address,
-  date,
-  start_time: startTime,
-  end_time: endTime,
-  type,
-  music: music ? [music] : [],
-  audience: '25-35',
-  price_from: priceFrom ? Number(priceFrom) : 0,
-  cover: imageUrl,
-  featured: false,
-  description,
-  perks: perks ? perks.split(',').map(p => p.trim()) : [],
-  published: true
-});
+    const { error } = await supabase.from('events').insert({
+      title,
+      slug: generateSlug(title, date),
+      venue,
+      area: area === 'Otra' ? customArea : area,
+      address,
+      date,
+      start_time: startTime,
+      end_time: endTime,
+      type,
+      music: music ? [music] : [],
+      audience: '25-35',
+      price_from: priceFrom ? Number(priceFrom) : 0,
+      cover: imageUrl,
+      featured: false,
+      description,
+      perks: perks ? perks.split(',').map((p) => p.trim()) : [],
+      published: true
+    });
 
     if (error) {
       setMessage('Error al crear evento');
@@ -84,7 +79,17 @@ if (cover && typeof cover !== 'string') {
       setTitle('');
       setVenue('');
       setArea('');
+      setCustomArea('');
       setDate('');
+      setType('');
+      setAddress('');
+      setStartTime('17:00');
+      setEndTime('23:00');
+      setPriceFrom('');
+      setMusic('');
+      setCover(null);
+      setDescription('');
+      setPerks('');
     }
   }
 
@@ -96,70 +101,55 @@ if (cover && typeof cover !== 'string') {
       <form onSubmit={handleSubmit} className="card mt-8 max-w-2xl space-y-4 p-6">
         <input className="input" placeholder="Nombre del evento" value={title} onChange={(e) => setTitle(e.target.value)} />
 
-      <select className="select" value={type} onChange={(e) => setType(e.target.value)}>
-  <option value="">Tipo de evento</option>
-  <option value="Tardeo">Tardeo</option>
-  <option value="Rooftop">Rooftop</option>
-  <option value="Brunch">Brunch</option>
-  <option value="Fitness Party">Fitness Party</option>
-  <option value="Afterwork">Afterwork</option>
-  <option value="Fiesta temática">Fiesta temática</option>
-</select>
+        <select className="select" value={type} onChange={(e) => setType(e.target.value)}>
+          <option value="">Tipo de evento</option>
+          <option value="Tardeo">Tardeo · plan social de tarde</option>
+          <option value="Rooftop">Rooftop · terraza con vistas</option>
+          <option value="Brunch">Brunch · comida + música</option>
+          <option value="Fitness Party">Fitness Party · deporte + música</option>
+          <option value="Afterwork">Afterwork · plan después del trabajo</option>
+          <option value="Fiesta temática">Fiesta temática · evento especial</option>
+        </select>
 
         <select className="select" value={music} onChange={(e) => setMusic(e.target.value)}>
-  <option value="">Estilo musical</option>
-  <option>Pop</option>
-  <option>House</option>
-  <option>Reggaetón</option>
-  <option>Flamenco</option>
-  <option>Techno</option>
-  <option>Indie</option>
-</select>
-        
-       <select className="select" value={area} onChange={(e) => setArea(e.target.value)}>
-  <option value="">Selecciona zona</option>
-  <option>Centro</option>
-  <option>Salamanca</option>
-  <option>Retiro</option>
-  <option>El Pardo</option>
-  <option value="Otra">Otra zona</option>
-</select>
+          <option value="">Estilo musical</option>
+          <option>Pop</option>
+          <option>House</option>
+          <option>Reggaetón</option>
+          <option>Flamenco</option>
+          <option>Techno</option>
+          <option>Indie</option>
+        </select>
 
-{area === 'Otra' && (
-  <input
-    className="input"
-    placeholder="Escribe la zona"
-    value={customArea}
-    onChange={(e) => setCustomArea(e.target.value)}
-  />
-)}
-<input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} /
+        <input className="input" placeholder="Lugar / venue" value={venue} onChange={(e) => setVenue(e.target.value)} />
 
-<input className="input" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-        
-<input className="input" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+        <select className="select" value={area} onChange={(e) => setArea(e.target.value)}>
+          <option value="">Selecciona zona</option>
+          <option>Centro</option>
+          <option>Salamanca</option>
+          <option>Retiro</option>
+          <option>El Pardo</option>
+          <option value="Otra">Otra zona</option>
+        </select>
 
-<input className="input" placeholder="Lugar / venue" value={venue} onChange={(e) => setVenue(e.target.value)} />    
+        {area === 'Otra' && (
+          <input className="input" placeholder="Escribe la zona" value={customArea} onChange={(e) => setCustomArea(e.target.value)} />
+        )}
 
-<input className="input" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} />
+        <input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        <input className="input" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} />
 
-<input className="input" placeholder="Precio desde (€)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
+        <input className="input" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+        <input className="input" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
 
-<input
-  type="file"
-  accept="image/*"
-  onChange={(e) => setCover(e.target.files?.[0] || null)}
-/>
+        <input className="input" placeholder="Precio desde (€)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
 
-<textarea
-  className="input"
-  placeholder="Descripción"
-  value={description}
-  onChange={(e) => setDescription(e.target.value)}
-/>
-        
-<input className="input" placeholder="Perks (coma separados)" value={perks} onChange={(e) => setPerks(e.target.value)} />
-        
+        <input type="file" accept="image/*" onChange={(e) => setCover(e.target.files?.[0] || null)} />
+
+        <textarea className="input" placeholder="Descripción" value={description} onChange={(e) => setDescription(e.target.value)} />
+
+        <input className="input" placeholder="Perks (coma separados)" value={perks} onChange={(e) => setPerks(e.target.value)} />
+
         <button className="btn-primary" type="submit">
           Crear evento
         </button>
