@@ -204,6 +204,28 @@ async function fetchEvents() {
 
         {message && <p className="text-sm text-brand-500">{message}</p>}
       </form>
+
+      <div className="mt-12">
+  <h2 className="mb-4 text-2xl font-bold">Eventos creados</h2>
+
+  <div className="space-y-3">
+    {events.map((event) => (
+      <div key={event.id} className="flex items-center justify-between rounded-xl bg-slate-800 p-4">
+        <div>
+          <p className="font-semibold">{event.title}</p>
+          <p className="text-sm text-slate-400">
+            {new Date(event.date).toLocaleDateString('es-ES')}
+          </p>
+        </div>
+
+        <button className="text-sm text-brand-500 hover:underline">
+          Editar
+        </button>
+      </div>
+    ))}
+  </div>
+</div>
+      
     </main>
   );
 }
