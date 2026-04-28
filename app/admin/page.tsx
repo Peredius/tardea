@@ -8,6 +8,7 @@ export default function AdminPage() {
   const [slug, setSlug] = useState('');
   const [venue, setVenue] = useState('');
   const [area, setArea] = useState('');
+  const [customArea, setCustomArea] = useState('');
   const [date, setDate] = useState('');
   const [type, setType] = useState('');
   const [address, setAddress] = useState('');
@@ -65,7 +66,23 @@ const [perks, setPerks] = useState('');
         <input className="input" placeholder="Nombre del evento" value={title} onChange={(e) => setTitle(e.target.value)} />
         <input className="input" placeholder="slug-evento" value={slug} onChange={(e) => setSlug(e.target.value)} />
         <input className="input" placeholder="Lugar / venue" value={venue} onChange={(e) => setVenue(e.target.value)} />
-        <input className="input" placeholder="Zona" value={area} onChange={(e) => setArea(e.target.value)} />
+       <select className="select" value={area} onChange={(e) => setArea(e.target.value)}>
+  <option value="">Selecciona zona</option>
+  <option>Centro</option>
+  <option>Salamanca</option>
+  <option>Retiro</option>
+  <option>El Pardo</option>
+  <option value="Otra">Otra zona</option>
+</select>
+
+{area === 'Otra' && (
+  <input
+    className="input"
+    placeholder="Escribe la zona"
+    value={customArea}
+    onChange={(e) => setCustomArea(e.target.value)}
+  />
+)}
         <input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         <input className="input" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} />
 
