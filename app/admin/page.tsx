@@ -28,6 +28,7 @@ export default function AdminPage() {
   const [music, setMusic] = useState('');
   const [cover, setCover] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
+const [message, setMessage] = useState('');
   const [description, setDescription] = useState('');
   const [perks, setPerks] = useState('');
   const [events, setEvents] = useState<any[]>([]);
