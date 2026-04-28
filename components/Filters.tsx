@@ -44,7 +44,7 @@ if (error) {
     area: event.area,
     address: event.address,
     date: event.date,
-    startTime: event.start_time,
+    startTime: event.starttime,
     endTime: event.end_time,
     type: event.type,
     music: event.music || [],
