@@ -37,10 +37,10 @@ export function Filters() {
   fetchEvents();
 }, []);
 
-  const areas = useMemo(() => ['Todas', ...new Set(events.map((event) => event.area))], []);
+  const areas = useMemo(() => ['Todas', ...new Set(dbEvents.map((event) => event.area))], [dbEvents]);
 
   const filtered = useMemo(() => {
-    return events.filter((event) => {
+    return dbEvents.filter((event) => {
       if (date && event.date !== date) return false;
       if (type !== 'Todos' && event.type !== type) return false;
       if (music !== 'Todas' && !event.music.includes(music as never)) return false;
