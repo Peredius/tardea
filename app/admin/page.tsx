@@ -134,8 +134,8 @@ export default function AdminPage() {
           <input className="input" placeholder="Escribe la zona" value={customArea} onChange={(e) => setCustomArea(e.target.value)} />
         )}
 
-        <label className="mt-6 space-y-4 text-sm text-slate-300">
-  <span>Fecha del evento</span>
+        <label className="space-y-2 text-sm text-slate-300">
+  <span className="block mt-4">Fecha del evento</span>
   <input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
 </label>
 
