@@ -139,7 +139,7 @@ export default function AdminPage() {
   <input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
 </label>
 
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+        <div className="flex flex-col gap-4 md:grid md:grid-cols-2">
   <label className="space-y-2 text-sm text-slate-300">
     <span>Hora inicio</span>
     <input className="input" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
