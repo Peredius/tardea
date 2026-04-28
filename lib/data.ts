@@ -146,7 +146,7 @@ export const events: EventItem[] = [
   description: 'Rooftop con vistas panorámicas de Madrid, ambiente de tarde, copas y una de las mejores puestas de sol de la ciudad.',
   perks: ['Vistas 360º', 'Atardecer', 'Copas', 'Música']
 }
-  };
+];
 
 export function getEventBySlug(slug: string) {
   return events.find((event) => event.slug === slug);
