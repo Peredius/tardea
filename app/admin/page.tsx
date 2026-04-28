@@ -23,25 +23,25 @@ const [perks, setPerks] = useState('');
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    const { error } = await supabase.from('events').insert({
-      title,
-      slug,
-      venue,
-      area,
-      address: '',
-      date,
-      start_time: '17:00',
-      end_time: '23:00',
-      type,
-      music: ['Pop'],
-      audience: '25-35',
-      price_from: 0,
-      cover: '',
-      featured: false,
-      description: '',
-      perks: [],
-      published: true
-    });
+  const { error } = await supabase.from('events').insert({
+  title,
+  slug,
+  venue,
+  area,
+  address,
+  date,
+  start_time: startTime,
+  end_time: endTime,
+  type,
+  music: [music],
+  audience: '25-35',
+  price_from: Number(priceFrom),
+  cover,
+  featured: false,
+  description,
+  perks: perks.split(',').map(p => p.trim()),
+  published: true
+});
 
     if (error) {
       setMessage('Error al crear evento');
