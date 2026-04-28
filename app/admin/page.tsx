@@ -28,33 +28,29 @@ export default function AdminPage() {
   const [music, setMusic] = useState('');
   const [cover, setCover] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
-const [message, setMessage] = useState('');
+  const [message, setMessage] = useState('');
   const [description, setDescription] = useState('');
   const [perks, setPerks] = useState('');
   const [events, setEvents] = useState<any[]>([]);
   const [editingEvent, setEditingEvent] = useState<any | null>(null);
 
   useEffect(() => {
-  fetchEvents();
-}, []);
+    fetchEvents();
+  }, []);
 
-async function fetchEvents() {
-  const { data, error } = await supabase
-    .from('events')
-    .select('*')
-    .order('date', { ascending: true });
+  async function fetchEvents() {
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .order('date', { ascending: true });
 
-  if (error) {
-    console.error(error);
-  } else {
-    setEvents(data || []);
+    if (!error) setEvents(data || []);
   }
-}
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    let imageUrl = '';
+    let imageUrl = previewUrl || '';
 
     if (cover) {
       const fileName = `${Date.now()}-${cover.name}`;
@@ -63,15 +59,15 @@ async function fetchEvents() {
         .from('events')
         .upload(fileName, cover);
 
-      if (uploadError) {
-        console.error(uploadError);
-      } else {
-        const { data } = supabase.storage.from('events').getPublicUrl(fileName);
+      if (!uploadError) {
+        const { data } = supabase.storage
+          .from('events')
+          .getPublicUrl(fileName);
         imageUrl = data.publicUrl;
       }
     }
 
-    const eventData = { 
+    const eventData = {
       title,
       slug: generateSlug(title, date),
       venue,
@@ -93,62 +89,64 @@ async function fetchEvents() {
 
     let error;
 
-if (editingEvent) {
-  const { error: updateError } = await supabase
-    .from('events')
-    .update(eventData)
-    .eq('id', editingEvent.id);
-
-  error = updateError;
-} else {
-  const { error: insertError } = await supabase
-    .from('events')
-    .insert(eventData);
-
-  error = insertError;
-}
+    if (editingEvent) {
+      const { error: updateError } = await supabase
+        .from('events')
+        .update(eventData)
+        .eq('id', editingEvent.id);
+      error = updateError;
+    } else {
+      const { error: insertError } = await supabase
+        .from('events')
+        .insert(eventData);
+      error = insertError;
+    }
 
     if (error) {
-      setMessage('Error al crear evento');
-      console.error(error);
-} else {
-  setMessage('Evento creado correctamente');
-  setEditingEvent(null);
-  fetchEvents();
-  setTitle('');
-  setVenue('');
-  setArea('');
-  setCustomArea('');
-  setDate('');
-  setType('');
-  setAddress('');
-  setStartTime('17:00');
-  setEndTime('23:00');
-  setPriceFrom('');
-  setMusic('');
-  setCover(null);
-  setPreviewUrl('');
-  setDescription('');
-  setPerks('');
-}
+      setMessage('Error al guardar evento');
+    } else {
+      setMessage(
+        editingEvent
+          ? 'Evento actualizado correctamente'
+          : 'Evento creado correctamente'
+      );
+      setEditingEvent(null);
+      fetchEvents();
+
+      setTitle('');
+      setVenue('');
+      setArea('');
+      setCustomArea('');
+      setDate('');
+      setType('');
+      setAddress('');
+      setStartTime('17:00');
+      setEndTime('23:00');
+      setPriceFrom('');
+      setMusic('');
+      setCover(null);
+      setPreviewUrl('');
+      setDescription('');
+      setPerks('');
+    }
   }
 
   return (
     <main className="container-page py-16">
       <h1 className="text-4xl font-bold">Panel admin TARDEA</h1>
-      <p className="mt-3 text-slate-400">Crear eventos nuevos desde la web.</p>
+      <p className="mt-3 text-slate-400">Crear y editar eventos</p>
 
       <form onSubmit={handleSubmit} className="card mt-8 max-w-2xl space-y-6 p-6">
+
         <input className="input" placeholder="Nombre del evento" value={title} onChange={(e) => setTitle(e.target.value)} />
 
         <select className="select" value={type} onChange={(e) => setType(e.target.value)}>
           <option value="">Tipo de evento</option>
-          <option value="Tardeo">Tardeo</option>
-          <option value="Rooftop">Rooftop</option>
-          <option value="Brunch">Brunch</option>
-          <option value="Fitness Party">Fitness Party</option>
-          <option value="Afterwork">Afterwork</option>
-          <option value="Fiesta temática">Fiesta temática</option>
+          <option>Tardeo</option>
+          <option>Rooftop</option>
+          <option>Brunch</option>
+          <option>Fitness Party</option>
+          <option>Afterwork</option>
         </select>
 
         <select className="select" value={music} onChange={(e) => setMusic(e.target.value)}>
@@ -156,115 +154,90 @@ if (editingEvent) {
           <option>Pop</option>
           <option>House</option>
           <option>Reggaetón</option>
-          <option>Flamenco</option>
           <option>Techno</option>
-          <option>Indie</option>
         </select>
 
         <select className="select" value={area} onChange={(e) => setArea(e.target.value)}>
-          <option value="">Selecciona zona</option>
+          <option value="">Zona</option>
           <option>Centro</option>
           <option>Salamanca</option>
           <option>Retiro</option>
-          <option>El Pardo</option>
-          <option value="Otra">Otra zona</option>
+          <option value="Otra">Otra</option>
         </select>
 
         {area === 'Otra' && (
-          <input className="input" placeholder="Escribe la zona" value={customArea} onChange={(e) => setCustomArea(e.target.value)} />
+          <input className="input" placeholder="Zona personalizada" value={customArea} onChange={(e) => setCustomArea(e.target.value)} />
         )}
 
-        <label className="space-y-4 text-sm text-slate-300">
-  <span className="block mt-4">Fecha del evento</span>
-  <input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-</label>
+        <input type="date" className="input" value={date} onChange={(e) => setDate(e.target.value)} />
 
-       <label className="block w-full space-y-2 text-sm text-slate-300">
-  <span>Hora inicio</span>
-  <input className="input w-full min-w-0 max-w-full" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-</label>
+        <input type="time" className="input" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+        <input type="time" className="input" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
 
-<label className="block w-full space-y-2 text-sm text-slate-300">
-  <span>Hora fin</span>
-  <input className="input w-full min-w-0 max-w-full" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-</label>
-
-        <input className="input" placeholder="Precio desde (€)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
-
-        <input className="input" placeholder="Lugar / venue" value={venue} onChange={(e) => setVenue(e.target.value)} />
-
+        <input className="input" placeholder="Precio (€)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
+        <input className="input" placeholder="Lugar" value={venue} onChange={(e) => setVenue(e.target.value)} />
         <input className="input" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} />
 
         <textarea className="input" placeholder="Descripción" value={description} onChange={(e) => setDescription(e.target.value)} />
+        <input className="input" placeholder="Extras" value={perks} onChange={(e) => setPerks(e.target.value)} />
 
-        <input className="input" placeholder="Extras, ventajas (coma separados)" value={perks} onChange={(e) => setPerks(e.target.value)} />
+        <input
+          type="file"
+          accept="image/*"
+          className="input"
+          onChange={(e) => {
+            const file = e.target.files?.[0] || null;
+            setCover(file);
+            setPreviewUrl(file ? URL.createObjectURL(file) : '');
+          }}
+        />
 
-       <div className="space-y-4">
-  <input
-  type="file"
-  accept="image/*"
-  className="input"
-  onChange={(e) => {
-    const file = e.target.files?.[0] || null;
-    setCover(file);
-    setPreviewUrl(file ? URL.createObjectURL(file) : '');
-  }}
-/>
+        {previewUrl && (
+          <img src={previewUrl} className="h-56 w-full rounded-xl object-cover" />
+        )}
 
-{previewUrl && (
-  <img
-    src={previewUrl}
-    alt="Preview"
-    className="mt-4 h-56 w-full rounded-2xl object-cover"
-  />
-)}
-
-  <button
-  className="text-sm text-brand-500 hover:underline"
-  onClick={() => {
-    setEditingEvent(event);
-    setTitle(event.title || '');
-    setVenue(event.venue || '');
-    setArea(event.area || '');
-    setDate(event.date || '');
-    setStartTime(event.start_time || '');
-    setEndTime(event.end_time || '');
-    setType(event.type || '');
-    setMusic(event.music?.[0] || '');
-    setPriceFrom(event.price_from?.toString() || '');
-    setCover(null);
-    setPreviewUrl(event.cover || '');
-    setDescription(event.description || '');
-    setPerks(event.perks?.join(', ') || '');
-  }}
->
-  Editar
-</button>
+        <button className="btn-primary w-full" type="submit">
+          {editingEvent ? 'Guardar cambios' : 'Crear evento'}
+        </button>
 
         {message && <p className="text-sm text-brand-500">{message}</p>}
       </form>
 
       <div className="mt-12">
-  <h2 className="mb-4 text-2xl font-bold">Eventos creados</h2>
+        <h2 className="mb-4 text-2xl font-bold">Eventos creados</h2>
 
-  <div className="space-y-3">
-    {events.map((event) => (
-      <div key={event.id} className="flex items-center justify-between rounded-xl bg-slate-800 p-4">
-        <div>
-          <p className="font-semibold">{event.title}</p>
-          <p className="text-sm text-slate-400">
-            {new Date(event.date).toLocaleDateString('es-ES')}
-          </p>
-        </div>
+        {events.map((event) => (
+          <div key={event.id} className="mb-3 flex justify-between rounded-xl bg-slate-800 p-4">
+            <div>
+              <p>{event.title}</p>
+              <p className="text-sm text-slate-400">
+                {new Date(event.date).toLocaleDateString('es-ES')}
+              </p>
+            </div>
 
-        <button className="text-sm text-brand-500 hover:underline">
-          Editar
-        </button>
+            <button
+              className="text-sm text-brand-500"
+              onClick={() => {
+                setEditingEvent(event);
+                setTitle(event.title);
+                setVenue(event.venue);
+                setArea(event.area);
+                setDate(event.date);
+                setStartTime(event.start_time);
+                setEndTime(event.end_time);
+                setType(event.type);
+                setMusic(event.music?.[0] || '');
+                setPriceFrom(event.price_from?.toString() || '');
+                setPreviewUrl(event.cover);
+                setDescription(event.description);
+                setPerks(event.perks?.join(', ') || '');
+              }}
+            >
+              Editar
+            </button>
+          </div>
+        ))}
       </div>
-    ))}
-  </div>
-</div>
-      
     </main>
   );
 }
