@@ -53,18 +53,26 @@ export default function AdminPage() {
    let imageUrl = editingEvent?.cover || '';
 
     if (cover) {
-      const fileName = `${Date.now()}-${cover.name}`;
+  const fileName = `${Date.now()}-${cover.name}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('events')
-        .upload(fileName, cover);
+  const { data: uploadData, error: uploadError } = await supabase.storage
+    .from('events')
+    .upload(fileName, cover);
 
-      if (!uploadError) {
-        const { data } = supabase.storage
-          .from('events')
-          .getPublicUrl(fileName);
-        imageUrl = data.publicUrl;
-      }
+  console.log('UPLOAD DATA:', uploadData);
+  console.log('UPLOAD ERROR:', uploadError);
+
+  if (uploadError) {
+    setMessage(`Error subiendo imagen: ${uploadError.message}`);
+    return;
+  }
+
+  const { data } = supabase.storage
+    .from('events')
+    .getPublicUrl(fileName);
+
+  imageUrl = data.publicUrl;
+}
     }
 
     const eventData = {
