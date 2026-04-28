@@ -27,6 +27,7 @@ export default function AdminPage() {
   const [priceFrom, setPriceFrom] = useState('');
   const [music, setMusic] = useState('');
   const [cover, setCover] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState('');
   const [description, setDescription] = useState('');
   const [perks, setPerks] = useState('');
   const [message, setMessage] = useState('');
@@ -88,6 +89,7 @@ export default function AdminPage() {
       setPriceFrom('');
       setMusic('');
       setCover(null);
+      setPreviewUrl('');
       setDescription('');
       setPerks('');
     }
@@ -164,8 +166,20 @@ export default function AdminPage() {
   type="file"
   accept="image/*"
   className="input"
-  onChange={(e) => setCover(e.target.files?.[0] || null)}
+  onChange={(e) => {
+    const file = e.target.files?.[0] || null;
+    setCover(file);
+    setPreviewUrl(file ? URL.createObjectURL(file) : '');
+  }}
 />
+
+{previewUrl && (
+  <img
+    src={previewUrl}
+    alt="Preview"
+    className="mt-4 h-56 w-full rounded-2xl object-cover"
+  />
+)}
 
   <button className="btn-primary w-full" type="submit">
     Crear evento
