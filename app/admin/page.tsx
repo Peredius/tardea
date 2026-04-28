@@ -111,26 +111,26 @@ if (editingEvent) {
     if (error) {
       setMessage('Error al crear evento');
       console.error(error);
-    } else {
-      setMessage('Evento creado correctamente');
-      setEditingEvent(null);
-fetchEvents();
-      setTitle('');
-      setVenue('');
-      setArea('');
-      setCustomArea('');
-      setDate('');
-      setType('');
-      setAddress('');
-      setStartTime('17:00');
-      setEndTime('23:00');
-      setPriceFrom('');
-      setMusic('');
-      setCover(null);
-      setPreviewUrl('');
-      setDescription('');
-      setPerks('');
-    }
+} else {
+  setMessage('Evento creado correctamente');
+  setEditingEvent(null);
+  fetchEvents();
+  setTitle('');
+  setVenue('');
+  setArea('');
+  setCustomArea('');
+  setDate('');
+  setType('');
+  setAddress('');
+  setStartTime('17:00');
+  setEndTime('23:00');
+  setPriceFrom('');
+  setMusic('');
+  setCover(null);
+  setPreviewUrl('');
+  setDescription('');
+  setPerks('');
+}
   }
 
   return (
