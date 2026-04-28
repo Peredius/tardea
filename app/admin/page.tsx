@@ -98,7 +98,7 @@ export default function AdminPage() {
       <h1 className="text-4xl font-bold">Panel admin TARDEA</h1>
       <p className="mt-3 text-slate-400">Crear eventos nuevos desde la web.</p>
 
-      <form onSubmit={handleSubmit} className="card mt-8 max-w-2xl space-y-4 p-6">
+      <form onSubmit={handleSubmit} className="card mt-8 max-w-2xl space-y-6 p-6">
         <input className="input" placeholder="Nombre del evento" value={title} onChange={(e) => setTitle(e.target.value)} />
 
         <select className="select" value={type} onChange={(e) => setType(e.target.value)}>
