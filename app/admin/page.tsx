@@ -139,17 +139,15 @@ export default function AdminPage() {
   <input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
 </label>
 
-        <div className="flex flex-col gap-4 md:grid md:grid-cols-2">
-  <label className="space-y-2 text-sm text-slate-300">
-    <span>Hora inicio</span>
-    <input className="input" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-  </label>
+       <label className="block w-full space-y-2 text-sm text-slate-300">
+  <span>Hora inicio</span>
+  <input className="input w-full min-w-0 max-w-full" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+</label>
 
-  <label className="space-y-2 text-sm text-slate-300">
-    <span>Hora fin</span>
-    <input className="input" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-  </label>
-</div>
+<label className="block w-full space-y-2 text-sm text-slate-300">
+  <span>Hora fin</span>
+  <input className="input w-full min-w-0 max-w-full" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+</label>
 
         <input className="input" placeholder="Precio desde (€)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
 
