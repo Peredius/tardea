@@ -3,9 +3,19 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
+function generateSlug(title: string, date: string) {
+  const cleanTitle = title
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return date ? `${cleanTitle}-${date}` : cleanTitle;
+}
+
 export default function AdminPage() {
   const [title, setTitle] = useState('');
-  const [slug, setSlug] = useState('');
   const [venue, setVenue] = useState('');
   const [area, setArea] = useState('');
   const [customArea, setCustomArea] = useState('');
@@ -26,7 +36,7 @@ const [perks, setPerks] = useState('');
 
   const { error } = await supabase.from('events').insert({
   title,
-  slug,
+  slug: generateSlug(title, date),
   venue,
   area,
   address,
@@ -64,7 +74,6 @@ const [perks, setPerks] = useState('');
 
       <form onSubmit={handleSubmit} className="card mt-8 max-w-2xl space-y-4 p-6">
         <input className="input" placeholder="Nombre del evento" value={title} onChange={(e) => setTitle(e.target.value)} />
-        <input className="input" placeholder="slug-evento" value={slug} onChange={(e) => setSlug(e.target.value)} />
         <input className="input" placeholder="Lugar / venue" value={venue} onChange={(e) => setVenue(e.target.value)} />
        <select className="select" value={area} onChange={(e) => setArea(e.target.value)}>
   <option value="">Selecciona zona</option>
