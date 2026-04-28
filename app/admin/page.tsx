@@ -74,7 +74,12 @@ const [perks, setPerks] = useState('');
 
 <input className="input" placeholder="Precio desde (€)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
 
-<input className="input" placeholder="Música (ej: Pop, House)" value=music: music.split(',').map(m => m.trim()), onChange={(e) => setMusic(e.target.value)} />
+<input
+  className="input"
+  placeholder="Música (ej: Pop, House)"
+  value={music}
+  onChange={(e) => setMusic(e.target.value)}
+/>
 
 <input className="input" placeholder="URL imagen (cover)" value={cover} onChange={(e) => setCover(e.target.value)} />
 
