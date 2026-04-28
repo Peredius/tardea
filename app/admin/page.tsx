@@ -71,7 +71,7 @@ async function fetchEvents() {
       }
     }
 
-    const { error } = await supabase.from('events').insert({
+    const eventData = { 
       title,
       slug: generateSlug(title, date),
       venue,
@@ -89,7 +89,7 @@ async function fetchEvents() {
       description,
       perks: perks ? perks.split(',').map((p) => p.trim()) : [],
       published: true
-    });
+    };
 
     if (error) {
       setMessage('Error al crear evento');
