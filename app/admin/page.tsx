@@ -32,6 +32,7 @@ const [message, setMessage] = useState('');
   const [description, setDescription] = useState('');
   const [perks, setPerks] = useState('');
   const [events, setEvents] = useState<any[]>([]);
+  const [editingEvent, setEditingEvent] = useState<any | null>(null);
 
   useEffect(() => {
   fetchEvents();
@@ -199,10 +200,27 @@ async function fetchEvents() {
   />
 )}
 
-  <button className="btn-primary w-full" type="submit">
-    Crear evento
-  </button>
-</div>
+  <button
+  className="text-sm text-brand-500 hover:underline"
+  onClick={() => {
+    setEditingEvent(event);
+    setTitle(event.title || '');
+    setVenue(event.venue || '');
+    setArea(event.area || '');
+    setDate(event.date || '');
+    setStartTime(event.start_time || '');
+    setEndTime(event.end_time || '');
+    setType(event.type || '');
+    setMusic(event.music?.[0] || '');
+    setPriceFrom(event.price_from?.toString() || '');
+    setCover(null);
+    setPreviewUrl(event.cover || '');
+    setDescription(event.description || '');
+    setPerks(event.perks?.join(', ') || '');
+  }}
+>
+  Editar
+</button>
 
         {message && <p className="text-sm text-brand-500">{message}</p>}
       </form>
