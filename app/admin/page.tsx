@@ -116,8 +116,6 @@ if (cover && typeof cover !== 'string') {
   <option>Indie</option>
 </select>
         
-        <input className="input" placeholder="Lugar / venue" value={venue} onChange={(e) => setVenue(e.target.value)} />
-        
        <select className="select" value={area} onChange={(e) => setArea(e.target.value)}>
   <option value="">Selecciona zona</option>
   <option>Centro</option>
@@ -135,13 +133,15 @@ if (cover && typeof cover !== 'string') {
     onChange={(e) => setCustomArea(e.target.value)}
   />
 )}
-        <input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        
-        <input className="input" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} />
+<input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} /
 
 <input className="input" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
         
 <input className="input" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+
+<input className="input" placeholder="Lugar / venue" value={venue} onChange={(e) => setVenue(e.target.value)} />    
+
+<input className="input" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} />
 
 <input className="input" placeholder="Precio desde (€)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
 
