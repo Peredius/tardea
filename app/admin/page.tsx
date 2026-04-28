@@ -92,6 +92,7 @@ const [perks, setPerks] = useState('');
 <input className="input" placeholder="Precio desde (€)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
 
 <select className="select" value={music} onChange={(e) => setMusic(e.target.value)}>
+  <option value="">Estilo musical</option>
   <option>Pop</option>
   <option>House</option>
   <option>Reggaetón</option>
