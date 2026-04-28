@@ -22,6 +22,7 @@ export function Filters() {
   const [audience, setAudience] = useState('Todas');
   const [price, setPrice] = useState('Todos');
   const [area, setArea] = useState('Todas');
+  const [dbEvents, setDbEvents] = useState(events);
 
   const areas = useMemo(() => ['Todas', ...new Set(events.map((event) => event.area))], []);
 
