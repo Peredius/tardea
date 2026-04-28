@@ -149,11 +149,17 @@ export default function AdminPage() {
 
         <input className="input" placeholder="Extras, ventajas (coma separados)" value={perks} onChange={(e) => setPerks(e.target.value)} />
 
-       <input type="file" accept="image/*" onChange={(e) => setCover(e.target.files?.[0] || null)} />
+       <div className="space-y-4">
+  <input
+    type="file"
+    accept="image/*"
+    onChange={(e) => setCover(e.target.files?.[0] || null)}
+  />
 
-        <button className="btn-primary" type="submit">
-          Crear evento
-        </button>
+  <button className="btn-primary w-full" type="submit">
+    Crear evento
+  </button>
+</div>
 
         {message && <p className="text-sm text-brand-500">{message}</p>}
       </form>
