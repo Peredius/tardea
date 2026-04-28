@@ -1,6 +1,19 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+useEffect(() => {
+  const fetchEvents = async () => {
+    const { data, error } = await supabase.from('events').select('*');
+
+    if (error) {
+      console.error(error);
+    } else {
+      setDbEvents(data);
+    }
+  };
+
+  fetchEvents();
+}, []);
 import Link from 'next/link';
 import { CalendarDays, Clock3, Euro, MapPin, Music4, Users } from 'lucide-react';
 import { audienceTypes, eventTypes, events, musicTypes, priceRanges } from '@/lib/data';
