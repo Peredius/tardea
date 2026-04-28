@@ -94,7 +94,20 @@ if (cover && typeof cover !== 'string') {
 
       <form onSubmit={handleSubmit} className="card mt-8 max-w-2xl space-y-4 p-6">
         <input className="input" placeholder="Nombre del evento" value={title} onChange={(e) => setTitle(e.target.value)} />
+
+        <input className="input" placeholder="Perks (coma separados)" value={perks} onChange={(e) => setPerks(e.target.value)} />
+
+        <select className="select" value={type} onChange={(e) => setType(e.target.value)}>
+          <option>Tardeo</option>
+          <option>Rooftop</option>
+          <option>Brunch</option>
+          <option>Fitness Party</option>
+          <option>Afterwork</option>
+          <option>Fiesta temática</option>
+        </select>
+        
         <input className="input" placeholder="Lugar / venue" value={venue} onChange={(e) => setVenue(e.target.value)} />
+        
        <select className="select" value={area} onChange={(e) => setArea(e.target.value)}>
   <option value="">Selecciona zona</option>
   <option>Centro</option>
@@ -113,9 +126,11 @@ if (cover && typeof cover !== 'string') {
   />
 )}
         <input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        
         <input className="input" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} />
 
 <input className="input" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+        
 <input className="input" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
 
 <input className="input" placeholder="Precio desde (€)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
@@ -142,17 +157,6 @@ if (cover && typeof cover !== 'string') {
   value={description}
   onChange={(e) => setDescription(e.target.value)}
 />
-
-<input className="input" placeholder="Perks (coma separados)" value={perks} onChange={(e) => setPerks(e.target.value)} />
-
-        <select className="select" value={type} onChange={(e) => setType(e.target.value)}>
-          <option>Tardeo</option>
-          <option>Rooftop</option>
-          <option>Brunch</option>
-          <option>Fitness Party</option>
-          <option>Afterwork</option>
-          <option>Fiesta temática</option>
-        </select>
 
         <button className="btn-primary" type="submit">
           Crear evento
