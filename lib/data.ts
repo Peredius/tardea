@@ -146,6 +146,24 @@ export const events: EventItem[] = [
   description: 'Rooftop con vistas panorámicas de Madrid, ambiente de tarde, copas y una de las mejores puestas de sol de la ciudad.',
   perks: ['Vistas 360º', 'Atardecer', 'Copas', 'Música']
 },
+  {
+  slug: 'ginkgo-sky-bar-madrid',
+  title: 'Ginkgo Sky Bar Tardeo',
+  venue: 'VP Plaza España',
+  area: 'Centro',
+  address: 'Plaza de España, 5',
+  date: '2026-05-25',
+  startTime: '18:00',
+  endTime: '23:30',
+  type: 'Tardeo',
+  music: ['House', 'Pop'],
+  audience: '25-35',
+  priceFrom: 15,
+  cover: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80',
+  featured: true,
+  description: 'Uno de los tardeos más exclusivos de Madrid con DJ en directo, copas premium y ambiente elegante.',
+  perks: ['Rooftop', 'DJ', 'Copas premium', 'Ambiente elegante']
+},
 ];
 
 export function getEventBySlug(slug: string) {
