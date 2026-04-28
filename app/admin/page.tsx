@@ -137,7 +137,6 @@ export default function AdminPage() {
       setDescription('');
       setPerks('');
     }
-  }
 
   return (
     <main className="container-page py-16">
