@@ -239,6 +239,35 @@ if (error) {
       <div className="mt-12">
         <h2 className="mb-4 text-2xl font-bold">Eventos creados</h2>
 
+        <div className="mt-12">
+  <h2 className="mb-4 text-2xl font-bold">Eventos pendientes</h2>
+
+  {pendingEvents.length === 0 && (
+    <p className="text-slate-400">No hay eventos pendientes</p>
+  )}
+
+  {pendingEvents.map((event) => (
+    <div
+      key={event.id}
+      className="mb-3 flex items-center justify-between rounded-xl bg-yellow-900/30 p-4"
+    >
+      <div>
+        <p className="font-semibold">{event.title}</p>
+        <p className="text-sm text-slate-400">
+          {new Date(event.date).toLocaleDateString('es-ES')}
+        </p>
+      </div>
+
+      <button
+        className="btn-primary"
+        onClick={() => approveEvent(event.id)}
+      >
+        Aprobar
+      </button>
+    </div>
+  ))}
+</div>
+
         {events.map((event) => (
           <div key={event.id} className="mb-3 flex justify-between rounded-xl bg-slate-800 p-4">
             <div>
