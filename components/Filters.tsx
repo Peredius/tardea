@@ -151,7 +151,7 @@ export function Filters() {
           const isPastEvent = event.date < today;
 
           return (
-            <article key={event.slug} className="card overflow-hidden">
+            <article key={event.slug} className="card flex h-full flex-col overflow-hidden">
               {!isPastEvent && event.cover && (
                 <div
                   className="h-56 bg-cover bg-center"
@@ -159,7 +159,7 @@ export function Filters() {
                 />
               )}
 
-              <div className="p-6">
+              <div className="flex flex-1 flex-col p-6">
                 <div className="mb-3 flex flex-wrap gap-2">
                   <span className="badge">{event.type}</span>
                   <span className="badge">{event.area}</span>
