@@ -162,7 +162,6 @@ if (error) {
       setDescription('');
       setPerks('');
     }
-  }
 
   return (
     <main className="container-page py-16">
