@@ -67,6 +67,8 @@ if (error) {
 
   const filtered = useMemo(() => {
     return dbEvents.filter((event) => {
+      const today = new Date().toISOString().split('T')[0];
+      if (!date && event.date < today) return false;
       if (date && event.date !== date) return false;
       if (type !== 'Todos' && event.type !== type) return false;
       if (music !== 'Todas' && !event.music.includes(music as never)) return false;
