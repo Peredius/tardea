@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+
 
 function generateSlug(title: string, date: string) {
   const cleanTitle = title
@@ -278,20 +280,50 @@ export default function AdminPage() {
           <p className="text-slate-400">No hay eventos pendientes</p>
         )}
 
-        {pendingEvents.map((event) => (
-          <div key={event.id} className="mb-3 flex items-center justify-between rounded-xl bg-yellow-900/30 p-4">
-            <div>
-              <p className="font-semibold">{event.title}</p>
-              <p className="text-sm text-slate-400">
-                {new Date(event.date).toLocaleDateString('es-ES')}
-              </p>
-            </div>
+     {pendingEvents.map((event) => (
+  <div key={event.id} className="mb-3 flex items-center justify-between rounded-xl bg-yellow-900/30 p-4">
+    <div>
+      <p className="font-semibold">{event.title}</p>
+      <p className="text-sm text-slate-400">
+        {new Date(event.date).toLocaleDateString('es-ES')}
+      </p>
+    </div>
 
-            <button className="btn-primary" onClick={() => approveEvent(event.id)}>
-              Aprobar
-            </button>
-          </div>
-        ))}
+    <div className="flex gap-3">
+      <Link href={`/eventos/${event.slug}`} className="btn-secondary">
+        Vista previa
+      </Link>
+
+      <button
+        className="text-sm text-brand-500"
+        onClick={() => {
+          const cleanCover = event.cover?.startsWith('blob:') ? '' : event.cover;
+
+          setEditingEvent({ ...event, cover: cleanCover });
+          setTitle(event.title || '');
+          setVenue(event.venue || '');
+          setArea(event.area || '');
+          setDate(event.date || '');
+          setStartTime(event.start_time || '17:00');
+          setEndTime(event.end_time || '23:00');
+          setType(event.type || '');
+          setMusic(event.music?.[0] || '');
+          setPriceFrom(event.price_from?.toString() || '');
+          setPreviewUrl(cleanCover || '');
+          setCover(null);
+          setDescription(event.description || '');
+          setPerks(event.perks?.join(', ') || '');
+        }}
+      >
+        Editar
+      </button>
+
+      <button className="btn-primary" onClick={() => approveEvent(event.id)}>
+        Aprobar
+      </button>
+    </div>
+  </div>
+))}
       </div>
     </main>
   );
