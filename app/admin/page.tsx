@@ -88,6 +88,7 @@ export default function AdminPage() {
       featured: false,
       description,
       perks: perks ? perks.split(',').map((p) => p.trim()) : [],
+      status: 'approved',
       published: true
     };
 
