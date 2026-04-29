@@ -125,7 +125,12 @@ if (error) {
 
   return (
           <article key={event.slug} className="card overflow-hidden">
-            <div className="h-56 bg-cover bg-center" style={{ backgroundImage: `url(${event.cover})` }} />
+          {!isPastEvent && (
+  <div
+    className="h-56 bg-cover bg-center"
+    style={{ backgroundImage: `url(${event.cover})` }}
+  />
+)}
             <div className="p-6">
               <div className="mb-3 flex flex-wrap gap-2">
                 <span className="badge">{event.type}</span>
@@ -143,8 +148,9 @@ if (error) {
                 <a href="#newsletter" className="btn-secondary">Recibir planes</a>
               </div>
             </div>
-          </article>
-        ))}
+        </article>
+  );
+})}
       </div>
     </section>
   );
