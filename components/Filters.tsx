@@ -179,12 +179,17 @@ export function Filters() {
                   {event.music.map((item) => <span key={item} className="badge">{item}</span>)}
                 </div>
 
-                {!isPastEvent && (
-                  <div className="mt-6 flex gap-3">
-                    <Link href={`/eventos/${event.slug}`} className="btn-primary">Ver evento</Link>
-                    <a href="#newsletter" className="btn-secondary">Recibir planes</a>
-                  </div>
-                )}
+  <div className="mt-6 flex gap-3">
+  <Link href={`/eventos/${event.slug}`} className="btn-primary">
+    Ver evento
+  </Link>
+
+  {!isPastEvent && (
+    <a href="#newsletter" className="btn-secondary">
+      Recibir planes
+    </a>
+  )}
+</div>
               </div>
             </article>
           );
