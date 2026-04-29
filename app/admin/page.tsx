@@ -241,6 +241,9 @@ export default function AdminPage() {
           <div key={event.id} className="mb-3 flex justify-between rounded-xl bg-slate-800 p-4">
             <div>
               <p>{event.title}</p>
+              <span className="mt-2 inline-block rounded-full bg-emerald-500/20 px-3 py-1 text-xs text-emerald-300">
+  Publicado
+</span>
               <p className="text-sm text-slate-400">
                 {new Date(event.date).toLocaleDateString('es-ES')}
               </p>
@@ -284,6 +287,9 @@ export default function AdminPage() {
   <div key={event.id} className="mb-3 flex items-center justify-between rounded-xl bg-yellow-900/30 p-4">
     <div>
       <p className="font-semibold">{event.title}</p>
+      <span className="mt-2 inline-block rounded-full bg-yellow-500/20 px-3 py-1 text-xs text-yellow-300">
+  Pendiente
+</span>
       <p className="text-sm text-slate-400">
         {new Date(event.date).toLocaleDateString('es-ES')}
       </p>
