@@ -266,47 +266,79 @@ if (error) {
       </button>
     </div>
   ))}
+{/* EVENTOS CREADOS */}
+<div className="mt-12">
+  <h2 className="mb-4 text-2xl font-bold">Eventos creados</h2>
+
+  {events.map((event) => (
+    <div
+      key={event.id}
+      className="mb-3 flex justify-between rounded-xl bg-slate-800 p-4"
+    >
+      <div>
+        <p>{event.title}</p>
+        <p className="text-sm text-slate-400">
+          {new Date(event.date).toLocaleDateString('es-ES')}
+        </p>
+      </div>
+
+      <button
+        className="text-sm text-brand-500"
+        onClick={() => {
+          const cleanCover = event.cover?.startsWith('blob:') ? '' : event.cover;
+
+          setEditingEvent({
+            ...event,
+            cover: cleanCover
+          });
+
+          setTitle(event.title || '');
+          setVenue(event.venue || '');
+          setArea(event.area || '');
+          setDate(event.date || '');
+          setStartTime(event.start_time || '17:00');
+          setEndTime(event.end_time || '23:00');
+          setType(event.type || '');
+          setMusic(event.music?.[0] || '');
+          setPriceFrom(event.price_from?.toString() || '');
+          setPreviewUrl(cleanCover || '');
+          setCover(null);
+          setDescription(event.description || '');
+          setPerks(event.perks?.join(', ') || '');
+        }}
+      >
+        Editar
+      </button>
+    </div>
+  ))}
 </div>
 
-        {events.map((event) => (
-          <div key={event.id} className="mb-3 flex justify-between rounded-xl bg-slate-800 p-4">
-            <div>
-              <p>{event.title}</p>
-              <p className="text-sm text-slate-400">
-                {new Date(event.date).toLocaleDateString('es-ES')}
-              </p>
-            </div>
+{/* EVENTOS PENDIENTES */}
+<div className="mt-12">
+  <h2 className="mb-4 text-2xl font-bold">Eventos pendientes</h2>
 
-            <button
-              className="text-sm text-brand-500"
-              onClick={() => {
-                const cleanCover = event.cover?.startsWith('blob:') ? '' : event.cover;
+  {pendingEvents.length === 0 && (
+    <p className="text-slate-400">No hay eventos pendientes</p>
+  )}
 
-                setEditingEvent({
-                  ...event,
-                  cover: cleanCover
-                });
-
-                setTitle(event.title || '');
-                setVenue(event.venue || '');
-                setArea(event.area || '');
-                setDate(event.date || '');
-                setStartTime(event.start_time || '17:00');
-                setEndTime(event.end_time || '23:00');
-                setType(event.type || '');
-                setMusic(event.music?.[0] || '');
-                setPriceFrom(event.price_from?.toString() || '');
-                setPreviewUrl(cleanCover || '');
-                setCover(null);
-                setDescription(event.description || '');
-                setPerks(event.perks?.join(', ') || '');
-              }}
-            >
-              Editar
-            </button>
-          </div>
-        ))}
+  {pendingEvents.map((event) => (
+    <div
+      key={event.id}
+      className="mb-3 flex items-center justify-between rounded-xl bg-yellow-900/30 p-4"
+    >
+      <div>
+        <p className="font-semibold">{event.title}</p>
+        <p className="text-sm text-slate-400">
+          {new Date(event.date).toLocaleDateString('es-ES')}
+        </p>
       </div>
-    </main>
-  );
-}
+
+      <button
+        className="btn-primary"
+        onClick={() => approveEvent(event.id)}
+      >
+        Aprobar
+      </button>
+    </div>
+  ))}
+</div>
