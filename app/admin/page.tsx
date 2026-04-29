@@ -38,7 +38,23 @@ export default function AdminPage() {
   useEffect(() => {
     fetchEvents();
   }, []);
+async function approveEvent(eventId: string) {
+  const { error } = await supabase
+    .from('events')
+    .update({
+      status: 'approved',
+      published: true
+    })
+    .eq('id', eventId);
 
+  if (error) {
+    console.error(error);
+    setMessage('Error al aprobar evento');
+  } else {
+    setMessage('Evento aprobado correctamente');
+    fetchEvents();
+  }
+}
   async function fetchEvents() {
     // Eventos aprobados
 const { data, error } = await supabase
