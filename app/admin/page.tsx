@@ -38,44 +38,43 @@ export default function AdminPage() {
   useEffect(() => {
     fetchEvents();
   }, []);
-async function approveEvent(eventId: string) {
-  const { error } = await supabase
-    .from('events')
-    .update({
-      status: 'approved',
-      published: true
-    })
-    .eq('id', eventId);
 
-  if (error) {
-    console.error(error);
-    setMessage('Error al aprobar evento');
-  } else {
-    setMessage('Evento aprobado correctamente');
-    fetchEvents();
-  }
-}
   async function fetchEvents() {
-    // Eventos aprobados
-const { data, error } = await supabase
-  .from('events')
-  .select('*')
-  .eq('status', 'approved')
-  .order('date', { ascending: true });
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('status', 'approved')
+      .order('date', { ascending: true });
 
-// Eventos pendientes
-const { data: pendingData } = await supabase
-  .from('events')
-  .select('*')
-  .eq('status', 'pending')
-  .order('date', { ascending: true });
+    const { data: pendingData, error: pendingError } = await supabase
+      .from('events')
+      .select('*')
+      .eq('status', 'pending')
+      .order('date', { ascending: true });
 
-if (error) {
-  console.error(error);
-} else {
-  setEvents(data || []);
-  setPendingEvents(pendingData || []);
-}
+    if (error || pendingError) {
+      console.error(error || pendingError);
+      return;
+    }
+
+    setEvents(data || []);
+    setPendingEvents(pendingData || []);
+  }
+
+  async function approveEvent(eventId: string) {
+    const { error } = await supabase
+      .from('events')
+      .update({ status: 'approved', published: true })
+      .eq('id', eventId);
+
+    if (error) {
+      setMessage('Error al aprobar evento');
+      console.error(error);
+    } else {
+      setMessage('Evento aprobado correctamente');
+      fetchEvents();
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -85,12 +84,9 @@ if (error) {
     if (cover) {
       const fileName = `${Date.now()}-${cover.name}`;
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('events')
         .upload(fileName, cover);
-
-      console.log('UPLOAD DATA:', uploadData);
-      console.log('UPLOAD ERROR:', uploadError);
 
       if (uploadError) {
         setMessage(`Error subiendo imagen: ${uploadError.message}`);
@@ -141,30 +137,32 @@ if (error) {
 
     if (error) {
       setMessage('Error al guardar evento');
-    } else {
-      setMessage(editingEvent ? 'Evento actualizado correctamente' : 'Evento creado correctamente');
-      setEditingEvent(null);
-      fetchEvents();
+      console.error(error);
+      return;
+    }
 
-      setTitle('');
-      setVenue('');
-      setArea('');
-      setCustomArea('');
-      setDate('');
-      setType('');
-      setAddress('');
-      setStartTime('17:00');
-      setEndTime('23:00');
-      setPriceFrom('');
-      setMusic('');
-      setCover(null);
-      setPreviewUrl('');
-      setDescription('');
-      setPerks('');
-}
-}
+    setMessage(editingEvent ? 'Evento actualizado correctamente' : 'Evento creado correctamente');
+    setEditingEvent(null);
+    fetchEvents();
 
-    return (
+    setTitle('');
+    setVenue('');
+    setArea('');
+    setCustomArea('');
+    setDate('');
+    setType('');
+    setAddress('');
+    setStartTime('17:00');
+    setEndTime('23:00');
+    setPriceFrom('');
+    setMusic('');
+    setCover(null);
+    setPreviewUrl('');
+    setDescription('');
+    setPerks('');
+  }
+
+  return (
     <main className="container-page py-16">
       <h1 className="text-4xl font-bold">Panel admin TARDEA</h1>
       <p className="mt-3 text-slate-400">Crear y editar eventos</p>
@@ -203,14 +201,12 @@ if (error) {
         )}
 
         <input type="date" className="input" value={date} onChange={(e) => setDate(e.target.value)} />
-
         <input type="time" className="input" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
         <input type="time" className="input" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
 
         <input className="input" placeholder="Precio (€)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
         <input className="input" placeholder="Lugar" value={venue} onChange={(e) => setVenue(e.target.value)} />
         <input className="input" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} />
-
         <textarea className="input" placeholder="Descripción" value={description} onChange={(e) => setDescription(e.target.value)} />
         <input className="input" placeholder="Extras" value={perks} onChange={(e) => setPerks(e.target.value)} />
 
@@ -239,106 +235,64 @@ if (error) {
       <div className="mt-12">
         <h2 className="mb-4 text-2xl font-bold">Eventos creados</h2>
 
-        <div className="mt-12">
-  <h2 className="mb-4 text-2xl font-bold">Eventos pendientes</h2>
+        {events.map((event) => (
+          <div key={event.id} className="mb-3 flex justify-between rounded-xl bg-slate-800 p-4">
+            <div>
+              <p>{event.title}</p>
+              <p className="text-sm text-slate-400">
+                {new Date(event.date).toLocaleDateString('es-ES')}
+              </p>
+            </div>
 
-  {pendingEvents.length === 0 && (
-    <p className="text-slate-400">No hay eventos pendientes</p>
-  )}
+            <button
+              className="text-sm text-brand-500"
+              onClick={() => {
+                const cleanCover = event.cover?.startsWith('blob:') ? '' : event.cover;
 
-  {pendingEvents.map((event) => (
-    <div
-      key={event.id}
-      className="mb-3 flex items-center justify-between rounded-xl bg-yellow-900/30 p-4"
-    >
-      <div>
-        <p className="font-semibold">{event.title}</p>
-        <p className="text-sm text-slate-400">
-          {new Date(event.date).toLocaleDateString('es-ES')}
-        </p>
+                setEditingEvent({ ...event, cover: cleanCover });
+                setTitle(event.title || '');
+                setVenue(event.venue || '');
+                setArea(event.area || '');
+                setDate(event.date || '');
+                setStartTime(event.start_time || '17:00');
+                setEndTime(event.end_time || '23:00');
+                setType(event.type || '');
+                setMusic(event.music?.[0] || '');
+                setPriceFrom(event.price_from?.toString() || '');
+                setPreviewUrl(cleanCover || '');
+                setCover(null);
+                setDescription(event.description || '');
+                setPerks(event.perks?.join(', ') || '');
+              }}
+            >
+              Editar
+            </button>
+          </div>
+        ))}
       </div>
 
-      <button
-        className="btn-primary"
-        onClick={() => approveEvent(event.id)}
-      >
-        Aprobar
-      </button>
-    </div>
-  ))}
-{/* EVENTOS CREADOS */}
-<div className="mt-12">
-  <h2 className="mb-4 text-2xl font-bold">Eventos creados</h2>
+      <div className="mt-12">
+        <h2 className="mb-4 text-2xl font-bold">Eventos pendientes</h2>
 
-  {events.map((event) => (
-    <div
-      key={event.id}
-      className="mb-3 flex justify-between rounded-xl bg-slate-800 p-4"
-    >
-      <div>
-        <p>{event.title}</p>
-        <p className="text-sm text-slate-400">
-          {new Date(event.date).toLocaleDateString('es-ES')}
-        </p>
+        {pendingEvents.length === 0 && (
+          <p className="text-slate-400">No hay eventos pendientes</p>
+        )}
+
+        {pendingEvents.map((event) => (
+          <div key={event.id} className="mb-3 flex items-center justify-between rounded-xl bg-yellow-900/30 p-4">
+            <div>
+              <p className="font-semibold">{event.title}</p>
+              <p className="text-sm text-slate-400">
+                {new Date(event.date).toLocaleDateString('es-ES')}
+              </p>
+            </div>
+
+            <button className="btn-primary" onClick={() => approveEvent(event.id)}>
+              Aprobar
+            </button>
+          </div>
+        ))}
       </div>
-
-      <button
-        className="text-sm text-brand-500"
-        onClick={() => {
-          const cleanCover = event.cover?.startsWith('blob:') ? '' : event.cover;
-
-          setEditingEvent({
-            ...event,
-            cover: cleanCover
-          });
-
-          setTitle(event.title || '');
-          setVenue(event.venue || '');
-          setArea(event.area || '');
-          setDate(event.date || '');
-          setStartTime(event.start_time || '17:00');
-          setEndTime(event.end_time || '23:00');
-          setType(event.type || '');
-          setMusic(event.music?.[0] || '');
-          setPriceFrom(event.price_from?.toString() || '');
-          setPreviewUrl(cleanCover || '');
-          setCover(null);
-          setDescription(event.description || '');
-          setPerks(event.perks?.join(', ') || '');
-        }}
-      >
-        Editar
-      </button>
-    </div>
-  ))}
-</div>
-
-{/* EVENTOS PENDIENTES */}
-<div className="mt-12">
-  <h2 className="mb-4 text-2xl font-bold">Eventos pendientes</h2>
-
-  {pendingEvents.length === 0 && (
-    <p className="text-slate-400">No hay eventos pendientes</p>
-  )}
-
-  {pendingEvents.map((event) => (
-    <div
-      key={event.id}
-      className="mb-3 flex items-center justify-between rounded-xl bg-yellow-900/30 p-4"
-    >
-      <div>
-        <p className="font-semibold">{event.title}</p>
-        <p className="text-sm text-slate-400">
-          {new Date(event.date).toLocaleDateString('es-ES')}
-        </p>
-      </div>
-
-      <button
-        className="btn-primary"
-        onClick={() => approveEvent(event.id)}
-      >
-        Aprobar
-      </button>
-    </div>
-  ))}
-</div>
+    </main>
+  );
+}
