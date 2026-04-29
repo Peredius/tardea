@@ -30,6 +30,7 @@ export function Filters() {
         .from('events')
         .select('*')
         .eq('published', true)
+        .eq('status', 'approved')
         .order('date', { ascending: true });
 
       if (error) {
