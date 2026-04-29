@@ -40,13 +40,26 @@ export default function AdminPage() {
   }, []);
 
   async function fetchEvents() {
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .order('date', { ascending: true });
+    // Eventos aprobados
+const { data, error } = await supabase
+  .from('events')
+  .select('*')
+  .eq('status', 'approved')
+  .order('date', { ascending: true });
 
-    if (!error) setEvents(data || []);
-  }
+// Eventos pendientes
+const { data: pendingData } = await supabase
+  .from('events')
+  .select('*')
+  .eq('status', 'pending')
+  .order('date', { ascending: true });
+
+if (error) {
+  console.error(error);
+} else {
+  setEvents(data || []);
+  setPendingEvents(pendingData || []);
+}
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
