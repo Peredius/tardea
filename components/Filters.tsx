@@ -120,11 +120,7 @@ if (error) {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
         {filtered.map((event) => {
-  const today = new Date().toISOString().split('T')[0];
-  const isPastEvent = event.date < today;
-
-  return (
-          <article key={event.slug} className="card overflow-hidden">
+            <article key={event.slug} className="card overflow-hidden">
           {!isPastEvent && (
   <div
     className="h-56 bg-cover bg-center"
