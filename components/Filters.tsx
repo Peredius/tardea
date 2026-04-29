@@ -119,7 +119,11 @@ if (error) {
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
-        {filtered.map((event) => (
+        {filtered.map((event) => {
+  const today = new Date().toISOString().split('T')[0];
+  const isPastEvent = event.date < today;
+
+  return (
           <article key={event.slug} className="card overflow-hidden">
             <div className="h-56 bg-cover bg-center" style={{ backgroundImage: `url(${event.cover})` }} />
             <div className="p-6">
