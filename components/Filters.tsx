@@ -23,51 +23,50 @@ export function Filters() {
   const [price, setPrice] = useState('Todos');
   const [area, setArea] = useState('Todas');
   const [dbEvents, setDbEvents] = useState(events);
+
   useEffect(() => {
-  const fetchEvents = async () => {
-   const { data, error } = await supabase
-  .from('events')
-  .select('*')
-  .eq('published', true)
-  .order('date', { ascending: true });
-    
-console.log('SUPABASE DATA:', data);
-console.log('SUPABASE ERROR:', error);
-    
-if (error) {
-  console.error(error);
-} else {
-  const mappedEvents = data.map((event) => ({
-    slug: event.slug,
-    title: event.title,
-    venue: event.venue,
-    area: event.area,
-    address: event.address,
-    date: event.date,
-    startTime: event.start_time,
-    endTime: event.end_time,
-    type: event.type,
-    music: event.music || [],
-    audience: event.audience,
-    priceFrom: event.price_from,
-    cover: event.cover,
-    featured: event.featured,
-    description: event.description,
-    perks: event.perks || []
-  }));
+    const fetchEvents = async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('published', true)
+        .order('date', { ascending: true });
 
-  setDbEvents(mappedEvents);
-}
-  };
+      if (error) {
+        console.error(error);
+      } else {
+        const mappedEvents = data.map((event) => ({
+          slug: event.slug,
+          title: event.title,
+          venue: event.venue,
+          area: event.area,
+          address: event.address,
+          date: event.date,
+          startTime: event.start_time,
+          endTime: event.end_time,
+          type: event.type,
+          music: event.music || [],
+          audience: event.audience,
+          priceFrom: event.price_from,
+          cover: event.cover,
+          featured: event.featured,
+          description: event.description,
+          perks: event.perks || []
+        }));
 
-  fetchEvents();
-}, []);
+        setDbEvents(mappedEvents);
+      }
+    };
+
+    fetchEvents();
+  }, []);
 
   const areas = useMemo(() => ['Todas', ...new Set(dbEvents.map((event) => event.area))], [dbEvents]);
 
   const filtered = useMemo(() => {
     return dbEvents.filter((event) => {
       const today = new Date().toISOString().split('T')[0];
+
       if (!date && event.date < today) return false;
       if (date && event.date !== date) return false;
       if (type !== 'Todos' && event.type !== type) return false;
@@ -75,9 +74,10 @@ if (error) {
       if (audience !== 'Todas' && event.audience !== audience) return false;
       if (!matchesPrice(price, event.priceFrom)) return false;
       if (area !== 'Todas' && event.area !== area) return false;
+
       return true;
     });
- }, [area, audience, date, music, price, type, dbEvents]);
+  }, [area, audience, date, music, price, type, dbEvents]);
 
   return (
     <section id="explorar" className="container-page py-16">
@@ -92,61 +92,103 @@ if (error) {
       <div className="card p-5">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
           <label className="block w-full space-y-2 text-sm">
-            <span className="inline-flex items-center gap-2 text-slate-300"><CalendarDays className="h-4 w-4" /> Fecha</span>
+            <span className="inline-flex items-center gap-2 text-slate-300">
+              <CalendarDays className="h-4 w-4" /> Fecha
+            </span>
             <input className="input w-full min-w-0" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </label>
+
           <label className="space-y-2 text-sm">
-            <span className="inline-flex items-center gap-2 text-slate-300"><Clock3 className="h-4 w-4" /> Tipo</span>
-            <select className="select" value={type} onChange={(e) => setType(e.target.value)}>{eventTypes.map((option) => <option key={option}>{option}</option>)}</select>
+            <span className="inline-flex items-center gap-2 text-slate-300">
+              <Clock3 className="h-4 w-4" /> Tipo
+            </span>
+            <select className="select" value={type} onChange={(e) => setType(e.target.value)}>
+              {eventTypes.map((option) => <option key={option}>{option}</option>)}
+            </select>
           </label>
+
           <label className="space-y-2 text-sm">
-            <span className="inline-flex items-center gap-2 text-slate-300"><Music4 className="h-4 w-4" /> Música</span>
-            <select className="select" value={music} onChange={(e) => setMusic(e.target.value)}>{musicTypes.map((option) => <option key={option}>{option}</option>)}</select>
+            <span className="inline-flex items-center gap-2 text-slate-300">
+              <Music4 className="h-4 w-4" /> Música
+            </span>
+            <select className="select" value={music} onChange={(e) => setMusic(e.target.value)}>
+              {musicTypes.map((option) => <option key={option}>{option}</option>)}
+            </select>
           </label>
+
           <label className="space-y-2 text-sm">
-            <span className="inline-flex items-center gap-2 text-slate-300"><Users className="h-4 w-4" /> Edad</span>
-            <select className="select" value={audience} onChange={(e) => setAudience(e.target.value)}>{audienceTypes.map((option) => <option key={option}>{option}</option>)}</select>
+            <span className="inline-flex items-center gap-2 text-slate-300">
+              <Users className="h-4 w-4" /> Edad
+            </span>
+            <select className="select" value={audience} onChange={(e) => setAudience(e.target.value)}>
+              {audienceTypes.map((option) => <option key={option}>{option}</option>)}
+            </select>
           </label>
+
           <label className="space-y-2 text-sm">
-            <span className="inline-flex items-center gap-2 text-slate-300"><Euro className="h-4 w-4" /> Precio</span>
-            <select className="select" value={price} onChange={(e) => setPrice(e.target.value)}>{priceRanges.map((option) => <option key={option}>{option}</option>)}</select>
+            <span className="inline-flex items-center gap-2 text-slate-300">
+              <Euro className="h-4 w-4" /> Precio
+            </span>
+            <select className="select" value={price} onChange={(e) => setPrice(e.target.value)}>
+              {priceRanges.map((option) => <option key={option}>{option}</option>)}
+            </select>
           </label>
+
           <label className="space-y-2 text-sm">
-            <span className="inline-flex items-center gap-2 text-slate-300"><MapPin className="h-4 w-4" /> Zona</span>
-            <select className="select" value={area} onChange={(e) => setArea(e.target.value)}>{areas.map((option) => <option key={option}>{option}</option>)}</select>
+            <span className="inline-flex items-center gap-2 text-slate-300">
+              <MapPin className="h-4 w-4" /> Zona
+            </span>
+            <select className="select" value={area} onChange={(e) => setArea(e.target.value)}>
+              {areas.map((option) => <option key={option}>{option}</option>)}
+            </select>
           </label>
         </div>
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
         {filtered.map((event) => {
+          const today = new Date().toISOString().split('T')[0];
+          const isPastEvent = event.date < today;
+
+          return (
             <article key={event.slug} className="card overflow-hidden">
-          {!isPastEvent && (
-  <div
-    className="h-56 bg-cover bg-center"
-    style={{ backgroundImage: `url(${event.cover})` }}
-  />
-)}
-            <div className="p-6">
-              <div className="mb-3 flex flex-wrap gap-2">
-                <span className="badge">{event.type}</span>
-                <span className="badge">{event.area}</span>
-                <span className="badge">Desde {event.priceFrom === 0 ? 'gratis' : `${event.priceFrom}€`}</span>
+              {!isPastEvent && event.cover && (
+                <div
+                  className="h-56 bg-cover bg-center"
+                  style={{ backgroundImage: `url(${event.cover})` }}
+                />
+              )}
+
+              <div className="p-6">
+                <div className="mb-3 flex flex-wrap gap-2">
+                  <span className="badge">{event.type}</span>
+                  <span className="badge">{event.area}</span>
+                  <span className="badge">Desde {event.priceFrom === 0 ? 'gratis' : `${event.priceFrom}€`}</span>
+                  {isPastEvent && <span className="badge">Evento pasado</span>}
+                </div>
+
+                <h3 className="text-2xl font-semibold text-white">{event.title}</h3>
+
+                <p className="mt-2 text-sm text-slate-300">
+                  {event.venue} · {new Date(event.date).toLocaleDateString('es-ES')} · {event.startTime?.slice(0, 5)} - {event.endTime?.slice(0, 5)}
+                </p>
+
+                <p className="mt-4 line-clamp-3 text-sm text-slate-400">{event.description}</p>
+
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {event.music.map((item) => <span key={item} className="badge">{item}</span>)}
+                </div>
+
+                {!isPastEvent && (
+                  <div className="mt-6 flex gap-3">
+                    <Link href={`/eventos/${event.slug}`} className="btn-primary">Ver evento</Link>
+                    <a href="#newsletter" className="btn-secondary">Recibir planes</a>
+                  </div>
+                )}
               </div>
-              <h3 className="text-2xl font-semibold text-white">{event.title}</h3>
-              {event.venue} · {new Date(event.date).toLocaleDateString('es-ES')} · {event.startTime?.slice(0, 5)} - {event.endTime?.slice(0, 5)}
-              <p className="mt-4 line-clamp-3 text-sm text-slate-400">{event.description}</p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                {event.music.map((item) => <span key={item} className="badge">{item}</span>)}
-              </div>
-              <div className="mt-6 flex gap-3">
-                <Link href={`/eventos/${event.slug}`} className="btn-primary">Ver evento</Link>
-                <a href="#newsletter" className="btn-secondary">Recibir planes</a>
-              </div>
-            </div>
-        </article>
-  );
-})}
+            </article>
+          );
+        })}
       </div>
     </section>
   );
