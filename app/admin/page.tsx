@@ -32,6 +32,7 @@ export default function AdminPage() {
   const [description, setDescription] = useState('');
   const [perks, setPerks] = useState('');
   const [events, setEvents] = useState<any[]>([]);
+  const [pendingEvents, setPendingEvents] = useState<any[]>([]);
   const [editingEvent, setEditingEvent] = useState<any | null>(null);
 
   useEffect(() => {
