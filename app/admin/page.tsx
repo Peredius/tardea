@@ -161,9 +161,10 @@ if (error) {
       setPreviewUrl('');
       setDescription('');
       setPerks('');
-    }
+}
+}
 
-  return (
+    return (
     <main className="container-page py-16">
       <h1 className="text-4xl font-bold">Panel admin TARDEA</h1>
       <p className="mt-3 text-slate-400">Crear y editar eventos</p>
