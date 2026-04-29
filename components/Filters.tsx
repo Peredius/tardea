@@ -179,7 +179,7 @@ export function Filters() {
                   {event.music.map((item) => <span key={item} className="badge">{item}</span>)}
                 </div>
 
-  <div className="mt-6 flex gap-3">
+  <div className="mt-auto flex gap-3 pt-6">
   <Link href={`/eventos/${event.slug}`} className="btn-primary">
     Ver evento
   </Link>
