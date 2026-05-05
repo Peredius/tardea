@@ -192,6 +192,16 @@ export default function DashboardPage() {
             Panel de sala
           </h1>
 
+          <button
+  onClick={async () => {
+    await supabase.auth.signOut()
+    window.location.href = '/login'
+  }}
+  className="btn-secondary mt-4"
+>
+  Cerrar sesión
+</button>
+
           <p className="mt-3 max-w-2xl text-slate-400">
             Crea eventos, revisa su estado y gestiona tus propuestas.
           </p>
