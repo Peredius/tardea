@@ -9,6 +9,9 @@ export function Hero() {
           <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-white md:text-6xl">
             Descubre los mejores planes de tarde en Madrid.
           </h1>
+          <a href="#eventos" className="btn-primary mt-8 inline-flex">
+  Buscar evento
+</a>
           <p className="mt-6 max-w-2xl text-lg text-slate-300">
             Una plataforma pensada para descubrir rooftops, afterworks, brunches y eventos de tarde con filtros útiles, diseño cuidado y fichas listas para reservar.
           </p>
