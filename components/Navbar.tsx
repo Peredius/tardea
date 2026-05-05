@@ -22,6 +22,22 @@ export function Navbar() {
           <a href="#newsletter" className="hover:text-white">Newsletter</a>
         </nav>
 
+        <div className="flex items-center gap-3">
+  <a
+    href="/login?type=user"
+    className="text-sm text-slate-300 hover:text-white transition"
+  >
+    Usuario
+  </a>
+
+  <a
+    href="/login?type=venue"
+    className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600 transition"
+  >
+    Promotor
+  </a>
+</div>
+        
         <a href="#explorar" className="btn-secondary hidden md:inline-flex">
           Ver eventos
         </a>
