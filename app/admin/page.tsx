@@ -1,9 +1,8 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
-
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
 
 function generateSlug(title: string, date: string) {
   const cleanTitle = title
@@ -11,116 +10,118 @@ function generateSlug(title: string, date: string) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/^-+|-+$/g, '')
 
-  return date ? `${cleanTitle}-${date}` : cleanTitle;
+  return date ? `${cleanTitle}-${date}` : cleanTitle
 }
 
 export default function AdminPage() {
-  const [title, setTitle] = useState('');
-  const [venue, setVenue] = useState('');
-  const [area, setArea] = useState('');
-  const [customArea, setCustomArea] = useState('');
-  const [date, setDate] = useState('');
-  const [type, setType] = useState('');
-  const [address, setAddress] = useState('');
-  const [mapsUrl, setMapsUrl] = useState('');
-  const [startTime, setStartTime] = useState('17:00');
-  const [endTime, setEndTime] = useState('23:00');
-  const [priceFrom, setPriceFrom] = useState('');
-  const [music, setMusic] = useState('');
-  const [cover, setCover] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState('');
-  const [message, setMessage] = useState('');
-  const [description, setDescription] = useState('');
-  const [perks, setPerks] = useState('');
-  const [events, setEvents] = useState<any[]>([]);
-  const [pendingEvents, setPendingEvents] = useState<any[]>([]);
-  const [editingEvent, setEditingEvent] = useState<any | null>(null);
+  const [title, setTitle] = useState('')
+  const [venue, setVenue] = useState('')
+  const [area, setArea] = useState('')
+  const [customArea, setCustomArea] = useState('')
+  const [date, setDate] = useState('')
+  const [type, setType] = useState('')
+  const [address, setAddress] = useState('')
+  const [mapsUrl, setMapsUrl] = useState('')
+  const [startTime, setStartTime] = useState('17:00')
+  const [endTime, setEndTime] = useState('23:00')
+  const [priceFrom, setPriceFrom] = useState('')
+  const [music, setMusic] = useState('')
+  const [cover, setCover] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState('')
+  const [message, setMessage] = useState('')
+  const [description, setDescription] = useState('')
+  const [perks, setPerks] = useState('')
+  const [events, setEvents] = useState<any[]>([])
+  const [pendingEvents, setPendingEvents] = useState<any[]>([])
+  const [editingEvent, setEditingEvent] = useState<any | null>(null)
 
   useEffect(() => {
-  async function checkAdmin() {
-    const { data: { user } } = await supabase.auth.getUser();
+    async function checkAdmin() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-    if (!user) {
-      window.location.href = '/login';
-      return;
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (!profile || profile.role !== 'admin') {
+        window.location.href = '/dashboard'
+        return
+      }
+
+      fetchEvents()
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile || profile.role !== 'admin') {
-      window.location.href = '/dashboard';
-      return;
-    }
-
-    // SOLO si es admin → cargar eventos
-    fetchEvents();
-  }
-
-  checkAdmin();
-}, []);
+    checkAdmin()
+  }, [])
 
   async function fetchEvents() {
     const { data, error } = await supabase
       .from('events')
       .select('*')
       .eq('status', 'approved')
-      .order('date', { ascending: true });
+      .order('date', { ascending: true })
 
     const { data: pendingData, error: pendingError } = await supabase
       .from('events')
       .select('*')
       .eq('status', 'pending')
-      .order('date', { ascending: true });
+      .order('date', { ascending: true })
 
     if (error || pendingError) {
-      console.error(error || pendingError);
-      return;
+      console.error(error || pendingError)
+      return
     }
 
-    setEvents(data || []);
-    setPendingEvents(pendingData || []);
+    setEvents(data || [])
+    setPendingEvents(pendingData || [])
   }
 
   async function approveEvent(eventId: string) {
     const { error } = await supabase
       .from('events')
       .update({ status: 'approved', published: true })
-      .eq('id', eventId);
+      .eq('id', eventId)
 
     if (error) {
-      setMessage('Error al aprobar evento');
-      console.error(error);
-    } else {
-      setMessage('Evento aprobado correctamente');
-      fetchEvents();
+      setMessage('Error al aprobar evento')
+      console.error(error)
+      return
     }
+
+    setMessage('Evento aprobado correctamente')
+    fetchEvents()
   }
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+    e.preventDefault()
 
-    let imageUrl = editingEvent?.cover || '';
+    let imageUrl = editingEvent?.cover || ''
 
     if (cover) {
-      const fileName = `${Date.now()}-${cover.name}`;
+      const fileName = `${Date.now()}-${cover.name}`
 
       const { error: uploadError } = await supabase.storage
         .from('events')
-        .upload(fileName, cover);
+        .upload(fileName, cover)
 
       if (uploadError) {
-        setMessage(`Error subiendo imagen: ${uploadError.message}`);
-        return;
+        setMessage(`Error subiendo imagen: ${uploadError.message}`)
+        return
       }
 
-      const { data } = supabase.storage.from('events').getPublicUrl(fileName);
-      imageUrl = data.publicUrl;
+      const { data } = supabase.storage.from('events').getPublicUrl(fileName)
+      imageUrl = data.publicUrl
     }
 
     const eventData = {
@@ -142,67 +143,95 @@ export default function AdminPage() {
       description,
       perks: perks ? perks.split(',').map((p) => p.trim()) : [],
       status: 'approved',
-      published: true
-    };
+      published: true,
+    }
 
-    let error;
+    let error
 
     if (editingEvent) {
       const { error: updateError } = await supabase
         .from('events')
         .update(eventData)
-        .eq('id', editingEvent.id);
+        .eq('id', editingEvent.id)
 
-      error = updateError;
+      error = updateError
     } else {
-      const { error: insertError } = await supabase
-        .from('events')
-        .insert(eventData);
-
-      error = insertError;
+      const { error: insertError } = await supabase.from('events').insert(eventData)
+      error = insertError
     }
 
     if (error) {
-      setMessage('Error al guardar evento');
-      console.error(error);
-      return;
+      setMessage('Error al guardar evento')
+      console.error(error)
+      return
     }
 
-    setMessage(editingEvent ? 'Evento actualizado correctamente' : 'Evento creado correctamente');
-    setEditingEvent(null);
-    fetchEvents();
+    setMessage(
+      editingEvent
+        ? 'Evento actualizado correctamente'
+        : 'Evento creado correctamente'
+    )
 
-    setTitle('');
-    setVenue('');
-    setArea('');
-    setCustomArea('');
-    setDate('');
-    setType('');
-    setAddress('');
-    setMapsUrl('');
-    setStartTime('17:00');
-    setEndTime('23:00');
-    setPriceFrom('');
-    setMusic('');
-    setCover(null);
-    setPreviewUrl('');
-    setDescription('');
-    setPerks('');
+    setEditingEvent(null)
+    fetchEvents()
+
+    setTitle('')
+    setVenue('')
+    setArea('')
+    setCustomArea('')
+    setDate('')
+    setType('')
+    setAddress('')
+    setMapsUrl('')
+    setStartTime('17:00')
+    setEndTime('23:00')
+    setPriceFrom('')
+    setMusic('')
+    setCover(null)
+    setPreviewUrl('')
+    setDescription('')
+    setPerks('')
+  }
+
+  function loadEventForEdit(event: any) {
+    const cleanCover = event.cover?.startsWith('blob:') ? '' : event.cover
+
+    setEditingEvent({ ...event, cover: cleanCover })
+    setTitle(event.title || '')
+    setVenue(event.venue || '')
+    setAddress(event.address || '')
+    setMapsUrl(event.maps_url || '')
+    setArea(event.area || '')
+    setDate(event.date || '')
+    setStartTime(event.start_time || '17:00')
+    setEndTime(event.end_time || '23:00')
+    setType(event.type || '')
+    setMusic(event.music?.[0] || '')
+    setPriceFrom(event.price_from?.toString() || '')
+    setPreviewUrl(cleanCover || '')
+    setCover(null)
+    setDescription(event.description || '')
+    setPerks(event.perks?.join(', ') || '')
   }
 
   return (
     <main className="container-page py-16">
-      <h1 className="text-4xl font-bold">Panel admin TARDEA</h1>
-      <button
-  onClick={async () => {
-    await supabase.auth.signOut()
-    window.location.href = '/login'
-  }}
-  className="btn-secondary mt-4"
->
-  Cerrar sesión
-</button>
-      <p className="mt-3 text-slate-400">Crear y editar eventos</p>
+      <section className="mb-10 flex items-start justify-between gap-6">
+        <div>
+          <h1 className="text-4xl font-bold">Panel admin TARDEA</h1>
+          <p className="mt-3 text-slate-400">Crear y editar eventos</p>
+        </div>
+
+        <button
+          onClick={async () => {
+            await supabase.auth.signOut()
+            window.location.href = '/login'
+          }}
+          className="shrink-0 text-sm text-slate-400 hover:text-white"
+        >
+          Cerrar sesión
+        </button>
+      </section>
 
       <form onSubmit={handleSubmit} className="card mt-8 max-w-2xl space-y-6 p-6">
         <input className="input" placeholder="Nombre del evento" value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -244,12 +273,8 @@ export default function AdminPage() {
         <input className="input" placeholder="Precio (€)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
         <input className="input" placeholder="Lugar" value={venue} onChange={(e) => setVenue(e.target.value)} />
         <input className="input" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} />
-        <input
-  className="input"
-  placeholder="Link de Google Maps"
-  value={mapsUrl}
-  onChange={(e) => setMapsUrl(e.target.value)}
-/>
+        <input className="input" placeholder="Link de Google Maps" value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} />
+
         <textarea className="input" placeholder="Descripción" value={description} onChange={(e) => setDescription(e.target.value)} />
         <input className="input" placeholder="Extras" value={perks} onChange={(e) => setPerks(e.target.value)} />
 
@@ -258,9 +283,9 @@ export default function AdminPage() {
           accept="image/*"
           className="input"
           onChange={(e) => {
-            const file = e.target.files?.[0] || null;
-            setCover(file);
-            setPreviewUrl(file ? URL.createObjectURL(file) : '');
+            const file = e.target.files?.[0] || null
+            setCover(file)
+            setPreviewUrl(file ? URL.createObjectURL(file) : '')
           }}
         />
 
@@ -282,36 +307,34 @@ export default function AdminPage() {
           <div key={event.id} className="mb-3 flex justify-between rounded-xl bg-slate-800 p-4">
             <div>
               <p>{event.title}</p>
+
               <span className="mt-2 inline-block rounded-full bg-emerald-500/20 px-3 py-1 text-xs text-emerald-300">
-  Publicado
-</span>
+                Publicado
+              </span>
+
               <p className="text-sm text-slate-400">
                 {new Date(event.date).toLocaleDateString('es-ES')}
               </p>
+
+              {event.address && (
+                <p className="mt-1 text-sm text-slate-400">{event.address}</p>
+              )}
+
+              {event.maps_url && (
+                <a
+                  href={event.maps_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-block text-sm text-brand-500"
+                >
+                  Ver en Google Maps
+                </a>
+              )}
             </div>
 
             <button
               className="text-sm text-brand-500"
-              onClick={() => {
-                const cleanCover = event.cover?.startsWith('blob:') ? '' : event.cover;
-
-                setEditingEvent({ ...event, cover: cleanCover });
-                setTitle(event.title || '');
-                setVenue(event.venue || '');
-                setAddress(event.address || '');
-                setMapsUrl(event.maps_url || '');
-                setArea(event.area || '');
-                setDate(event.date || '');
-                setStartTime(event.start_time || '17:00');
-                setEndTime(event.end_time || '23:00');
-                setType(event.type || '');
-                setMusic(event.music?.[0] || '');
-                setPriceFrom(event.price_from?.toString() || '');
-                setPreviewUrl(cleanCover || '');
-                setCover(null);
-                setDescription(event.description || '');
-                setPerks(event.perks?.join(', ') || '');
-              }}
+              onClick={() => loadEventForEdit(event)}
             >
               Editar
             </button>
@@ -326,72 +349,54 @@ export default function AdminPage() {
           <p className="text-slate-400">No hay eventos pendientes</p>
         )}
 
-     {pendingEvents.map((event) => (
-  <div key={event.id} className="mb-3 flex items-center justify-between rounded-xl bg-yellow-900/30 p-4">
-    <div>
-      <p className="font-semibold">{event.title}</p>
-      <span className="mt-2 inline-block rounded-full bg-yellow-500/20 px-3 py-1 text-xs text-yellow-300">
-  Pendiente
-</span>
-      <p className="text-sm text-slate-400">
-        {new Date(event.date).toLocaleDateString('es-ES')}
-      </p>
-      {event.address && (
-  <p className="mt-1 text-sm text-slate-400">
-    {event.address}
-  </p>
-)}
+        {pendingEvents.map((event) => (
+          <div key={event.id} className="mb-3 flex items-center justify-between rounded-xl bg-yellow-900/30 p-4">
+            <div>
+              <p className="font-semibold">{event.title}</p>
 
-{event.maps_url && (
-  <a
-    href={event.maps_url}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="mt-1 inline-block text-sm text-brand-500"
-  >
-    Ver en Google Maps
-  </a>
-)}
-    </div>
+              <span className="mt-2 inline-block rounded-full bg-yellow-500/20 px-3 py-1 text-xs text-yellow-300">
+                Pendiente
+              </span>
 
-    <div className="flex gap-3">
-      <Link href={`/eventos/${event.slug}`} className="btn-secondary">
-        Vista previa
-      </Link>
+              <p className="text-sm text-slate-400">
+                {new Date(event.date).toLocaleDateString('es-ES')}
+              </p>
 
-      <button
-        className="text-sm text-brand-500"
-        onClick={() => {
-          const cleanCover = event.cover?.startsWith('blob:') ? '' : event.cover;
+              {event.address && (
+                <p className="mt-1 text-sm text-slate-400">{event.address}</p>
+              )}
 
-          setEditingEvent({ ...event, cover: cleanCover });
-          setTitle(event.title || '');
-          setVenue(event.venue || '');
-          setAddress(event.address || '');
-          setMapsUrl(event.maps_url || '');
-          setArea(event.area || '');
-          setDate(event.date || '');
-          setStartTime(event.start_time || '17:00');
-          setEndTime(event.end_time || '23:00');
-          setType(event.type || '');
-          setMusic(event.music?.[0] || '');
-          setPriceFrom(event.price_from?.toString() || '');
-          setPreviewUrl(cleanCover || '');
-          setCover(null);
-          setDescription(event.description || '');
-          setPerks(event.perks?.join(', ') || '');
-        }}
-      >
-        Editar
-      </button>
+              {event.maps_url && (
+                <a
+                  href={event.maps_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-block text-sm text-brand-500"
+                >
+                  Ver en Google Maps
+                </a>
+              )}
+            </div>
 
-      <button className="btn-primary" onClick={() => approveEvent(event.id)}>
-        Aprobar
-      </button>
-    </div>
-  </div>
-))}
+            <div className="flex gap-3">
+              <Link href={`/eventos/${event.slug}`} className="btn-secondary">
+                Vista previa
+              </Link>
+
+              <button
+                className="text-sm text-brand-500"
+                onClick={() => loadEventForEdit(event)}
+              >
+                Editar
+              </button>
+
+              <button className="btn-primary" onClick={() => approveEvent(event.id)}>
+                Aprobar
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </main>
-  );
+  )
 }
