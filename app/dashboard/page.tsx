@@ -43,7 +43,21 @@ setEvents(events || [])
 
   return (
     <main className="min-h-screen bg-black text-white p-8">
-      <h1 className="text-3xl font-bold mb-4">Panel de sala</h1>
+      <div className="flex items-center justify-between gap-4 mb-8">
+  <div>
+    <p className="text-sm uppercase tracking-[0.3em] text-white/40">
+      Dashboard
+    </p>
+    <h1 className="text-3xl font-bold">Panel de sala</h1>
+  </div>
+
+  <a
+    href="/dashboard/new-event"
+    className="rounded-full bg-[#d7ff3f] px-5 py-3 text-sm font-bold text-black hover:opacity-90 transition"
+  >
+    + Crear evento
+  </a>
+</div>
       <a
   href="/dashboard/new-event"
   className="inline-block mt-4 bg-white text-black px-4 py-2 rounded"
