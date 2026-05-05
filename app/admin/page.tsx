@@ -193,6 +193,15 @@ export default function AdminPage() {
   return (
     <main className="container-page py-16">
       <h1 className="text-4xl font-bold">Panel admin TARDEA</h1>
+      <button
+  onClick={async () => {
+    await supabase.auth.signOut()
+    window.location.href = '/login'
+  }}
+  className="btn-secondary mt-4"
+>
+  Cerrar sesión
+</button>
       <p className="mt-3 text-slate-400">Crear y editar eventos</p>
 
       <form onSubmit={handleSubmit} className="card mt-8 max-w-2xl space-y-6 p-6">
