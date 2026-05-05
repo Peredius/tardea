@@ -24,6 +24,7 @@ export default function AdminPage() {
   const [date, setDate] = useState('');
   const [type, setType] = useState('');
   const [address, setAddress] = useState('');
+  const [mapsUrl, setMapsUrl] = useState('');
   const [startTime, setStartTime] = useState('17:00');
   const [endTime, setEndTime] = useState('23:00');
   const [priceFrom, setPriceFrom] = useState('');
@@ -105,6 +106,7 @@ export default function AdminPage() {
       venue,
       area: area === 'Otra' ? customArea : area,
       address,
+      maps_url: mapsUrl || null,
       date,
       start_time: startTime,
       end_time: endTime,
@@ -154,6 +156,7 @@ export default function AdminPage() {
     setDate('');
     setType('');
     setAddress('');
+    setMapsUrl('');
     setStartTime('17:00');
     setEndTime('23:00');
     setPriceFrom('');
@@ -209,6 +212,12 @@ export default function AdminPage() {
         <input className="input" placeholder="Precio (€)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
         <input className="input" placeholder="Lugar" value={venue} onChange={(e) => setVenue(e.target.value)} />
         <input className="input" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} />
+        <input
+  className="input"
+  placeholder="Link de Google Maps"
+  value={mapsUrl}
+  onChange={(e) => setMapsUrl(e.target.value)}
+/>
         <textarea className="input" placeholder="Descripción" value={description} onChange={(e) => setDescription(e.target.value)} />
         <input className="input" placeholder="Extras" value={perks} onChange={(e) => setPerks(e.target.value)} />
 
