@@ -16,231 +16,126 @@ export default function NewEventPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
-  const [form, setForm] = useState({
-    title: '',
-    venue: '',
-    area: '',
-    address: '',
-    date: '',
-    start_time: '',
-    end_time: '',
-    type: '',
-    audience: '',
-    price_from: '',
-    cover: '',
-    description: '',
-    music: '',
-    perks: '',
-  })
-
-  function updateField(field: string, value: string) {
-    setForm((prev) => ({ ...prev, [field]: value }))
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    setMessage('')
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      window.location.href = '/login'
-      return
-    }
-
-    const slug = `${slugify(form.title)}-${Date.now()}`
-
-    const { error } = await supabase.from('events').insert({
-      title: form.title,
-      slug,
-      venue: form.venue,
-      area: form.area,
-      address: form.address,
-      date: form.date,
-      start_time: form.start_time,
-      end_time: form.end_time,
-      type: form.type,
-      audience: form.audience,
-      price_from: Number(form.price_from || 0),
-      cover: form.cover,
-      description: form.description,
-      music: form.music
-        .split(',')
-        .map((item) => item.trim())
-        .filter(Boolean),
-      perks: form.perks
-        .split(',')
-        .map((item) => item.trim())
-        .filter(Boolean),
-      status: 'pending',
-      user_id: user.id,
-    })
-
-    if (error) {
-      setMessage(`Error: ${error.message}`)
-    } else {
-      setMessage('Evento enviado para revisión')
-      setForm({
-        title: '',
-        venue: '',
-        area: '',
-        address: '',
-        date: '',
-        start_time: '',
-        end_time: '',
-        type: '',
-        audience: '',
-        price_from: '',
-        cover: '',
-        description: '',
-        music: '',
-        perks: '',
-      })
-    }
-
-    setLoading(false)
-  }
+  const event = {
+    slug: data.slug,
+    title: data.title,
+    venue: data.venue,
+    area: data.area,
+    address: data.address,
+    date: data.date,
+    startTime: data.start_time,
+    endTime: data.end_time,
+    type: data.type,
+    music: data.music || [],
+    audience: data.audience,
+    priceFrom: data.price_from,
+    cover: data.cover,
+    description: data.description,
+    perks: data.perks || [],
+    status: data.status
+  };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="container-page py-10">
-        <a href="/dashboard" className="text-sm text-slate-400 hover:text-white">
-          ← Volver al panel
-        </a>
+    <main>
+      <Navbar />
 
-        <section className="card mt-8 max-w-3xl p-6 md:p-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-500">
-            Tardea Partners
-          </p>
+      <section className="relative overflow-hidden border-b border-white/10">
+        {event.cover && (
+          <div className="absolute inset-0 bg-cover bg-center opacity-25" style={{ backgroundImage: `url(${event.cover})` }} />
+        )}
 
-          <h1 className="mt-2 text-4xl font-bold">Crear evento</h1>
+        <div className="container-page relative py-16 md:py-24">
+          <Link href="/" className="btn-secondary mb-8 inline-flex">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Volver
+          </Link>
 
-          <p className="mt-3 text-slate-400">
-            Completa los datos del evento. Se enviará como pendiente para revisión.
-          </p>
-
-          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-            <input
-              className="input"
-              placeholder="Título del evento"
-              value={form.title}
-              onChange={(e) => updateField('title', e.target.value)}
-              required
-            />
-
-            <input
-              className="input"
-              placeholder="Lugar / sala"
-              value={form.venue}
-              onChange={(e) => updateField('venue', e.target.value)}
-              required
-            />
-
-            <input
-              className="input"
-              placeholder="Zona / ciudad"
-              value={form.area}
-              onChange={(e) => updateField('area', e.target.value)}
-              required
-            />
-
-            <input
-              className="input"
-              placeholder="Dirección"
-              value={form.address}
-              onChange={(e) => updateField('address', e.target.value)}
-              required
-            />
-
-            <div className="grid gap-4 md:grid-cols-3">
-              <input
-                className="input"
-                type="date"
-                value={form.date}
-                onChange={(e) => updateField('date', e.target.value)}
-                required
-              />
-
-              <input
-                className="input"
-                type="time"
-                value={form.start_time}
-                onChange={(e) => updateField('start_time', e.target.value)}
-                required
-              />
-
-              <input
-                className="input"
-                type="time"
-                value={form.end_time}
-                onChange={(e) => updateField('end_time', e.target.value)}
-                required
-              />
+          {event.status === 'pending' && (
+            <div className="mb-4 rounded-xl bg-yellow-500/20 px-4 py-2 text-sm text-yellow-200">
+              Evento pendiente de aprobación
             </div>
+          )}
 
-            <input
-              className="input"
-              placeholder="Tipo de evento"
-              value={form.type}
-              onChange={(e) => updateField('type', e.target.value)}
-              required
-            />
+          <div className="max-w-3xl">
+            <span className="badge mb-4">{event.type}</span>
+            <h1 className="text-4xl font-bold tracking-tight md:text-6xl">{event.title}</h1>
+            <p className="mt-5 text-lg text-slate-300">{event.description}</p>
+          </div>
+        </div>
+      </section>
 
-            <input
-              className="input"
-              placeholder="Público recomendado"
-              value={form.audience}
-              onChange={(e) => updateField('audience', e.target.value)}
-            />
+      <section className="container-page grid gap-8 py-16 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="space-y-6">
+          <div className="card p-6">
+            <h2 className="text-2xl font-semibold">Detalles del evento</h2>
 
-            <input
-              className="input"
-              type="number"
-              placeholder="Precio desde (€)"
-              value={form.price_from}
-              onChange={(e) => updateField('price_from', e.target.value)}
-            />
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <CalendarDays className="mb-2 h-5 w-5 text-brand-500" />
+                <p className="font-medium">Fecha</p>
+                <p className="text-sm text-slate-400">{new Date(event.date).toLocaleDateString('es-ES')}</p>
+              </div>
 
-            <input
-              className="input"
-              placeholder="URL de imagen de portada"
-              value={form.cover}
-              onChange={(e) => updateField('cover', e.target.value)}
-            />
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <Clock3 className="mb-2 h-5 w-5 text-brand-500" />
+                <p className="font-medium">Horario</p>
+                <p className="text-sm text-slate-400">
+                  {event.startTime?.slice(0, 5)} - {event.endTime?.slice(0, 5)}
+                </p>
+              </div>
 
-            <textarea
-              className="input min-h-32"
-              placeholder="Descripción"
-              value={form.description}
-              onChange={(e) => updateField('description', e.target.value)}
-              required
-            />
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <MapPin className="mb-2 h-5 w-5 text-brand-500" />
+                <p className="font-medium">Ubicación</p>
+                <p className="text-sm text-slate-400">{event.venue}, {event.address}</p>
+              </div>
 
-            <input
-              className="input"
-              placeholder="Música, separada por comas"
-              value={form.music}
-              onChange={(e) => updateField('music', e.target.value)}
-            />
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <Euro className="mb-2 h-5 w-5 text-brand-500" />
+                <p className="font-medium">Precio</p>
+                <p className="text-sm text-slate-400">
+                  {event.priceFrom === 0 ? 'Entrada gratis' : `Desde ${event.priceFrom}€`}
+                </p>
+              </div>
 
-            <input
-              className="input"
-              placeholder="Extras / perks, separados por comas"
-              value={form.perks}
-              onChange={(e) => updateField('perks', e.target.value)}
-            />
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <Music4 className="mb-2 h-5 w-5 text-brand-500" />
+                <p className="font-medium">Música</p>
+                <p className="text-sm text-slate-400">{event.music.join(', ')}</p>
+              </div>
 
-            <button type="submit" disabled={loading} className="btn-primary w-full">
-              {loading ? 'Enviando...' : 'Enviar evento a revisión'}
-            </button>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <Users className="mb-2 h-5 w-5 text-brand-500" />
+                <p className="font-medium">Público</p>
+                <p className="text-sm text-slate-400">{event.audience}</p>
+              </div>
+            </div>
+          </div>
 
-            {message && <p className="text-sm text-slate-400">{message}</p>}
-          </form>
-        </section>
-      </div>
+          <div className="card p-6">
+            <h2 className="text-2xl font-semibold">Qué hace especial este plan</h2>
+            <div className="mt-5 flex flex-wrap gap-3">
+              {event.perks.map((perk: string) => (
+                <span key={perk} className="badge">
+                  <Sparkles className="mr-2 h-4 w-4" /> {perk}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <aside className="space-y-6">
+          <div className="card p-6">
+            <h3 className="text-xl font-semibold">Reserva o compra entradas</h3>
+            <p className="mt-3 text-sm text-slate-400">
+              En producción, aquí conectaríamos Eventbrite, Fourvenues, Xceed o una URL directa del organizador.
+            </p>
+            <a href="#" className="btn-primary mt-6 w-full">Comprar entradas</a>
+            <button className="btn-secondary mt-3 w-full">Guardar en favoritos</button>
+          </div>
+        </aside>
+      </section>
+
+      <Footer />
     </main>
-  )
+  );
 }
