@@ -12,13 +12,11 @@ function LoginContent() {
   const type = searchParams.get('type')
 
   const [isRegister, setIsRegister] = useState(false)
-
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [venueName, setVenueName] = useState('')
   const [message, setMessage] = useState('')
 
-  // USER EXTRA DATA
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [day, setDay] = useState('')
@@ -27,16 +25,21 @@ function LoginContent() {
   const [musicPrefs, setMusicPrefs] = useState<string[]>([])
   const [areaPrefs, setAreaPrefs] = useState<string[]>([])
 
-  function toggleSelection(value: string, list: string[], setList: any) {
-    if (list.includes(value)) {
-      setList(list.filter((item) => item !== value))
-    } else {
-      setList([...list, value])
-    }
+  function toggleSelection(
+    value: string,
+    list: string[],
+    setList: React.Dispatch<React.SetStateAction<string[]>>
+  ) {
+    setList(
+      list.includes(value)
+        ? list.filter((item) => item !== value)
+        : [...list, value]
+    )
   }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
+    setMessage('')
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -71,6 +74,7 @@ function LoginContent() {
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
+    setMessage('')
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -87,14 +91,12 @@ function LoginContent() {
         id: data.user.id,
         role: type === 'venue' ? 'venue' : 'user',
         venue_name: type === 'venue' ? venueName : null,
-
-        // USER DATA
         first_name: type === 'user' ? firstName : null,
         last_name: type === 'user' ? lastName : null,
         birth_date:
-  type === 'user'
-    ? `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
-    : null,
+          type === 'user'
+            ? `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+            : null,
         music_preferences: type === 'user' ? musicPrefs : [],
         area_preferences: type === 'user' ? areaPrefs : [],
       })
@@ -120,18 +122,16 @@ function LoginContent() {
             onSubmit={isRegister ? handleRegister : handleLogin}
             className="mt-6 space-y-4"
           >
-            {/* PROMOTOR */}
             {isRegister && type === 'venue' && (
               <input
                 className="input"
-                placeholder="Nombre de sala"
+                placeholder="Nombre de sala o promotor"
                 value={venueName}
                 onChange={(e) => setVenueName(e.target.value)}
                 required
               />
             )}
 
-            {/* USUARIO */}
             {isRegister && type === 'user' && (
               <>
                 <input
@@ -142,124 +142,124 @@ function LoginContent() {
                   required
                 />
 
-               <input
-  className="input"
-  placeholder="Apellidos"
-  value={lastName}
-  onChange={(e) => setLastName(e.target.value)}
-  required
-/>
+                <input
+                  className="input"
+                  placeholder="Apellidos"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                />
 
-{/* FECHA NACIMIENTO */}
-<div>
-  <p className="text-sm text-slate-400 mb-2">
-    Fecha de nacimiento
-  </p>
-
-  <div className="grid grid-cols-3 gap-2">
-    {/* DÍA */}
-    <select
-      className="input"
-      value={day}
-      onChange={(e) => setDay(e.target.value)}
-      required
-    >
-      <option value="">Día</option>
-      {[...Array(31)].map((_, i) => (
-        <option key={i + 1} value={i + 1}>
-          {i + 1}
-        </option>
-      ))}
-    </select>
-
-    {/* MES */}
-    <select
-      className="input"
-      value={month}
-      onChange={(e) => setMonth(e.target.value)}
-      required
-    >
-      <option value="">Mes</option>
-      {[
-        'Enero',
-        'Febrero',
-        'Marzo',
-        'Abril',
-        'Mayo',
-        'Junio',
-        'Julio',
-        'Agosto',
-        'Septiembre',
-        'Octubre',
-        'Noviembre',
-        'Diciembre',
-      ].map((m, i) => (
-        <option key={i + 1} value={i + 1}>
-          {m}
-        </option>
-      ))}
-    </select>
-
-    {/* AÑO */}
-    <select
-      className="input"
-      value={year}
-      onChange={(e) => setYear(e.target.value)}
-      required
-    >
-      <option value="">Año</option>
-      {Array.from({ length: 60 }, (_, i) => 2007 - i).map((y) => (
-        <option key={y} value={y}>
-          {y}
-        </option>
-      ))}
-    </select>
-  </div>
-</div>
-
-                {/* MUSIC */}
                 <div>
-                  <p className="text-sm text-slate-400 mb-2">Gustos musicales</p>
+                  <p className="mb-2 text-sm text-slate-400">
+                    Fecha de nacimiento
+                  </p>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <select
+                      className="input"
+                      value={day}
+                      onChange={(e) => setDay(e.target.value)}
+                      required
+                    >
+                      <option value="">Día</option>
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      className="input"
+                      value={month}
+                      onChange={(e) => setMonth(e.target.value)}
+                      required
+                    >
+                      <option value="">Mes</option>
+                      {[
+                        'Enero',
+                        'Febrero',
+                        'Marzo',
+                        'Abril',
+                        'Mayo',
+                        'Junio',
+                        'Julio',
+                        'Agosto',
+                        'Septiembre',
+                        'Octubre',
+                        'Noviembre',
+                        'Diciembre',
+                      ].map((m, i) => (
+                        <option key={i + 1} value={i + 1}>
+                          {m}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      className="input"
+                      value={year}
+                      onChange={(e) => setYear(e.target.value)}
+                      required
+                    >
+                      <option value="">Año</option>
+                      {Array.from({ length: 70 }, (_, i) => 2007 - i).map(
+                        (y) => (
+                          <option key={y} value={y}>
+                            {y}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-2 text-sm text-slate-400">
+                    Gustos musicales
+                  </p>
+
                   <div className="flex flex-wrap gap-2">
-                    {MUSIC_OPTIONS.map((m) => (
+                    {MUSIC_OPTIONS.map((music) => (
                       <button
                         type="button"
-                        key={m}
+                        key={music}
                         onClick={() =>
-                          toggleSelection(m, musicPrefs, setMusicPrefs)
+                          toggleSelection(music, musicPrefs, setMusicPrefs)
                         }
-                        className={`px-3 py-1 rounded-full text-sm ${
-                          musicPrefs.includes(m)
+                        className={`rounded-full px-3 py-1 text-sm ${
+                          musicPrefs.includes(music)
                             ? 'bg-brand-500 text-white'
-                            : 'bg-white/10'
+                            : 'bg-white/10 text-slate-200'
                         }`}
                       >
-                        {m}
+                        {music}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* AREAS */}
                 <div>
-                  <p className="text-sm text-slate-400 mb-2">
+                  <p className="mb-2 text-sm text-slate-400">
                     Zonas favoritas
                   </p>
+
                   <div className="flex flex-wrap gap-2">
-                    {AREA_OPTIONS.map((a) => (
+                    {AREA_OPTIONS.map((area) => (
                       <button
                         type="button"
-                        key={a}
+                        key={area}
                         onClick={() =>
-                          toggleSelection(a, areaPrefs, setAreaPrefs)
+                          toggleSelection(area, areaPrefs, setAreaPrefs)
                         }
-                        className={`px-3 py-1 rounded-full text-sm ${
-                          areaPrefs.includes(a)
+                        className={`rounded-full px-3 py-1 text-sm ${
+                          areaPrefs.includes(area)
                             ? 'bg-brand-500 text-white'
-                            : 'bg-white/10'
+                            : 'bg-white/10 text-slate-200'
                         }`}
                       >
-                        {a}
+                        {area}
                       </button>
                     ))}
                   </div>
@@ -267,7 +267,6 @@ function LoginContent() {
               </>
             )}
 
-            {/* EMAIL */}
             <input
               className="input"
               type="email"
@@ -277,7 +276,6 @@ function LoginContent() {
               required
             />
 
-            {/* PASSWORD */}
             <input
               className="input"
               type="password"
@@ -292,15 +290,18 @@ function LoginContent() {
             </button>
 
             {message && (
-              <p className="text-sm text-brand-500 text-center">{message}</p>
+              <p className="text-center text-sm text-brand-500">{message}</p>
             )}
           </form>
 
           <p className="mt-6 text-center text-sm text-slate-400">
             {isRegister ? '¿Ya tienes cuenta?' : '¿No tienes cuenta?'}{' '}
             <button
-              onClick={() => setIsRegister(!isRegister)}
-              className="text-brand-500"
+              onClick={() => {
+                setIsRegister(!isRegister)
+                setMessage('')
+              }}
+              className="text-brand-500 hover:underline"
             >
               {isRegister ? 'Iniciar sesión' : 'Crear cuenta'}
             </button>
