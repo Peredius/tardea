@@ -266,6 +266,8 @@ export default function AdminPage() {
                 setEditingEvent({ ...event, cover: cleanCover });
                 setTitle(event.title || '');
                 setVenue(event.venue || '');
+                setAddress(event.address || '');
+                setMapsUrl(event.maps_url || '');
                 setArea(event.area || '');
                 setDate(event.date || '');
                 setStartTime(event.start_time || '17:00');
@@ -302,6 +304,22 @@ export default function AdminPage() {
       <p className="text-sm text-slate-400">
         {new Date(event.date).toLocaleDateString('es-ES')}
       </p>
+      {event.address && (
+  <p className="mt-1 text-sm text-slate-400">
+    {event.address}
+  </p>
+)}
+
+{event.maps_url && (
+  <a
+    href={event.maps_url}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="mt-1 inline-block text-sm text-brand-500"
+  >
+    Ver en Google Maps
+  </a>
+)}
     </div>
 
     <div className="flex gap-3">
@@ -317,6 +335,8 @@ export default function AdminPage() {
           setEditingEvent({ ...event, cover: cleanCover });
           setTitle(event.title || '');
           setVenue(event.venue || '');
+          setAddress(event.address || '');
+          setMapsUrl(event.maps_url || '');
           setArea(event.area || '');
           setDate(event.date || '');
           setStartTime(event.start_time || '17:00');
