@@ -23,6 +23,7 @@ export default function NewEventPage() {
   const [date, setDate] = useState('')
   const [type, setType] = useState('')
   const [address, setAddress] = useState('')
+  const [mapsUrl, setMapsUrl] = useState('')
   const [startTime, setStartTime] = useState('17:00')
   const [endTime, setEndTime] = useState('23:00')
   const [priceFrom, setPriceFrom] = useState('')
@@ -74,6 +75,7 @@ export default function NewEventPage() {
       venue,
       area: area === 'Otra' ? customArea || null : area || null,
       address: address || null,
+      maps_url: mapsUrl || null,
       date,
       start_time: startTime,
       end_time: endTime,
@@ -204,6 +206,12 @@ export default function NewEventPage() {
 </div>
         <input className="input" placeholder="Lugar / Sala" value={venue} onChange={(e) => setVenue(e.target.value)} required />
         <input className="input" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} required />
+        <input
+  className="input"
+  placeholder="Link de Google Maps"
+  value={mapsUrl}
+  onChange={(e) => setMapsUrl(e.target.value)}
+/>
 
         <textarea
           className="input min-h-32"
