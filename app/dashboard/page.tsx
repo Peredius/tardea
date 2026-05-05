@@ -1,147 +1,244 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
-export default function DashboardPage() {
-  const [email, setEmail] = useState<string | null>(null)
-  const [events, setEvents] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
+}
 
-  useEffect(() => {
-    async function loadUser() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+export default function NewEventPage() {
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
 
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
+  const [form, setForm] = useState({
+    title: '',
+    venue: '',
+    area: '',
+    address: '',
+    date: '',
+    start_time: '',
+    end_time: '',
+    type: '',
+    audience: '',
+    price_from: '',
+    cover: '',
+    description: '',
+    music: '',
+    perks: '',
+  })
 
-      setEmail(user.email ?? null)
-
-      const { data: events } = await supabase
-        .from('events')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-
-      setEvents(events || [])
-      setLoading(false)
-    }
-
-    loadUser()
-  }, [])
-
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-slate-950 text-slate-100">
-        <div className="container-page py-10">
-          <p className="text-slate-400">Cargando panel...</p>
-        </div>
-      </main>
-    )
+  function updateField(field: string, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }))
   }
 
-  const pendingEvents = events.filter((event) => event.status === 'pending')
-  const approvedEvents = events.filter((event) => event.status === 'approved')
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setMessage('')
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      window.location.href = '/login'
+      return
+    }
+
+    const slug = `${slugify(form.title)}-${Date.now()}`
+
+    const { error } = await supabase.from('events').insert({
+      title: form.title,
+      slug,
+      venue: form.venue,
+      area: form.area,
+      address: form.address,
+      date: form.date,
+      start_time: form.start_time,
+      end_time: form.end_time,
+      type: form.type,
+      audience: form.audience,
+      price_from: Number(form.price_from || 0),
+      cover: form.cover,
+      description: form.description,
+      music: form.music
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean),
+      perks: form.perks
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean),
+      status: 'pending',
+      user_id: user.id,
+    })
+
+    if (error) {
+      setMessage(`Error: ${error.message}`)
+    } else {
+      setMessage('Evento enviado para revisión')
+      setForm({
+        title: '',
+        venue: '',
+        area: '',
+        address: '',
+        date: '',
+        start_time: '',
+        end_time: '',
+        type: '',
+        audience: '',
+        price_from: '',
+        cover: '',
+        description: '',
+        music: '',
+        perks: '',
+      })
+    }
+
+    setLoading(false)
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="container-page py-10">
-        <section className="mb-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-500">
-              Tardea Partners
-            </p>
-            <h1 className="mt-2 text-4xl font-bold tracking-tight md:text-5xl">
-              Panel de sala
-            </h1>
-            <p className="mt-3 max-w-2xl text-slate-400">
-              Crea eventos, consulta su estado y gestiona las propuestas que has enviado a Tardea.
-            </p>
-          </div>
+        <a href="/dashboard" className="text-sm text-slate-400 hover:text-white">
+          ← Volver al panel
+        </a>
 
-          <a href="/dashboard/new-event" className="btn-primary">
-            + Crear evento
-          </a>
-        </section>
+        <section className="card mt-8 max-w-3xl p-6 md:p-8">
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-500">
+            Tardea Partners
+          </p>
 
-        <section className="mb-8 grid gap-4 md:grid-cols-3">
-          <div className="card p-6">
-            <p className="text-sm text-slate-400">Usuario conectado</p>
-            <p className="mt-2 break-all font-semibold">{email}</p>
-          </div>
+          <h1 className="mt-2 text-4xl font-bold">Crear evento</h1>
 
-          <div className="card p-6">
-            <p className="text-sm text-slate-400">Eventos publicados</p>
-            <p className="mt-2 text-4xl font-bold">{approvedEvents.length}</p>
-          </div>
+          <p className="mt-3 text-slate-400">
+            Completa los datos del evento. Se enviará como pendiente para revisión.
+          </p>
 
-          <div className="card p-6">
-            <p className="text-sm text-slate-400">Eventos pendientes</p>
-            <p className="mt-2 text-4xl font-bold">{pendingEvents.length}</p>
-          </div>
-        </section>
+          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+            <input
+              className="input"
+              placeholder="Título del evento"
+              value={form.title}
+              onChange={(e) => updateField('title', e.target.value)}
+              required
+            />
 
-        <section className="card p-6">
-          <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="text-2xl font-bold">Mis eventos</h2>
-              <p className="mt-1 text-sm text-slate-400">
-                Los eventos pendientes serán revisados antes de publicarse.
-              </p>
+            <input
+              className="input"
+              placeholder="Lugar / sala"
+              value={form.venue}
+              onChange={(e) => updateField('venue', e.target.value)}
+              required
+            />
+
+            <input
+              className="input"
+              placeholder="Zona / ciudad"
+              value={form.area}
+              onChange={(e) => updateField('area', e.target.value)}
+              required
+            />
+
+            <input
+              className="input"
+              placeholder="Dirección"
+              value={form.address}
+              onChange={(e) => updateField('address', e.target.value)}
+              required
+            />
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <input
+                className="input"
+                type="date"
+                value={form.date}
+                onChange={(e) => updateField('date', e.target.value)}
+                required
+              />
+
+              <input
+                className="input"
+                type="time"
+                value={form.start_time}
+                onChange={(e) => updateField('start_time', e.target.value)}
+                required
+              />
+
+              <input
+                className="input"
+                type="time"
+                value={form.end_time}
+                onChange={(e) => updateField('end_time', e.target.value)}
+                required
+              />
             </div>
-          </div>
 
-          {events.length === 0 && (
-            <div className="rounded-3xl border border-dashed border-white/10 bg-white/5 p-8 text-center">
-              <p className="font-semibold">No tienes eventos todavía.</p>
-              <p className="mt-2 text-sm text-slate-400">
-                Crea tu primer evento para enviarlo a revisión.
-              </p>
+            <input
+              className="input"
+              placeholder="Tipo de evento"
+              value={form.type}
+              onChange={(e) => updateField('type', e.target.value)}
+              required
+            />
 
-              <a href="/dashboard/new-event" className="btn-primary mt-6">
-                Crear primer evento
-              </a>
-            </div>
-          )}
+            <input
+              className="input"
+              placeholder="Público recomendado"
+              value={form.audience}
+              onChange={(e) => updateField('audience', e.target.value)}
+            />
 
-          <div className="space-y-4">
-            {events.map((event) => {
-              const approved = event.status === 'approved'
+            <input
+              className="input"
+              type="number"
+              placeholder="Precio desde (€)"
+              value={form.price_from}
+              onChange={(e) => updateField('price_from', e.target.value)}
+            />
 
-              return (
-                <article
-                  key={event.id}
-                  className="rounded-3xl border border-white/10 bg-slate-900/80 p-5"
-                >
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <h3 className="font-semibold">{event.title}</h3>
+            <input
+              className="input"
+              placeholder="URL de imagen de portada"
+              value={form.cover}
+              onChange={(e) => updateField('cover', e.target.value)}
+            />
 
-                      {event.date && (
-                        <p className="mt-2 text-sm text-slate-400">
-                          {event.date}
-                        </p>
-                      )}
-                    </div>
+            <textarea
+              className="input min-h-32"
+              placeholder="Descripción"
+              value={form.description}
+              onChange={(e) => updateField('description', e.target.value)}
+              required
+            />
 
-                    <span
-                      className={
-                        approved
-                          ? 'badge border-emerald-400/20 bg-emerald-500/20 text-emerald-200'
-                          : 'badge border-yellow-400/20 bg-yellow-500/20 text-yellow-200'
-                      }
-                    >
-                      {approved ? 'Publicado' : 'Pendiente'}
-                    </span>
-                  </div>
-                </article>
-              )
-            })}
-          </div>
+            <input
+              className="input"
+              placeholder="Música, separada por comas"
+              value={form.music}
+              onChange={(e) => updateField('music', e.target.value)}
+            />
+
+            <input
+              className="input"
+              placeholder="Extras / perks, separados por comas"
+              value={form.perks}
+              onChange={(e) => updateField('perks', e.target.value)}
+            />
+
+            <button type="submit" disabled={loading} className="btn-primary w-full">
+              {loading ? 'Enviando...' : 'Enviar evento a revisión'}
+            </button>
+
+            {message && <p className="text-sm text-slate-400">{message}</p>}
+          </form>
         </section>
       </div>
     </main>
