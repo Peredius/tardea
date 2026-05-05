@@ -21,7 +21,9 @@ function LoginContent() {
   // USER EXTRA DATA
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
-  const [age, setAge] = useState('')
+  const [day, setDay] = useState('')
+  const [month, setMonth] = useState('')
+  const [year, setYear] = useState('')
   const [musicPrefs, setMusicPrefs] = useState<string[]>([])
   const [areaPrefs, setAreaPrefs] = useState<string[]>([])
 
@@ -89,7 +91,10 @@ function LoginContent() {
         // USER DATA
         first_name: type === 'user' ? firstName : null,
         last_name: type === 'user' ? lastName : null,
-        age: type === 'user' ? Number(age) : null,
+        birth_date:
+  type === 'user'
+    ? `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+    : null,
         music_preferences: type === 'user' ? musicPrefs : [],
         area_preferences: type === 'user' ? areaPrefs : [],
       })
@@ -137,22 +142,46 @@ function LoginContent() {
                   required
                 />
 
-                <input
-                  className="input"
-                  placeholder="Apellido"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  required
-                />
+               <input
+  className="input"
+  placeholder="Apellidos"
+  value={lastName}
+  onChange={(e) => setLastName(e.target.value)}
+  required
+/>
 
-                <input
-                  className="input"
-                  type="number"
-                  placeholder="Edad"
-                  value={age}
-                  onChange={(e) => setAge(e.target.value)}
-                  required
-                />
+{/* FECHA NACIMIENTO */}
+<div>
+  <p className="text-sm text-slate-400 mb-2">
+    Fecha de nacimiento
+  </p>
+
+  <div className="grid grid-cols-3 gap-2">
+    <input
+      className="input"
+      placeholder="Día"
+      value={day}
+      onChange={(e) => setDay(e.target.value)}
+      required
+    />
+
+    <input
+      className="input"
+      placeholder="Mes"
+      value={month}
+      onChange={(e) => setMonth(e.target.value)}
+      required
+    />
+
+    <input
+      className="input"
+      placeholder="Año"
+      value={year}
+      onChange={(e) => setYear(e.target.value)}
+      required
+    />
+  </div>
+</div>
 
                 {/* MUSIC */}
                 <div>
