@@ -38,9 +38,6 @@ export function Navbar() {
   </a>
 </div>
         
-        <a href="#explorar" className="btn-secondary hidden md:inline-flex">
-          Ver eventos
-        </a>
       </div>
     </header>
   );
