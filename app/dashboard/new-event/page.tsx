@@ -80,7 +80,7 @@ export default function NewEventPage() {
       type,
       music: music ? [music] : [],
       audience: '25-35',
-      price_from: priceFrom ? parseFloat(priceFrom) : null,
+      price_from: isInvitation ? 0 : priceFrom ? parseFloat(priceFrom) : 0,
       cover: imageUrl,
       featured: false,
       description,
