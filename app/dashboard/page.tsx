@@ -190,7 +190,7 @@ export default function DashboardPage() {
             </p>
 
             <h1 className="mt-2 text-4xl font-bold tracking-tight md:text-5xl">
-              Panel de sala
+              Promotor
             </h1>
 
             <p className="mt-3 max-w-2xl text-slate-400">
