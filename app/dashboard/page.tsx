@@ -1,20 +1,37 @@
-import { redirect } from 'next/navigation'
+'use client'
+
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
-export default async function DashboardPage() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+export default function DashboardPage() {
+  const [email, setEmail] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  if (!user) {
-    redirect('/login')
+  useEffect(() => {
+    async function loadUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+
+      setEmail(user.email ?? null)
+      setLoading(false)
+    }
+
+    loadUser()
+  }, [])
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-black text-white p-8">
+        Cargando...
+      </main>
+    )
   }
-
-  const { data: events } = await supabase
-    .from('events')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
 
   return (
     <main className="min-h-screen bg-black text-white p-8">
@@ -22,22 +39,7 @@ export default async function DashboardPage() {
 
       <div className="mt-8 rounded-xl border border-white/10 p-6">
         <h2 className="text-xl font-semibold">Usuario conectado</h2>
-        <p className="mt-2 text-white/70">{user.email}</p>
-      </div>
-
-      <div className="mt-8 space-y-4">
-        <h2 className="text-xl font-semibold">Mis eventos</h2>
-
-        {events?.length === 0 && (
-          <p className="text-white/60">No tienes eventos todavía</p>
-        )}
-
-        {events?.map((event) => (
-          <div key={event.id} className="border border-white/10 p-4 rounded">
-            <h3 className="font-semibold">{event.title}</h3>
-            <p className="text-white/60">{event.status}</p>
-          </div>
-        ))}
+        <p className="mt-2 text-white/70">{email}</p>
       </div>
     </main>
   )
