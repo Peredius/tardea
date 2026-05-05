@@ -19,7 +19,7 @@ export default function LoginPage() {
     if (error) {
       setMessage('Error al iniciar sesión');
     } else {
-      window.location.href = '/admin';
+      window.location.href = '/dashboard';
     }
   }
 
