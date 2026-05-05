@@ -19,7 +19,26 @@ export default function LoginPage() {
     if (error) {
       setMessage('Error al iniciar sesión');
     } else {
-      window.location.href = '/dashboard';
+      const {
+  data: { user },
+} = await supabase.auth.getUser()
+
+if (!user) {
+  window.location.href = '/login'
+  return
+}
+
+const { data: profile } = await supabase
+  .from('profiles')
+  .select('role')
+  .eq('id', user.id)
+  .single()
+
+if (profile?.role === 'admin') {
+  window.location.href = '/admin'
+} else {
+  window.location.href = '/dashboard'
+}
     }
   }
 
