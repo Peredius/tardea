@@ -183,7 +183,31 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="container-page py-10">
-        <section className="mb-10">
+        <section className="mb-10 flex items-start justify-between">
+  <div>
+    <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-500">
+      Tardea Partners
+    </p>
+
+    <h1 className="mt-2 text-4xl font-bold tracking-tight md:text-5xl">
+      Panel de sala
+    </h1>
+
+    <p className="mt-3 max-w-2xl text-slate-400">
+      Crea eventos, revisa su estado y gestiona tus propuestas.
+    </p>
+  </div>
+
+  <button
+    onClick={async () => {
+      await supabase.auth.signOut()
+      window.location.href = '/login'
+    }}
+    className="text-sm text-slate-400 hover:text-white"
+  >
+    Cerrar sesión
+  </button>
+</section>
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-500">
             Tardea Partners
           </p>
