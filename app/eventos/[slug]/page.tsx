@@ -1,11 +1,24 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, CalendarDays, Clock3, Euro, MapPin, Music4, Sparkles, Users } from 'lucide-react';
+import {
+  ArrowLeft,
+  CalendarDays,
+  Clock3,
+  Euro,
+  MapPin,
+  Music4,
+  Sparkles,
+  Users,
+} from 'lucide-react';
 import { Footer } from '@/components/Footer';
 import { Navbar } from '@/components/Navbar';
 import { supabase } from '@/lib/supabase';
 
-export default async function EventDetailPage({ params }: { params: { slug: string } }) {
+export default async function EventDetailPage({
+  params,
+}: {
+  params: { slug: string };
+}) {
   const { data } = await supabase
     .from('events')
     .select('*')
@@ -20,6 +33,7 @@ export default async function EventDetailPage({ params }: { params: { slug: stri
     venue: data.venue,
     area: data.area,
     address: data.address,
+    mapsUrl: data.maps_url,
     date: data.date,
     startTime: data.start_time,
     endTime: data.end_time,
@@ -30,7 +44,7 @@ export default async function EventDetailPage({ params }: { params: { slug: stri
     cover: data.cover,
     description: data.description,
     perks: data.perks || [],
-    status: data.status
+    status: data.status,
   };
 
   return (
@@ -39,7 +53,10 @@ export default async function EventDetailPage({ params }: { params: { slug: stri
 
       <section className="relative overflow-hidden border-b border-white/10">
         {event.cover && (
-          <div className="absolute inset-0 bg-cover bg-center opacity-25" style={{ backgroundImage: `url(${event.cover})` }} />
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-25"
+            style={{ backgroundImage: `url(${event.cover})` }}
+          />
         )}
 
         <div className="container-page relative py-16 md:py-24">
@@ -55,7 +72,9 @@ export default async function EventDetailPage({ params }: { params: { slug: stri
 
           <div className="max-w-3xl">
             <span className="badge mb-4">{event.type}</span>
-            <h1 className="text-4xl font-bold tracking-tight md:text-6xl">{event.title}</h1>
+            <h1 className="text-4xl font-bold tracking-tight md:text-6xl">
+              {event.title}
+            </h1>
             <p className="mt-5 text-lg text-slate-300">{event.description}</p>
           </div>
         </div>
@@ -70,7 +89,9 @@ export default async function EventDetailPage({ params }: { params: { slug: stri
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <CalendarDays className="mb-2 h-5 w-5 text-brand-500" />
                 <p className="font-medium">Fecha</p>
-                <p className="text-sm text-slate-400">{new Date(event.date).toLocaleDateString('es-ES')}</p>
+                <p className="text-sm text-slate-400">
+                  {new Date(event.date).toLocaleDateString('es-ES')}
+                </p>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -84,21 +105,38 @@ export default async function EventDetailPage({ params }: { params: { slug: stri
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <MapPin className="mb-2 h-5 w-5 text-brand-500" />
                 <p className="font-medium">Ubicación</p>
-                <p className="text-sm text-slate-400">{event.venue}, {event.address}</p>
+                <p className="text-sm text-slate-400">
+                  {event.venue}, {event.address}
+                </p>
+
+                {event.mapsUrl && (
+                  <a
+                    href={event.mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-block text-sm font-medium text-brand-500 hover:underline"
+                  >
+                    Ver en Google Maps →
+                  </a>
+                )}
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <Euro className="mb-2 h-5 w-5 text-brand-500" />
                 <p className="font-medium">Precio</p>
                 <p className="text-sm text-slate-400">
-                  {event.priceFrom === 0 ? 'Entrada gratis' : `Desde ${event.priceFrom}€`}
+                  {event.priceFrom === 0
+                    ? 'Entrada gratis o con invitación'
+                    : `Desde ${event.priceFrom}€`}
                 </p>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <Music4 className="mb-2 h-5 w-5 text-brand-500" />
                 <p className="font-medium">Música</p>
-                <p className="text-sm text-slate-400">{event.music.join(', ')}</p>
+                <p className="text-sm text-slate-400">
+                  {event.music.join(', ')}
+                </p>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -110,7 +148,9 @@ export default async function EventDetailPage({ params }: { params: { slug: stri
           </div>
 
           <div className="card p-6">
-            <h2 className="text-2xl font-semibold">Qué hace especial este plan</h2>
+            <h2 className="text-2xl font-semibold">
+              Qué hace especial este plan
+            </h2>
             <div className="mt-5 flex flex-wrap gap-3">
               {event.perks.map((perk: string) => (
                 <span key={perk} className="badge">
@@ -125,10 +165,15 @@ export default async function EventDetailPage({ params }: { params: { slug: stri
           <div className="card p-6">
             <h3 className="text-xl font-semibold">Reserva o compra entradas</h3>
             <p className="mt-3 text-sm text-slate-400">
-              En producción, aquí conectaríamos Eventbrite, Fourvenues, Xceed o una URL directa del organizador.
+              En producción, aquí conectaríamos Eventbrite, Fourvenues, Xceed o
+              una URL directa del organizador.
             </p>
-            <a href="#" className="btn-primary mt-6 w-full">Comprar entradas</a>
-            <button className="btn-secondary mt-3 w-full">Guardar en favoritos</button>
+            <a href="#" className="btn-primary mt-6 w-full">
+              Comprar entradas
+            </a>
+            <button className="btn-secondary mt-3 w-full">
+              Guardar en favoritos
+            </button>
           </div>
         </aside>
       </section>
