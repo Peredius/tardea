@@ -1,1 +1,118 @@
+'use client'
 
+import { Suspense, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+
+function RegisterContent() {
+  const searchParams = useSearchParams()
+  const type = searchParams.get('type')
+
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [venueName, setVenueName] = useState('')
+  const [message, setMessage] = useState('')
+
+  async function handleRegister(e: React.FormEvent) {
+    e.preventDefault()
+    setMessage('')
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    })
+
+    if (error) {
+      setMessage('Error al crear cuenta')
+      return
+    }
+
+    if (data.user) {
+      await supabase.from('profiles').insert({
+        id: data.user.id,
+        role: type === 'venue' ? 'venue' : 'user',
+        venue_name: type === 'venue' ? venueName : null,
+      })
+    }
+
+    setMessage('Cuenta creada. Revisa tu email o inicia sesión.')
+  }
+
+  return (
+    <main className="min-h-screen bg-slate-950 text-slate-100">
+      <div className="container-page py-16">
+        <a href="/" className="mb-10 block text-center">
+          <span className="text-2xl font-bold tracking-tight">TARDEA</span>
+        </a>
+
+        <div className="card mx-auto max-w-md p-6">
+          <h1 className="text-center text-3xl font-bold">
+            {type === 'venue' ? 'Registro promotor' : 'Registro usuario'}
+          </h1>
+
+          <p className="mt-2 text-center text-slate-400">
+            {type === 'venue'
+              ? 'Crea tu cuenta para publicar eventos.'
+              : 'Crea tu cuenta para guardar favoritos y acceder a ventajas.'}
+          </p>
+
+          <form onSubmit={handleRegister} className="mt-6 space-y-4">
+            {type === 'venue' && (
+              <input
+                className="input"
+                placeholder="Nombre de sala o promotor"
+                value={venueName}
+                onChange={(e) => setVenueName(e.target.value)}
+                required
+              />
+            )}
+
+            <input
+              className="input"
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+
+            <input
+              className="input"
+              type="password"
+              placeholder="Contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+
+            <button className="btn-primary w-full" type="submit">
+              Crear cuenta
+            </button>
+
+            {message && (
+              <p className="text-center text-sm text-brand-500">{message}</p>
+            )}
+          </form>
+
+          <p className="mt-6 text-center text-sm text-slate-400">
+            ¿Ya tienes cuenta?{' '}
+            <a
+              href={`/login?type=${type === 'venue' ? 'venue' : 'user'}`}
+              className="text-brand-500 hover:underline"
+            >
+              Iniciar sesión
+            </a>
+          </p>
+        </div>
+      </div>
+    </main>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterContent />
+    </Suspense>
+  )
+}
