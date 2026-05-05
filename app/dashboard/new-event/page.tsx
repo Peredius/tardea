@@ -177,8 +177,8 @@ export default function NewEventPage() {
         <input type="time" className="input" value={startTime} onChange={(e) => setStartTime(e.target.value)} required />
         <input type="time" className="input" value={endTime} onChange={(e) => setEndTime(e.target.value)} required />
 
-        <input className="input" placeholder="Precio (€)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
-        <input className="input" placeholder="Lugar" value={venue} onChange={(e) => setVenue(e.target.value)} required />
+        <input className="input" placeholder="Precio desde (€)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
+        <input className="input" placeholder="Lugar / Sala" value={venue} onChange={(e) => setVenue(e.target.value)} required />
         <input className="input" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} required />
 
         <textarea
