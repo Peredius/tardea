@@ -5,7 +5,7 @@ export function FeaturedEvents() {
   const featured = getFeaturedEvents();
 
   return (
-    <section id="eventos" className="container-page py-6 md:py-10">
+    <section id="destacados" className="container-page py-6 md:py-10">
       <div className="mb-8">
         <p className="text-sm font-semibold text-brand-500">Selección editorial</p>
         <h2 className="mt-2 text-3xl font-bold tracking-tight">Eventos destacados de la semana</h2>
