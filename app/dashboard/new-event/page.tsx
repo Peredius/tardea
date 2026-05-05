@@ -1,141 +1,226 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
-function slugify(text: string) {
-  return text
+function generateSlug(title: string, date: string) {
+  const cleanTitle = title
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)+/g, '')
+    .replace(/^-+|-+$/g, '')
+
+  return date ? `${cleanTitle}-${date}` : cleanTitle
 }
 
 export default function NewEventPage() {
-  const [loading, setLoading] = useState(false)
+  const [title, setTitle] = useState('')
+  const [venue, setVenue] = useState('')
+  const [area, setArea] = useState('')
+  const [customArea, setCustomArea] = useState('')
+  const [date, setDate] = useState('')
+  const [type, setType] = useState('')
+  const [address, setAddress] = useState('')
+  const [startTime, setStartTime] = useState('17:00')
+  const [endTime, setEndTime] = useState('23:00')
+  const [priceFrom, setPriceFrom] = useState('')
+  const [music, setMusic] = useState('')
+  const [cover, setCover] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState('')
   const [message, setMessage] = useState('')
+  const [description, setDescription] = useState('')
+  const [perks, setPerks] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const event = {
-    slug: data.slug,
-    title: data.title,
-    venue: data.venue,
-    area: data.area,
-    address: data.address,
-    date: data.date,
-    startTime: data.start_time,
-    endTime: data.end_time,
-    type: data.type,
-    music: data.music || [],
-    audience: data.audience,
-    priceFrom: data.price_from,
-    cover: data.cover,
-    description: data.description,
-    perks: data.perks || [],
-    status: data.status
-  };
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setMessage('')
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      window.location.href = '/login'
+      return
+    }
+
+    let imageUrl = ''
+
+    if (cover) {
+      const fileName = `${Date.now()}-${cover.name}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('events')
+        .upload(fileName, cover)
+
+      if (uploadError) {
+        setMessage(`Error subiendo imagen: ${uploadError.message}`)
+        setLoading(false)
+        return
+      }
+
+      const { data } = supabase.storage.from('events').getPublicUrl(fileName)
+      imageUrl = data.publicUrl
+    }
+
+    const eventData = {
+      title,
+      slug: generateSlug(title, date),
+      venue,
+      area: area === 'Otra' ? customArea : area,
+      address,
+      date,
+      start_time: startTime,
+      end_time: endTime,
+      type,
+      music: music ? [music] : [],
+      audience: '25-35',
+      price_from: priceFrom ? Number(priceFrom) : 0,
+      cover: imageUrl,
+      featured: false,
+      description,
+      perks: perks ? perks.split(',').map((p) => p.trim()) : [],
+      status: 'pending',
+      published: false,
+      user_id: user.id,
+    }
+
+    const { error } = await supabase.from('events').insert(eventData)
+
+    if (error) {
+      setMessage(`Error al crear evento: ${error.message}`)
+      setLoading(false)
+      return
+    }
+
+    setMessage('Evento enviado correctamente. Queda pendiente de revisión.')
+
+    setTitle('')
+    setVenue('')
+    setArea('')
+    setCustomArea('')
+    setDate('')
+    setType('')
+    setAddress('')
+    setStartTime('17:00')
+    setEndTime('23:00')
+    setPriceFrom('')
+    setMusic('')
+    setCover(null)
+    setPreviewUrl('')
+    setDescription('')
+    setPerks('')
+    setLoading(false)
+  }
 
   return (
-    <main>
-      <Navbar />
+    <main className="container-page py-16">
+      <Link href="/dashboard" className="btn-secondary mb-8 inline-flex">
+        ← Volver al panel
+      </Link>
 
-      <section className="relative overflow-hidden border-b border-white/10">
-        {event.cover && (
-          <div className="absolute inset-0 bg-cover bg-center opacity-25" style={{ backgroundImage: `url(${event.cover})` }} />
+      <h1 className="text-4xl font-bold">Crear evento</h1>
+      <p className="mt-3 text-slate-400">
+        Envía un evento para que el equipo de Tardea lo revise antes de publicarlo.
+      </p>
+
+      <form onSubmit={handleSubmit} className="card mt-8 max-w-2xl space-y-6 p-6">
+        <input
+          className="input"
+          placeholder="Nombre del evento"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
+
+        <select className="select" value={type} onChange={(e) => setType(e.target.value)} required>
+          <option value="">Tipo de evento</option>
+          <option>Tardeo</option>
+          <option>Rooftop</option>
+          <option>Brunch</option>
+          <option>Fitness Party</option>
+          <option>Afterwork</option>
+        </select>
+
+        <select className="select" value={music} onChange={(e) => setMusic(e.target.value)}>
+          <option value="">Estilo musical</option>
+          <option>Indie</option>
+          <option>Pop</option>
+          <option>House</option>
+          <option>Urbano</option>
+          <option>Techno</option>
+        </select>
+
+        <select className="select" value={area} onChange={(e) => setArea(e.target.value)} required>
+          <option value="">Zona</option>
+          <option>Centro</option>
+          <option>Salamanca</option>
+          <option>Retiro</option>
+          <option value="Otra">Otra</option>
+        </select>
+
+        {area === 'Otra' && (
+          <input
+            className="input"
+            placeholder="Zona personalizada"
+            value={customArea}
+            onChange={(e) => setCustomArea(e.target.value)}
+            required
+          />
         )}
 
-        <div className="container-page relative py-16 md:py-24">
-          <Link href="/" className="btn-secondary mb-8 inline-flex">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Volver
-          </Link>
+        <input type="date" className="input" value={date} onChange={(e) => setDate(e.target.value)} required />
+        <input type="time" className="input" value={startTime} onChange={(e) => setStartTime(e.target.value)} required />
+        <input type="time" className="input" value={endTime} onChange={(e) => setEndTime(e.target.value)} required />
 
-          {event.status === 'pending' && (
-            <div className="mb-4 rounded-xl bg-yellow-500/20 px-4 py-2 text-sm text-yellow-200">
-              Evento pendiente de aprobación
-            </div>
-          )}
+        <input className="input" placeholder="Precio (€)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
+        <input className="input" placeholder="Lugar" value={venue} onChange={(e) => setVenue(e.target.value)} required />
+        <input className="input" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} required />
 
-          <div className="max-w-3xl">
-            <span className="badge mb-4">{event.type}</span>
-            <h1 className="text-4xl font-bold tracking-tight md:text-6xl">{event.title}</h1>
-            <p className="mt-5 text-lg text-slate-300">{event.description}</p>
-          </div>
-        </div>
-      </section>
+        <textarea
+          className="input min-h-32"
+          placeholder="Descripción"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          required
+        />
 
-      <section className="container-page grid gap-8 py-16 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="space-y-6">
-          <div className="card p-6">
-            <h2 className="text-2xl font-semibold">Detalles del evento</h2>
+        <input
+          className="input"
+          placeholder="Extras separados por comas"
+          value={perks}
+          onChange={(e) => setPerks(e.target.value)}
+        />
 
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <CalendarDays className="mb-2 h-5 w-5 text-brand-500" />
-                <p className="font-medium">Fecha</p>
-                <p className="text-sm text-slate-400">{new Date(event.date).toLocaleDateString('es-ES')}</p>
-              </div>
+        <input
+          type="file"
+          accept="image/*"
+          className="input"
+          onChange={(e) => {
+            const file = e.target.files?.[0] || null
+            setCover(file)
+            setPreviewUrl(file ? URL.createObjectURL(file) : '')
+          }}
+        />
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <Clock3 className="mb-2 h-5 w-5 text-brand-500" />
-                <p className="font-medium">Horario</p>
-                <p className="text-sm text-slate-400">
-                  {event.startTime?.slice(0, 5)} - {event.endTime?.slice(0, 5)}
-                </p>
-              </div>
+        {previewUrl && (
+          <img
+            src={previewUrl}
+            alt="Preview del evento"
+            className="h-56 w-full rounded-xl object-cover"
+          />
+        )}
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <MapPin className="mb-2 h-5 w-5 text-brand-500" />
-                <p className="font-medium">Ubicación</p>
-                <p className="text-sm text-slate-400">{event.venue}, {event.address}</p>
-              </div>
+        <button className="btn-primary w-full" type="submit" disabled={loading}>
+          {loading ? 'Enviando...' : 'Enviar evento a revisión'}
+        </button>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <Euro className="mb-2 h-5 w-5 text-brand-500" />
-                <p className="font-medium">Precio</p>
-                <p className="text-sm text-slate-400">
-                  {event.priceFrom === 0 ? 'Entrada gratis' : `Desde ${event.priceFrom}€`}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <Music4 className="mb-2 h-5 w-5 text-brand-500" />
-                <p className="font-medium">Música</p>
-                <p className="text-sm text-slate-400">{event.music.join(', ')}</p>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <Users className="mb-2 h-5 w-5 text-brand-500" />
-                <p className="font-medium">Público</p>
-                <p className="text-sm text-slate-400">{event.audience}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="card p-6">
-            <h2 className="text-2xl font-semibold">Qué hace especial este plan</h2>
-            <div className="mt-5 flex flex-wrap gap-3">
-              {event.perks.map((perk: string) => (
-                <span key={perk} className="badge">
-                  <Sparkles className="mr-2 h-4 w-4" /> {perk}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <aside className="space-y-6">
-          <div className="card p-6">
-            <h3 className="text-xl font-semibold">Reserva o compra entradas</h3>
-            <p className="mt-3 text-sm text-slate-400">
-              En producción, aquí conectaríamos Eventbrite, Fourvenues, Xceed o una URL directa del organizador.
-            </p>
-            <a href="#" className="btn-primary mt-6 w-full">Comprar entradas</a>
-            <button className="btn-secondary mt-3 w-full">Guardar en favoritos</button>
-          </div>
-        </aside>
-      </section>
-
-      <Footer />
+        {message && <p className="text-sm text-brand-500">{message}</p>}
+      </form>
     </main>
-  );
+  )
 }
