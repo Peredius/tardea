@@ -26,6 +26,7 @@ export default function NewEventPage() {
   const [startTime, setStartTime] = useState('17:00')
   const [endTime, setEndTime] = useState('23:00')
   const [priceFrom, setPriceFrom] = useState('')
+  const [isInvitation, setIsInvitation] = useState(false)
   const [music, setMusic] = useState('')
   const [cover, setCover] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState('')
@@ -71,15 +72,15 @@ export default function NewEventPage() {
       title,
       slug: generateSlug(title, date),
       venue,
-      area: area === 'Otra' ? customArea : area,
-      address,
+      area: area === 'Otra' ? customArea || null : area || null,
+      address: address || null,
       date,
       start_time: startTime,
       end_time: endTime,
       type,
       music: music ? [music] : [],
       audience: '25-35',
-      price_from: priceFrom ? Number(priceFrom) : 0,
+      price_from: priceFrom ? parseFloat(priceFrom) : null,
       cover: imageUrl,
       featured: false,
       description,
@@ -177,7 +178,30 @@ export default function NewEventPage() {
         <input type="time" className="input" value={startTime} onChange={(e) => setStartTime(e.target.value)} required />
         <input type="time" className="input" value={endTime} onChange={(e) => setEndTime(e.target.value)} required />
 
-        <input className="input" placeholder="Precio desde (€)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
+       <div className="space-y-3">
+  <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-slate-100">
+    <input
+      type="checkbox"
+      checked={isInvitation}
+      onChange={(e) => {
+        setIsInvitation(e.target.checked)
+        if (e.target.checked) setPriceFrom('')
+      }}
+    />
+    Entrada con invitación
+  </label>
+
+  {!isInvitation && (
+    <input
+      className="input"
+      type="number"
+      min="0"
+      placeholder="Precio desde (€)"
+      value={priceFrom}
+      onChange={(e) => setPriceFrom(e.target.value)}
+    />
+  )}
+</div>
         <input className="input" placeholder="Lugar / Sala" value={venue} onChange={(e) => setVenue(e.target.value)} required />
         <input className="input" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} required />
 
