@@ -157,29 +157,63 @@ function LoginContent() {
   </p>
 
   <div className="grid grid-cols-3 gap-2">
-    <input
+    {/* DÍA */}
+    <select
       className="input"
-      placeholder="Día"
       value={day}
       onChange={(e) => setDay(e.target.value)}
       required
-    />
+    >
+      <option value="">Día</option>
+      {[...Array(31)].map((_, i) => (
+        <option key={i + 1} value={i + 1}>
+          {i + 1}
+        </option>
+      ))}
+    </select>
 
-    <input
+    {/* MES */}
+    <select
       className="input"
-      placeholder="Mes"
       value={month}
       onChange={(e) => setMonth(e.target.value)}
       required
-    />
+    >
+      <option value="">Mes</option>
+      {[
+        'Enero',
+        'Febrero',
+        'Marzo',
+        'Abril',
+        'Mayo',
+        'Junio',
+        'Julio',
+        'Agosto',
+        'Septiembre',
+        'Octubre',
+        'Noviembre',
+        'Diciembre',
+      ].map((m, i) => (
+        <option key={i + 1} value={i + 1}>
+          {m}
+        </option>
+      ))}
+    </select>
 
-    <input
+    {/* AÑO */}
+    <select
       className="input"
-      placeholder="Año"
       value={year}
       onChange={(e) => setYear(e.target.value)}
       required
-    />
+    >
+      <option value="">Año</option>
+      {Array.from({ length: 60 }, (_, i) => 2007 - i).map((y) => (
+        <option key={y} value={y}>
+          {y}
+        </option>
+      ))}
+    </select>
   </div>
 </div>
 
