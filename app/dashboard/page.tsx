@@ -1,5 +1,15 @@
 import { redirect } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+const {
+  data: { user },
+} = await supabase.auth.getUser()
+
+await supabase.from('events').insert({
+  title,
+  description,
+  image_url,
+  status: 'pending',
+  user_id: user.id,
+})
 
 export default async function DashboardPage() {
   const {
