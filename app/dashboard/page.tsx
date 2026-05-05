@@ -36,8 +36,8 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-black text-white px-6 py-10 md:px-12">
-        <p className="text-white/60">Cargando...</p>
+      <main className="min-h-screen bg-black px-6 py-10 text-white md:px-12">
+        <p className="text-sm text-white/50">Cargando panel...</p>
       </main>
     )
   }
@@ -46,94 +46,128 @@ export default function DashboardPage() {
   const approvedEvents = events.filter((event) => event.status === 'approved')
 
   return (
-    <main className="min-h-screen bg-black text-white px-6 py-10 md:px-12">
-      <section className="mb-10 flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-        <div>
-          <p className="text-sm uppercase tracking-[0.35em] text-white/40">
-            Dashboard
-          </p>
-          <h1 className="mt-2 text-4xl font-black tracking-tight">
-            Panel de sala
-          </h1>
-          <p className="mt-3 max-w-2xl text-white/60">
-            Gestiona tus eventos, revisa su estado y crea nuevas propuestas para aprobación.
-          </p>
-        </div>
-
-        <a
-          href="/dashboard/new-event"
-          className="rounded-full bg-[#d7ff3f] px-6 py-3 text-sm font-black text-black transition hover:scale-[1.02] hover:opacity-90"
-        >
-          + Crear evento
-        </a>
-      </section>
-
-      <section className="mb-8 grid gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-          <p className="text-sm text-white/50">Usuario conectado</p>
-          <p className="mt-2 font-semibold">{email}</p>
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-          <p className="text-sm text-white/50">Eventos aprobados</p>
-          <p className="mt-2 text-3xl font-black">{approvedEvents.length}</p>
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-          <p className="text-sm text-white/50">Pendientes de revisión</p>
-          <p className="mt-2 text-3xl font-black">{pendingEvents.length}</p>
-        </div>
-      </section>
-
-      <section className="rounded-3xl border border-white/10 bg-white/[0.02] p-5 md:p-6">
-        <div className="mb-5 flex items-center justify-between">
+    <main className="min-h-screen bg-black px-6 py-8 text-white md:px-12">
+      <section className="mx-auto max-w-7xl">
+        <div className="mb-10 flex flex-col gap-6 border-b border-white/10 pb-8 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.25em] text-white/40">
-              Eventos
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#d7ff3f]">
+              Tardea Partners
             </p>
-            <h2 className="mt-1 text-2xl font-black">Mis eventos</h2>
+
+            <h1 className="text-4xl font-black tracking-tight md:text-6xl">
+              Panel de sala
+            </h1>
+
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+              Sube tus eventos, revisa su estado y gestiona tus propuestas antes
+              de que aparezcan publicadas en Tardea.
+            </p>
           </div>
+
+          <a
+            href="/dashboard/new-event"
+            className="inline-flex items-center justify-center rounded-full bg-[#d7ff3f] px-7 py-4 text-sm font-black uppercase tracking-wide text-black transition hover:scale-[1.02] hover:bg-white"
+          >
+            + Crear evento
+          </a>
         </div>
 
-        {events.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-white/15 p-8 text-center">
-            <p className="text-white/60">No tienes eventos todavía.</p>
-            <a
-              href="/dashboard/new-event"
-              className="mt-5 inline-block rounded-full bg-[#d7ff3f] px-5 py-3 text-sm font-black text-black"
-            >
-              Crear mi primer evento
-            </a>
+        <section className="mb-8 grid gap-4 md:grid-cols-3">
+          <div className="rounded-[28px] border border-white/10 bg-[#0b0b0b] p-6">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-white/35">
+              Usuario
+            </p>
+            <p className="mt-3 break-all text-lg font-bold text-white">
+              {email}
+            </p>
           </div>
-        )}
 
-        <div className="space-y-3">
-          {events.map((event) => (
-            <div
-              key={event.id}
-              className="rounded-2xl border border-white/10 bg-black/40 p-5 transition hover:border-white/20 hover:bg-white/[0.04]"
-            >
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <h3 className="text-lg font-bold">{event.title}</h3>
-                  <p className="mt-1 text-sm text-white/45">
-                    Evento enviado para revisión
-                  </p>
-                </div>
+          <div className="rounded-[28px] border border-white/10 bg-[#0b0b0b] p-6">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-white/35">
+              Aprobados
+            </p>
+            <p className="mt-3 text-5xl font-black text-[#d7ff3f]">
+              {approvedEvents.length}
+            </p>
+          </div>
 
-                <span
-                  className={
-                    event.status === 'approved'
-                      ? 'w-fit rounded-full bg-[#d7ff3f] px-3 py-1 text-xs font-black uppercase text-black'
-                      : 'w-fit rounded-full border border-white/15 px-3 py-1 text-xs font-bold uppercase text-white/60'
-                  }
-                >
-                  {event.status === 'approved' ? 'Aprobado' : 'Pendiente'}
-                </span>
-              </div>
+          <div className="rounded-[28px] border border-white/10 bg-[#0b0b0b] p-6">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-white/35">
+              Pendientes
+            </p>
+            <p className="mt-3 text-5xl font-black text-white">
+              {pendingEvents.length}
+            </p>
+          </div>
+        </section>
+
+        <section className="rounded-[32px] border border-white/10 bg-[#050505] p-5 md:p-7">
+          <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#d7ff3f]">
+                Eventos
+              </p>
+              <h2 className="mt-2 text-3xl font-black">Mis eventos</h2>
             </div>
-          ))}
-        </div>
+
+            <p className="text-sm text-white/45">
+              Los eventos nuevos se envían como pendientes.
+            </p>
+          </div>
+
+          {events.length === 0 && (
+            <div className="rounded-[28px] border border-dashed border-white/15 bg-white/[0.02] p-10 text-center">
+              <p className="text-xl font-bold">Todavía no tienes eventos.</p>
+              <p className="mt-2 text-white/50">
+                Crea tu primer evento y lo revisaremos antes de publicarlo.
+              </p>
+
+              <a
+                href="/dashboard/new-event"
+                className="mt-6 inline-flex rounded-full bg-[#d7ff3f] px-6 py-3 text-sm font-black uppercase text-black transition hover:bg-white"
+              >
+                Crear primer evento
+              </a>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {events.map((event) => {
+              const approved = event.status === 'approved'
+
+              return (
+                <article
+                  key={event.id}
+                  className="group rounded-[26px] border border-white/10 bg-[#0b0b0b] p-5 transition hover:border-[#d7ff3f]/50 hover:bg-[#101010]"
+                >
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <h3 className="text-xl font-black tracking-tight">
+                        {event.title}
+                      </h3>
+
+                      <p className="mt-2 text-sm text-white/45">
+                        {approved
+                          ? 'Publicado en Tardea'
+                          : 'En revisión por el equipo de Tardea'}
+                      </p>
+                    </div>
+
+                    <span
+                      className={
+                        approved
+                          ? 'w-fit rounded-full bg-[#d7ff3f] px-4 py-2 text-xs font-black uppercase tracking-wide text-black'
+                          : 'w-fit rounded-full border border-white/15 bg-white/[0.03] px-4 py-2 text-xs font-black uppercase tracking-wide text-white/65'
+                      }
+                    >
+                      {approved ? 'Aprobado' : 'Pendiente'}
+                    </span>
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        </section>
       </section>
     </main>
   )
