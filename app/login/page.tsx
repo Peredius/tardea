@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
-export default function LoginPage() {
+function LoginContent() {
   const searchParams = useSearchParams()
   const type = searchParams.get('type')
 
@@ -50,22 +50,15 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="container-page py-16">
-
-        {/* 🔥 LOGO */}
         <a href="/" className="mb-10 block text-center">
-          <span className="text-2xl font-bold tracking-tight">
-            TARDEA
-          </span>
+          <span className="text-2xl font-bold tracking-tight">TARDEA</span>
         </a>
 
         <div className="card mx-auto max-w-md p-6">
-          
-          {/* 🔥 TÍTULO */}
-          <h1 className="text-3xl font-bold text-center">
+          <h1 className="text-center text-3xl font-bold">
             {type === 'user' ? 'Acceso usuarios' : 'Acceso promotor'}
           </h1>
 
-          {/* 🔥 SUBTEXTO */}
           <p className="mt-2 text-center text-slate-400">
             {type === 'user'
               ? 'Guarda tus eventos favoritos y accede a beneficios.'
@@ -94,13 +87,19 @@ export default function LoginPage() {
             </button>
 
             {message && (
-              <p className="text-sm text-center text-brand-500">
-                {message}
-              </p>
+              <p className="text-center text-sm text-brand-500">{message}</p>
             )}
           </form>
         </div>
       </div>
     </main>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginContent />
+    </Suspense>
   )
 }
