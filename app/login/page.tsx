@@ -40,7 +40,6 @@ export default function LoginPage() {
       .eq('id', user.id)
       .single()
 
-    // 🔥 REDIRECCIÓN INTELIGENTE
     if (profile?.role === 'admin') {
       window.location.href = '/admin'
     } else {
@@ -49,43 +48,58 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="container-page py-16">
-      <div className="card mx-auto max-w-md p-6">
-        
-        {/* 🔥 TÍTULO DINÁMICO */}
-        <h1 className="text-3xl font-bold">
-          {type === 'user' ? 'Acceso usuarios' : 'Acceso promotores'}
-        </h1>
+    <main className="min-h-screen bg-slate-950 text-slate-100">
+      <div className="container-page py-16">
 
-        <p className="mt-2 text-slate-400">
-          {type === 'user'
-            ? 'Guarda tus eventos favoritos y accede a beneficios.'
-            : 'Entra para gestionar tus eventos.'}
-        </p>
+        {/* 🔥 LOGO */}
+        <a href="/" className="mb-10 block text-center">
+          <span className="text-2xl font-bold tracking-tight">
+            TARDEA
+          </span>
+        </a>
 
-        <form onSubmit={handleLogin} className="mt-6 space-y-4">
-          <input
-            className="input"
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+        <div className="card mx-auto max-w-md p-6">
+          
+          {/* 🔥 TÍTULO */}
+          <h1 className="text-3xl font-bold text-center">
+            {type === 'user' ? 'Acceso usuarios' : 'Acceso promotor'}
+          </h1>
 
-          <input
-            className="input"
-            type="password"
-            placeholder="Contraseña"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          {/* 🔥 SUBTEXTO */}
+          <p className="mt-2 text-center text-slate-400">
+            {type === 'user'
+              ? 'Guarda tus eventos favoritos y accede a beneficios.'
+              : 'Accede a tu panel promotor para gestionar eventos.'}
+          </p>
 
-          <button className="btn-primary w-full" type="submit">
-            Entrar
-          </button>
+          <form onSubmit={handleLogin} className="mt-6 space-y-4">
+            <input
+              className="input"
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
 
-          {message && <p className="text-sm text-brand-500">{message}</p>}
-        </form>
+            <input
+              className="input"
+              type="password"
+              placeholder="Contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+
+            <button className="btn-primary w-full" type="submit">
+              Entrar
+            </button>
+
+            {message && (
+              <p className="text-sm text-center text-brand-500">
+                {message}
+              </p>
+            )}
+          </form>
+        </div>
       </div>
     </main>
   )
