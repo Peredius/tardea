@@ -81,7 +81,7 @@ export function Filters() {
   }, [area, audience, date, music, price, type, dbEvents]);
 
   return (
-    <section id="explorar" className="container-page py-16">
+    <section id="eventos" className="container-page py-6">
       <div className="mb-8 flex items-end justify-between gap-4">
         <div>
           <p className="text-sm font-semibold text-brand-500">Buscador</p>
