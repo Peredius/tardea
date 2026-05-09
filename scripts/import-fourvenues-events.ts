@@ -306,7 +306,12 @@ async function fetchFourvenues(source: SourceEvent) {
 
   const html = await response.text()
 
-  const title = getTitleFromHtml(html) || source.fallbackTitle
+  const scrapedTitle = getTitleFromHtml(html)
+
+const title =
+  scrapedTitle && !scrapedTitle.toLowerCase().includes('hang on a sec')
+    ? scrapedTitle
+    : source.fallbackTitle
   const description =
     getMeta(html, 'description') ||
     getMeta(html, 'og:description') ||
