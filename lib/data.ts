@@ -8,7 +8,7 @@ export type EventItem = {
   startTime: string;
   endTime: string;
   type: 'Tardeo' | 'Brunch' | 'Rooftop' | 'Afterwork' | 'Fiesta temática';
-  music: ('Reggaetón' | 'House' | 'Pop' | 'Indie' | 'Flamenco' | 'Techno')[];
+  music: ('Reggaetón' | 'House' | 'Pop' | 'Indie' | 'Flamenquito' | 'Techno')[];
   audience: '18-25' | '25-35' | '30+' | 'Mixto';
   priceFrom: number;
   cover: string;
