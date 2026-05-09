@@ -52,7 +52,7 @@ export const events: EventItem[] = [
     startTime: '13:30',
     endTime: '20:00',
     type: 'Brunch',
-    music: ['House', 'Indie'],
+    music: ['Electrónica'],
     audience: '30+',
     priceFrom: 25,
     cover: 'https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&w=1200&q=80',
