@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "import-events": "tsx -r dotenv/config scripts/import-fourvenues-events.ts"
+    "import-events": "tsx -r dotenv/config scripts/import-events.ts"
   },
 
   "dependencies": {
