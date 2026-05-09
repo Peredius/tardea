@@ -29,11 +29,11 @@ export function Navbar() {
           <a href="#newsletter" className="hover:text-white">Newsletter</a>
         </nav>
 
-       <div className="flex items-center gap-3">
+       <div className="flex items-center gap-2">
   {/* PROMOTOR */}
   <Link
     href="/login?type=venue"
-    className="text-sm text-slate-200 hover:text-white"
+    className="text-sm text-slate-300 hover:text-white"
   >
     Promotor
   </Link>
