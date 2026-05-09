@@ -34,7 +34,7 @@ export const events: EventItem[] = [
     startTime: '17:00',
     endTime: '23:00',
     type: 'Rooftop',
-    music: ['House', 'Pop'],
+    music: ['Electrónica', 'Pop'],
     audience: '25-35',
     priceFrom: 18,
     cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80',
