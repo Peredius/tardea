@@ -121,7 +121,7 @@ export const events: EventItem[] = [
     startTime: '15:30',
     endTime: '21:30',
     type: 'Fiesta temática',
-    music: ['Flamenco', 'Pop'],
+    music: ['Flamenquito'],
     audience: '30+',
     priceFrom: 20,
     cover: 'https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?auto=format&fit=crop&w=1200&q=80',
