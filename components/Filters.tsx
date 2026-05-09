@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { CalendarDays, Clock3, Euro, MapPin, Music4, Users } from 'lucide-react';
+import { CalendarDays, Clock3, Euro, MapPin, Music4, Search, Users } from 'lucide-react';
 import { audienceTypes, eventTypes, events, musicTypes, priceRanges } from '@/lib/data';
 import { supabase } from '@/lib/supabase';
 
@@ -16,6 +16,7 @@ function matchesPrice(range: string, price: number) {
 }
 
 export function Filters() {
+  const [search, setSearch] = useState('');
   const [date, setDate] = useState('');
   const [type, setType] = useState('Todos');
   const [music, setMusic] = useState('Todas');
@@ -52,7 +53,7 @@ export function Filters() {
           cover: event.cover,
           featured: event.featured,
           description: event.description,
-          perks: event.perks || []
+          perks: event.perks || [],
         }));
 
         setDbEvents(mappedEvents);
@@ -62,12 +63,17 @@ export function Filters() {
     fetchEvents();
   }, []);
 
-  const areas = useMemo(() => ['Todas', ...new Set(dbEvents.map((event) => event.area))], [dbEvents]);
+  const areas = useMemo(
+    () => ['Todas', ...new Set(dbEvents.map((event) => event.area).filter(Boolean))],
+    [dbEvents]
+  );
 
   const filtered = useMemo(() => {
     return dbEvents.filter((event) => {
       const today = new Date().toISOString().split('T')[0];
+      const searchText = search.trim().toLowerCase();
 
+      if (searchText && !event.title.toLowerCase().includes(searchText)) return false;
       if (!date && event.date < today) return false;
       if (date && event.date !== date) return false;
       if (type !== 'Todos' && event.type !== type) return false;
@@ -78,25 +84,40 @@ export function Filters() {
 
       return true;
     });
-  }, [area, audience, date, music, price, type, dbEvents]);
+  }, [area, audience, date, music, price, type, search, dbEvents]);
 
   return (
     <section id="eventos" className="container-page py-6">
       <div className="mb-8 flex items-end justify-between gap-4">
         <div>
           <p className="text-sm font-semibold text-brand-500">Buscador</p>
-          <h2 className="mt-2 text-3xl font-bold tracking-tight">Explora eventos de tardeo</h2>
+          <h2 className="mt-2 text-3xl font-bold tracking-tight">
+            Explora eventos de tardeo
+          </h2>
         </div>
         <p className="text-sm text-slate-400">{filtered.length} eventos encontrados</p>
       </div>
 
       <div className="card p-5">
+        <label className="mb-4 block space-y-2 text-sm">
+          <span className="inline-flex items-center gap-2 text-slate-300">
+            <Search className="h-4 w-4" /> Buscar por nombre de evento
+          </span>
+          <input
+            className="input"
+            type="text"
+            placeholder="Ej: Pompa, brunch, rooftop..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </label>
+
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
           <label className="block w-full space-y-2 text-sm">
             <span className="inline-flex items-center gap-2 text-slate-300">
               <CalendarDays className="h-4 w-4" /> Fecha
             </span>
-            <input className="input w-full min-w-0" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            <input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </label>
 
           <label className="space-y-2 text-sm">
@@ -164,33 +185,40 @@ export function Filters() {
                 <div className="mb-3 flex flex-wrap gap-2">
                   <span className="badge">{event.type}</span>
                   <span className="badge">{event.area}</span>
-                  <span className="badge">Desde {event.priceFrom === 0 ? 'gratis' : `${event.priceFrom}€`}</span>
+                  <span className="badge">
+                    Desde {event.priceFrom === 0 ? 'gratis' : `${event.priceFrom}€`}
+                  </span>
                   {isPastEvent && <span className="badge">Evento pasado</span>}
                 </div>
 
                 <h3 className="text-2xl font-semibold text-white">{event.title}</h3>
 
                 <p className="mt-2 text-sm text-slate-300">
-                  {event.venue} · {new Date(event.date).toLocaleDateString('es-ES')} · {event.startTime?.slice(0, 5)} - {event.endTime?.slice(0, 5)}
+                  {event.venue} · {new Date(event.date).toLocaleDateString('es-ES')} ·{' '}
+                  {event.startTime?.slice(0, 5)} - {event.endTime?.slice(0, 5)}
                 </p>
 
-                <p className="mt-4 line-clamp-3 text-sm text-slate-400">{event.description}</p>
+                <p className="mt-4 line-clamp-3 text-sm text-slate-400">
+                  {event.description}
+                </p>
 
                 <div className="mt-5 flex flex-wrap gap-2">
-                  {event.music.map((item) => <span key={item} className="badge">{item}</span>)}
+                  {event.music.map((item) => (
+                    <span key={item} className="badge">{item}</span>
+                  ))}
                 </div>
 
-  <div className="mt-auto flex gap-3 pt-6">
-  <Link href={`/eventos/${event.slug}`} className="btn-primary">
-    Ver evento
-  </Link>
+                <div className="mt-auto flex gap-3 pt-6">
+                  <Link href={`/eventos/${event.slug}`} className="btn-primary">
+                    Ver evento
+                  </Link>
 
-  {!isPastEvent && (
-    <a href="#newsletter" className="btn-secondary">
-      Recibir planes
-    </a>
-  )}
-</div>
+                  {!isPastEvent && (
+                    <a href="#newsletter" className="btn-secondary">
+                      Recibir planes
+                    </a>
+                  )}
+                </div>
               </div>
             </article>
           );
