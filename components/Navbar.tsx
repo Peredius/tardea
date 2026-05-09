@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { Search } from 'lucide-react';
 
 export function Navbar() {
   return (
@@ -16,7 +17,13 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden gap-8 text-sm text-slate-300 md:flex">
-          <a href="#explorar" className="hover:text-white">Explorar</a>
+          <a
+  href="#eventos"
+  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10 hover:text-white"
+>
+  <Search className="h-4 w-4" />
+  Buscar
+</a>
           <a href="#destacados" className="hover:text-white">Destacados</a>
           <a href="#zonas" className="hover:text-white">Zonas</a>
           <a href="#newsletter" className="hover:text-white">Newsletter</a>
