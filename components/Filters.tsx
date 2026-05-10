@@ -65,20 +65,35 @@ export function Filters() {
   const areas = useMemo(() => ['Todas', ...new Set(dbEvents.map((event) => event.area))], [dbEvents]);
 
   const filtered = useMemo(() => {
-    return dbEvents.filter((event) => {
-      const today = new Date().toISOString().split('T')[0];
+  // SI NO HAY FECHA → NO MOSTRAR EVENTOS
+  if (!date) return [];
 
-      if (!date && event.date < today) return false;
-      if (date && event.date !== date) return false;
-      if (type !== 'Todos' && event.type !== type) return false;
-      if (music !== 'Todas' && !event.music.includes(music as never)) return false;
-      if (audience !== 'Todas' && event.audience !== audience) return false;
-      if (!matchesPrice(price, event.priceFrom)) return false;
-      if (area !== 'Todas' && event.area !== area) return false;
+  return dbEvents.filter((event) => {
+    if (event.date !== date) return false;
 
-      return true;
-    });
-  }, [area, audience, date, music, price, type, dbEvents]);
+    if (type !== 'Todos' && event.type !== type) return false;
+
+    if (
+      music !== 'Todas' &&
+      !event.music.includes(music as never)
+    )
+      return false;
+
+    if (
+      audience !== 'Todas' &&
+      event.audience !== audience
+    )
+      return false;
+
+    if (!matchesPrice(price, event.priceFrom))
+      return false;
+
+    if (area !== 'Todas' && event.area !== area)
+      return false;
+
+    return true;
+  });
+}, [area, audience, date, music, price, type, dbEvents]);
 
   return (
     <section id="eventos" className="container-page py-6">
@@ -87,7 +102,11 @@ export function Filters() {
           <p className="text-sm font-semibold text-brand-500">Buscador</p>
           <h2 className="mt-2 text-3xl font-bold tracking-tight">Explora eventos de tardeo</h2>
         </div>
-        <p className="text-sm text-slate-400">{filtered.length} eventos encontrados</p>
+        {date && (
+  <p className="text-sm text-slate-400">
+    {filtered.length} eventos encontrados
+  </p>
+)}
       </div>
 
       <div className="card p-5">
@@ -146,7 +165,18 @@ export function Filters() {
         </div>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
+      {!date ? (
+  <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-10 text-center">
+    <h3 className="text-2xl font-semibold text-white">
+      Elige una fecha
+    </h3>
+
+    <p className="mt-3 text-slate-400">
+      Descubre los mejores tardeos, brunchs, rooftop y afterworks de Madrid.
+    </p>
+  </div>
+) : (
+  <div className="mt-8 grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
         {filtered.map((event) => {
           const today = new Date().toISOString().split('T')[0];
           const isPastEvent = event.date < today;
@@ -196,6 +226,7 @@ export function Filters() {
           );
         })}
       </div>
+      )}
     </section>
   );
 }

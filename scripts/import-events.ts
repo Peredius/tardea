@@ -24,6 +24,14 @@ type SourceEvent = {
   fallbackDate: string
   fallbackStartTime: string
   fallbackEndTime: string
+  fallbackCover?: string
+}
+
+const defaultCovers = {
+  Tardeo: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80',
+  Brunch: 'https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=1200&q=80',
+  Rooftop: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1200&q=80',
+  Afterwork: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=1200&q=80',
 }
 
 const sources: SourceEvent[] = [
@@ -60,7 +68,7 @@ const sources: SourceEvent[] = [
     fallbackEndTime: '05:30',
   },
   {
-    url: 'https://site.fourvenues.com/es/discotecas-madrid/events/7QK1',
+    url: 'https://site.fourvenues.com/es/4lights1/events/la-vuelta-tardeo-22-05-2026-7QK1',
     venue: 'La Vuelta',
     area: 'Chamartín',
     address: 'Calle de María de Molina, 41, Chamartín, 28006 Madrid, España',
@@ -107,21 +115,6 @@ const sources: SourceEvent[] = [
     fallbackEndTime: '23:30',
   },
   {
-    url: 'https://site.fourvenues.com/es/discotecas-madrid/events/tardeo-mix-02-05-2026-11IZ',
-    venue: 'Samsara',
-    area: 'Centro',
-    address: 'C. de la Cruz, 7, 28012 Madrid, España',
-    maps_url: 'https://www.google.com/maps/search/?api=1&query=Calle%20de%20la%20Cruz%207%20Madrid',
-    type: 'Tardeo',
-    music: ['Comercial'],
-    audience: '+18',
-    price_from: 0,
-    fallbackTitle: 'TARDEO MIX',
-    fallbackDate: '2026-05-02',
-    fallbackStartTime: '18:00',
-    fallbackEndTime: '23:00',
-  },
-  {
     url: 'https://site.fourvenues.com/en/voy/events/tardeo-mix-09-05-2026-5FY4',
     venue: 'Samsara',
     area: 'Centro',
@@ -135,21 +128,6 @@ const sources: SourceEvent[] = [
     fallbackDate: '2026-05-09',
     fallbackStartTime: '18:00',
     fallbackEndTime: '23:00',
-  },
-  {
-    url: 'https://site.fourvenues.com/es/xiringuito-madrid/events/tardeo-xiringuito-01-05-2026-3HA8',
-    venue: 'Xiringuito Madrid',
-    area: 'Alcorcón',
-    address: 'Calle Oslo 53, Centro Comercial X, local 061, 28922 Madrid, España',
-    maps_url: 'https://www.google.com/maps/search/?api=1&query=Calle%20Oslo%2053%20Alcorcon',
-    type: 'Tardeo',
-    music: ['Comercial'],
-    audience: '+18',
-    price_from: 0,
-    fallbackTitle: 'TARDEO XIRINGUITO',
-    fallbackDate: '2026-05-01',
-    fallbackStartTime: '19:00',
-    fallbackEndTime: '02:00',
   },
   {
     url: 'https://site.fourvenues.com/es/xiringuito-madrid/events/tardeo-chuoos-09-05-2026-L70G',
@@ -182,21 +160,6 @@ const sources: SourceEvent[] = [
     fallbackEndTime: '23:00',
   },
   {
-    url: 'https://site.fourvenues.com/es/discotecas-madrid/events/after-party-tardeo-electronico-02-05-2026-0YZZ',
-    venue: 'Madrid',
-    area: 'Salamanca',
-    address: 'Calle de Juan Bravo, 35, Salamanca, 28006 Madrid, España',
-    maps_url: 'https://www.google.com/maps/search/?api=1&query=Calle%20Juan%20Bravo%2035%20Madrid',
-    type: 'Tardeo',
-    music: ['Electrónica'],
-    audience: '+18',
-    price_from: 0,
-    fallbackTitle: 'AFTER PARTY TARDEO ELECTRÓNICO',
-    fallbackDate: '2026-05-02',
-    fallbackStartTime: '00:00',
-    fallbackEndTime: '06:00',
-  },
-  {
     url: 'https://site.fourvenues.com/es/discotecas-madrid/events/experiencia-rita-la-bailaora-09-05-2026-MKX9',
     venue: 'Rita la Bailaora',
     area: 'Fuencarral-El Pardo',
@@ -211,21 +174,6 @@ const sources: SourceEvent[] = [
     fallbackDate: '2026-05-09',
     fallbackStartTime: '18:00',
     fallbackEndTime: '01:00',
-  },
-  {
-    url: 'https://site.fourvenues.com/es/discotecas-madrid/events/ZR4A',
-    venue: 'Rita la Bailaora',
-    area: 'Fuencarral-El Pardo',
-    address: 'Pista del Cristo de El Pardo, 3, Fuencarral-El Pardo, 28048 Madrid, España',
-    maps_url: 'https://www.google.com/maps/search/?api=1&query=Pista%20del%20Cristo%20de%20El%20Pardo%203%20Madrid',
-    type: 'Tardeo',
-    music: ['Comercial'],
-    audience: '+18',
-    price_from: 0,
-    fallbackTitle: 'Domingueo Rita la Bailaora',
-    fallbackDate: '2026-05-17',
-    fallbackStartTime: '13:00',
-    fallbackEndTime: '23:00',
   },
   {
     url: 'https://site.fourvenues.com/es/fiestas-legendarias-madrid/events/tardeo-rumbeo-actuacion-david-de-paloma-09-05-2026-V5BV',
@@ -257,6 +205,56 @@ const sources: SourceEvent[] = [
     fallbackDate: '2026-05-09',
     fallbackStartTime: '18:00',
     fallbackEndTime: '23:00',
+  },
+
+  // XCEED / ENTRADIUM - de momento semi-manual
+  {
+    url: 'https://xceed.me/es',
+    venue: 'Sala Nazca',
+    area: 'Chamartín',
+    address: 'Calle de Orense 24, Madrid',
+    maps_url: 'https://www.google.com/maps/search/?api=1&query=Sala%20Nazca%20Madrid',
+    type: 'Tardeo',
+    music: ['Comercial'],
+    audience: '+18',
+    price_from: 18,
+    featured: true,
+    fallbackTitle: 'Tardeo Mañana Será Bonito',
+    fallbackDate: '2026-05-16',
+    fallbackStartTime: '17:00',
+    fallbackEndTime: '23:00',
+  },
+  {
+    url: 'https://xceed.me/es',
+    venue: 'Autocine Madrid',
+    area: 'Fuencarral',
+    address: 'Calle Isla de Java 2, Madrid',
+    maps_url: 'https://www.google.com/maps/search/?api=1&query=Autocine%20Madrid',
+    type: 'Brunch',
+    music: ['Electrónica'],
+    audience: '+21',
+    price_from: 20,
+    featured: true,
+    fallbackTitle: 'Brunch Electronik Madrid',
+    fallbackDate: '2026-05-17',
+    fallbackStartTime: '16:00',
+    fallbackEndTime: '00:00',
+  },
+  {
+    url: 'https://entradium.com',
+    venue: 'Hotel Emperador',
+    area: 'Gran Vía',
+    address: 'Gran Vía 53, Madrid',
+    maps_url: 'https://www.google.com/maps/search/?api=1&query=Hotel%20Emperador%20Madrid',
+    type: 'Rooftop',
+    music: ['Electrónica'],
+    audience: '+25',
+    price_from: 25,
+    featured: true,
+    fallbackTitle: 'Rooftop Sunset Party',
+    fallbackDate: '2026-05-30',
+    fallbackStartTime: '19:00',
+    fallbackEndTime: '02:00',
   },
 ]
 
@@ -297,27 +295,55 @@ function getDateFromUrl(url: string) {
   return `${year}-${month}-${day}`
 }
 
-async function fetchFourvenues(source: SourceEvent) {
-  const response = await fetch(source.url, {
-    headers: {
-      'user-agent': 'Mozilla/5.0 TardeaBot/1.0',
-    },
-  })
+function fallbackCoverForType(type: string) {
+  if (type === 'Brunch') return defaultCovers.Brunch
+  if (type === 'Rooftop') return defaultCovers.Rooftop
+  if (type === 'Afterwork') return defaultCovers.Afterwork
+  return defaultCovers.Tardeo
+}
 
-  const html = await response.text()
+async function fetchSource(source: SourceEvent) {
+  let html = ''
+
+  try {
+    const response = await fetch(source.url, {
+      headers: {
+        'user-agent': 'Mozilla/5.0 TardeaBot/1.0',
+      },
+    })
+
+    html = await response.text()
+  } catch {
+    html = ''
+  }
 
   const scrapedTitle = getTitleFromHtml(html)
 
+  const blockedTitles = [
+  'hang on a sec',
+  'xceed',
+  'entradium',
+]
+
+const invalidTitle = blockedTitles.some((item) =>
+  scrapedTitle?.toLowerCase().includes(item)
+)
+
 const title =
-  scrapedTitle && !scrapedTitle.toLowerCase().includes('hang on a sec')
+  scrapedTitle && !invalidTitle
     ? scrapedTitle
     : source.fallbackTitle
+
   const description =
     getMeta(html, 'description') ||
     getMeta(html, 'og:description') ||
-    `Evento en ${source.venue}`
+    `Evento de ${source.type.toLowerCase()} en ${source.venue}.`
 
-  const cover = getMeta(html, 'og:image') || ''
+  const cover =
+    source.fallbackCover ||
+    getMeta(html, 'og:image') ||
+    fallbackCoverForType(source.type)
+
   const date = getDateFromUrl(source.url) || source.fallbackDate
 
   return {
@@ -347,7 +373,7 @@ const title =
 async function main() {
   for (const source of sources) {
     try {
-      const event = await fetchFourvenues(source)
+      const event = await fetchSource(source)
 
       const { error } = await supabase
         .from('events')
