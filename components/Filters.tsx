@@ -122,14 +122,7 @@ useEffect(() => {
 
       <div className="card p-5">
   
-  {date && (
-  <div className="mt-5 flex justify-end">
-    <p className="text-sm font-semibold text-white">
-      {filtered.length} eventos encontrados
-    </p>
-  </div>
-)}
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           
 
           <label className="space-y-2 text-sm">
@@ -176,19 +169,21 @@ useEffect(() => {
               {areas.map((option) => <option key={option}>{option}</option>)}
             </select>
           </label>
+          <div className="mt-5 flex items-center justify-between">
+    <h2 className="text-sm font-semibold text-brand-500">
+      Filtrador de eventos
+    </h2>
+    
+          {date && (
+      <p className="text-sm font-semibold text-white">
+        {filtered.length} eventos encontrados
+      </p>
+    )}
         </div>
       </div>
-<div className="mt-5 flex items-center justify-between">
-  <h2 className="text-sm font-semibold text-brand-500">
-    Filtrador de eventos
-  </h2>
 
-  {date && (
-    <p className="text-sm font-semibold text-white">
-      {filtered.length} eventos encontrados
-    </p>
-  )}
-</div>
+)}
+  </div>
       {!date ? (
   <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-10 text-center">
     <h3 className="text-2xl font-semibold text-white">
