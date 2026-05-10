@@ -84,11 +84,8 @@ export function Hero() {
             <span className="text-brand-500">planes de tarde</span> en Madrid.
           </h1>
 
-          <a href="#eventos" className="btn-primary mt-8 inline-flex">
-            Buscar eventos
-          </a>
-
-          <p className="mt-6 max-w-2xl text-lg text-slate-300">
+          
+          <p className="mt-8 max-w-2xl text-lg text-slate-300">
             Rooftops, brunches, afterworks y eventos de tarde seleccionados cada
             día para que solo tengas que elegir y disfrutar.
           </p>
