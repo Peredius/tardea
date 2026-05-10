@@ -121,11 +121,7 @@ useEffect(() => {
       
 
       <div className="card p-5">
-  <div className="mb-5">
-    <h2 className="text-sm font-semibold text-brand-500">
-      Filtrador de eventos
-    </h2>
-  </div>
+  
   {date && (
   <div className="mt-5 flex justify-end">
     <p className="text-sm font-semibold text-white">
@@ -182,7 +178,17 @@ useEffect(() => {
           </label>
         </div>
       </div>
+<div className="mt-5 flex items-center justify-between">
+  <h2 className="text-sm font-semibold text-brand-500">
+    Filtrador de eventos
+  </h2>
 
+  {date && (
+    <p className="text-sm font-semibold text-white">
+      {filtered.length} eventos encontrados
+    </p>
+  )}
+</div>
       {!date ? (
   <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-10 text-center">
     <h3 className="text-2xl font-semibold text-white">
