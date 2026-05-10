@@ -76,21 +76,13 @@ export function Hero() {
     <section className="bg-hero-gradient">
       <div className="container-page grid items-center gap-12 py-10 md:grid-cols-[1.15fr_0.85fr] md:py-12">
         <div>
-          <span className="badge mb-6">
-            Agenda premium de tardeo en Madrid
-          </span>
-
+          
           <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-white md:text-[56px] md:leading-[1.02]">
             Descubre los mejores{' '}
             <span className="text-brand-500">planes de tarde</span> en Madrid.
           </h1>
 
-          <p className="mt-6 max-w-2xl text-lg text-slate-300">
-            Rooftops, brunches, afterworks y eventos de tarde seleccionados cada
-            día para que solo tengas que elegir y disfrutar.
-          </p>
-
-          <div className="mt-8 flex flex-wrap gap-x-8 gap-y-4 text-sm text-slate-200">
+          <div className="mt-6 flex flex-wrap gap-5 text-sm text-slate-200">
             <div className="flex items-start gap-2">
               <Calendar className="mt-0.5 h-4 w-4 text-brand-500" />
               <div>
