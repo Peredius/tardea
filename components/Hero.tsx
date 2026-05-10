@@ -90,36 +90,36 @@ export function Hero() {
             día para que solo tengas que elegir y disfrutar.
           </p>
 
-          <div className="mt-8 flex flex-wrap gap-8 text-sm text-slate-200">
+          <div className="mt-8 flex flex-wrap gap-5 text-sm text-slate-200">
             <div className="flex items-start gap-3">
-              <Calendar className="mt-1 h-5 w-5 text-brand-500" />
+              <Calendar className="mt-0.5 h-4 w-4 text-brand-500"" />
               <div>
-                <p className="font-semibold text-white">Agenda diaria</p>
-                <p className="text-xs text-slate-400">Actualizada</p>
+                <p className="text-sm font-semibold text-white">Agenda diaria</p>
+                <p className="text-[11px] text-slate-400">Actualizada</p>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
-              <Music4 className="mt-1 h-5 w-5 text-brand-500" />
+              <Music4 className="mt-0.5 h-4 w-4 text-brand-500"" />
               <div>
-                <p className="font-semibold text-white">Música y ambiente</p>
-                <p className="text-xs text-slate-400">Para todos los gustos</p>
+                <p className="text-sm font-semibold text-white">Música y ambiente</p>
+                <p className="text-[11px] text-slate-400">Para todos los gustos</p>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
-              <MapPin className="mt-1 h-5 w-5 text-brand-500" />
+              <MapPin className="mt-0.5 h-4 w-4 text-brand-500"" />
               <div>
-                <p className="font-semibold text-white">Zonas de Madrid</p>
-                <p className="text-xs text-slate-400">Descubre tu zona</p>
+                <p className="text-sm font-semibold text-white">Zonas de Madrid</p>
+                <p className="text-[11px] text-slate-400">Descubre tu zona</p>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
-              <Ticket className="mt-1 h-5 w-5 text-brand-500" />
+              <Ticket className="mt-0.5 h-4 w-4 text-brand-500"" />
               <div>
-                <p className="font-semibold text-white">Precios y entradas</p>
-                <p className="text-xs text-slate-400">Encuentra tu plan</p>
+                <p className="text-sm font-semibold text-white">Precios y entradas</p>
+                <p className="text-[11px] text-slate-400">Encuentra tu plan</p>
               </div>
             </div>
           </div>
