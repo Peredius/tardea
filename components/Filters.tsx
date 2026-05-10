@@ -125,7 +125,7 @@ useEffect(() => {
 </h2>
         </div>
         {date && (
-  <p className="text-sm font-semibold text-brand-500">
+  <p className="text-sm font-semibold text-white">
   {filtered.length} eventos encontrados
 </p>
 )}
