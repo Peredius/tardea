@@ -125,7 +125,7 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-[30px] border border-brand-500/35 bg-black/40 p-4 shadow-[0_0_85px_rgba(255,0,102,0.22)] backdrop-blur-xl">
+        <div className="relative mx-auto w-full max-w-[520px] overflow-hidden rounded-[26px] border border-brand-500/35 bg-black/40 p-3 shadow-[0_0_60px_rgba(255,0,102,0.16)] backdrop-blur-xl">
           <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-[radial-gradient(circle_at_top,rgba(255,0,120,0.20),transparent_58%)]" />
           <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-brand-500 to-transparent" />
 
@@ -136,7 +136,7 @@ export function Hero() {
               </div>
 
               <div>
-                <h2 className="text-3xl font-bold leading-none text-white">
+                <h2 className="text-2xl font-bold leading-none text-white">
                   ¿Qué día vas a salir?
                 </h2>
 
@@ -146,7 +146,7 @@ export function Hero() {
               </div>
             </div>
 
-            <div className="rounded-[28px] border border-white/10 bg-[#060816]/90 p-5 shadow-inner shadow-brand-500/5">
+            <div className="rounded-[22px] border border-white/10 bg-[#060816]/90 p-3 shadow-inner shadow-brand-500/5">
               <div className="mb-5 flex items-center justify-between">
                 <button
                   type="button"
@@ -156,7 +156,7 @@ export function Hero() {
                   <ChevronLeft className="h-5 w-5" />
                 </button>
 
-                <p className="text-lg font-bold text-white">
+                <p className="text-base font-bold text-white">
                   {monthNames[currentMonth]} {currentYear}
                 </p>
 
@@ -169,13 +169,13 @@ export function Hero() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-7 gap-1.5 text-center text-xs font-semibold text-slate-400">
+              <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-slate-500">
                 {weekDays.map((day) => (
                   <div key={day}>{day}</div>
                 ))}
               </div>
 
-              <div className="mt-4 grid grid-cols-7 gap-1.5 text-center">
+              <div className="mt-3 grid grid-cols-7 gap-1 text-center">
                 {days.map((day, index) => {
                   if (!day) return <div key={index} />
 
@@ -193,7 +193,7 @@ export function Hero() {
                       key={value}
                       type="button"
                       onClick={() => selectDate(day)}
-                      className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition ${
+                      className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold transition ${
                         isSelected
                           ? 'bg-gradient-to-br from-pink-500 to-rose-500 text-white shadow-[0_0_30px_rgba(255,0,102,0.55)]'
                           : isToday
