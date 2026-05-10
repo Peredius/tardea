@@ -118,20 +118,21 @@ useEffect(() => {
 
   return (
     <section id="eventos" className="container-page py-6">
-      <div className="mb-8 flex items-end justify-between gap-4">
-        <div>
-          <h2 className="text-sm font-semibold text-brand-500">
-  Buscador de eventos
-</h2>
-        </div>
-        {date && (
-  <p className="text-sm font-semibold text-white">
-  {filtered.length} eventos encontrados
-</p>
-)}
-      </div>
+      
 
       <div className="card p-5">
+  <div className="mb-5">
+    <h2 className="text-sm font-semibold text-brand-500">
+      Filtrador de eventos
+    </h2>
+  </div>
+  {date && (
+  <div className="mt-5 flex justify-end">
+    <p className="text-sm font-semibold text-white">
+      {filtered.length} eventos encontrados
+    </p>
+  </div>
+)}
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           
 
