@@ -97,15 +97,14 @@ export function Hero() {
                     '#eventos input[type="date"]'
                   ) as HTMLInputElement
 
-                if (dateInput) {
-                  dateInput.value = e.target.value
+                localStorage.setItem(
+  'selectedDate',
+  e.target.value
+)
 
-                  dateInput.dispatchEvent(
-                    new Event('input', {
-                      bubbles: true,
-                    })
-                  )
-                }
+window.location.href = '#eventos'
+
+window.location.reload()
               }}
             />
 

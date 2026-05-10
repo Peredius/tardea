@@ -16,7 +16,13 @@ function matchesPrice(range: string, price: number) {
 }
 
 export function Filters() {
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState(() => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('selectedDate') || ''
+  }
+
+  return ''
+})
   const [type, setType] = useState('Todos');
   const [music, setMusic] = useState('Todas');
   const [audience, setAudience] = useState('Todas');
@@ -63,7 +69,11 @@ export function Filters() {
   }, []);
 
   const areas = useMemo(() => ['Todas', ...new Set(dbEvents.map((event) => event.area))], [dbEvents]);
-
+useEffect(() => {
+  if (date) {
+    localStorage.setItem('selectedDate', date)
+  }
+}, [date])
   const filtered = useMemo(() => {
   // SI NO HAY FECHA → NO MOSTRAR EVENTOS
   if (!date) return [];
