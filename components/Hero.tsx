@@ -95,77 +95,53 @@ export function Hero() {
           </p>
 
           <div className="mt-8 grid grid-cols-2 gap-4 text-sm text-slate-200 md:grid-cols-4">
-  <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-    <div className="rounded-xl bg-pink-500/15 p-2 text-pink-400">
-      <Calendar className="h-5 w-5" />
-    </div>
+            <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+              <div className="rounded-xl bg-pink-500/15 p-2 text-pink-400">
+                <Calendar className="h-5 w-5" />
+              </div>
 
-    <div>
-      <p className="font-semibold text-white">Agenda diaria</p>
-      <p className="mt-1 text-xs text-slate-400">
-        Actualizada
-      </p>
-    </div>
-  </div>
+              <div>
+                <p className="font-semibold text-white">Agenda diaria</p>
+                <p className="mt-1 text-xs text-slate-400">Actualizada</p>
+              </div>
+            </div>
 
-  <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-    <div className="rounded-xl bg-orange-500/15 p-2 text-orange-400">
-      <Music4 className="h-5 w-5" />
-    </div>
+            <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+              <div className="rounded-xl bg-orange-500/15 p-2 text-orange-400">
+                <Music4 className="h-5 w-5" />
+              </div>
 
-    <div>
-      <p className="font-semibold text-white">Música y ambiente</p>
-      <p className="mt-1 text-xs text-slate-400">
-        Para todos los gustos
-      </p>
-    </div>
-  </div>
+              <div>
+                <p className="font-semibold text-white">Música y ambiente</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  Para todos los gustos
+                </p>
+              </div>
+            </div>
 
-  <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-    <div className="rounded-xl bg-rose-500/15 p-2 text-rose-400">
-      <MapPin className="h-5 w-5" />
-    </div>
+            <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+              <div className="rounded-xl bg-rose-500/15 p-2 text-rose-400">
+                <MapPin className="h-5 w-5" />
+              </div>
 
-    <div>
-      <p className="font-semibold text-white">Zonas de Madrid</p>
-      <p className="mt-1 text-xs text-slate-400">
-        Descubre tu zona
-      </p>
-    </div>
-  </div>
+              <div>
+                <p className="font-semibold text-white">Zonas de Madrid</p>
+                <p className="mt-1 text-xs text-slate-400">Descubre tu zona</p>
+              </div>
+            </div>
 
-  <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-    <div className="rounded-xl bg-fuchsia-500/15 p-2 text-fuchsia-400">
-      <Ticket className="h-5 w-5" />
-    </div>
+            <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+              <div className="rounded-xl bg-fuchsia-500/15 p-2 text-fuchsia-400">
+                <Ticket className="h-5 w-5" />
+              </div>
 
-    <div>
-      <p className="font-semibold text-white">Precios y entradas</p>
-      <p className="mt-1 text-xs text-slate-400">
-        Encuentra tu plan
-      </p>
-    </div>
-  </div>
-</div>
-            <span className="badge">
-              <Calendar className="mr-2 h-4 w-4" />
-              Agenda diaria
-            </span>
-
-            <span className="badge">
-              <Music4 className="mr-2 h-4 w-4" />
-              Música y ambiente
-            </span>
-
-            <span className="badge">
-              <MapPin className="mr-2 h-4 w-4" />
-              Zonas de Madrid
-            </span>
-
-            <span className="badge">
-              <Ticket className="mr-2 h-4 w-4" />
-              Precios y entradas
-            </span>
+              <div>
+                <p className="font-semibold text-white">Precios y entradas</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  Encuentra tu plan
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
