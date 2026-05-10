@@ -140,10 +140,7 @@ export function Hero() {
                   ¿Qué día vas a salir?
                 </h2>
 
-                <p className="mt-1 text-sm text-slate-400">
-                  Elige una fecha y descubre los mejores eventos de tarde.
-                </p>
-              </div>
+                              </div>
             </div>
 
             <div className="rounded-[22px] border border-white/10 bg-[#060816]/90 p-3 shadow-inner shadow-brand-500/5">
