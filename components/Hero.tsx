@@ -50,6 +50,7 @@ export function Hero() {
 
   function changeMonth(direction: number) {
     const newDate = new Date(currentYear, currentMonth + direction, 1)
+
     setCurrentMonth(newDate.getMonth())
     setCurrentYear(newDate.getFullYear())
   }
@@ -72,81 +73,65 @@ export function Hero() {
   }
 
   return (
-  <section className="bg-hero-gradient">
-    <div className="container-page grid items-center gap-12 py-12 md:grid-cols-[0.95fr_1.05fr] md:py-16">
-      <div>
-        <span className="badge mb-6">
-          Agenda premium de tardeo en Madrid
-        </span>
+    <section className="bg-hero-gradient">
+      <div className="container-page grid items-center gap-12 py-12 md:grid-cols-[0.95fr_1.05fr] md:py-14">
+        <div>
+          <span className="badge mb-6">
+            Agenda premium de tardeo en Madrid
+          </span>
 
-        <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-white md:text-5xl">
-          Descubre los mejores{' '}
-          <span className="text-brand-500">planes de tarde</span> en Madrid.
-        </h1>
+          <h1 className="max-w-3xl text-5xl font-bold tracking-tight text-white md:text-6xl">
+            Descubre los mejores{' '}
+            <span className="text-brand-500">planes de tarde</span> en Madrid.
+          </h1>
 
-        <p className="mt-8 max-w-2xl text-lg text-slate-300">
-          Rooftops, brunches, afterworks y eventos de tarde seleccionados cada
-          día para que solo tengas que elegir y disfrutar.
-        </p>
+          <p className="mt-6 max-w-2xl text-lg text-slate-300">
+            Rooftops, brunches, afterworks y eventos de tarde seleccionados cada
+            día para que solo tengas que elegir y disfrutar.
+          </p>
 
-        <div className="mt-8 flex flex-wrap gap-5 text-sm text-slate-200">
-          <div className="flex items-start gap-2">
-            <Calendar className="mt-0.5 h-4 w-4 text-brand-500" />
-
-            <div>
-              <p className="text-sm font-semibold text-white">
-                Agenda diaria
-              </p>
-
-              <p className="text-[11px] text-slate-400">
-                Actualizada
-              </p>
+          <div className="mt-8 flex flex-wrap gap-x-8 gap-y-4 text-sm text-slate-200">
+            <div className="flex items-start gap-2">
+              <Calendar className="mt-0.5 h-4 w-4 text-brand-500" />
+              <div>
+                <p className="text-sm font-semibold text-white">Agenda diaria</p>
+                <p className="text-[11px] text-slate-400">Actualizada</p>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-start gap-2">
-            <Music4 className="mt-0.5 h-4 w-4 text-brand-500" />
-
-            <div>
-              <p className="text-sm font-semibold text-white">
-                Música y ambiente
-              </p>
-
-              <p className="text-[11px] text-slate-400">
-                Para todos los gustos
-              </p>
+            <div className="flex items-start gap-2">
+              <Music4 className="mt-0.5 h-4 w-4 text-brand-500" />
+              <div>
+                <p className="text-sm font-semibold text-white">
+                  Música y ambiente
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  Para todos los gustos
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-start gap-2">
-            <MapPin className="mt-0.5 h-4 w-4 text-brand-500" />
-
-            <div>
-              <p className="text-sm font-semibold text-white">
-                Zonas de Madrid
-              </p>
-
-              <p className="text-[11px] text-slate-400">
-                Descubre tu zona
-              </p>
+            <div className="flex items-start gap-2">
+              <MapPin className="mt-0.5 h-4 w-4 text-brand-500" />
+              <div>
+                <p className="text-sm font-semibold text-white">
+                  Zonas de Madrid
+                </p>
+                <p className="text-[11px] text-slate-400">Descubre tu zona</p>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-start gap-2">
-            <Ticket className="mt-0.5 h-4 w-4 text-brand-500" />
-
-            <div>
-              <p className="text-sm font-semibold text-white">
-                Precios y entradas
-              </p>
-
-              <p className="text-[11px] text-slate-400">
-                Encuentra tu plan
-              </p>
+            <div className="flex items-start gap-2">
+              <Ticket className="mt-0.5 h-4 w-4 text-brand-500" />
+              <div>
+                <p className="text-sm font-semibold text-white">
+                  Precios y entradas
+                </p>
+                <p className="text-[11px] text-slate-400">Encuentra tu plan</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
         <div className="relative overflow-hidden rounded-[32px] border border-brand-500/35 bg-black/40 p-5 shadow-[0_0_85px_rgba(255,0,102,0.22)] backdrop-blur-xl">
           <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-[radial-gradient(circle_at_top,rgba(255,0,120,0.20),transparent_58%)]" />
@@ -159,7 +144,7 @@ export function Hero() {
               </div>
 
               <div>
-                <h2 className="text-[2rem] font-bold leading-none text-white">
+                <h2 className="text-3xl font-bold leading-none text-white">
                   ¿Qué día vas a salir?
                 </h2>
 
