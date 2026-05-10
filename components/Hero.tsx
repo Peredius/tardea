@@ -97,14 +97,18 @@ export function Hero() {
                     '#eventos input[type="date"]'
                   ) as HTMLInputElement
 
-                localStorage.setItem(
-  'selectedDate',
-  e.target.value
-)
+                localStorage.setItem('selectedDate', e.target.value)
 
-window.location.href = '#eventos'
+window.dispatchEvent(new Event('selectedDateChanged'))
 
-window.location.reload()
+const eventos = document.getElementById('eventos')
+
+if (eventos) {
+  eventos.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start',
+  })
+}
               }}
             />
 

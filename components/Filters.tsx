@@ -74,6 +74,17 @@ useEffect(() => {
     localStorage.setItem('selectedDate', date)
   }
 }, [date])
+useEffect(() => {
+  function handleSelectedDateChanged() {
+    setDate(localStorage.getItem('selectedDate') || '')
+  }
+
+  window.addEventListener('selectedDateChanged', handleSelectedDateChanged)
+
+  return () => {
+    window.removeEventListener('selectedDateChanged', handleSelectedDateChanged)
+  }
+}, [])
   const filtered = useMemo(() => {
   // SI NO HAY FECHA → NO MOSTRAR EVENTOS
   if (!date) return [];
