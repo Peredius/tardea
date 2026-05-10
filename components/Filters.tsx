@@ -120,7 +120,7 @@ useEffect(() => {
     <section id="eventos" className="container-page py-6">
       <div className="mb-8 flex items-end justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-brand-500">
+          <h2 className="text-sm font-semibold text-brand-500">
   Buscador de eventos
 </h2>
         </div>
