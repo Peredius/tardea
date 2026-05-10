@@ -74,13 +74,13 @@ export function Hero() {
 
   return (
     <section className="bg-hero-gradient">
-      <div className="container-page grid items-center gap-12 py-12 md:grid-cols-[0.95fr_1.05fr] md:py-14">
+      <div className="container-page grid items-center gap-12 py-10 md:grid-cols-[1.15fr_0.85fr] md:py-12">
         <div>
           <span className="badge mb-6">
             Agenda premium de tardeo en Madrid
           </span>
 
-          <h1 className="max-w-3xl text-5xl font-bold tracking-tight text-white md:text-6xl">
+          <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-white md:text-[56px] md:leading-[1.02]">
             Descubre los mejores{' '}
             <span className="text-brand-500">planes de tarde</span> en Madrid.
           </h1>
@@ -133,7 +133,7 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-[32px] border border-brand-500/35 bg-black/40 p-5 shadow-[0_0_85px_rgba(255,0,102,0.22)] backdrop-blur-xl">
+        <div className="relative overflow-hidden rounded-[30px] border border-brand-500/35 bg-black/40 p-4 shadow-[0_0_85px_rgba(255,0,102,0.22)] backdrop-blur-xl">
           <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-[radial-gradient(circle_at_top,rgba(255,0,120,0.20),transparent_58%)]" />
           <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-brand-500 to-transparent" />
 
@@ -201,7 +201,7 @@ export function Hero() {
                       key={value}
                       type="button"
                       onClick={() => selectDate(day)}
-                      className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition ${
+                      className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition ${
                         isSelected
                           ? 'bg-gradient-to-br from-pink-500 to-rose-500 text-white shadow-[0_0_30px_rgba(255,0,102,0.55)]'
                           : isToday
