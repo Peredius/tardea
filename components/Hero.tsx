@@ -83,33 +83,19 @@ export function Hero() {
               type="date"
               className="input h-16 w-full text-lg"
               onChange={(e) => {
-                const eventos =
-                  document.getElementById('eventos')
+  localStorage.setItem('selectedDate', e.target.value)
 
-                if (eventos) {
-                  eventos.scrollIntoView({
-                    behavior: 'smooth',
-                  })
-                }
+  window.dispatchEvent(new Event('selectedDateChanged'))
 
-                const dateInput =
-                  document.querySelector(
-                    '#eventos input[type="date"]'
-                  ) as HTMLInputElement
+  const eventos = document.getElementById('eventos')
 
-                localStorage.setItem('selectedDate', e.target.value)
-
-window.dispatchEvent(new Event('selectedDateChanged'))
-
-const eventos = document.getElementById('eventos')
-
-if (eventos) {
-  eventos.scrollIntoView({
-    behavior: 'smooth',
-    block: 'start',
-  })
-}
-              }}
+  if (eventos) {
+    eventos.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  }
+}}
             />
 
             <div className="mt-6 grid grid-cols-2 gap-3 text-sm text-slate-300">
