@@ -10,8 +10,7 @@ export default function HomePage() {
   return (
     <main>
       <Navbar />
-      <Hero />
-      <FeaturedEvents />
+      <Hero /> 
       <Filters />
       <AreasSection />
       <Newsletter />
