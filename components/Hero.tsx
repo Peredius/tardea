@@ -204,9 +204,7 @@ export function Hero() {
                 })}
               </div>
 
-              <p className="mt-5 text-center text-sm text-slate-400">
-                ✨ Los mejores planes, cada día.
-              </p>
+              
             </div>
           </div>
         </div>
