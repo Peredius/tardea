@@ -120,13 +120,14 @@ useEffect(() => {
     <section id="eventos" className="container-page py-6">
       <div className="mb-8 flex items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold text-brand-500">Buscador</p>
-          <h2 className="mt-2 text-3xl font-bold tracking-tight">Explora eventos de tardeo</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-brand-500">
+  Buscador de eventos
+</h2>
         </div>
         {date && (
-  <p className="text-sm text-slate-400">
-    {filtered.length} eventos encontrados
-  </p>
+  <p className="text-xl font-semibold text-white">
+  {filtered.length} eventos encontrados
+</p>
 )}
       </div>
 
@@ -192,7 +193,7 @@ useEffect(() => {
     </p>
   </div>
 ) : (
-  <div className="mt-8 grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
+  <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {filtered.map((event) => {
           const today = new Date().toISOString().split('T')[0];
           const isPastEvent = event.date < today;
