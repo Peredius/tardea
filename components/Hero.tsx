@@ -74,76 +74,40 @@ export function Hero() {
 
   return (
     <section className="bg-hero-gradient">
-      <div className="container-page grid gap-10 py-14 md:grid-cols-[1fr_0.95fr] md:py-20">
-        <div>
-          <span className="badge mb-6">
-            Agenda premium de tardeo en Madrid
-          </span>
+      <div className="mt-8 flex flex-wrap gap-8 text-sm text-slate-200">
+  <div className="flex items-start gap-3">
+    <Calendar className="mt-1 h-5 w-5 text-brand-500" />
+    <div>
+      <p className="font-semibold text-white">Agenda diaria</p>
+      <p className="text-xs text-slate-400">Actualizada</p>
+    </div>
+  </div>
 
-          <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-white md:text-6xl">
-            Descubre los mejores{' '}
-            <span className="text-brand-500">planes de tarde</span> en Madrid.
-          </h1>
+  <div className="flex items-start gap-3">
+    <Music4 className="mt-1 h-5 w-5 text-brand-500" />
+    <div>
+      <p className="font-semibold text-white">Música y ambiente</p>
+      <p className="text-xs text-slate-400">Para todos los gustos</p>
+    </div>
+  </div>
 
-          <a href="#eventos" className="btn-primary mt-8 inline-flex">
-            Buscar eventos
-          </a>
+  <div className="flex items-start gap-3">
+    <MapPin className="mt-1 h-5 w-5 text-brand-500" />
+    <div>
+      <p className="font-semibold text-white">Zonas de Madrid</p>
+      <p className="text-xs text-slate-400">Descubre tu zona</p>
+    </div>
+  </div>
 
-          <p className="mt-6 max-w-2xl text-lg text-slate-300">
-            Rooftops, brunches, afterworks y eventos de tarde seleccionados cada
-            día para que solo tengas que elegir y disfrutar.
-          </p>
-
-          <div className="mt-8 grid grid-cols-2 gap-4 text-sm text-slate-200 md:grid-cols-4">
-            <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-              <div className="rounded-xl bg-pink-500/15 p-2 text-pink-400">
-                <Calendar className="h-5 w-5" />
-              </div>
-
-              <div>
-                <p className="font-semibold text-white">Agenda diaria</p>
-                <p className="mt-1 text-xs text-slate-400">Actualizada</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-              <div className="rounded-xl bg-orange-500/15 p-2 text-orange-400">
-                <Music4 className="h-5 w-5" />
-              </div>
-
-              <div>
-                <p className="font-semibold text-white">Música y ambiente</p>
-                <p className="mt-1 text-xs text-slate-400">
-                  Para todos los gustos
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-              <div className="rounded-xl bg-rose-500/15 p-2 text-rose-400">
-                <MapPin className="h-5 w-5" />
-              </div>
-
-              <div>
-                <p className="font-semibold text-white">Zonas de Madrid</p>
-                <p className="mt-1 text-xs text-slate-400">Descubre tu zona</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-              <div className="rounded-xl bg-fuchsia-500/15 p-2 text-fuchsia-400">
-                <Ticket className="h-5 w-5" />
-              </div>
-
-              <div>
-                <p className="font-semibold text-white">Precios y entradas</p>
-                <p className="mt-1 text-xs text-slate-400">
-                  Encuentra tu plan
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+  <div className="flex items-start gap-3">
+    <Ticket className="mt-1 h-5 w-5 text-brand-500" />
+    <div>
+      <p className="font-semibold text-white">Precios y entradas</p>
+      <p className="text-xs text-slate-400">Encuentra tu plan</p>
+    </div>
+  </div>
+</div>
+      
 
         <div className="relative overflow-hidden rounded-[32px] border border-brand-500/35 bg-black/40 p-5 shadow-[0_0_85px_rgba(255,0,102,0.22)] backdrop-blur-xl">
           <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-[radial-gradient(circle_at_top,rgba(255,0,120,0.20),transparent_58%)]" />
