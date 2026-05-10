@@ -22,27 +22,94 @@ export function Hero() {
             <span className="badge"><Ticket className="mr-2 h-4 w-4" /> Precio y entradas</span>
           </div>
         </div>
-        <div className="card p-6">
-          <div className="mb-4">
-            <p className="text-sm font-semibold text-brand-500">MVP profesional</p>
-            <h2 className="mt-1 text-2xl font-semibold">Base lista para crecer</h2>
-          </div>
-          <div className="space-y-4 text-sm text-slate-300">
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-              <p className="font-semibold text-white">Arquitectura preparada para producción</p>
-              <p className="mt-1">Next.js App Router, componentes reutilizables y datos centralizados para conectar Supabase o PostgreSQL.</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-              <p className="font-semibold text-white">Diseño premium y responsive</p>
-              <p className="mt-1">Enfocado a móvil, velocidad, SEO local y crecimiento por barrios, música y categorías.</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-              <p className="font-semibold text-white">Monetización preparada</p>
-              <p className="mt-1">Eventos destacados, afiliación con entradas, patrocinados y perfiles de promotores en la siguiente fase.</p>
-            </div>
-          </div>
-        </div>
+        <div className="card border border-brand-500/20 bg-black/30 p-6 shadow-2xl shadow-brand-500/10">
+  <div className="mb-5">
+    <div className="mb-3 inline-flex items-center gap-3">
+      <div className="rounded-2xl bg-brand-500/20 p-3 text-brand-400">
+        <Calendar className="h-6 w-6" />
       </div>
-    </section>
+
+      <div>
+        <h2 className="text-3xl font-bold text-white">
+          ¿Qué día vas a salir?
+        </h2>
+
+        <p className="mt-1 text-slate-400">
+          Elige una fecha y descubre los mejores eventos de tarde.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div className="rounded-3xl border border-white/10 bg-black/20 p-6">
+    <input
+      type="date"
+      className="input h-16 w-full text-lg"
+      onChange={(e) => {
+        const eventos = document.getElementById('eventos')
+
+        if (eventos) {
+          eventos.scrollIntoView({
+            behavior: 'smooth',
+          })
+        }
+
+        const dateInput = document.querySelector(
+          '#eventos input[type="date"]'
+        ) as HTMLInputElement
+
+        if (dateInput) {
+          dateInput.value = e.target.value
+
+          dateInput.dispatchEvent(
+            new Event('input', { bubbles: true })
+          )
+        }
+      }}
+    />
+
+    <div className="mt-6 grid grid-cols-2 gap-3 text-sm text-slate-300">
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <p className="font-semibold text-white">
+          Rooftops
+        </p>
+
+        <p className="mt-1 text-slate-400">
+          Atardeceres y vistas premium.
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <p className="font-semibold text-white">
+          Brunch & tardeo
+        </p>
+
+        <p className="mt-1 text-slate-400">
+          Planes para empezar temprano.
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <p className="font-semibold text-white">
+          Afterworks
+        </p>
+
+        <p className="mt-1 text-slate-400">
+          El mejor ambiente después del trabajo.
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <p className="font-semibold text-white">
+          Eventos premium
+        </p>
+
+        <p className="mt-1 text-slate-400">
+          Los planes más top de Madrid.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
   );
 }
