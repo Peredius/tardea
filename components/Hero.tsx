@@ -169,10 +169,10 @@ export function Hero() {
               </div>
 
               <div className="min-w-0 flex-1">
-                <h2 className="text-2xl font-bold leading-none text-white">
+                <h2 className="text-lg font-bold leading-none text-white sm:text-xl">
                   ¿Qué día vas a salir?
                 </h2>
-                <p className="mt-1 text-[11px] font-medium normal-case tracking-0 text-slate-500 sm:text-xs">
+                <p className="mt-1 text-[10px] font-medium normal-case tracking-0 text-slate-500 sm:text-[11px]">
                   seleciona uno o varios días
                 </p>
 
