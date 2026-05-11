@@ -20,7 +20,7 @@ export function FeaturedEvents() {
         .eq('featured', true)
         .gte('date', today)
         .order('date', { ascending: true })
-        .limit(8)
+        .limit(4)
 
       if (error) {
         console.error(error)
