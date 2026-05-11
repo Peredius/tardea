@@ -22,37 +22,50 @@ function AuthCallbackContent() {
         return
       }
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileLoadError } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .maybeSingle()
 
-      if (!profile) {
-        const { error: profileError } = await supabase.from('profiles').insert({
-          id: user.id,
-          role: type,
-          first_name:
-            type === 'user'
-              ? user.user_metadata?.full_name?.split(' ')[0] ?? null
-              : null,
-          last_name:
-            type === 'user'
-              ? user.user_metadata?.full_name?.split(' ').slice(1).join(' ') ||
-                null
-              : null,
-          venue_name: null,
-          music_preferences: [],
-          area_preferences: [],
-        })
-
-        if (profileError) {
-          setMessage('Sesion iniciada, pero no se pudo crear el perfil.')
-          return
-        }
+      if (profileLoadError) {
+        setMessage(`No se pudo leer el perfil: ${profileLoadError.message}`)
+        return
       }
 
-      const role = profile?.role ?? type
+      let role = profile?.role ?? type
+
+      if (!profile) {
+        const fullName = user.user_metadata?.full_name ?? ''
+        const [firstName, ...lastNameParts] = fullName.split(' ')
+
+        const { data: createdProfile, error: profileError } = await supabase
+          .from('profiles')
+          .upsert(
+            {
+              id: user.id,
+              role: type,
+              first_name: type === 'user' ? firstName || null : null,
+              last_name:
+                type === 'user' ? lastNameParts.join(' ') || null : null,
+              venue_name: null,
+              music_preferences: [],
+              area_preferences: [],
+            },
+            { onConflict: 'id' }
+          )
+          .select('role')
+          .single()
+
+        if (profileError) {
+          setMessage(
+            `Sesion iniciada, pero no se pudo crear el perfil: ${profileError.message}`
+          )
+          return
+        }
+
+        role = createdProfile?.role ?? type
+      }
 
       if (role === 'admin') {
         window.location.href = '/admin'
