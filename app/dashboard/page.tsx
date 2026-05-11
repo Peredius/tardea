@@ -69,6 +69,9 @@ const PROVINCE_OPTIONS = [
   'Zaragoza',
 ]
 
+const MUSIC_OPTIONS = ['Comercial', 'Electrónica', 'Pop', 'Indie', 'Flamenquito', 'Remember']
+const AUDIENCE_OPTIONS = ['18-25', '25-35', '30+', 'Mixto']
+
 function generateSlug(title: string, date: string) {
   const cleanTitle = title
     .toLowerCase()
@@ -130,7 +133,8 @@ export default function DashboardPage() {
   const [endTime, setEndTime] = useState('23:00')
   const [priceFrom, setPriceFrom] = useState('')
   const [isInvitation, setIsInvitation] = useState(false)
-  const [music, setMusic] = useState('')
+  const [music, setMusic] = useState<string[]>([])
+  const [audience, setAudience] = useState('25-35')
   const [cover, setCover] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState('')
   const [description, setDescription] = useState('')
@@ -410,8 +414,8 @@ export default function DashboardPage() {
       start_time: startTime,
       end_time: endTime,
       type,
-      music: music ? [music] : [],
-      audience: '25-35',
+      music,
+      audience,
       price_from: isInvitation ? 0 : priceFrom ? parseFloat(priceFrom) : 0,
       cover: imageUrl,
       featured: false,
@@ -443,7 +447,8 @@ export default function DashboardPage() {
     setEndTime('23:00')
     setPriceFrom('')
     setIsInvitation(false)
-    setMusic('')
+    setMusic([])
+    setAudience('25-35')
     setCover(null)
     setPreviewUrl('')
     setDescription('')
@@ -470,6 +475,14 @@ export default function DashboardPage() {
   const showProfileForm = panelMode === 'profile' && profileComplete
   const showResources = panelMode === 'resources' && profileComplete
   const logoDisplay = promoterLogoPreview || promoterLogoUrl
+
+  function toggleMusicStyle(style: string) {
+    setMusic((current) =>
+      current.includes(style)
+        ? current.filter((item) => item !== style)
+        : [...current, style]
+    )
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -831,15 +844,31 @@ export default function DashboardPage() {
                   <option>Fitness Party</option>
                   <option>Afterwork</option>
                 </select>
-                <select className="select" value={music} onChange={(e) => setMusic(e.target.value)}>
-                  <option value="">Estilo musical</option>
-                  <option>Comercial</option>
-                  <option>Indie</option>
-                  <option>Pop</option>
-                  <option>Electronica</option>
-                  <option>Flamenquito</option>
-                  <option>Remember</option>
+                <select className="select" value={audience} onChange={(e) => setAudience(e.target.value)} required>
+                  <option value="">Edad recomendada</option>
+                  {AUDIENCE_OPTIONS.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
                 </select>
+                <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4">
+                  <p className="mb-3 text-sm font-semibold text-slate-300">Estilos musicales</p>
+                  <div className="flex flex-wrap gap-2">
+                    {MUSIC_OPTIONS.map((style) => (
+                      <button
+                        key={style}
+                        type="button"
+                        onClick={() => toggleMusicStyle(style)}
+                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                          music.includes(style)
+                            ? 'bg-brand-500 text-white'
+                            : 'bg-white/10 text-slate-300 hover:bg-white/15'
+                        }`}
+                      >
+                        {style}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <select className="select" value={area} onChange={(e) => setArea(e.target.value)} required>
                   <option value="">Zona</option>
                   <option>Centro</option>

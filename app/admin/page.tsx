@@ -15,6 +15,9 @@ function generateSlug(title: string, date: string) {
   return date ? `${cleanTitle}-${date}` : cleanTitle
 }
 
+const MUSIC_OPTIONS = ['Comercial', 'Electrónica', 'Pop', 'Indie', 'Flamenquito', 'Remember']
+const AUDIENCE_OPTIONS = ['18-25', '25-35', '30+', 'Mixto']
+
 export default function AdminPage() {
   const formRef = useRef<HTMLFormElement | null>(null)
   const [title, setTitle] = useState('')
@@ -28,7 +31,8 @@ export default function AdminPage() {
   const [startTime, setStartTime] = useState('17:00')
   const [endTime, setEndTime] = useState('23:00')
   const [priceFrom, setPriceFrom] = useState('')
-  const [music, setMusic] = useState('')
+  const [music, setMusic] = useState<string[]>([])
+  const [audience, setAudience] = useState('25-35')
   const [cover, setCover] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState('')
   const [message, setMessage] = useState('')
@@ -136,8 +140,8 @@ export default function AdminPage() {
       start_time: startTime,
       end_time: endTime,
       type,
-      music: music ? [music] : [],
-      audience: '25-35',
+      music,
+      audience,
       price_from: priceFrom ? Number(priceFrom) : 0,
       cover: imageUrl,
       featured: false,
@@ -187,7 +191,8 @@ export default function AdminPage() {
     setStartTime('17:00')
     setEndTime('23:00')
     setPriceFrom('')
-    setMusic('')
+    setMusic([])
+    setAudience('25-35')
     setCover(null)
     setPreviewUrl('')
     setDescription('')
@@ -207,13 +212,22 @@ export default function AdminPage() {
     setStartTime(event.start_time || '17:00')
     setEndTime(event.end_time || '23:00')
     setType(event.type || '')
-    setMusic(event.music?.[0] || '')
+    setMusic(event.music || [])
+    setAudience(event.audience || '25-35')
     setPriceFrom(event.price_from?.toString() || '')
     setPreviewUrl(cleanCover || '')
     setCover(null)
     setDescription(event.description || '')
     setPerks(event.perks?.join(', ') || '')
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  function toggleMusicStyle(style: string) {
+    setMusic((current) =>
+      current.includes(style)
+        ? current.filter((item) => item !== style)
+        : [...current, style]
+    )
   }
 
   return (
@@ -253,14 +267,32 @@ export default function AdminPage() {
           <option>Afterwork</option>
         </select>
 
-        <select className="select" value={music} onChange={(e) => setMusic(e.target.value)}>
-          <option value="">Estilo musical</option>
-          <option>Indie</option>
-          <option>Pop</option>
-          <option>House</option>
-          <option>Urbano</option>
-          <option>Techno</option>
+        <select className="select" value={audience} onChange={(e) => setAudience(e.target.value)}>
+          <option value="">Edad recomendada</option>
+          {AUDIENCE_OPTIONS.map((option) => (
+            <option key={option} value={option}>{option}</option>
+          ))}
         </select>
+
+        <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4">
+          <p className="mb-3 text-sm font-semibold text-slate-300">Estilos musicales</p>
+          <div className="flex flex-wrap gap-2">
+            {MUSIC_OPTIONS.map((style) => (
+              <button
+                key={style}
+                type="button"
+                onClick={() => toggleMusicStyle(style)}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  music.includes(style)
+                    ? 'bg-brand-500 text-white'
+                    : 'bg-white/10 text-slate-300 hover:bg-white/15'
+                }`}
+              >
+                {style}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <select className="select" value={area} onChange={(e) => setArea(e.target.value)}>
           <option value="">Zona</option>
@@ -311,10 +343,15 @@ export default function AdminPage() {
       <div className="mt-12">
         <h2 className="mb-4 text-2xl font-bold">Eventos creados</h2>
 
-        {events.map((event) => (
-          <div key={event.id} className="mb-3 flex justify-between rounded-xl bg-slate-800 p-4">
+        {events.length === 0 && (
+          <p className="text-slate-400">No hay eventos publicados</p>
+        )}
+
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {events.map((event) => (
+          <div key={event.id} className="flex min-h-56 flex-col justify-between rounded-xl bg-slate-800 p-4">
             <div>
-              <p>{event.title}</p>
+              <p className="font-semibold">{event.title}</p>
 
               <span className="mt-2 inline-block rounded-full bg-emerald-500/20 px-3 py-1 text-xs text-emerald-300">
                 Publicado
@@ -326,6 +363,14 @@ export default function AdminPage() {
 
               {event.address && (
                 <p className="mt-1 text-sm text-slate-400">{event.address}</p>
+              )}
+
+              {event.audience && (
+                <p className="mt-2 text-xs text-slate-500">Edad: {event.audience}</p>
+              )}
+
+              {event.music?.length > 0 && (
+                <p className="mt-1 text-xs text-slate-500">{event.music.join(', ')}</p>
               )}
 
               {event.maps_url && (
@@ -340,14 +385,21 @@ export default function AdminPage() {
               )}
             </div>
 
-            <button
-              className="text-sm text-brand-500"
-              onClick={() => loadEventForEdit(event)}
-            >
-              Editar
-            </button>
+            <div className="mt-4 flex gap-2">
+              <Link href={`/eventos/${event.slug}?from=admin`} className="btn-secondary flex-1 text-center">
+                Vista previa
+              </Link>
+
+              <button
+                className="btn-primary flex-1"
+                onClick={() => loadEventForEdit(event)}
+              >
+                Editar
+              </button>
+            </div>
           </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <div className="mt-12">
