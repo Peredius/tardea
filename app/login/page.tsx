@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { Apple, Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 const MUSIC_OPTIONS = ['Indie', 'Pop', 'House', 'Urbano', 'Techno']
@@ -10,6 +11,8 @@ const AREA_OPTIONS = ['Centro', 'Salamanca', 'Retiro', 'Chamberí', 'Malasaña']
 function LoginContent() {
   const searchParams = useSearchParams()
   const type = searchParams.get('type')
+  const accountType = type === 'venue' ? 'venue' : 'user'
+  const isUserAccess = accountType === 'user'
 
   const [isRegister, setIsRegister] = useState(false)
   const [email, setEmail] = useState('')
@@ -35,6 +38,32 @@ function LoginContent() {
         ? list.filter((item) => item !== value)
         : [...list, value]
     )
+  }
+
+  async function handleOAuthLogin(provider: 'google' | 'apple') {
+    setMessage('')
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?type=${accountType}`,
+        queryParams:
+          provider === 'google'
+            ? {
+                access_type: 'offline',
+                prompt: 'select_account',
+              }
+            : undefined,
+      },
+    })
+
+    if (error) {
+      setMessage(
+        `No se pudo iniciar sesion con ${
+          provider === 'google' ? 'Google' : 'Apple'
+        }`
+      )
+    }
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -89,16 +118,16 @@ function LoginContent() {
     if (data.user) {
       await supabase.from('profiles').insert({
         id: data.user.id,
-        role: type === 'venue' ? 'venue' : 'user',
-        venue_name: type === 'venue' ? venueName : null,
-        first_name: type === 'user' ? firstName : null,
-        last_name: type === 'user' ? lastName : null,
+        role: accountType,
+        venue_name: accountType === 'venue' ? venueName : null,
+        first_name: accountType === 'user' ? firstName : null,
+        last_name: accountType === 'user' ? lastName : null,
         birth_date:
-          type === 'user'
+          accountType === 'user'
             ? `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
             : null,
-        music_preferences: type === 'user' ? musicPrefs : [],
-        area_preferences: type === 'user' ? areaPrefs : [],
+        music_preferences: accountType === 'user' ? musicPrefs : [],
+        area_preferences: accountType === 'user' ? areaPrefs : [],
       })
     }
 
@@ -115,14 +144,14 @@ function LoginContent() {
 
         <div className="card mx-auto max-w-md p-6">
           <h1 className="text-center text-3xl font-bold">
-            {type === 'venue' ? 'Acceso promotor' : 'Acceso usuario'}
+            {accountType === 'venue' ? 'Acceso promotor' : 'Acceso usuario'}
           </h1>
 
           <form
             onSubmit={isRegister ? handleRegister : handleLogin}
             className="mt-6 space-y-4"
           >
-            {isRegister && type === 'venue' && (
+            {isRegister && accountType === 'venue' && (
               <input
                 className="input"
                 placeholder="Nombre de sala o promotor"
@@ -132,7 +161,7 @@ function LoginContent() {
               />
             )}
 
-            {isRegister && type === 'user' && (
+            {isRegister && accountType === 'user' && (
               <>
                 <input
                   className="input"
@@ -293,6 +322,45 @@ function LoginContent() {
               <p className="text-center text-sm text-brand-500">{message}</p>
             )}
           </form>
+
+          {isUserAccess && !isRegister && (
+            <div className="mt-6">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/10" />
+                <span className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                  O entra con
+                </span>
+                <div className="h-px flex-1 bg-white/10" />
+              </div>
+
+              <div className="mt-4 grid gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleOAuthLogin('google')}
+                  className="btn-secondary w-full gap-3"
+                >
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-sm font-bold text-slate-950">
+                    G
+                  </span>
+                  Continuar con Google
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleOAuthLogin('apple')}
+                  className="btn-secondary w-full gap-3"
+                >
+                  <Apple className="h-5 w-5" />
+                  Continuar con Apple
+                </button>
+
+                <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
+                  <Mail className="h-4 w-4" />
+                  Tambien puedes usar tu correo electronico arriba.
+                </div>
+              </div>
+            </div>
+          )}
 
           <p className="mt-6 text-center text-sm text-slate-400">
             {isRegister ? '¿Ya tienes cuenta?' : '¿No tienes cuenta?'}{' '}

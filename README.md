@@ -23,6 +23,23 @@ npm install
 npm run dev
 ```
 
+## Variables de entorno
+Configura estas variables en `.env.local` y tambien en Vercel:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key_publica
+SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key_solo_servidor
+```
+
+Para el acceso de usuarios con Google y Apple, activa ambos proveedores en
+Supabase Auth y anade como URL de retorno:
+
+```bash
+https://tu-dominio.vercel.app/auth/callback
+http://localhost:3000/auth/callback
+```
+
 ## Siguiente fase recomendada
 1. Conectar Supabase/PostgreSQL
 2. Crear panel admin para eventos
