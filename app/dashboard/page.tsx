@@ -1,7 +1,61 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { ChevronDown, LogOut, ReceiptText, Settings, UserCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+
+const PROVINCE_OPTIONS = [
+  'A Coruna',
+  'Alava',
+  'Albacete',
+  'Alicante',
+  'Almeria',
+  'Asturias',
+  'Avila',
+  'Badajoz',
+  'Barcelona',
+  'Burgos',
+  'Caceres',
+  'Cadiz',
+  'Cantabria',
+  'Castellon',
+  'Ciudad Real',
+  'Cordoba',
+  'Cuenca',
+  'Girona',
+  'Granada',
+  'Guadalajara',
+  'Gipuzkoa',
+  'Huelva',
+  'Huesca',
+  'Illes Balears',
+  'Jaen',
+  'La Rioja',
+  'Las Palmas',
+  'Leon',
+  'Lleida',
+  'Lugo',
+  'Madrid',
+  'Malaga',
+  'Murcia',
+  'Navarra',
+  'Ourense',
+  'Palencia',
+  'Pontevedra',
+  'Salamanca',
+  'Santa Cruz de Tenerife',
+  'Segovia',
+  'Sevilla',
+  'Soria',
+  'Tarragona',
+  'Teruel',
+  'Toledo',
+  'Valencia',
+  'Valladolid',
+  'Vizcaya',
+  'Zamora',
+  'Zaragoza',
+]
 
 function generateSlug(title: string, date: string) {
   const cleanTitle = title
@@ -23,15 +77,24 @@ export default function DashboardPage() {
   const [savingProfile, setSavingProfile] = useState(false)
   const [message, setMessage] = useState('')
   const [profileMessage, setProfileMessage] = useState('')
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [panelMode, setPanelMode] = useState<'events' | 'profile' | 'billing'>('events')
 
-  const [venueName, setVenueName] = useState('')
+  const [promoterEventName, setPromoterEventName] = useState('')
   const [promoterContactName, setPromoterContactName] = useState('')
-  const [promoterPhone, setPromoterPhone] = useState('')
-  const [promoterWebsite, setPromoterWebsite] = useState('')
-  const [promoterDescription, setPromoterDescription] = useState('')
+  const [promoterCompany, setPromoterCompany] = useState('')
+  const [promoterTaxId, setPromoterTaxId] = useState('')
+  const [promoterAddress, setPromoterAddress] = useState('')
+  const [promoterMunicipality, setPromoterMunicipality] = useState('')
+  const [promoterPostalCode, setPromoterPostalCode] = useState('')
+  const [promoterProvince, setPromoterProvince] = useState('Madrid')
+  const [billingDifferent, setBillingDifferent] = useState(false)
   const [billingName, setBillingName] = useState('')
   const [billingTaxId, setBillingTaxId] = useState('')
   const [billingAddress, setBillingAddress] = useState('')
+  const [billingMunicipality, setBillingMunicipality] = useState('')
+  const [billingPostalCode, setBillingPostalCode] = useState('')
+  const [billingProvince, setBillingProvince] = useState('Madrid')
   const [billingEmail, setBillingEmail] = useState('')
 
   const [title, setTitle] = useState('')
@@ -52,6 +115,16 @@ export default function DashboardPage() {
   const [description, setDescription] = useState('')
   const [perks, setPerks] = useState('')
 
+  const profileComplete =
+    promoterEventName &&
+    promoterContactName &&
+    promoterCompany &&
+    promoterTaxId &&
+    promoterAddress &&
+    promoterMunicipality &&
+    promoterPostalCode &&
+    promoterProvince
+
   useEffect(() => {
     async function loadDashboard() {
       const {
@@ -59,7 +132,7 @@ export default function DashboardPage() {
       } = await supabase.auth.getUser()
 
       if (!user) {
-        window.location.href = '/login'
+        window.location.href = '/login?type=venue'
         return
       }
 
@@ -70,21 +143,34 @@ export default function DashboardPage() {
       const { data: profile } = await supabase
         .from('profiles')
         .select(
-          'venue_name, promoter_contact_name, promoter_phone, promoter_website, promoter_description, billing_name, billing_tax_id, billing_address, billing_email'
+          'venue_name, promoter_event_name, promoter_contact_name, promoter_company, promoter_tax_id, promoter_address, promoter_municipality, promoter_postal_code, promoter_province, billing_different, billing_name, billing_tax_id, billing_address, billing_municipality, billing_postal_code, billing_province, billing_email'
         )
         .eq('id', user.id)
         .maybeSingle()
 
       if (profile) {
-        setVenueName(profile.venue_name ?? '')
+        const commercialName = profile.promoter_event_name ?? profile.venue_name ?? ''
+        setPromoterEventName(commercialName)
         setPromoterContactName(profile.promoter_contact_name ?? '')
-        setPromoterPhone(profile.promoter_phone ?? '')
-        setPromoterWebsite(profile.promoter_website ?? '')
-        setPromoterDescription(profile.promoter_description ?? '')
+        setPromoterCompany(profile.promoter_company ?? '')
+        setPromoterTaxId(profile.promoter_tax_id ?? '')
+        setPromoterAddress(profile.promoter_address ?? '')
+        setPromoterMunicipality(profile.promoter_municipality ?? '')
+        setPromoterPostalCode(profile.promoter_postal_code ?? '')
+        setPromoterProvince(profile.promoter_province ?? 'Madrid')
+        setBillingDifferent(Boolean(profile.billing_different))
         setBillingName(profile.billing_name ?? '')
         setBillingTaxId(profile.billing_tax_id ?? '')
         setBillingAddress(profile.billing_address ?? '')
+        setBillingMunicipality(profile.billing_municipality ?? '')
+        setBillingPostalCode(profile.billing_postal_code ?? '')
+        setBillingProvince(profile.billing_province ?? 'Madrid')
         setBillingEmail(profile.billing_email ?? user.email ?? '')
+        if (!commercialName || !profile.promoter_contact_name || !profile.promoter_company) {
+          setPanelMode('profile')
+        }
+      } else {
+        setPanelMode('profile')
       }
 
       const { data } = await supabase
@@ -112,26 +198,47 @@ export default function DashboardPage() {
     setEvents(data || [])
   }
 
-  async function handleProfileSubmit(e: React.FormEvent) {
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    window.location.href = '/login?type=venue'
+  }
+
+  async function savePromoterProfile(e: React.FormEvent) {
     e.preventDefault()
     if (!userId) return
 
     setSavingProfile(true)
     setProfileMessage('')
 
+    const finalBillingName = billingDifferent ? billingName : promoterCompany
+    const finalBillingTaxId = billingDifferent ? billingTaxId : promoterTaxId
+    const finalBillingAddress = billingDifferent ? billingAddress : promoterAddress
+    const finalBillingMunicipality = billingDifferent ? billingMunicipality : promoterMunicipality
+    const finalBillingPostalCode = billingDifferent ? billingPostalCode : promoterPostalCode
+    const finalBillingProvince = billingDifferent ? billingProvince : promoterProvince
+    const finalBillingEmail = billingDifferent ? billingEmail : email ?? ''
+
     const { error } = await supabase.from('profiles').upsert(
       {
         id: userId,
         role: 'venue',
-        venue_name: venueName,
+        venue_name: promoterEventName,
+        promoter_event_name: promoterEventName,
         promoter_contact_name: promoterContactName,
-        promoter_phone: promoterPhone,
-        promoter_website: promoterWebsite,
-        promoter_description: promoterDescription,
-        billing_name: billingName,
-        billing_tax_id: billingTaxId,
-        billing_address: billingAddress,
-        billing_email: billingEmail,
+        promoter_company: promoterCompany,
+        promoter_tax_id: promoterTaxId,
+        promoter_address: promoterAddress,
+        promoter_municipality: promoterMunicipality,
+        promoter_postal_code: promoterPostalCode,
+        promoter_province: promoterProvince,
+        billing_different: billingDifferent,
+        billing_name: finalBillingName,
+        billing_tax_id: finalBillingTaxId,
+        billing_address: finalBillingAddress,
+        billing_municipality: finalBillingMunicipality,
+        billing_postal_code: finalBillingPostalCode,
+        billing_province: finalBillingProvince,
+        billing_email: finalBillingEmail,
       },
       { onConflict: 'id' }
     )
@@ -139,11 +246,19 @@ export default function DashboardPage() {
     setSavingProfile(false)
 
     if (error) {
-      setProfileMessage(`Error al guardar perfil: ${error.message}`)
+      setProfileMessage(`Error al guardar: ${error.message}`)
       return
     }
 
-    setProfileMessage('Perfil guardado correctamente')
+    setBillingName(finalBillingName)
+    setBillingTaxId(finalBillingTaxId)
+    setBillingAddress(finalBillingAddress)
+    setBillingMunicipality(finalBillingMunicipality)
+    setBillingPostalCode(finalBillingPostalCode)
+    setBillingProvince(finalBillingProvince)
+    setBillingEmail(finalBillingEmail)
+    setProfileMessage('Datos guardados correctamente')
+    setPanelMode('events')
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -156,7 +271,7 @@ export default function DashboardPage() {
     } = await supabase.auth.getUser()
 
     if (!user) {
-      window.location.href = '/login'
+      window.location.href = '/login?type=venue'
       return
     }
 
@@ -210,8 +325,7 @@ export default function DashboardPage() {
       return
     }
 
-    setMessage('Evento enviado correctamente. Queda pendiente de revisión.')
-
+    setMessage('Evento enviado correctamente. Queda pendiente de revision.')
     setTitle('')
     setVenue('')
     setArea('')
@@ -246,297 +360,259 @@ export default function DashboardPage() {
 
   const approvedEvents = events.filter((event) => event.status === 'approved')
   const pendingEvents = events.filter((event) => event.status === 'pending')
+  const greetingName = promoterEventName || promoterCompany || 'promotor'
+  const showProfileForm = panelMode === 'profile' || !profileComplete
+  const showBillingForm = panelMode === 'billing'
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="container-page py-10">
-        <section className="mb-10 flex items-start justify-between gap-6">
+      <div className="container-page py-8">
+        <header className="mb-8 flex items-start justify-between gap-6">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-500">
               Tardea Partners
             </p>
-
             <h1 className="mt-2 text-4xl font-bold tracking-tight md:text-5xl">
-              Promotor
+              Hola, {greetingName}
             </h1>
-
             <p className="mt-3 max-w-2xl text-slate-400">
-              Crea eventos, revisa su estado y gestiona tus propuestas.
+              Gestiona tus eventos, datos de promotor y facturacion.
             </p>
           </div>
 
-          <button
-            onClick={async () => {
-              await supabase.auth.signOut()
-              window.location.href = '/login'
-            }}
-            className="shrink-0 text-sm text-slate-400 hover:text-white"
-          >
-            Cerrar sesión
-          </button>
-        </section>
-
-        <section className="mb-8 grid gap-4 md:grid-cols-3">
-          <div className="card p-6">
-            <p className="text-sm text-slate-400">Usuario conectado</p>
-            <p className="mt-2 break-all font-semibold">{email}</p>
-          </div>
-
-          <div className="card p-6">
-            <p className="text-sm text-slate-400">Eventos publicados</p>
-            <p className="mt-2 text-4xl font-bold">{approvedEvents.length}</p>
-          </div>
-
-          <div className="card p-6">
-            <p className="text-sm text-slate-400">Eventos pendientes</p>
-            <p className="mt-2 text-4xl font-bold">{pendingEvents.length}</p>
-          </div>
-        </section>
-
-        <section className="mb-8 grid gap-8 lg:grid-cols-2">
-          <form onSubmit={handleProfileSubmit} className="card space-y-5 p-6">
-            <div>
-              <h2 className="text-2xl font-bold">Perfil de sala o promotor</h2>
-              <p className="mt-2 text-sm text-slate-400">
-                Estos datos nos ayudan a validar tus eventos y preparar futuras
-                opciones de destacados.
-              </p>
-            </div>
-
-            <input
-              className="input"
-              placeholder="Nombre comercial de la sala o promotora"
-              value={venueName}
-              onChange={(e) => setVenueName(e.target.value)}
-              required
-            />
-
-            <input
-              className="input"
-              placeholder="Persona de contacto"
-              value={promoterContactName}
-              onChange={(e) => setPromoterContactName(e.target.value)}
-            />
-
-            <input
-              className="input"
-              placeholder="Telefono de contacto"
-              value={promoterPhone}
-              onChange={(e) => setPromoterPhone(e.target.value)}
-            />
-
-            <input
-              className="input"
-              placeholder="Web o Instagram"
-              value={promoterWebsite}
-              onChange={(e) => setPromoterWebsite(e.target.value)}
-            />
-
-            <textarea
-              className="input min-h-28"
-              placeholder="Descripcion breve de la sala o promotora"
-              value={promoterDescription}
-              onChange={(e) => setPromoterDescription(e.target.value)}
-            />
-
-            <button className="btn-primary w-full" type="submit" disabled={savingProfile}>
-              {savingProfile ? 'Guardando...' : 'Guardar perfil'}
+          <div className="relative shrink-0">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-500 text-white">
+                <UserCircle className="h-6 w-6" />
+              </span>
+              <span className="hidden sm:inline">{greetingName}</span>
+              <ChevronDown className="h-4 w-4 text-slate-400" />
             </button>
 
-            {profileMessage && (
-              <p className="text-sm text-brand-500">{profileMessage}</p>
-            )}
-          </form>
-
-          <form onSubmit={handleProfileSubmit} className="card space-y-5 p-6">
-            <div>
-              <h2 className="text-2xl font-bold">Datos de facturacion</h2>
-              <p className="mt-2 text-sm text-slate-400">
-                Se usaran cuando actives destacados, promociones o servicios de
-                pago.
-              </p>
-            </div>
-
-            <input
-              className="input"
-              placeholder="Razon social o nombre fiscal"
-              value={billingName}
-              onChange={(e) => setBillingName(e.target.value)}
-            />
-
-            <input
-              className="input"
-              placeholder="NIF / CIF"
-              value={billingTaxId}
-              onChange={(e) => setBillingTaxId(e.target.value)}
-            />
-
-            <input
-              className="input"
-              placeholder="Direccion fiscal"
-              value={billingAddress}
-              onChange={(e) => setBillingAddress(e.target.value)}
-            />
-
-            <input
-              className="input"
-              type="email"
-              placeholder="Email de facturacion"
-              value={billingEmail}
-              onChange={(e) => setBillingEmail(e.target.value)}
-            />
-
-            <button className="btn-secondary w-full" type="submit" disabled={savingProfile}>
-              {savingProfile ? 'Guardando...' : 'Guardar facturacion'}
-            </button>
-          </form>
-        </section>
-
-        <section className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-          <form onSubmit={handleSubmit} className="card space-y-6 p-6">
-            <div>
-              <h2 className="text-2xl font-bold">Crear evento</h2>
-              <p className="mt-2 text-sm text-slate-400">
-                El evento se enviará como pendiente para revisión.
-              </p>
-            </div>
-
-            <input className="input" placeholder="Nombre del evento" value={title} onChange={(e) => setTitle(e.target.value)} required />
-
-            <select className="select" value={type} onChange={(e) => setType(e.target.value)} required>
-              <option value="">Tipo de evento</option>
-              <option>Tardeo</option>
-              <option>Rooftop</option>
-              <option>Brunch</option>
-              <option>Fitness Party</option>
-              <option>Afterwork</option>
-            </select>
-
-            <select className="select" value={music} onChange={(e) => setMusic(e.target.value)}>
-              <option value="">Estilo musical</option>
-              <option>Indie</option>
-              <option>Pop</option>
-              <option>House</option>
-              <option>Urbano</option>
-              <option>Techno</option>
-            </select>
-
-            <select className="select" value={area} onChange={(e) => setArea(e.target.value)} required>
-              <option value="">Zona</option>
-              <option>Centro</option>
-              <option>Salamanca</option>
-              <option>Retiro</option>
-              <option value="Otra">Otra</option>
-            </select>
-
-            {area === 'Otra' && (
-              <input className="input" placeholder="Zona personalizada" value={customArea} onChange={(e) => setCustomArea(e.target.value)} required />
-            )}
-
-            <input type="date" className="input" value={date} onChange={(e) => setDate(e.target.value)} required />
-            <input type="time" className="input" value={startTime} onChange={(e) => setStartTime(e.target.value)} required />
-            <input type="time" className="input" value={endTime} onChange={(e) => setEndTime(e.target.value)} required />
-
-            <div className="space-y-3">
-              <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-slate-100">
-                <input
-                  type="checkbox"
-                  checked={isInvitation}
-                  onChange={(e) => {
-                    setIsInvitation(e.target.checked)
-                    if (e.target.checked) setPriceFrom('')
+            {menuOpen && (
+              <div className="absolute right-0 z-50 mt-3 w-64 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPanelMode('profile')
+                    setMenuOpen(false)
                   }}
-                />
-                Entrada con invitación
-              </label>
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-200 hover:bg-white/5"
+                >
+                  <Settings className="h-4 w-4 text-brand-500" />
+                  Editar perfil
+                </button>
 
-              {!isInvitation && (
-                <input
-                  className="input"
-                  type="number"
-                  min="0"
-                  placeholder="Precio desde (€)"
-                  value={priceFrom}
-                  onChange={(e) => setPriceFrom(e.target.value)}
-                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPanelMode('billing')
+                    setMenuOpen(false)
+                  }}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-200 hover:bg-white/5"
+                >
+                  <ReceiptText className="h-4 w-4 text-brand-500" />
+                  Datos de facturacion
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="flex w-full items-center gap-3 border-t border-white/10 px-4 py-3 text-left text-sm text-slate-200 hover:bg-white/5"
+                >
+                  <LogOut className="h-4 w-4 text-brand-500" />
+                  Cerrar sesion
+                </button>
+              </div>
+            )}
+          </div>
+        </header>
+
+        {(showProfileForm || showBillingForm) && (
+          <form onSubmit={savePromoterProfile} className="card mb-8 space-y-6 p-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="text-2xl font-bold">
+                  {showBillingForm ? 'Datos de facturacion' : 'Perfil de promotor'}
+                </h2>
+                <p className="mt-2 text-sm text-slate-400">
+                  {showBillingForm
+                    ? 'Estos datos se usaran cuando actives destacados o servicios de pago.'
+                    : 'Completa estos datos para poder publicar eventos en TARDEA.'}
+                </p>
+              </div>
+
+              {profileComplete && (
+                <button
+                  type="button"
+                  onClick={() => setPanelMode('events')}
+                  className="text-sm text-slate-400 hover:text-white"
+                >
+                  Volver a eventos
+                </button>
               )}
             </div>
 
-            <input className="input" placeholder="Lugar" value={venue} onChange={(e) => setVenue(e.target.value)} required />
-            <input className="input" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} required />
-            <input className="input" placeholder="Link de Google Maps" value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} />
-
-            <textarea className="input min-h-32" placeholder="Descripción" value={description} onChange={(e) => setDescription(e.target.value)} required />
-
-            <input className="input" placeholder="Extras separados por comas" value={perks} onChange={(e) => setPerks(e.target.value)} />
-
-            <input
-              type="file"
-              accept="image/*"
-              className="input"
-              onChange={(e) => {
-                const file = e.target.files?.[0] || null
-                setCover(file)
-                setPreviewUrl(file ? URL.createObjectURL(file) : '')
-              }}
-            />
-
-            {previewUrl && (
-              <img src={previewUrl} alt="Preview del evento" className="h-56 w-full rounded-xl object-cover" />
+            {showBillingForm && (
+              <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-slate-100">
+                <input type="checkbox" checked={billingDifferent} onChange={(e) => setBillingDifferent(e.target.checked)} />
+                Los datos de facturacion son diferentes a los datos de promotor
+              </label>
             )}
 
-            <button className="btn-primary w-full" type="submit" disabled={saving}>
-              {saving ? 'Enviando...' : 'Enviar evento a revisión'}
+            {!showBillingForm && (
+              <>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <input className="input" placeholder="Evento o nombre comercial" value={promoterEventName} onChange={(e) => setPromoterEventName(e.target.value)} required />
+                  <input className="input" placeholder="Persona de contacto" value={promoterContactName} onChange={(e) => setPromoterContactName(e.target.value)} required />
+                  <input className="input" placeholder="Empresa" value={promoterCompany} onChange={(e) => setPromoterCompany(e.target.value)} required />
+                  <input className="input" placeholder="NIF" value={promoterTaxId} onChange={(e) => setPromoterTaxId(e.target.value)} required />
+                  <input className="input md:col-span-2" placeholder="Direccion" value={promoterAddress} onChange={(e) => setPromoterAddress(e.target.value)} required />
+                  <input className="input" placeholder="Municipio" value={promoterMunicipality} onChange={(e) => setPromoterMunicipality(e.target.value)} required />
+                  <input className="input" placeholder="Codigo postal" inputMode="numeric" maxLength={5} value={promoterPostalCode} onChange={(e) => setPromoterPostalCode(e.target.value)} required />
+                  <select className="select md:col-span-2" value={promoterProvince} onChange={(e) => setPromoterProvince(e.target.value)} required>
+                    {PROVINCE_OPTIONS.map((province) => (
+                      <option key={province} value={province}>{province}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-slate-100">
+                  <input type="checkbox" checked={billingDifferent} onChange={(e) => setBillingDifferent(e.target.checked)} />
+                  Los datos de facturacion son diferentes a los datos de promotor
+                </label>
+              </>
+            )}
+
+            {(showBillingForm ? billingDifferent : billingDifferent) && (
+              <div className="grid gap-4 md:grid-cols-2">
+                <input className="input" placeholder="Razon social o nombre fiscal" value={billingName} onChange={(e) => setBillingName(e.target.value)} required={billingDifferent} />
+                <input className="input" placeholder="NIF / CIF" value={billingTaxId} onChange={(e) => setBillingTaxId(e.target.value)} required={billingDifferent} />
+                <input className="input md:col-span-2" placeholder="Direccion fiscal" value={billingAddress} onChange={(e) => setBillingAddress(e.target.value)} required={billingDifferent} />
+                <input className="input" placeholder="Municipio fiscal" value={billingMunicipality} onChange={(e) => setBillingMunicipality(e.target.value)} required={billingDifferent} />
+                <input className="input" placeholder="Codigo postal fiscal" inputMode="numeric" maxLength={5} value={billingPostalCode} onChange={(e) => setBillingPostalCode(e.target.value)} required={billingDifferent} />
+                <select className="select" value={billingProvince} onChange={(e) => setBillingProvince(e.target.value)} required={billingDifferent}>
+                  {PROVINCE_OPTIONS.map((province) => (
+                    <option key={province} value={province}>{province}</option>
+                  ))}
+                </select>
+                <input className="input" type="email" placeholder="Email de facturacion" value={billingEmail} onChange={(e) => setBillingEmail(e.target.value)} required={billingDifferent} />
+              </div>
+            )}
+
+            {showBillingForm && !billingDifferent && (
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
+                Se usaran los mismos datos del promotor para facturacion. Activa la casilla si necesitas otra razon social, direccion o email fiscal.
+              </div>
+            )}
+
+            <button className="btn-primary w-full" type="submit" disabled={savingProfile}>
+              {savingProfile ? 'Guardando...' : 'Guardar datos'}
             </button>
 
-            {message && <p className="text-sm text-brand-500">{message}</p>}
+            {profileMessage && <p className="text-sm text-brand-500">{profileMessage}</p>}
           </form>
+        )}
 
-          <section className="card p-6">
-            <h2 className="text-2xl font-bold">Mis eventos</h2>
-            <p className="mt-2 text-sm text-slate-400">
-              Aquí verás los eventos enviados y su estado.
-            </p>
+        {!showProfileForm && !showBillingForm && (
+          <>
+            <section className="mb-8 grid gap-4 md:grid-cols-3">
+              <div className="card p-6">
+                <p className="text-sm text-slate-400">Usuario conectado</p>
+                <p className="mt-2 break-all font-semibold">{email}</p>
+              </div>
+              <div className="card p-6">
+                <p className="text-sm text-slate-400">Eventos publicados</p>
+                <p className="mt-2 text-4xl font-bold">{approvedEvents.length}</p>
+              </div>
+              <div className="card p-6">
+                <p className="text-sm text-slate-400">Eventos pendientes</p>
+                <p className="mt-2 text-4xl font-bold">{pendingEvents.length}</p>
+              </div>
+            </section>
 
-            {events.length === 0 && (
-              <p className="mt-6 text-slate-400">No tienes eventos todavía.</p>
-            )}
-
-            <div className="mt-6 space-y-4">
-              {events.map((event) => (
-                <div
-                  key={event.id}
-                  className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 md:flex-row md:items-center md:justify-between"
-                >
-                  <div>
-                    <h3 className="font-semibold">{event.title}</h3>
-
-                    <p className="mt-1 text-sm text-slate-400">
-                      {event.date ? new Date(event.date).toLocaleDateString('es-ES') : 'Sin fecha'}
-                    </p>
-
-                    <span
-                      className={`mt-2 inline-block rounded-full px-3 py-1 text-xs ${
-                        event.status === 'approved'
-                          ? 'bg-emerald-500/20 text-emerald-300'
-                          : 'bg-yellow-500/20 text-yellow-300'
-                      }`}
-                    >
-                      {event.status === 'approved' ? 'Publicado' : 'Pendiente'}
-                    </span>
-                  </div>
-
-                  <a
-                    href={`/eventos/${event.slug}`}
-                    className="text-sm font-medium text-brand-500 hover:underline"
-                  >
-                    Vista previa
-                  </a>
+            <section className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+              <form onSubmit={handleSubmit} className="card space-y-6 p-6">
+                <div>
+                  <h2 className="text-2xl font-bold">Crear evento</h2>
+                  <p className="mt-2 text-sm text-slate-400">
+                    El evento se enviara como pendiente para revision.
+                  </p>
                 </div>
-              ))}
-            </div>
-          </section>
-        </section>
+
+                <input className="input" placeholder="Nombre del evento" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                <select className="select" value={type} onChange={(e) => setType(e.target.value)} required>
+                  <option value="">Tipo de evento</option>
+                  <option>Tardeo</option>
+                  <option>Rooftop</option>
+                  <option>Brunch</option>
+                  <option>Fitness Party</option>
+                  <option>Afterwork</option>
+                </select>
+                <select className="select" value={music} onChange={(e) => setMusic(e.target.value)}>
+                  <option value="">Estilo musical</option>
+                  <option>Comercial</option>
+                  <option>Indie</option>
+                  <option>Pop</option>
+                  <option>Electronica</option>
+                  <option>Flamenquito</option>
+                  <option>Remember</option>
+                </select>
+                <select className="select" value={area} onChange={(e) => setArea(e.target.value)} required>
+                  <option value="">Zona</option>
+                  <option>Centro</option>
+                  <option>Salamanca</option>
+                  <option>Retiro</option>
+                  <option value="Otra">Otra</option>
+                </select>
+                {area === 'Otra' && <input className="input" placeholder="Zona personalizada" value={customArea} onChange={(e) => setCustomArea(e.target.value)} required />}
+                <input type="date" className="input" value={date} onChange={(e) => setDate(e.target.value)} required />
+                <input type="time" className="input" value={startTime} onChange={(e) => setStartTime(e.target.value)} required />
+                <input type="time" className="input" value={endTime} onChange={(e) => setEndTime(e.target.value)} required />
+                <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-slate-100">
+                  <input type="checkbox" checked={isInvitation} onChange={(e) => { setIsInvitation(e.target.checked); if (e.target.checked) setPriceFrom('') }} />
+                  Entrada con invitacion
+                </label>
+                {!isInvitation && <input className="input" type="number" min="0" placeholder="Precio desde" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />}
+                <input className="input" placeholder="Lugar" value={venue} onChange={(e) => setVenue(e.target.value)} required />
+                <input className="input" placeholder="Direccion" value={address} onChange={(e) => setAddress(e.target.value)} required />
+                <input className="input" placeholder="Link de Google Maps" value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} />
+                <textarea className="input min-h-32" placeholder="Descripcion" value={description} onChange={(e) => setDescription(e.target.value)} required />
+                <input className="input" placeholder="Extras separados por comas" value={perks} onChange={(e) => setPerks(e.target.value)} />
+                <input type="file" accept="image/*" className="input" onChange={(e) => { const file = e.target.files?.[0] || null; setCover(file); setPreviewUrl(file ? URL.createObjectURL(file) : '') }} />
+                {previewUrl && <img src={previewUrl} alt="Preview del evento" className="h-56 w-full rounded-xl object-cover" />}
+                <button className="btn-primary w-full" type="submit" disabled={saving}>
+                  {saving ? 'Enviando...' : 'Enviar evento a revision'}
+                </button>
+                {message && <p className="text-sm text-brand-500">{message}</p>}
+              </form>
+
+              <section className="card p-6">
+                <h2 className="text-2xl font-bold">Mis eventos</h2>
+                <p className="mt-2 text-sm text-slate-400">Aqui veras los eventos enviados y su estado.</p>
+                {events.length === 0 && <p className="mt-6 text-slate-400">No tienes eventos todavia.</p>}
+                <div className="mt-6 space-y-4">
+                  {events.map((event) => (
+                    <div key={event.id} className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <h3 className="font-semibold">{event.title}</h3>
+                        <p className="mt-1 text-sm text-slate-400">{event.date ? new Date(event.date).toLocaleDateString('es-ES') : 'Sin fecha'}</p>
+                        <span className={`mt-2 inline-block rounded-full px-3 py-1 text-xs ${event.status === 'approved' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-yellow-500/20 text-yellow-300'}`}>
+                          {event.status === 'approved' ? 'Publicado' : 'Pendiente'}
+                        </span>
+                      </div>
+                      <a href={`/eventos/${event.slug}`} className="text-sm font-medium text-brand-500 hover:underline">Vista previa</a>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </section>
+          </>
+        )}
       </div>
     </main>
   )

@@ -19,6 +19,27 @@ alter table public.profiles
 add column if not exists promoter_contact_name text;
 
 alter table public.profiles
+add column if not exists promoter_event_name text;
+
+alter table public.profiles
+add column if not exists promoter_company text;
+
+alter table public.profiles
+add column if not exists promoter_tax_id text;
+
+alter table public.profiles
+add column if not exists promoter_address text;
+
+alter table public.profiles
+add column if not exists promoter_municipality text;
+
+alter table public.profiles
+add column if not exists promoter_postal_code text;
+
+alter table public.profiles
+add column if not exists promoter_province text;
+
+alter table public.profiles
 add column if not exists promoter_phone text;
 
 alter table public.profiles
@@ -31,10 +52,22 @@ alter table public.profiles
 add column if not exists billing_name text;
 
 alter table public.profiles
+add column if not exists billing_different boolean default false;
+
+alter table public.profiles
 add column if not exists billing_tax_id text;
 
 alter table public.profiles
 add column if not exists billing_address text;
+
+alter table public.profiles
+add column if not exists billing_municipality text;
+
+alter table public.profiles
+add column if not exists billing_postal_code text;
+
+alter table public.profiles
+add column if not exists billing_province text;
 
 alter table public.profiles
 add column if not exists billing_email text;
