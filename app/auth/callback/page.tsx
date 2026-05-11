@@ -24,7 +24,9 @@ function AuthCallbackContent() {
 
       const { data: profile, error: profileLoadError } = await supabase
         .from('profiles')
-        .select('role, first_name, last_name, birth_date, address, music_preferences')
+        .select(
+          'role, first_name, last_name, birth_date, address, postal_code, city, music_preferences'
+        )
         .eq('id', user.id)
         .maybeSingle()
 
@@ -50,6 +52,8 @@ function AuthCallbackContent() {
                 type === 'user' ? lastNameParts.join(' ') || null : null,
               venue_name: null,
               address: null,
+              postal_code: null,
+              city: null,
               music_preferences: [],
               area_preferences: [],
             },
@@ -74,6 +78,8 @@ function AuthCallbackContent() {
           !profile?.last_name ||
           !profile?.birth_date ||
           !profile?.address ||
+          !profile?.postal_code ||
+          !profile?.city ||
           !profile?.music_preferences?.length)
 
       if (role === 'admin') {

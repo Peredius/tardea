@@ -4,7 +4,36 @@ import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
-const MUSIC_OPTIONS = ['Indie', 'Pop', 'House', 'Urbano', 'Techno']
+const MUSIC_OPTIONS = [
+  'Comercial',
+  'Indie',
+  'Electronica',
+  'Flamenquito',
+  'Pop',
+]
+
+const CITY_OPTIONS = [
+  'Madrid',
+  'Barcelona',
+  'Valencia',
+  'Sevilla',
+  'Zaragoza',
+  'Malaga',
+  'Murcia',
+  'Palma',
+  'Las Palmas de Gran Canaria',
+  'Bilbao',
+  'Alicante',
+  'Cordoba',
+  'Valladolid',
+  'Vigo',
+  'Gijon',
+  'Hospitalet de Llobregat',
+  'Vitoria-Gasteiz',
+  'A Coruna',
+  'Granada',
+  'Elche',
+]
 
 function ProfileForm() {
   const searchParams = useSearchParams()
@@ -17,6 +46,8 @@ function ProfileForm() {
   const [lastName, setLastName] = useState('')
   const [birthDate, setBirthDate] = useState('')
   const [address, setAddress] = useState('')
+  const [postalCode, setPostalCode] = useState('')
+  const [city, setCity] = useState('Madrid')
   const [musicPrefs, setMusicPrefs] = useState<string[]>([])
 
   useEffect(() => {
@@ -34,7 +65,9 @@ function ProfileForm() {
 
       const { data } = await supabase
         .from('profiles')
-        .select('first_name, last_name, birth_date, address, music_preferences')
+        .select(
+          'first_name, last_name, birth_date, address, postal_code, city, music_preferences'
+        )
         .eq('id', user.id)
         .maybeSingle()
 
@@ -45,6 +78,8 @@ function ProfileForm() {
       setLastName(data?.last_name ?? metadataLastName.join(' ') ?? '')
       setBirthDate(data?.birth_date ?? '')
       setAddress(data?.address ?? '')
+      setPostalCode(data?.postal_code ?? '')
+      setCity(data?.city ?? 'Madrid')
       setMusicPrefs(data?.music_preferences ?? [])
       setLoading(false)
     }
@@ -73,6 +108,8 @@ function ProfileForm() {
         last_name: lastName,
         birth_date: birthDate,
         address,
+        postal_code: postalCode,
+        city,
         music_preferences: musicPrefs,
         area_preferences: [],
       },
@@ -144,11 +181,36 @@ function ProfileForm() {
 
             <input
               className="input"
-              placeholder="Direccion o zona donde vives"
+              placeholder="Direccion"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               required
             />
+
+            <div className="grid gap-4 sm:grid-cols-[0.8fr_1.2fr]">
+              <input
+                className="input"
+                placeholder="Codigo postal"
+                inputMode="numeric"
+                maxLength={5}
+                value={postalCode}
+                onChange={(e) => setPostalCode(e.target.value)}
+                required
+              />
+
+              <select
+                className="select"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                required
+              >
+                {CITY_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <div>
               <p className="mb-2 text-sm text-slate-400">
