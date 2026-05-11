@@ -15,6 +15,30 @@ add column if not exists municipality text;
 alter table public.profiles
 add column if not exists province text;
 
+alter table public.profiles
+add column if not exists promoter_contact_name text;
+
+alter table public.profiles
+add column if not exists promoter_phone text;
+
+alter table public.profiles
+add column if not exists promoter_website text;
+
+alter table public.profiles
+add column if not exists promoter_description text;
+
+alter table public.profiles
+add column if not exists billing_name text;
+
+alter table public.profiles
+add column if not exists billing_tax_id text;
+
+alter table public.profiles
+add column if not exists billing_address text;
+
+alter table public.profiles
+add column if not exists billing_email text;
+
 drop policy if exists "Users can read own profile" on public.profiles;
 drop policy if exists "Users can create own profile" on public.profiles;
 drop policy if exists "Users can update own profile" on public.profiles;

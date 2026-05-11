@@ -20,7 +20,19 @@ export default function DashboardPage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [savingProfile, setSavingProfile] = useState(false)
   const [message, setMessage] = useState('')
+  const [profileMessage, setProfileMessage] = useState('')
+
+  const [venueName, setVenueName] = useState('')
+  const [promoterContactName, setPromoterContactName] = useState('')
+  const [promoterPhone, setPromoterPhone] = useState('')
+  const [promoterWebsite, setPromoterWebsite] = useState('')
+  const [promoterDescription, setPromoterDescription] = useState('')
+  const [billingName, setBillingName] = useState('')
+  const [billingTaxId, setBillingTaxId] = useState('')
+  const [billingAddress, setBillingAddress] = useState('')
+  const [billingEmail, setBillingEmail] = useState('')
 
   const [title, setTitle] = useState('')
   const [venue, setVenue] = useState('')
@@ -53,6 +65,27 @@ export default function DashboardPage() {
 
       setEmail(user.email ?? null)
       setUserId(user.id)
+      setBillingEmail(user.email ?? '')
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select(
+          'venue_name, promoter_contact_name, promoter_phone, promoter_website, promoter_description, billing_name, billing_tax_id, billing_address, billing_email'
+        )
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (profile) {
+        setVenueName(profile.venue_name ?? '')
+        setPromoterContactName(profile.promoter_contact_name ?? '')
+        setPromoterPhone(profile.promoter_phone ?? '')
+        setPromoterWebsite(profile.promoter_website ?? '')
+        setPromoterDescription(profile.promoter_description ?? '')
+        setBillingName(profile.billing_name ?? '')
+        setBillingTaxId(profile.billing_tax_id ?? '')
+        setBillingAddress(profile.billing_address ?? '')
+        setBillingEmail(profile.billing_email ?? user.email ?? '')
+      }
 
       const { data } = await supabase
         .from('events')
@@ -77,6 +110,40 @@ export default function DashboardPage() {
       .order('date', { ascending: true })
 
     setEvents(data || [])
+  }
+
+  async function handleProfileSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!userId) return
+
+    setSavingProfile(true)
+    setProfileMessage('')
+
+    const { error } = await supabase.from('profiles').upsert(
+      {
+        id: userId,
+        role: 'venue',
+        venue_name: venueName,
+        promoter_contact_name: promoterContactName,
+        promoter_phone: promoterPhone,
+        promoter_website: promoterWebsite,
+        promoter_description: promoterDescription,
+        billing_name: billingName,
+        billing_tax_id: billingTaxId,
+        billing_address: billingAddress,
+        billing_email: billingEmail,
+      },
+      { onConflict: 'id' }
+    )
+
+    setSavingProfile(false)
+
+    if (error) {
+      setProfileMessage(`Error al guardar perfil: ${error.message}`)
+      return
+    }
+
+    setProfileMessage('Perfil guardado correctamente')
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -224,6 +291,105 @@ export default function DashboardPage() {
             <p className="text-sm text-slate-400">Eventos pendientes</p>
             <p className="mt-2 text-4xl font-bold">{pendingEvents.length}</p>
           </div>
+        </section>
+
+        <section className="mb-8 grid gap-8 lg:grid-cols-2">
+          <form onSubmit={handleProfileSubmit} className="card space-y-5 p-6">
+            <div>
+              <h2 className="text-2xl font-bold">Perfil de sala o promotor</h2>
+              <p className="mt-2 text-sm text-slate-400">
+                Estos datos nos ayudan a validar tus eventos y preparar futuras
+                opciones de destacados.
+              </p>
+            </div>
+
+            <input
+              className="input"
+              placeholder="Nombre comercial de la sala o promotora"
+              value={venueName}
+              onChange={(e) => setVenueName(e.target.value)}
+              required
+            />
+
+            <input
+              className="input"
+              placeholder="Persona de contacto"
+              value={promoterContactName}
+              onChange={(e) => setPromoterContactName(e.target.value)}
+            />
+
+            <input
+              className="input"
+              placeholder="Telefono de contacto"
+              value={promoterPhone}
+              onChange={(e) => setPromoterPhone(e.target.value)}
+            />
+
+            <input
+              className="input"
+              placeholder="Web o Instagram"
+              value={promoterWebsite}
+              onChange={(e) => setPromoterWebsite(e.target.value)}
+            />
+
+            <textarea
+              className="input min-h-28"
+              placeholder="Descripcion breve de la sala o promotora"
+              value={promoterDescription}
+              onChange={(e) => setPromoterDescription(e.target.value)}
+            />
+
+            <button className="btn-primary w-full" type="submit" disabled={savingProfile}>
+              {savingProfile ? 'Guardando...' : 'Guardar perfil'}
+            </button>
+
+            {profileMessage && (
+              <p className="text-sm text-brand-500">{profileMessage}</p>
+            )}
+          </form>
+
+          <form onSubmit={handleProfileSubmit} className="card space-y-5 p-6">
+            <div>
+              <h2 className="text-2xl font-bold">Datos de facturacion</h2>
+              <p className="mt-2 text-sm text-slate-400">
+                Se usaran cuando actives destacados, promociones o servicios de
+                pago.
+              </p>
+            </div>
+
+            <input
+              className="input"
+              placeholder="Razon social o nombre fiscal"
+              value={billingName}
+              onChange={(e) => setBillingName(e.target.value)}
+            />
+
+            <input
+              className="input"
+              placeholder="NIF / CIF"
+              value={billingTaxId}
+              onChange={(e) => setBillingTaxId(e.target.value)}
+            />
+
+            <input
+              className="input"
+              placeholder="Direccion fiscal"
+              value={billingAddress}
+              onChange={(e) => setBillingAddress(e.target.value)}
+            />
+
+            <input
+              className="input"
+              type="email"
+              placeholder="Email de facturacion"
+              value={billingEmail}
+              onChange={(e) => setBillingEmail(e.target.value)}
+            />
+
+            <button className="btn-secondary w-full" type="submit" disabled={savingProfile}>
+              {savingProfile ? 'Guardando...' : 'Guardar facturacion'}
+            </button>
+          </form>
         </section>
 
         <section className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
