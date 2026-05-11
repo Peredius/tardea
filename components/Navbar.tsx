@@ -124,13 +124,6 @@ export function Navbar() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-2">
-          <Link
-            href="/login?type=venue"
-            className="text-sm text-slate-300 hover:text-white"
-          >
-            Promotor
-          </Link>
-
           {user ? (
             <>
               <Link href="/cuenta" className="btn-primary">
@@ -146,9 +139,18 @@ export function Navbar() {
               </button>
             </>
           ) : (
-            <Link href="/login?type=user" className="btn-primary">
-              Usuario
-            </Link>
+            <>
+              <Link
+                href="/login?type=venue"
+                className="text-sm text-slate-300 hover:text-white"
+              >
+                Promotor
+              </Link>
+
+              <Link href="/login?type=user" className="btn-primary">
+                Usuario
+              </Link>
+            </>
           )}
         </div>
       </div>
