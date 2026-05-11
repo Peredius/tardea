@@ -220,7 +220,7 @@ export default function DashboardPage() {
 
   async function handleSignOut() {
     await supabase.auth.signOut()
-    window.location.href = '/login?type=venue'
+    window.location.href = '/'
   }
 
   async function savePromoterProfile(e: React.FormEvent) {
