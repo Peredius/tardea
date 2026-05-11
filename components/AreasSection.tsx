@@ -65,15 +65,6 @@ export function AreasSection() {
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">
               Destacados de la semana
             </h2>
-
-            <p className="mt-3 text-slate-400">
-              Esta zona se activara cuando haya promotores destacados. Asi la
-              portada queda limpia ahora y lista para monetizar despues.
-            </p>
-          </div>
-
-          <div className="mt-6 rounded-2xl border border-dashed border-brand-500/30 bg-brand-500/5 p-4 text-sm font-medium text-brand-200">
-            Espacio reservado para eventos destacados reales.
           </div>
         </div>
       </div>
