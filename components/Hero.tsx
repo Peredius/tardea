@@ -172,8 +172,8 @@ export function Hero() {
                 <h2 className="text-2xl font-bold leading-none text-white">
                   ¿Qué día vas a salir?
                 </h2>
-                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  Seleciona uno o varios días
+                <p className="mt-1 text-[11px] font-medium normal-case tracking-0 text-slate-500 sm:text-xs">
+                  seleciona uno o varios días
                 </p>
 
               </div>
@@ -182,7 +182,7 @@ export function Hero() {
                 type="button"
                 onClick={searchSelectedDates}
                 disabled={selectedDates.length === 0}
-                className="rounded-full bg-brand-500 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-slate-500"
+                className="rounded-full bg-brand-500 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-slate-500 sm:px-4 sm:py-2 sm:text-xs"
               >
                 Buscar
               </button>
