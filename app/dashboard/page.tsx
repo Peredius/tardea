@@ -883,7 +883,7 @@ export default function DashboardPage() {
                           {event.status === 'approved' ? 'Publicado' : 'Pendiente'}
                         </span>
                       </div>
-                      <a href={`/eventos/${event.slug}`} className="text-sm font-medium text-brand-500 hover:underline">Vista previa</a>
+                      <a href={`/eventos/${event.slug}?from=dashboard`} className="text-sm font-medium text-brand-500 hover:underline">Vista previa</a>
                     </div>
                   ))}
                 </div>

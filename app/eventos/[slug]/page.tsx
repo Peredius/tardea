@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import {
   ArrowLeft,
   CalendarDays,
@@ -20,7 +20,11 @@ import { supabase } from '@/lib/supabase'
 
 export default function EventDetailPage() {
   const params = useParams()
+  const searchParams = useSearchParams()
   const slug = params.slug as string
+  const from = searchParams.get('from')
+  const backHref = from === 'admin' ? '/admin' : from === 'dashboard' ? '/dashboard' : '/'
+  const backLabel = from === 'admin' ? 'Volver al admin' : from === 'dashboard' ? 'Volver al panel' : 'Volver'
 
   const [event, setEvent] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
@@ -103,7 +107,7 @@ export default function EventDetailPage() {
         <Navbar />
         <section className="container-page py-16">
           <h1 className="text-3xl font-bold">Evento no encontrado</h1>
-          <Link href="/" className="btn-secondary mt-6 inline-flex">
+          <Link href={backHref} className="btn-secondary mt-6 inline-flex">
             Volver
           </Link>
         </section>
@@ -125,8 +129,8 @@ export default function EventDetailPage() {
         )}
 
         <div className="container-page relative py-16 md:py-24">
-          <Link href="/" className="btn-secondary mb-8 inline-flex">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Volver
+          <Link href={backHref} className="btn-secondary mb-8 inline-flex">
+            <ArrowLeft className="mr-2 h-4 w-4" /> {backLabel}
           </Link>
 
           {event.status === 'pending' && (

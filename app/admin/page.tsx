@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
@@ -16,6 +16,7 @@ function generateSlug(title: string, date: string) {
 }
 
 export default function AdminPage() {
+  const formRef = useRef<HTMLFormElement | null>(null)
   const [title, setTitle] = useState('')
   const [venue, setVenue] = useState('')
   const [area, setArea] = useState('')
@@ -142,8 +143,8 @@ export default function AdminPage() {
       featured: false,
       description,
       perks: perks ? perks.split(',').map((p) => p.trim()) : [],
-      status: 'approved',
-      published: true,
+      status: editingEvent?.status || 'approved',
+      published: editingEvent ? Boolean(editingEvent.published) : true,
     }
 
     let error
@@ -212,6 +213,7 @@ export default function AdminPage() {
     setCover(null)
     setDescription(event.description || '')
     setPerks(event.perks?.join(', ') || '')
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   return (
@@ -233,7 +235,13 @@ export default function AdminPage() {
         </button>
       </section>
 
-      <form onSubmit={handleSubmit} className="card mt-8 max-w-2xl space-y-6 p-6">
+      <form ref={formRef} onSubmit={handleSubmit} className="card mt-8 max-w-2xl space-y-6 p-6">
+        {editingEvent && (
+          <div className="rounded-2xl border border-brand-500/30 bg-brand-500/10 p-4 text-sm text-brand-100">
+            Editando: {editingEvent.title}. Si era pendiente, seguira pendiente hasta que pulses Aprobar.
+          </div>
+        )}
+
         <input className="input" placeholder="Nombre del evento" value={title} onChange={(e) => setTitle(e.target.value)} />
 
         <select className="select" value={type} onChange={(e) => setType(e.target.value)}>
@@ -379,7 +387,7 @@ export default function AdminPage() {
             </div>
 
             <div className="flex gap-3">
-              <Link href={`/eventos/${event.slug}`} className="btn-secondary">
+              <Link href={`/eventos/${event.slug}?from=admin`} className="btn-secondary">
                 Vista previa
               </Link>
 
