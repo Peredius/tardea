@@ -11,6 +11,7 @@ const MUSIC_OPTIONS = [
   'Electronica',
   'Flamenquito',
   'Pop',
+  'Remember',
 ]
 
 const CITY_OPTIONS = [
