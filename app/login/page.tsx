@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Apple, Mail } from 'lucide-react'
+import { Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 const MUSIC_OPTIONS = [
@@ -65,7 +65,7 @@ function LoginContent() {
     )
   }
 
-  async function handleOAuthLogin(provider: 'google' | 'apple') {
+  async function handleOAuthLogin(provider: 'google') {
     setMessage('')
 
     const { error } = await supabase.auth.signInWithOAuth({
@@ -73,21 +73,15 @@ function LoginContent() {
       options: {
         redirectTo: `${window.location.origin}/auth/callback?type=${accountType}`,
         queryParams:
-          provider === 'google'
-            ? {
-                access_type: 'offline',
-                prompt: 'select_account',
-              }
-            : undefined,
+          {
+            access_type: 'offline',
+            prompt: 'select_account',
+          },
       },
     })
 
     if (error) {
-      setMessage(
-        `No se pudo iniciar sesion con ${
-          provider === 'google' ? 'Google' : 'Apple'
-        }`
-      )
+      setMessage('No se pudo iniciar sesion con Google')
     }
   }
 
@@ -343,15 +337,6 @@ function LoginContent() {
                     G
                   </span>
                   Continuar con Google
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleOAuthLogin('apple')}
-                  className="btn-secondary w-full gap-3"
-                >
-                  <Apple className="h-5 w-5" />
-                  Continuar con Apple
                 </button>
 
                 <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
