@@ -173,7 +173,7 @@ export function Hero() {
                   ¿Qué día vas a salir?
                 </h2>
                 <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  Selecciona uno o varios dias
+                  Seleciona uno o varios días
                 </p>
 
               </div>
