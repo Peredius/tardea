@@ -536,35 +536,6 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        {profileComplete && (
-          <nav className="mb-8 grid gap-3 md:grid-cols-4">
-            {[
-              { key: 'events', label: 'Subir eventos', icon: UploadCloud },
-              { key: 'data', label: 'Editar datos', icon: ReceiptText },
-              { key: 'profile', label: 'Editar perfil', icon: PencilLine },
-              { key: 'resources', label: 'Recursos', icon: Megaphone },
-            ].map((item) => {
-              const Icon = item.icon
-              const active = panelMode === item.key
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => setPanelMode(item.key as 'events' | 'data' | 'profile' | 'resources')}
-                  className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
-                    active
-                      ? 'border-brand-500 bg-brand-500 text-white'
-                      : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </button>
-              )
-            })}
-          </nav>
-        )}
-
         {showDataForm && (
           <form onSubmit={savePromoterProfile} className="card mb-8 space-y-6 p-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
