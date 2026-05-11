@@ -110,3 +110,30 @@ using (
   published = true
   and status = 'approved'
 );
+
+insert into storage.buckets (id, name, public)
+values ('events', 'events', true)
+on conflict (id) do update set public = true;
+
+drop policy if exists "Anyone can read event files" on storage.objects;
+drop policy if exists "Authenticated users can upload event files" on storage.objects;
+drop policy if exists "Authenticated users can update event files" on storage.objects;
+
+create policy "Anyone can read event files"
+on storage.objects
+for select
+to anon, authenticated
+using (bucket_id = 'events');
+
+create policy "Authenticated users can upload event files"
+on storage.objects
+for insert
+to authenticated
+with check (bucket_id = 'events');
+
+create policy "Authenticated users can update event files"
+on storage.objects
+for update
+to authenticated
+using (bucket_id = 'events')
+with check (bucket_id = 'events');
