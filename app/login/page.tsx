@@ -14,27 +14,57 @@ const MUSIC_OPTIONS = [
   'Remember',
 ]
 
-const CITY_OPTIONS = [
-  'Madrid',
+const PROVINCE_OPTIONS = [
+  'A Coruna',
+  'Alava',
+  'Albacete',
+  'Alicante',
+  'Almeria',
+  'Asturias',
+  'Avila',
+  'Badajoz',
   'Barcelona',
-  'Valencia',
-  'Sevilla',
-  'Zaragoza',
+  'Burgos',
+  'Caceres',
+  'Cadiz',
+  'Cantabria',
+  'Castellon',
+  'Ciudad Real',
+  'Cordoba',
+  'Cuenca',
+  'Girona',
+  'Granada',
+  'Guadalajara',
+  'Gipuzkoa',
+  'Huelva',
+  'Huesca',
+  'Illes Balears',
+  'Jaen',
+  'La Rioja',
+  'Las Palmas',
+  'Leon',
+  'Lleida',
+  'Lugo',
+  'Madrid',
   'Malaga',
   'Murcia',
-  'Palma',
-  'Las Palmas de Gran Canaria',
-  'Bilbao',
-  'Alicante',
-  'Cordoba',
+  'Navarra',
+  'Ourense',
+  'Palencia',
+  'Pontevedra',
+  'Salamanca',
+  'Santa Cruz de Tenerife',
+  'Segovia',
+  'Sevilla',
+  'Soria',
+  'Tarragona',
+  'Teruel',
+  'Toledo',
+  'Valencia',
   'Valladolid',
-  'Vigo',
-  'Gijon',
-  'Hospitalet de Llobregat',
-  'Vitoria-Gasteiz',
-  'A Coruna',
-  'Granada',
-  'Elche',
+  'Vizcaya',
+  'Zamora',
+  'Zaragoza',
 ]
 
 function LoginContent() {
@@ -54,7 +84,8 @@ function LoginContent() {
   const [birthDate, setBirthDate] = useState('')
   const [address, setAddress] = useState('')
   const [postalCode, setPostalCode] = useState('')
-  const [city, setCity] = useState('Madrid')
+  const [municipality, setMunicipality] = useState('')
+  const [province, setProvince] = useState('Madrid')
   const [musicPrefs, setMusicPrefs] = useState<string[]>([])
 
   function toggleSelection(value: string) {
@@ -108,7 +139,7 @@ function LoginContent() {
     const { data: profile } = await supabase
       .from('profiles')
       .select(
-        'role, first_name, last_name, birth_date, address, postal_code, city, music_preferences'
+        'role, first_name, last_name, birth_date, address, postal_code, municipality, province, city, music_preferences'
       )
       .eq('id', user.id)
       .single()
@@ -123,7 +154,8 @@ function LoginContent() {
       !profile?.birth_date ||
       !profile?.address ||
       !profile?.postal_code ||
-      !profile?.city ||
+      !(profile?.municipality || profile?.city) ||
+      !profile?.province ||
       !profile?.music_preferences?.length
     ) {
       window.location.href = '/cuenta/perfil?first=1'
@@ -157,7 +189,9 @@ function LoginContent() {
           birth_date: accountType === 'user' ? birthDate : null,
           address: accountType === 'user' ? address : null,
           postal_code: accountType === 'user' ? postalCode : null,
-          city: accountType === 'user' ? city : null,
+          municipality: accountType === 'user' ? municipality : null,
+          province: accountType === 'user' ? province : null,
+          city: accountType === 'user' ? municipality : null,
           music_preferences: accountType === 'user' ? musicPrefs : [],
           area_preferences: [],
         },
@@ -251,13 +285,27 @@ function LoginContent() {
                     required
                   />
 
+                  <input
+                    className="input"
+                    placeholder="Municipio"
+                    value={municipality}
+                    onChange={(e) => setMunicipality(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <p className="mb-2 text-sm text-slate-400">
+                    Provincia
+                  </p>
+
                   <select
                     className="select"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
+                    value={province}
+                    onChange={(e) => setProvince(e.target.value)}
                     required
                   >
-                    {CITY_OPTIONS.map((option) => (
+                    {PROVINCE_OPTIONS.map((option) => (
                       <option key={option} value={option}>
                         {option}
                       </option>
