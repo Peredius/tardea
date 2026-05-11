@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Calendar,
   ChevronLeft,
@@ -9,6 +9,7 @@ import {
   Music4,
   Ticket,
 } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 const monthNames = [
   'Enero',
@@ -36,6 +37,7 @@ export function Hero() {
   const [currentMonth, setCurrentMonth] = useState(today.getMonth())
   const [currentYear, setCurrentYear] = useState(today.getFullYear())
   const [selectedDate, setSelectedDate] = useState('')
+  const [eventDates, setEventDates] = useState<string[]>([])
 
   const days = useMemo(() => {
     const firstDay = new Date(currentYear, currentMonth, 1)
@@ -47,6 +49,27 @@ export function Hero() {
       ...Array.from({ length: totalDays }, (_, i) => i + 1),
     ]
   }, [currentMonth, currentYear])
+
+  useEffect(() => {
+    async function loadEventDates() {
+      const { data, error } = await supabase
+        .from('events')
+        .select('date')
+        .eq('published', true)
+        .eq('status', 'approved')
+
+      if (error) {
+        console.error(error)
+        return
+      }
+
+      setEventDates([
+        ...new Set((data || []).map((event) => event.date).filter(Boolean)),
+      ])
+    }
+
+    loadEventDates()
+  }, [])
 
   function changeMonth(direction: number) {
     const newDate = new Date(currentYear, currentMonth + direction, 1)
@@ -184,21 +207,27 @@ export function Hero() {
                     currentYear === today.getFullYear()
 
                   const isSelected = selectedDate === value
+                  const hasEvents = eventDates.includes(value)
 
                   return (
                     <button
                       key={value}
                       type="button"
                       onClick={() => selectDate(day)}
-                      className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold transition ${
+                      className={`relative mx-auto flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold transition ${
                         isSelected
                           ? 'bg-gradient-to-br from-pink-500 to-rose-500 text-white shadow-[0_0_30px_rgba(255,0,102,0.55)]'
                           : isToday
                             ? 'border border-brand-500 text-brand-400'
+                            : hasEvents
+                              ? 'bg-brand-500/15 text-white ring-1 ring-brand-500/35 hover:bg-brand-500/25'
                             : 'text-slate-200 hover:bg-white/10 hover:text-white'
                       }`}
                     >
                       {day}
+                      {hasEvents && !isSelected && (
+                        <span className="absolute -bottom-1 h-1 w-1 rounded-full bg-brand-500" />
+                      )}
                     </button>
                   )
                 })}
