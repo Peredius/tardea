@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import type { User } from '@supabase/supabase-js'
 import { Search } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 export function Navbar() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<any[]>([])
+  const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
     async function searchEvents() {
@@ -31,6 +33,34 @@ export function Navbar() {
 
     searchEvents()
   }, [query])
+
+  useEffect(() => {
+    async function loadUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      setUser(user)
+    }
+
+    loadUser()
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    setUser(null)
+    window.location.href = '/'
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/80 backdrop-blur">
@@ -101,9 +131,25 @@ export function Navbar() {
             Promotor
           </Link>
 
-          <Link href="/login?type=user" className="btn-primary">
-            Usuario
-          </Link>
+          {user ? (
+            <>
+              <Link href="/cuenta" className="btn-primary">
+                Mi cuenta
+              </Link>
+
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="hidden text-sm text-slate-300 hover:text-white sm:inline"
+              >
+                Cerrar sesion
+              </button>
+            </>
+          ) : (
+            <Link href="/login?type=user" className="btn-primary">
+              Usuario
+            </Link>
+          )}
         </div>
       </div>
     </header>
