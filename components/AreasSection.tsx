@@ -1,22 +1,82 @@
-import { areas } from '@/lib/data';
+import { BadgePercent, CalendarCheck, MapPinned, Music4 } from 'lucide-react'
+
+const discoveryPoints = [
+  {
+    icon: CalendarCheck,
+    title: 'Planes actualizados',
+    text: 'Encuentra tardeos activos segun la fecha que elijas.',
+  },
+  {
+    icon: Music4,
+    title: 'Tardeos por musica y zona',
+    text: 'Filtra por ambiente, estilo musical, precio y barrio.',
+  },
+  {
+    icon: BadgePercent,
+    title: 'Ofertas para usuarios registrados',
+    text: 'Preparamos ventajas para que recibas planes que encajen contigo.',
+  },
+]
 
 export function AreasSection() {
   return (
-    <section id="zonas" className="container-page py-16">
-      <div className="mb-8">
-        <p className="text-sm font-semibold text-brand-500">SEO local</p>
-        <h2 className="mt-2 text-3xl font-bold tracking-tight">Zonas que deberías cubrir</h2>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {areas.map((area) => (
-          <div key={area} className="card p-6">
-            <h3 className="text-xl font-semibold text-white">Tardeo en {area}</h3>
-            <p className="mt-2 text-sm text-slate-400">
-              Página SEO ideal para captar búsquedas como “tardeo {area.toLowerCase()} hoy”, “fiesta tarde {area.toLowerCase()}” o “afterwork {area.toLowerCase()}”.
+    <section id="zonas" className="container-page py-12">
+      <div className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
+        <div className="card p-6 md:p-8">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-500/15 text-brand-500">
+            <MapPinned className="h-5 w-5" />
+          </div>
+
+          <h2 className="mt-5 text-3xl font-bold tracking-tight text-white">
+            Encuentra tu tardeo ideal
+          </h2>
+
+          <p className="mt-3 max-w-2xl text-slate-400">
+            Elige fecha, zona, musica y presupuesto para descubrir planes de
+            tardeo en Madrid.
+          </p>
+
+          <div className="mt-6 grid gap-3 md:grid-cols-3">
+            {discoveryPoints.map((item) => {
+              const Icon = item.icon
+
+              return (
+                <div
+                  key={item.title}
+                  className="rounded-2xl border border-white/10 bg-slate-900/60 p-4"
+                >
+                  <Icon className="h-5 w-5 text-brand-500" />
+                  <h3 className="mt-3 font-semibold text-white">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-slate-400">{item.text}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="card flex flex-col justify-between p-6 md:p-8">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-500">
+              Proximamente
+            </p>
+
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">
+              Destacados de la semana
+            </h2>
+
+            <p className="mt-3 text-slate-400">
+              Esta zona se activara cuando haya promotores destacados. Asi la
+              portada queda limpia ahora y lista para monetizar despues.
             </p>
           </div>
-        ))}
+
+          <div className="mt-6 rounded-2xl border border-dashed border-brand-500/30 bg-brand-500/5 p-4 text-sm font-medium text-brand-200">
+            Espacio reservado para eventos destacados reales.
+          </div>
+        </div>
       </div>
     </section>
-  );
+  )
 }

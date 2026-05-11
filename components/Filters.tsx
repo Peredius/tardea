@@ -2,7 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Clock3, Euro, MapPin, Music4, Users } from 'lucide-react'
+import {
+  Clock3,
+  Euro,
+  MapPin,
+  Music4,
+  SlidersHorizontal,
+  Users,
+} from 'lucide-react'
 import {
   audienceTypes,
   eventTypes,
@@ -205,7 +212,8 @@ export function Filters() {
         </div>
 
         <div className="mt-5 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-brand-500">
+          <h2 className="inline-flex items-center gap-2 text-sm font-semibold text-brand-500">
+            <SlidersHorizontal className="h-4 w-4" />
             Filtrador de eventos
           </h2>
 
