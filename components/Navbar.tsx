@@ -83,14 +83,15 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/80 backdrop-blur">
-      <div className="container-page flex h-16 items-center justify-between gap-4">
-        <Link href="/" className="flex shrink-0 items-center">
+      <div className="container-page flex h-16 items-center justify-between gap-2 sm:gap-4">
+        <Link href="/" className="flex min-w-0 shrink items-center sm:shrink-0">
           <Image
             src="/logotardeaweb.png"
             alt="TARDEA"
-            width={140}
+            width={118}
             height={40}
             priority
+            className="h-auto w-[108px] sm:w-[140px]"
           />
         </Link>
 
@@ -167,12 +168,15 @@ export function Navbar() {
             <>
               <Link
                 href="/login?type=venue"
-                className="text-sm text-slate-300 hover:text-white"
+                className="whitespace-nowrap text-xs font-medium text-slate-300 hover:text-white sm:text-sm"
               >
                 Promotor
               </Link>
 
-              <Link href="/login?type=user" className="btn-primary">
+              <Link
+                href="/login?type=user"
+                className="inline-flex items-center justify-center rounded-2xl bg-brand-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-600 sm:px-5 sm:py-3"
+              >
                 Usuario
               </Link>
             </>
