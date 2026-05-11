@@ -87,8 +87,10 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
+  const [savingPassword, setSavingPassword] = useState(false)
   const [message, setMessage] = useState('')
   const [profileMessage, setProfileMessage] = useState('')
+  const [passwordMessage, setPasswordMessage] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [panelMode, setPanelMode] = useState<'events' | 'data' | 'profile' | 'resources'>('events')
 
@@ -113,6 +115,8 @@ export default function DashboardPage() {
   const [billingPostalCode, setBillingPostalCode] = useState('')
   const [billingProvince, setBillingProvince] = useState('Madrid')
   const [billingEmail, setBillingEmail] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
 
   const [title, setTitle] = useState('')
   const [venue, setVenue] = useState('')
@@ -282,6 +286,33 @@ export default function DashboardPage() {
     setBillingEmail(finalBillingEmail)
     setProfileMessage('Datos guardados correctamente')
     setPanelMode('events')
+  }
+
+  async function updatePassword() {
+    setPasswordMessage('')
+
+    if (newPassword.length < 6) {
+      setPasswordMessage('La contrasena debe tener al menos 6 caracteres.')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordMessage('Las contrasenas no coinciden.')
+      return
+    }
+
+    setSavingPassword(true)
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setSavingPassword(false)
+
+    if (error) {
+      setPasswordMessage(`No se pudo cambiar la contrasena: ${error.message}`)
+      return
+    }
+
+    setNewPassword('')
+    setConfirmPassword('')
+    setPasswordMessage('Contrasena actualizada correctamente.')
   }
 
   async function savePublicProfile(e: React.FormEvent) {
@@ -557,6 +588,16 @@ export default function DashboardPage() {
               )}
             </div>
 
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-500">
+                Acceso
+              </p>
+              <p className="mt-2 break-all text-lg font-semibold text-white">{email}</p>
+              <p className="mt-1 text-sm text-slate-400">
+                Este es el correo con el que entras al panel de promotor.
+              </p>
+            </div>
+
             <div className="grid gap-4 md:grid-cols-2">
               <input className="input" placeholder="Evento o nombre comercial" value={promoterEventName} onChange={(e) => setPromoterEventName(e.target.value)} required />
               <input className="input" placeholder="Persona de contacto" value={promoterContactName} onChange={(e) => setPromoterContactName(e.target.value)} required />
@@ -604,6 +645,43 @@ export default function DashboardPage() {
             </button>
 
             {profileMessage && <p className="text-sm text-brand-500">{profileMessage}</p>}
+
+            <div className="border-t border-white/10 pt-6">
+              <h3 className="text-xl font-bold">Cambiar contrasena</h3>
+              <p className="mt-2 text-sm text-slate-400">
+                Usa una contrasena nueva para acceder con este correo.
+              </p>
+
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <input
+                  className="input"
+                  type="password"
+                  placeholder="Nueva contrasena"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  autoComplete="new-password"
+                />
+                <input
+                  className="input"
+                  type="password"
+                  placeholder="Repetir contrasena"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={updatePassword}
+                disabled={savingPassword}
+                className="btn-secondary mt-4 w-full md:w-auto"
+              >
+                {savingPassword ? 'Actualizando...' : 'Cambiar contrasena'}
+              </button>
+
+              {passwordMessage && <p className="mt-3 text-sm text-brand-500">{passwordMessage}</p>}
+            </div>
           </form>
         )}
 
