@@ -30,7 +30,11 @@ Configura estas variables en `.env.local` y tambien en Vercel:
 NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key_publica
 SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key_solo_servidor
+SITE_PASSWORD=elige_una_contrasena_privada
 ```
+
+Si `SITE_PASSWORD` esta configurada, toda la web queda protegida por una
+pantalla de acceso privado. Si la variable no existe, la web queda publica.
 
 Para el acceso de usuarios con Google y Apple, activa ambos proveedores en
 Supabase Auth y anade como URL de retorno:
