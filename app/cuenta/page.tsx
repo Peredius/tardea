@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Heart, TicketPercent } from 'lucide-react'
+import { ArrowLeft, Heart, TicketPercent } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 export default function AccountPage() {
@@ -47,9 +47,13 @@ export default function AccountPage() {
       <div className="container-page py-12">
         <section className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-500">
-              Mi TARDEA
-            </p>
+            <Link
+              href="/#eventos"
+              className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.25em] text-brand-500 hover:text-brand-400"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Link>
 
             <h1 className="mt-2 text-4xl font-bold tracking-tight">
               Mi cuenta
