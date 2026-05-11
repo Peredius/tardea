@@ -11,6 +11,7 @@ export function Navbar() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<any[]>([])
   const [user, setUser] = useState<User | null>(null)
+  const [firstName, setFirstName] = useState('')
 
   useEffect(() => {
     async function searchEvents() {
@@ -35,12 +36,28 @@ export function Navbar() {
   }, [query])
 
   useEffect(() => {
+    async function loadUserProfile(currentUser: User | null) {
+      if (!currentUser) {
+        setFirstName('')
+        return
+      }
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('first_name')
+        .eq('id', currentUser.id)
+        .maybeSingle()
+
+      setFirstName(data?.first_name ?? '')
+    }
+
     async function loadUser() {
       const {
         data: { user },
       } = await supabase.auth.getUser()
 
       setUser(user)
+      loadUserProfile(user)
     }
 
     loadUser()
@@ -48,7 +65,9 @@ export function Navbar() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+      const currentUser = session?.user ?? null
+      setUser(currentUser)
+      loadUserProfile(currentUser)
     })
 
     return () => {
@@ -126,6 +145,12 @@ export function Navbar() {
         <div className="flex shrink-0 items-center gap-2">
           {user ? (
             <>
+              {firstName && (
+                <span className="hidden text-sm font-medium text-slate-200 md:inline">
+                  Hola, {firstName}
+                </span>
+              )}
+
               <Link href="/cuenta" className="btn-primary">
                 Mi cuenta
               </Link>

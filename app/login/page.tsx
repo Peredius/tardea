@@ -6,7 +6,6 @@ import { Apple, Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 const MUSIC_OPTIONS = ['Indie', 'Pop', 'House', 'Urbano', 'Techno']
-const AREA_OPTIONS = ['Centro', 'Salamanca', 'Retiro', 'Chamberí', 'Malasaña']
 
 function LoginContent() {
   const searchParams = useSearchParams()
@@ -22,21 +21,15 @@ function LoginContent() {
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
-  const [day, setDay] = useState('')
-  const [month, setMonth] = useState('')
-  const [year, setYear] = useState('')
+  const [birthDate, setBirthDate] = useState('')
+  const [address, setAddress] = useState('')
   const [musicPrefs, setMusicPrefs] = useState<string[]>([])
-  const [areaPrefs, setAreaPrefs] = useState<string[]>([])
 
-  function toggleSelection(
-    value: string,
-    list: string[],
-    setList: React.Dispatch<React.SetStateAction<string[]>>
-  ) {
-    setList(
-      list.includes(value)
-        ? list.filter((item) => item !== value)
-        : [...list, value]
+  function toggleSelection(value: string) {
+    setMusicPrefs((current) =>
+      current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value]
     )
   }
 
@@ -76,7 +69,7 @@ function LoginContent() {
     })
 
     if (error) {
-      setMessage('Error al iniciar sesión')
+      setMessage('Error al iniciar sesion')
       return
     }
 
@@ -88,7 +81,7 @@ function LoginContent() {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, first_name, last_name, birth_date, address, music_preferences')
       .eq('id', user.id)
       .single()
 
@@ -96,6 +89,14 @@ function LoginContent() {
       window.location.href = '/admin'
     } else if (profile?.role === 'venue') {
       window.location.href = '/dashboard'
+    } else if (
+      !profile?.first_name ||
+      !profile?.last_name ||
+      !profile?.birth_date ||
+      !profile?.address ||
+      !profile?.music_preferences?.length
+    ) {
+      window.location.href = '/cuenta/perfil?first=1'
     } else {
       window.location.href = '/'
     }
@@ -116,19 +117,25 @@ function LoginContent() {
     }
 
     if (data.user) {
-      await supabase.from('profiles').insert({
-        id: data.user.id,
-        role: accountType,
-        venue_name: accountType === 'venue' ? venueName : null,
-        first_name: accountType === 'user' ? firstName : null,
-        last_name: accountType === 'user' ? lastName : null,
-        birth_date:
-          accountType === 'user'
-            ? `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
-            : null,
-        music_preferences: accountType === 'user' ? musicPrefs : [],
-        area_preferences: accountType === 'user' ? areaPrefs : [],
-      })
+      const { error: profileError } = await supabase.from('profiles').upsert(
+        {
+          id: data.user.id,
+          role: accountType,
+          venue_name: accountType === 'venue' ? venueName : null,
+          first_name: accountType === 'user' ? firstName : null,
+          last_name: accountType === 'user' ? lastName : null,
+          birth_date: accountType === 'user' ? birthDate : null,
+          address: accountType === 'user' ? address : null,
+          music_preferences: accountType === 'user' ? musicPrefs : [],
+          area_preferences: [],
+        },
+        { onConflict: 'id' }
+      )
+
+      if (profileError) {
+        setMessage(`Cuenta creada, pero falta guardar el perfil: ${profileError.message}`)
+        return
+      }
     }
 
     setMessage('Cuenta creada correctamente')
@@ -184,65 +191,22 @@ function LoginContent() {
                     Fecha de nacimiento
                   </p>
 
-                  <div className="grid grid-cols-3 gap-2">
-                    <select
-                      className="input"
-                      value={day}
-                      onChange={(e) => setDay(e.target.value)}
-                      required
-                    >
-                      <option value="">Día</option>
-                      {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                        <option key={d} value={d}>
-                          {d}
-                        </option>
-                      ))}
-                    </select>
-
-                    <select
-                      className="input"
-                      value={month}
-                      onChange={(e) => setMonth(e.target.value)}
-                      required
-                    >
-                      <option value="">Mes</option>
-                      {[
-                        'Enero',
-                        'Febrero',
-                        'Marzo',
-                        'Abril',
-                        'Mayo',
-                        'Junio',
-                        'Julio',
-                        'Agosto',
-                        'Septiembre',
-                        'Octubre',
-                        'Noviembre',
-                        'Diciembre',
-                      ].map((m, i) => (
-                        <option key={i + 1} value={i + 1}>
-                          {m}
-                        </option>
-                      ))}
-                    </select>
-
-                    <select
-                      className="input"
-                      value={year}
-                      onChange={(e) => setYear(e.target.value)}
-                      required
-                    >
-                      <option value="">Año</option>
-                      {Array.from({ length: 70 }, (_, i) => 2007 - i).map(
-                        (y) => (
-                          <option key={y} value={y}>
-                            {y}
-                          </option>
-                        )
-                      )}
-                    </select>
-                  </div>
+                  <input
+                    className="input"
+                    type="date"
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                    required
+                  />
                 </div>
+
+                <input
+                  className="input"
+                  placeholder="Direccion o zona donde vives"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  required
+                />
 
                 <div>
                   <p className="mb-2 text-sm text-slate-400">
@@ -254,9 +218,7 @@ function LoginContent() {
                       <button
                         type="button"
                         key={music}
-                        onClick={() =>
-                          toggleSelection(music, musicPrefs, setMusicPrefs)
-                        }
+                        onClick={() => toggleSelection(music)}
                         className={`rounded-full px-3 py-1 text-sm ${
                           musicPrefs.includes(music)
                             ? 'bg-brand-500 text-white'
@@ -264,31 +226,6 @@ function LoginContent() {
                         }`}
                       >
                         {music}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="mb-2 text-sm text-slate-400">
-                    Zonas favoritas
-                  </p>
-
-                  <div className="flex flex-wrap gap-2">
-                    {AREA_OPTIONS.map((area) => (
-                      <button
-                        type="button"
-                        key={area}
-                        onClick={() =>
-                          toggleSelection(area, areaPrefs, setAreaPrefs)
-                        }
-                        className={`rounded-full px-3 py-1 text-sm ${
-                          areaPrefs.includes(area)
-                            ? 'bg-brand-500 text-white'
-                            : 'bg-white/10 text-slate-200'
-                        }`}
-                      >
-                        {area}
                       </button>
                     ))}
                   </div>
@@ -308,7 +245,7 @@ function LoginContent() {
             <input
               className="input"
               type="password"
-              placeholder="Contraseña"
+              placeholder="Contrasena"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -363,7 +300,7 @@ function LoginContent() {
           )}
 
           <p className="mt-6 text-center text-sm text-slate-400">
-            {isRegister ? '¿Ya tienes cuenta?' : '¿No tienes cuenta?'}{' '}
+            {isRegister ? 'Ya tienes cuenta?' : 'No tienes cuenta?'}{' '}
             <button
               onClick={() => {
                 setIsRegister(!isRegister)
@@ -371,7 +308,7 @@ function LoginContent() {
               }}
               className="text-brand-500 hover:underline"
             >
-              {isRegister ? 'Iniciar sesión' : 'Crear cuenta'}
+              {isRegister ? 'Iniciar sesion' : 'Crear cuenta'}
             </button>
           </p>
         </div>

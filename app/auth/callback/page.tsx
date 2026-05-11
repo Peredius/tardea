@@ -24,7 +24,7 @@ function AuthCallbackContent() {
 
       const { data: profile, error: profileLoadError } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, first_name, last_name, birth_date, address, music_preferences')
         .eq('id', user.id)
         .maybeSingle()
 
@@ -49,6 +49,7 @@ function AuthCallbackContent() {
               last_name:
                 type === 'user' ? lastNameParts.join(' ') || null : null,
               venue_name: null,
+              address: null,
               music_preferences: [],
               area_preferences: [],
             },
@@ -67,10 +68,20 @@ function AuthCallbackContent() {
         role = createdProfile?.role ?? type
       }
 
+      const needsProfile =
+        role === 'user' &&
+        (!profile?.first_name ||
+          !profile?.last_name ||
+          !profile?.birth_date ||
+          !profile?.address ||
+          !profile?.music_preferences?.length)
+
       if (role === 'admin') {
         window.location.href = '/admin'
       } else if (role === 'venue') {
         window.location.href = '/dashboard'
+      } else if (needsProfile) {
+        window.location.href = '/cuenta/perfil?first=1'
       } else {
         window.location.href = '/'
       }

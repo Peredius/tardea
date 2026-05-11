@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Heart, TicketPercent } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
@@ -66,6 +67,18 @@ export default function AccountPage() {
           >
             Cerrar sesion
           </button>
+        </section>
+
+        <section className="card mb-4 p-6">
+          <h2 className="text-2xl font-bold">Datos y preferencias</h2>
+          <p className="mt-2 text-sm text-slate-400">
+            Actualiza tu nombre, fecha de nacimiento, direccion y gustos
+            musicales para recibir recomendaciones mejor ajustadas.
+          </p>
+
+          <Link href="/cuenta/perfil" className="btn-primary mt-4">
+            Editar perfil
+          </Link>
         </section>
 
         <section className="grid gap-4 md:grid-cols-2">
