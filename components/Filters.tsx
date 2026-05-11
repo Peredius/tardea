@@ -29,12 +29,22 @@ function matchesPrice(range: string, price: number) {
 }
 
 export function Filters() {
-  const [date, setDate] = useState(() => {
+  const [selectedDates, setSelectedDates] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('selectedDate') || ''
+      const storedDates = localStorage.getItem('selectedDates')
+      if (storedDates) {
+        try {
+          return JSON.parse(storedDates)
+        } catch {
+          return []
+        }
+      }
+
+      const storedDate = localStorage.getItem('selectedDate')
+      return storedDate ? [storedDate] : []
     }
 
-    return ''
+    return []
   })
 
   const [type, setType] = useState('Todos')
@@ -84,14 +94,21 @@ export function Filters() {
   }, [])
 
   useEffect(() => {
-    if (date) {
-      localStorage.setItem('selectedDate', date)
-    }
-  }, [date])
-
-  useEffect(() => {
     function handleSelectedDateChanged() {
-      setDate(localStorage.getItem('selectedDate') || '')
+      const storedDates = localStorage.getItem('selectedDates')
+
+      if (storedDates) {
+        try {
+          setSelectedDates(JSON.parse(storedDates))
+          return
+        } catch {
+          setSelectedDates([])
+          return
+        }
+      }
+
+      const storedDate = localStorage.getItem('selectedDate')
+      setSelectedDates(storedDate ? [storedDate] : [])
     }
 
     window.addEventListener('selectedDateChanged', handleSelectedDateChanged)
@@ -110,10 +127,10 @@ export function Filters() {
   )
 
   const filtered = useMemo(() => {
-    if (!date) return []
+    if (selectedDates.length === 0) return []
 
     return dbEvents.filter((event) => {
-      if (event.date !== date) return false
+      if (!selectedDates.includes(event.date)) return false
       if (type !== 'Todos' && event.type !== type) return false
       if (music !== 'Todas' && !event.music.includes(music as never)) {
         return false
@@ -124,7 +141,7 @@ export function Filters() {
 
       return true
     })
-  }, [area, audience, date, music, price, type, dbEvents])
+  }, [area, audience, selectedDates, music, price, type, dbEvents])
 
   return (
     <section id="eventos" className="container-page py-6">
@@ -217,7 +234,7 @@ export function Filters() {
             Filtrador de eventos
           </h2>
 
-          {date && (
+          {selectedDates.length > 0 && (
             <p className="text-sm font-semibold text-white">
               {filtered.length} eventos encontrados
             </p>
@@ -225,7 +242,7 @@ export function Filters() {
         </div>
       </div>
 
-      {!date ? (
+      {selectedDates.length === 0 ? (
         <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-10 text-center">
           <h3 className="text-2xl font-semibold text-white">
             Elige una fecha

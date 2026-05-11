@@ -36,7 +36,7 @@ export function Hero() {
   const today = new Date()
   const [currentMonth, setCurrentMonth] = useState(today.getMonth())
   const [currentYear, setCurrentYear] = useState(today.getFullYear())
-  const [selectedDate, setSelectedDate] = useState('')
+  const [selectedDates, setSelectedDates] = useState<string[]>([])
   const [eventDates, setEventDates] = useState<string[]>([])
 
   const days = useMemo(() => {
@@ -81,8 +81,18 @@ export function Hero() {
   function selectDate(day: number) {
     const value = formatDate(currentYear, currentMonth, day)
 
-    setSelectedDate(value)
-    localStorage.setItem('selectedDate', value)
+    setSelectedDates((current) =>
+      current.includes(value)
+        ? current.filter((date) => date !== value)
+        : [...current, value].sort()
+    )
+  }
+
+  function searchSelectedDates() {
+    if (selectedDates.length === 0) return
+
+    localStorage.setItem('selectedDates', JSON.stringify(selectedDates))
+    localStorage.setItem('selectedDate', selectedDates[0])
     window.dispatchEvent(new Event('selectedDateChanged'))
 
     const eventos = document.getElementById('eventos')
@@ -153,17 +163,29 @@ export function Hero() {
           <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-brand-500 to-transparent" />
 
           <div className="relative">
-            <div className="mb-4 flex items-center gap-4">
+            <div className="mb-4 flex items-center justify-between gap-4">
               <div className="rounded-2xl bg-brand-500/20 p-3 text-brand-400 shadow-[0_0_35px_rgba(255,0,102,0.25)]">
                 <Calendar className="h-6 w-6" />
               </div>
 
-              <div>
+              <div className="min-w-0 flex-1">
                 <h2 className="text-2xl font-bold leading-none text-white">
                   ¿Qué día vas a salir?
                 </h2>
+                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Selecciona uno o varios dias
+                </p>
 
-                              </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={searchSelectedDates}
+                disabled={selectedDates.length === 0}
+                className="rounded-full bg-brand-500 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-slate-500"
+              >
+                Buscar
+              </button>
             </div>
 
             <div className="rounded-[22px] border border-white/10 bg-[#060816]/90 p-3 shadow-inner shadow-brand-500/5">
@@ -206,7 +228,7 @@ export function Hero() {
                     currentMonth === today.getMonth() &&
                     currentYear === today.getFullYear()
 
-                  const isSelected = selectedDate === value
+                  const isSelected = selectedDates.includes(value)
                   const hasEvents = eventDates.includes(value)
 
                   return (
