@@ -101,6 +101,12 @@ with check (auth.uid() = id);
 alter table public.events enable row level security;
 
 drop policy if exists "Anyone can read published approved events" on public.events;
+drop policy if exists "Users can read own events" on public.events;
+drop policy if exists "Users can create own pending events" on public.events;
+drop policy if exists "Users can update own pending events" on public.events;
+drop policy if exists "Admins can read all events" on public.events;
+drop policy if exists "Admins can create events" on public.events;
+drop policy if exists "Admins can update events" on public.events;
 
 create policy "Anyone can read published approved events"
 on public.events
@@ -109,6 +115,83 @@ to anon, authenticated
 using (
   published = true
   and status = 'approved'
+);
+
+create policy "Users can read own events"
+on public.events
+for select
+to authenticated
+using (auth.uid() = user_id);
+
+create policy "Users can create own pending events"
+on public.events
+for insert
+to authenticated
+with check (
+  auth.uid() = user_id
+  and status = 'pending'
+  and published = false
+);
+
+create policy "Users can update own pending events"
+on public.events
+for update
+to authenticated
+using (
+  auth.uid() = user_id
+  and status = 'pending'
+)
+with check (
+  auth.uid() = user_id
+  and status = 'pending'
+  and published = false
+);
+
+create policy "Admins can read all events"
+on public.events
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+    and profiles.role = 'admin'
+  )
+);
+
+create policy "Admins can create events"
+on public.events
+for insert
+to authenticated
+with check (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+    and profiles.role = 'admin'
+  )
+);
+
+create policy "Admins can update events"
+on public.events
+for update
+to authenticated
+using (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+    and profiles.role = 'admin'
+  )
+)
+with check (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+    and profiles.role = 'admin'
+  )
 );
 
 insert into storage.buckets (id, name, public)
