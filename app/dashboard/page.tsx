@@ -1,7 +1,19 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ChevronDown, LogOut, ReceiptText, Settings, UserCircle } from 'lucide-react'
+import {
+  BadgeEuro,
+  ChevronDown,
+  ImagePlus,
+  LayoutDashboard,
+  LogOut,
+  Megaphone,
+  PencilLine,
+  ReceiptText,
+  Sparkles,
+  UploadCloud,
+  UserCircle,
+} from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 const PROVINCE_OPTIONS = [
@@ -78,7 +90,7 @@ export default function DashboardPage() {
   const [message, setMessage] = useState('')
   const [profileMessage, setProfileMessage] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
-  const [panelMode, setPanelMode] = useState<'events' | 'profile' | 'billing'>('events')
+  const [panelMode, setPanelMode] = useState<'events' | 'data' | 'profile' | 'resources'>('events')
 
   const [promoterEventName, setPromoterEventName] = useState('')
   const [promoterContactName, setPromoterContactName] = useState('')
@@ -88,6 +100,11 @@ export default function DashboardPage() {
   const [promoterMunicipality, setPromoterMunicipality] = useState('')
   const [promoterPostalCode, setPromoterPostalCode] = useState('')
   const [promoterProvince, setPromoterProvince] = useState('Madrid')
+  const [promoterWebsite, setPromoterWebsite] = useState('')
+  const [promoterDescription, setPromoterDescription] = useState('')
+  const [promoterLogoUrl, setPromoterLogoUrl] = useState('')
+  const [promoterLogoFile, setPromoterLogoFile] = useState<File | null>(null)
+  const [promoterLogoPreview, setPromoterLogoPreview] = useState('')
   const [billingDifferent, setBillingDifferent] = useState(false)
   const [billingName, setBillingName] = useState('')
   const [billingTaxId, setBillingTaxId] = useState('')
@@ -143,7 +160,7 @@ export default function DashboardPage() {
       const { data: profile } = await supabase
         .from('profiles')
         .select(
-          'venue_name, promoter_event_name, promoter_contact_name, promoter_company, promoter_tax_id, promoter_address, promoter_municipality, promoter_postal_code, promoter_province, billing_different, billing_name, billing_tax_id, billing_address, billing_municipality, billing_postal_code, billing_province, billing_email'
+          'venue_name, promoter_event_name, promoter_contact_name, promoter_company, promoter_tax_id, promoter_address, promoter_municipality, promoter_postal_code, promoter_province, promoter_website, promoter_description, promoter_logo_url, billing_different, billing_name, billing_tax_id, billing_address, billing_municipality, billing_postal_code, billing_province, billing_email'
         )
         .eq('id', user.id)
         .maybeSingle()
@@ -158,6 +175,9 @@ export default function DashboardPage() {
         setPromoterMunicipality(profile.promoter_municipality ?? '')
         setPromoterPostalCode(profile.promoter_postal_code ?? '')
         setPromoterProvince(profile.promoter_province ?? 'Madrid')
+        setPromoterWebsite(profile.promoter_website ?? '')
+        setPromoterDescription(profile.promoter_description ?? '')
+        setPromoterLogoUrl(profile.promoter_logo_url ?? '')
         setBillingDifferent(Boolean(profile.billing_different))
         setBillingName(profile.billing_name ?? '')
         setBillingTaxId(profile.billing_tax_id ?? '')
@@ -167,10 +187,10 @@ export default function DashboardPage() {
         setBillingProvince(profile.billing_province ?? 'Madrid')
         setBillingEmail(profile.billing_email ?? user.email ?? '')
         if (!commercialName || !profile.promoter_contact_name || !profile.promoter_company) {
-          setPanelMode('profile')
+          setPanelMode('data')
         }
       } else {
-        setPanelMode('profile')
+        setPanelMode('data')
       }
 
       const { data } = await supabase
@@ -231,6 +251,9 @@ export default function DashboardPage() {
         promoter_municipality: promoterMunicipality,
         promoter_postal_code: promoterPostalCode,
         promoter_province: promoterProvince,
+        promoter_website: promoterWebsite,
+        promoter_description: promoterDescription,
+        promoter_logo_url: promoterLogoUrl,
         billing_different: billingDifferent,
         billing_name: finalBillingName,
         billing_tax_id: finalBillingTaxId,
@@ -259,6 +282,57 @@ export default function DashboardPage() {
     setBillingEmail(finalBillingEmail)
     setProfileMessage('Datos guardados correctamente')
     setPanelMode('events')
+  }
+
+  async function savePublicProfile(e: React.FormEvent) {
+    e.preventDefault()
+    if (!userId) return
+
+    setSavingProfile(true)
+    setProfileMessage('')
+
+    let nextLogoUrl = promoterLogoUrl
+
+    if (promoterLogoFile) {
+      const fileName = `promoters/${userId}/${Date.now()}-${promoterLogoFile.name}`
+      const { error: uploadError } = await supabase.storage
+        .from('events')
+        .upload(fileName, promoterLogoFile, { upsert: true })
+
+      if (uploadError) {
+        setProfileMessage(`Error subiendo imagen: ${uploadError.message}`)
+        setSavingProfile(false)
+        return
+      }
+
+      const { data } = supabase.storage.from('events').getPublicUrl(fileName)
+      nextLogoUrl = data.publicUrl
+    }
+
+    const { error } = await supabase.from('profiles').upsert(
+      {
+        id: userId,
+        role: 'venue',
+        venue_name: promoterEventName,
+        promoter_event_name: promoterEventName,
+        promoter_website: promoterWebsite,
+        promoter_description: promoterDescription,
+        promoter_logo_url: nextLogoUrl,
+      },
+      { onConflict: 'id' }
+    )
+
+    setSavingProfile(false)
+
+    if (error) {
+      setProfileMessage(`Error al guardar: ${error.message}`)
+      return
+    }
+
+    setPromoterLogoUrl(nextLogoUrl)
+    setPromoterLogoFile(null)
+    setPromoterLogoPreview('')
+    setProfileMessage('Perfil guardado correctamente')
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -361,8 +435,10 @@ export default function DashboardPage() {
   const approvedEvents = events.filter((event) => event.status === 'approved')
   const pendingEvents = events.filter((event) => event.status === 'pending')
   const greetingName = promoterEventName || promoterCompany || 'promotor'
-  const showProfileForm = panelMode === 'profile' || !profileComplete
-  const showBillingForm = panelMode === 'billing'
+  const showDataForm = panelMode === 'data' || !profileComplete
+  const showProfileForm = panelMode === 'profile' && profileComplete
+  const showResources = panelMode === 'resources' && profileComplete
+  const logoDisplay = promoterLogoPreview || promoterLogoUrl
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -386,8 +462,12 @@ export default function DashboardPage() {
               onClick={() => setMenuOpen((open) => !open)}
               className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
             >
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-500 text-white">
-                <UserCircle className="h-6 w-6" />
+              <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-brand-500 text-white">
+                {logoDisplay ? (
+                  <img src={logoDisplay} alt={greetingName} className="h-full w-full object-cover" />
+                ) : (
+                  <UserCircle className="h-6 w-6" />
+                )}
               </span>
               <span className="hidden sm:inline">{greetingName}</span>
               <ChevronDown className="h-4 w-4 text-slate-400" />
@@ -398,25 +478,49 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => {
+                    setPanelMode('events')
+                    setMenuOpen(false)
+                  }}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-200 hover:bg-white/5"
+                >
+                  <UploadCloud className="h-4 w-4 text-brand-500" />
+                  Subir eventos
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPanelMode('data')
+                    setMenuOpen(false)
+                  }}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-200 hover:bg-white/5"
+                >
+                  <ReceiptText className="h-4 w-4 text-brand-500" />
+                  Editar datos
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
                     setPanelMode('profile')
                     setMenuOpen(false)
                   }}
                   className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-200 hover:bg-white/5"
                 >
-                  <Settings className="h-4 w-4 text-brand-500" />
+                  <PencilLine className="h-4 w-4 text-brand-500" />
                   Editar perfil
                 </button>
 
                 <button
                   type="button"
                   onClick={() => {
-                    setPanelMode('billing')
+                    setPanelMode('resources')
                     setMenuOpen(false)
                   }}
                   className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-200 hover:bg-white/5"
                 >
-                  <ReceiptText className="h-4 w-4 text-brand-500" />
-                  Datos de facturacion
+                  <Megaphone className="h-4 w-4 text-brand-500" />
+                  Recursos
                 </button>
 
                 <button
@@ -432,17 +536,42 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        {(showProfileForm || showBillingForm) && (
+        {profileComplete && (
+          <nav className="mb-8 grid gap-3 md:grid-cols-4">
+            {[
+              { key: 'events', label: 'Subir eventos', icon: UploadCloud },
+              { key: 'data', label: 'Editar datos', icon: ReceiptText },
+              { key: 'profile', label: 'Editar perfil', icon: PencilLine },
+              { key: 'resources', label: 'Recursos', icon: Megaphone },
+            ].map((item) => {
+              const Icon = item.icon
+              const active = panelMode === item.key
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setPanelMode(item.key as 'events' | 'data' | 'profile' | 'resources')}
+                  className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+                    active
+                      ? 'border-brand-500 bg-brand-500 text-white'
+                      : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                </button>
+              )
+            })}
+          </nav>
+        )}
+
+        {showDataForm && (
           <form onSubmit={savePromoterProfile} className="card mb-8 space-y-6 p-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h2 className="text-2xl font-bold">
-                  {showBillingForm ? 'Datos de facturacion' : 'Perfil de promotor'}
-                </h2>
+                <h2 className="text-2xl font-bold">Editar datos</h2>
                 <p className="mt-2 text-sm text-slate-400">
-                  {showBillingForm
-                    ? 'Estos datos se usaran cuando actives destacados o servicios de pago.'
-                    : 'Completa estos datos para poder publicar eventos en TARDEA.'}
+                  Datos de contacto, empresa y facturacion. Estos datos no son la pagina publica del promotor.
                 </p>
               </div>
 
@@ -457,38 +586,27 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {showBillingForm && (
-              <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-slate-100">
-                <input type="checkbox" checked={billingDifferent} onChange={(e) => setBillingDifferent(e.target.checked)} />
-                Los datos de facturacion son diferentes a los datos de promotor
-              </label>
-            )}
+            <div className="grid gap-4 md:grid-cols-2">
+              <input className="input" placeholder="Evento o nombre comercial" value={promoterEventName} onChange={(e) => setPromoterEventName(e.target.value)} required />
+              <input className="input" placeholder="Persona de contacto" value={promoterContactName} onChange={(e) => setPromoterContactName(e.target.value)} required />
+              <input className="input" placeholder="Empresa" value={promoterCompany} onChange={(e) => setPromoterCompany(e.target.value)} required />
+              <input className="input" placeholder="NIF" value={promoterTaxId} onChange={(e) => setPromoterTaxId(e.target.value)} required />
+              <input className="input md:col-span-2" placeholder="Direccion" value={promoterAddress} onChange={(e) => setPromoterAddress(e.target.value)} required />
+              <input className="input" placeholder="Municipio" value={promoterMunicipality} onChange={(e) => setPromoterMunicipality(e.target.value)} required />
+              <input className="input" placeholder="Codigo postal" inputMode="numeric" maxLength={5} value={promoterPostalCode} onChange={(e) => setPromoterPostalCode(e.target.value)} required />
+              <select className="select md:col-span-2" value={promoterProvince} onChange={(e) => setPromoterProvince(e.target.value)} required>
+                {PROVINCE_OPTIONS.map((province) => (
+                  <option key={province} value={province}>{province}</option>
+                ))}
+              </select>
+            </div>
 
-            {!showBillingForm && (
-              <>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <input className="input" placeholder="Evento o nombre comercial" value={promoterEventName} onChange={(e) => setPromoterEventName(e.target.value)} required />
-                  <input className="input" placeholder="Persona de contacto" value={promoterContactName} onChange={(e) => setPromoterContactName(e.target.value)} required />
-                  <input className="input" placeholder="Empresa" value={promoterCompany} onChange={(e) => setPromoterCompany(e.target.value)} required />
-                  <input className="input" placeholder="NIF" value={promoterTaxId} onChange={(e) => setPromoterTaxId(e.target.value)} required />
-                  <input className="input md:col-span-2" placeholder="Direccion" value={promoterAddress} onChange={(e) => setPromoterAddress(e.target.value)} required />
-                  <input className="input" placeholder="Municipio" value={promoterMunicipality} onChange={(e) => setPromoterMunicipality(e.target.value)} required />
-                  <input className="input" placeholder="Codigo postal" inputMode="numeric" maxLength={5} value={promoterPostalCode} onChange={(e) => setPromoterPostalCode(e.target.value)} required />
-                  <select className="select md:col-span-2" value={promoterProvince} onChange={(e) => setPromoterProvince(e.target.value)} required>
-                    {PROVINCE_OPTIONS.map((province) => (
-                      <option key={province} value={province}>{province}</option>
-                    ))}
-                  </select>
-                </div>
+            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-slate-100">
+              <input type="checkbox" checked={billingDifferent} onChange={(e) => setBillingDifferent(e.target.checked)} />
+              Los datos de facturacion son diferentes a los datos de promotor
+            </label>
 
-                <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-slate-100">
-                  <input type="checkbox" checked={billingDifferent} onChange={(e) => setBillingDifferent(e.target.checked)} />
-                  Los datos de facturacion son diferentes a los datos de promotor
-                </label>
-              </>
-            )}
-
-            {(showBillingForm ? billingDifferent : billingDifferent) && (
+            {billingDifferent && (
               <div className="grid gap-4 md:grid-cols-2">
                 <input className="input" placeholder="Razon social o nombre fiscal" value={billingName} onChange={(e) => setBillingName(e.target.value)} required={billingDifferent} />
                 <input className="input" placeholder="NIF / CIF" value={billingTaxId} onChange={(e) => setBillingTaxId(e.target.value)} required={billingDifferent} />
@@ -504,7 +622,7 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {showBillingForm && !billingDifferent && (
+            {!billingDifferent && (
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
                 Se usaran los mismos datos del promotor para facturacion. Activa la casilla si necesitas otra razon social, direccion o email fiscal.
               </div>
@@ -518,7 +636,118 @@ export default function DashboardPage() {
           </form>
         )}
 
-        {!showProfileForm && !showBillingForm && (
+        {showProfileForm && (
+          <form onSubmit={savePublicProfile} className="card mb-8 space-y-6 p-6">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <h2 className="text-2xl font-bold">Editar perfil</h2>
+                <p className="mt-2 max-w-2xl text-sm text-slate-400">
+                  Esta sera la ficha publica de tu sala o promotora: imagen, nombre, web y una descripcion clara de lo que haces.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-slate-900">
+                  {logoDisplay ? (
+                    <img src={logoDisplay} alt={greetingName} className="h-full w-full object-cover" />
+                  ) : (
+                    <ImagePlus className="h-8 w-8 text-slate-500" />
+                  )}
+                </div>
+                <label className="cursor-pointer rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-slate-100 hover:bg-white/10">
+                  Subir logo o foto
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null
+                      setPromoterLogoFile(file)
+                      setPromoterLogoPreview(file ? URL.createObjectURL(file) : '')
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <input className="input" placeholder="Nombre publico del evento, sala o promotora" value={promoterEventName} onChange={(e) => setPromoterEventName(e.target.value)} required />
+              <input className="input" placeholder="Web o Instagram" value={promoterWebsite} onChange={(e) => setPromoterWebsite(e.target.value)} />
+              <textarea
+                className="input min-h-36 md:col-span-2"
+                placeholder="A que se dedica, tipo de tardeos, musica, publico y propuesta del promotor"
+                value={promoterDescription}
+                onChange={(e) => setPromoterDescription(e.target.value)}
+              />
+            </div>
+
+            <button className="btn-primary w-full" type="submit" disabled={savingProfile}>
+              {savingProfile ? 'Guardando...' : 'Guardar perfil publico'}
+            </button>
+
+            {profileMessage && <p className="text-sm text-brand-500">{profileMessage}</p>}
+          </form>
+        )}
+
+        {showResources && (
+          <section className="space-y-6">
+            <div className="card p-6">
+              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-500">
+                Recursos para promotores
+              </p>
+              <h2 className="mt-2 text-3xl font-bold">Haz que tu tardeo destaque</h2>
+              <p className="mt-3 max-w-3xl text-slate-400">
+                Aqui podras contratar espacios destacados en la web, app y redes sociales. De momento queda preparado como escaparate comercial.
+              </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {[
+                {
+                  title: 'Destacado web',
+                  price: 'Desde 49 EUR',
+                  text: 'Aparece en seleccion editorial y en posiciones preferentes del buscador.',
+                  icon: LayoutDashboard,
+                },
+                {
+                  title: 'Push app',
+                  price: 'Proximamente',
+                  text: 'Campanas para usuarios que encajen por edad, ciudad y gustos musicales.',
+                  icon: Sparkles,
+                },
+                {
+                  title: 'Redes sociales',
+                  price: 'Desde 79 EUR',
+                  text: 'Apoyo en publicaciones, stories y recomendaciones segmentadas.',
+                  icon: Megaphone,
+                },
+                {
+                  title: 'Pack completo',
+                  price: 'A medida',
+                  text: 'Web, app y redes coordinadas para fechas clave o lanzamientos.',
+                  icon: BadgeEuro,
+                },
+              ].map((resource) => {
+                const Icon = resource.icon
+                return (
+                  <article key={resource.title} className="card flex min-h-64 flex-col justify-between p-6">
+                    <div>
+                      <Icon className="h-7 w-7 text-brand-500" />
+                      <h3 className="mt-5 text-xl font-bold">{resource.title}</h3>
+                      <p className="mt-2 text-sm font-semibold text-slate-200">{resource.price}</p>
+                      <p className="mt-4 text-sm text-slate-400">{resource.text}</p>
+                    </div>
+                    <button type="button" className="btn-secondary mt-6 w-full">
+                      Solicitar informacion
+                    </button>
+                  </article>
+                )
+              })}
+            </div>
+          </section>
+        )}
+
+        {panelMode === 'events' && profileComplete && (
           <>
             <section className="mb-8 grid gap-4 md:grid-cols-3">
               <div className="card p-6">
