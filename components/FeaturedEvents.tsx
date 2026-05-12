@@ -42,7 +42,7 @@ export function FeaturedEvents() {
       <div className="mb-6 flex items-end justify-between gap-4">
         <div>
           <p className="text-sm font-semibold text-brand-500">
-            Selección editorial
+            Top eventos Madrid
           </p>
           <h2 className="mt-2 text-3xl font-bold tracking-tight text-white">
             Destacados de la semana
@@ -66,7 +66,7 @@ export function FeaturedEvents() {
                 : 'min-w-[50vw] scale-[0.94] opacity-80'
             }`}
           >
-            <Link href={`/eventos/${event.slug}`} className="relative flex aspect-[9/16] overflow-hidden sm:block sm:aspect-auto">
+            <div className="relative flex aspect-[9/16] overflow-hidden sm:block sm:aspect-auto">
               <div
                 className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105 sm:relative sm:h-44 sm:w-full"
                 style={{
@@ -97,11 +97,11 @@ export function FeaturedEvents() {
                   {event.start_time ? ` · ${event.start_time.slice(0, 5)}` : ''}
                 </p>
 
-                <p className="mt-auto pt-3 text-sm font-semibold text-brand-500 sm:mt-4 sm:pt-0">
+                <Link href={`/eventos/${event.slug}`} className="mt-auto pt-3 text-sm font-semibold text-brand-500 hover:underline sm:mt-4 sm:pt-0">
                   Ver evento →
-                </p>
+                </Link>
               </div>
-            </Link>
+            </div>
           </article>
         ))}
       </div>
