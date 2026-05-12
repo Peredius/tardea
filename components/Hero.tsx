@@ -115,8 +115,8 @@ export function Hero() {
             <span className="text-brand-500">planes de tarde</span> en Madrid.
           </h1>
 
-          <div className="order-3 mt-2 flex flex-wrap gap-5 text-sm text-slate-200 md:mt-6">
-            <div className="flex items-start gap-2">
+          <div className="order-3 mx-auto mt-2 grid w-full max-w-[520px] grid-cols-2 gap-x-4 gap-y-5 text-sm text-slate-200 md:mx-0 md:mt-6 md:flex md:max-w-none md:flex-wrap md:gap-5">
+            <div className="flex min-w-0 items-start gap-2">
               <Calendar className="mt-0.5 h-4 w-4 text-brand-500" />
               <div>
                 <p className="text-sm font-semibold text-white">Agenda diaria</p>
@@ -124,7 +124,7 @@ export function Hero() {
               </div>
             </div>
 
-            <div className="flex items-start gap-2">
+            <div className="flex min-w-0 items-start gap-2">
               <Music4 className="mt-0.5 h-4 w-4 text-brand-500" />
               <div>
                 <p className="text-sm font-semibold text-white">
@@ -136,7 +136,7 @@ export function Hero() {
               </div>
             </div>
 
-            <div className="flex items-start gap-2">
+            <div className="flex min-w-0 items-start gap-2">
               <MapPin className="mt-0.5 h-4 w-4 text-brand-500" />
               <div>
                 <p className="text-sm font-semibold text-white">
@@ -146,7 +146,7 @@ export function Hero() {
               </div>
             </div>
 
-            <div className="flex items-start gap-2">
+            <div className="flex min-w-0 items-start gap-2">
               <Ticket className="mt-0.5 h-4 w-4 text-brand-500" />
               <div>
                 <p className="text-sm font-semibold text-white">
