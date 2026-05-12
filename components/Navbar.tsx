@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { User } from '@supabase/supabase-js'
-import { Search } from 'lucide-react'
+import { Search, UserRound } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 export function Navbar() {
@@ -175,9 +175,11 @@ export function Navbar() {
 
               <Link
                 href="/login?type=user"
-                className="inline-flex items-center justify-center rounded-2xl bg-brand-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-600 sm:px-5 sm:py-3"
+                aria-label="Acceso usuario"
+                title="Usuario"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-brand-500/60 hover:bg-brand-500/15 hover:text-white"
               >
-                Usuario
+                <UserRound className="h-5 w-5" />
               </Link>
             </>
           )}
