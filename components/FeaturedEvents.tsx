@@ -105,9 +105,9 @@ export function FeaturedEvents() {
                 }}
               />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent sm:hidden" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/75 to-transparent sm:hidden" />
 
-              <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-end p-4 sm:justify-start">
+              <div className="relative z-10 mt-auto flex min-w-0 flex-1 flex-col justify-end self-end p-4 sm:mt-0 sm:justify-start sm:self-auto">
                 <div className="mb-2 flex flex-wrap gap-1.5 sm:mb-3 sm:gap-2">
                   <span className="badge">Destacado</span>
                   {event.type && <span className="badge hidden sm:inline-flex">{event.type}</span>}
@@ -117,18 +117,18 @@ export function FeaturedEvents() {
                   {event.title}
                 </h3>
 
-                <p className="mt-2 flex items-center gap-2 text-xs text-slate-400 sm:text-sm">
+                <p className="mt-2 flex items-center gap-2 text-xs text-slate-200 sm:text-sm sm:text-slate-400">
                   <MapPin className="h-4 w-4 text-brand-500" />
                   {event.venue}
                 </p>
 
-                <p className="mt-2 flex items-center gap-2 text-xs text-slate-400 sm:text-sm">
+                <p className="mt-2 flex items-center gap-2 text-xs text-slate-200 sm:text-sm sm:text-slate-400">
                   <CalendarDays className="h-4 w-4 text-brand-500" />
                   {new Date(event.date).toLocaleDateString('es-ES')}
                   {event.start_time ? ` · ${event.start_time.slice(0, 5)}` : ''}
                 </p>
 
-                <Link href={`/eventos/${event.slug}`} className="mt-auto pt-3 text-sm font-semibold text-brand-500 hover:underline sm:mt-4 sm:pt-0">
+                <Link href={`/eventos/${event.slug}`} className="mt-3 text-sm font-semibold text-brand-500 hover:underline sm:mt-4">
                   Ver evento →
                 </Link>
               </div>
