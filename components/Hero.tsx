@@ -107,15 +107,15 @@ export function Hero() {
 
   return (
     <section className="bg-hero-gradient">
-      <div className="container-page grid items-center gap-12 py-10 md:grid-cols-[1.15fr_0.85fr] md:py-12">
-        <div>
+      <div className="container-page grid items-center gap-8 py-10 md:grid-cols-[1.15fr_0.85fr] md:gap-12 md:py-12">
+        <div className="contents md:block">
           
           <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-white md:text-[56px] md:leading-[1.02]">
             Descubre los mejores{' '}
             <span className="text-brand-500">planes de tarde</span> en Madrid.
           </h1>
 
-          <div className="mt-6 flex flex-wrap gap-5 text-sm text-slate-200">
+          <div className="order-3 mt-2 flex flex-wrap gap-5 text-sm text-slate-200 md:mt-6">
             <div className="flex items-start gap-2">
               <Calendar className="mt-0.5 h-4 w-4 text-brand-500" />
               <div>
@@ -158,7 +158,7 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="relative mx-auto w-full max-w-[520px] overflow-hidden rounded-[26px] border border-brand-500/35 bg-black/40 p-3 shadow-[0_0_60px_rgba(255,0,102,0.16)] backdrop-blur-xl">
+        <div className="relative order-2 mx-auto w-full max-w-[520px] overflow-hidden rounded-[26px] border border-brand-500/35 bg-black/40 p-3 shadow-[0_0_60px_rgba(255,0,102,0.16)] backdrop-blur-xl md:order-none">
           <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-[radial-gradient(circle_at_top,rgba(255,0,120,0.20),transparent_58%)]" />
           <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-brand-500 to-transparent" />
 
