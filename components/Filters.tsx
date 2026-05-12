@@ -262,20 +262,24 @@ export function Filters() {
             return (
               <article
                 key={event.slug}
-                className="card flex h-full flex-col overflow-hidden"
+                className="card flex h-full min-h-[170px] overflow-hidden sm:flex-col"
               >
-                {!isPastEvent && event.cover && (
-                  <div
-                    className="h-56 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${event.cover})` }}
-                  />
-                )}
+                <div
+                  className="min-h-full w-[38%] shrink-0 bg-cover bg-center sm:h-56 sm:min-h-0 sm:w-full"
+                  style={{
+                    backgroundImage: `url(${
+                      !isPastEvent && event.cover
+                        ? event.cover
+                        : 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
+                    })`,
+                  }}
+                />
 
-                <div className="flex flex-1 flex-col p-6">
-                  <div className="mb-3 flex flex-wrap gap-2">
+                <div className="flex min-w-0 flex-1 flex-col p-4 sm:p-6">
+                  <div className="mb-2 flex flex-wrap gap-1.5 sm:mb-3 sm:gap-2">
                     <span className="badge">{event.type}</span>
-                    <span className="badge">{event.area}</span>
-                    <span className="badge">
+                    <span className="badge hidden sm:inline-flex">{event.area}</span>
+                    <span className="badge hidden sm:inline-flex">
                       Desde{' '}
                       {event.priceFrom === 0 ? 'gratis' : `${event.priceFrom}€`}
                     </span>
@@ -283,36 +287,36 @@ export function Filters() {
                     {isPastEvent && <span className="badge">Evento pasado</span>}
                   </div>
 
-                  <h3 className="text-2xl font-semibold text-white">
+                  <h3 className="line-clamp-2 text-base font-semibold leading-tight text-white sm:text-2xl">
                     {event.title}
                   </h3>
 
-                  <p className="mt-2 text-sm text-slate-300">
+                  <p className="mt-2 line-clamp-2 text-xs text-slate-300 sm:text-sm">
                     {event.venue} ·{' '}
                     {new Date(event.date).toLocaleDateString('es-ES')} ·{' '}
                     {event.startTime?.slice(0, 5)} -{' '}
                     {event.endTime?.slice(0, 5)}
                   </p>
 
-                  <p className="mt-4 line-clamp-3 text-sm text-slate-400">
+                  <p className="mt-4 hidden line-clamp-3 text-sm text-slate-400 sm:block">
                     {event.description}
                   </p>
 
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {event.music.map((item) => (
+                  <div className="mt-3 flex flex-wrap gap-1.5 sm:mt-5 sm:gap-2">
+                    {event.music.slice(0, 2).map((item) => (
                       <span key={item} className="badge">
                         {item}
                       </span>
                     ))}
                   </div>
 
-                  <div className="mt-auto flex gap-3 pt-6">
-                    <Link href={`/eventos/${event.slug}`} className="btn-primary">
+                  <div className="mt-auto flex gap-2 pt-4 sm:gap-3 sm:pt-6">
+                    <Link href={`/eventos/${event.slug}`} className="btn-primary px-3 py-2 text-xs sm:px-5 sm:py-3 sm:text-sm">
                       Ver evento
                     </Link>
 
                     {!isPastEvent && (
-                      <a href="#newsletter" className="btn-secondary">
+                      <a href="#newsletter" className="btn-secondary hidden px-3 py-2 text-xs sm:inline-flex sm:px-5 sm:py-3 sm:text-sm">
                         Recibir planes
                       </a>
                     )}
