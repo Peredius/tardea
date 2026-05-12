@@ -24,7 +24,7 @@ export function Footer() {
           <span>Privacidad</span>
           <span>Contacto</span>
           <a
-            href="https://www.instagram.com/tardea"
+            href="https://www.instagram.com/tardea__"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Instagram de TARDEA"
@@ -33,7 +33,7 @@ export function Footer() {
             <Instagram className="h-5 w-5" />
           </a>
           <a
-            href="https://www.tiktok.com/@tardea"
+            href="https://www.tiktok.com/@tardea__"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="TikTok de TARDEA"
