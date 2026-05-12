@@ -56,17 +56,19 @@ export function FeaturedEvents() {
         {featured.map((event) => (
           <article
             key={event.slug}
-            className="group min-w-[84vw] snap-start overflow-hidden rounded-3xl border border-white/10 bg-white/5 transition hover:-translate-y-1 hover:border-brand-500/40 sm:min-w-0"
+            className="group min-w-[78vw] snap-start overflow-hidden rounded-3xl border border-white/10 bg-white/5 transition hover:-translate-y-1 hover:border-brand-500/40 sm:min-w-0"
           >
-            <Link href={`/eventos/${event.slug}`} className="flex min-h-[170px] sm:block">
+            <Link href={`/eventos/${event.slug}`} className="relative flex aspect-[3/4] overflow-hidden sm:block sm:aspect-auto">
               <div
-                className="w-[38%] shrink-0 bg-cover bg-center transition duration-500 group-hover:scale-105 sm:h-44 sm:w-full"
+                className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105 sm:relative sm:h-44 sm:w-full"
                 style={{
                   backgroundImage: `url(${event.cover || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80'})`,
                 }}
               />
 
-              <div className="flex min-w-0 flex-1 flex-col p-4">
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent sm:hidden" />
+
+              <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-end p-4 sm:justify-start">
                 <div className="mb-2 flex flex-wrap gap-1.5 sm:mb-3 sm:gap-2">
                   <span className="badge">Destacado</span>
                   {event.type && <span className="badge hidden sm:inline-flex">{event.type}</span>}
