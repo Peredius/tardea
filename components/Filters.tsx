@@ -254,7 +254,7 @@ export function Filters() {
           </p>
         </div>
       ) : (
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="-mx-5 mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden">
           {filtered.map((event) => {
             const today = new Date().toISOString().split('T')[0]
             const isPastEvent = event.date < today
@@ -262,7 +262,7 @@ export function Filters() {
             return (
               <article
                 key={event.slug}
-                className="card flex h-full min-h-[170px] overflow-hidden sm:flex-col"
+                className="card flex h-full min-h-[170px] min-w-[84vw] snap-start overflow-hidden sm:min-w-0 sm:flex-col"
               >
                 <div
                   className="min-h-full w-[38%] shrink-0 bg-cover bg-center sm:h-56 sm:min-h-0 sm:w-full"

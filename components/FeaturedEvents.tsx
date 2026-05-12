@@ -52,11 +52,11 @@ export function FeaturedEvents() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden">
         {featured.map((event) => (
           <article
             key={event.slug}
-            className="group overflow-hidden rounded-3xl border border-white/10 bg-white/5 transition hover:-translate-y-1 hover:border-brand-500/40"
+            className="group min-w-[84vw] snap-start overflow-hidden rounded-3xl border border-white/10 bg-white/5 transition hover:-translate-y-1 hover:border-brand-500/40 sm:min-w-0"
           >
             <Link href={`/eventos/${event.slug}`} className="flex min-h-[170px] sm:block">
               <div
