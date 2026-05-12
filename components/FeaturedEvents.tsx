@@ -56,9 +56,9 @@ export function FeaturedEvents() {
         {featured.map((event) => (
           <article
             key={event.slug}
-            className="group min-w-[78vw] snap-start overflow-hidden rounded-3xl border border-white/10 bg-white/5 transition hover:-translate-y-1 hover:border-brand-500/40 sm:min-w-0"
+            className="group min-w-[62vw] snap-start overflow-hidden rounded-3xl border border-white/10 bg-white/5 transition hover:-translate-y-1 hover:border-brand-500/40 sm:min-w-0"
           >
-            <Link href={`/eventos/${event.slug}`} className="relative flex aspect-[3/4] overflow-hidden sm:block sm:aspect-auto">
+            <Link href={`/eventos/${event.slug}`} className="relative flex aspect-[9/16] overflow-hidden sm:block sm:aspect-auto">
               <div
                 className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105 sm:relative sm:h-44 sm:w-full"
                 style={{

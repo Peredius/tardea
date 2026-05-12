@@ -262,7 +262,7 @@ export function Filters() {
             return (
               <article
                 key={event.slug}
-                className="group relative flex aspect-[3/4] min-w-[78vw] snap-start overflow-hidden rounded-3xl border border-white/10 bg-slate-900 sm:card sm:aspect-auto sm:h-full sm:min-h-[170px] sm:min-w-0 sm:flex-col"
+                className="group relative flex aspect-[9/16] min-w-[62vw] snap-start overflow-hidden rounded-3xl border border-white/10 bg-slate-900 sm:card sm:aspect-auto sm:h-full sm:min-h-[170px] sm:min-w-0 sm:flex-col"
               >
                 <div
                   className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105 sm:relative sm:h-56 sm:min-h-0 sm:w-full sm:shrink-0"
