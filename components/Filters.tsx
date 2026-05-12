@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   Clock3,
@@ -29,6 +29,7 @@ function matchesPrice(range: string, price: number) {
 }
 
 export function Filters() {
+  const carouselRef = useRef<HTMLDivElement | null>(null)
   const [selectedDates, setSelectedDates] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       const storedDates = localStorage.getItem('selectedDates')
@@ -148,6 +149,32 @@ export function Filters() {
     setActiveEventSlug(filtered[0]?.slug || '')
   }, [filtered])
 
+  function updateActiveEventFromScroll() {
+    const carousel = carouselRef.current
+    if (!carousel) return
+
+    const carouselBox = carousel.getBoundingClientRect()
+    const center = carouselBox.left + carouselBox.width / 2
+    const cards = Array.from(
+      carousel.querySelectorAll<HTMLElement>('[data-event-card]')
+    )
+
+    const closest = cards.reduce<{ slug: string; distance: number } | null>(
+      (best, card) => {
+        const box = card.getBoundingClientRect()
+        const cardCenter = box.left + box.width / 2
+        const distance = Math.abs(center - cardCenter)
+        const slug = card.dataset.slug || ''
+
+        if (!best || distance < best.distance) return { slug, distance }
+        return best
+      },
+      null
+    )
+
+    if (closest?.slug) setActiveEventSlug(closest.slug)
+  }
+
   return (
     <section id="eventos" className="container-page py-6">
       <div className="card p-5">
@@ -259,7 +286,11 @@ export function Filters() {
           </p>
         </div>
       ) : (
-        <div className="-mx-5 mt-8 flex snap-x snap-mandatory gap-2 overflow-x-auto px-5 pb-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+        <div
+          ref={carouselRef}
+          onScroll={updateActiveEventFromScroll}
+          className="-mx-5 mt-8 flex snap-x snap-mandatory gap-2 overflow-x-auto px-5 pb-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden"
+        >
           {filtered.map((event) => {
             const today = new Date().toISOString().split('T')[0]
             const isPastEvent = event.date < today
@@ -267,8 +298,8 @@ export function Filters() {
             return (
               <article
                 key={event.slug}
-                onTouchStart={() => setActiveEventSlug(event.slug)}
-                onMouseEnter={() => setActiveEventSlug(event.slug)}
+                data-event-card
+                data-slug={event.slug}
                 className={`group relative flex aspect-[9/16] snap-center overflow-hidden rounded-3xl border border-white/10 bg-slate-900 transition duration-300 sm:card sm:aspect-auto sm:h-full sm:min-h-[170px] sm:min-w-0 sm:scale-100 sm:flex-col ${
                   activeEventSlug === event.slug
                     ? 'min-w-[56vw] scale-100'

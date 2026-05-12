@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { CalendarDays, MapPin } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 export function FeaturedEvents() {
+  const carouselRef = useRef<HTMLDivElement | null>(null)
   const [featured, setFeatured] = useState<any[]>([])
   const [activeEventSlug, setActiveEventSlug] = useState('')
 
@@ -37,6 +38,32 @@ export function FeaturedEvents() {
 
   if (featured.length === 0) return null
 
+  function updateActiveEventFromScroll() {
+    const carousel = carouselRef.current
+    if (!carousel) return
+
+    const carouselBox = carousel.getBoundingClientRect()
+    const center = carouselBox.left + carouselBox.width / 2
+    const cards = Array.from(
+      carousel.querySelectorAll<HTMLElement>('[data-event-card]')
+    )
+
+    const closest = cards.reduce<{ slug: string; distance: number } | null>(
+      (best, card) => {
+        const box = card.getBoundingClientRect()
+        const cardCenter = box.left + box.width / 2
+        const distance = Math.abs(center - cardCenter)
+        const slug = card.dataset.slug || ''
+
+        if (!best || distance < best.distance) return { slug, distance }
+        return best
+      },
+      null
+    )
+
+    if (closest?.slug) setActiveEventSlug(closest.slug)
+  }
+
   return (
     <section id="destacados" className="container-page py-8 md:py-12">
       <div className="mb-6 flex items-end justify-between gap-4">
@@ -54,12 +81,16 @@ export function FeaturedEvents() {
         </p>
       </div>
 
-      <div className="-mx-5 flex snap-x snap-mandatory gap-2 overflow-x-auto px-5 pb-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+      <div
+        ref={carouselRef}
+        onScroll={updateActiveEventFromScroll}
+        className="-mx-5 flex snap-x snap-mandatory gap-2 overflow-x-auto px-5 pb-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden"
+      >
         {featured.map((event) => (
           <article
             key={event.slug}
-            onTouchStart={() => setActiveEventSlug(event.slug)}
-            onMouseEnter={() => setActiveEventSlug(event.slug)}
+            data-event-card
+            data-slug={event.slug}
             className={`group snap-center overflow-hidden rounded-3xl border border-white/10 bg-white/5 transition duration-300 hover:border-brand-500/40 sm:min-w-0 sm:scale-100 ${
               activeEventSlug === event.slug
                 ? 'min-w-[56vw] scale-100'
