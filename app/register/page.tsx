@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { BrandLogo } from '@/components/BrandLogo'
 
 function RegisterContent() {
   const searchParams = useSearchParams()
@@ -42,7 +43,7 @@ function RegisterContent() {
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="container-page py-16">
         <a href="/" className="mb-10 block text-center">
-          <span className="text-2xl font-bold tracking-tight">TARDEA</span>
+          <BrandLogo className="justify-center" iconClassName="h-11 w-11" />
         </a>
 
         <div className="card mx-auto max-w-md p-6">

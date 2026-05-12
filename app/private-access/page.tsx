@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { BrandLogo } from '@/components/BrandLogo'
 
 function PrivateAccessForm() {
   const searchParams = useSearchParams()
@@ -33,7 +34,7 @@ function PrivateAccessForm() {
       <div className="container-page flex min-h-screen items-center justify-center py-16">
         <form onSubmit={handleSubmit} className="card w-full max-w-md p-6">
           <a href="/" className="mb-8 block text-center">
-            <span className="text-2xl font-bold">TARDEA</span>
+            <BrandLogo className="justify-center" iconClassName="h-11 w-11" />
           </a>
 
           <h1 className="text-center text-3xl font-bold">

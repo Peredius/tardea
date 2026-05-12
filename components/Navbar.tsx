@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import type { User } from '@supabase/supabase-js'
 import { Search, UserRound } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { BrandLogo } from '@/components/BrandLogo'
 
 export function Navbar() {
   const [query, setQuery] = useState('')
@@ -85,13 +85,10 @@ export function Navbar() {
     <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/80 backdrop-blur">
       <div className="container-page flex h-16 items-center justify-between gap-2 sm:gap-4">
         <Link href="/" className="flex min-w-0 shrink items-center sm:shrink-0">
-          <Image
-            src="/logotardeaweb.png"
-            alt="TARDEA"
-            width={118}
-            height={40}
-            priority
-            className="h-auto w-[108px] sm:w-[140px]"
+          <BrandLogo
+            className="scale-[0.78] origin-left sm:scale-100"
+            iconClassName="h-10 w-10 sm:h-11 sm:w-11"
+            textClassName="text-[1.15rem] sm:text-[1.45rem]"
           />
         </Link>
 
