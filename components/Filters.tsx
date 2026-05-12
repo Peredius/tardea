@@ -300,14 +300,14 @@ export function Filters() {
                 key={event.slug}
                 data-event-card
                 data-slug={event.slug}
-                className={`group relative flex aspect-[9/16] snap-center overflow-hidden rounded-3xl border border-white/10 bg-slate-900 transition duration-300 sm:card sm:aspect-auto sm:h-full sm:min-h-[170px] sm:min-w-0 sm:scale-100 sm:flex-col ${
+                className={`group relative flex aspect-[9/16] snap-center overflow-hidden rounded-3xl border border-white/10 bg-slate-900 transition duration-300 sm:card sm:aspect-auto sm:h-full sm:min-h-0 sm:min-w-0 sm:scale-100 sm:flex-col ${
                   activeEventSlug === event.slug
                     ? 'min-w-[56vw] scale-100'
                     : 'min-w-[50vw] scale-[0.94] opacity-80'
                 }`}
               >
                 <div
-                  className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105 sm:relative sm:h-56 sm:min-h-0 sm:w-full sm:shrink-0"
+                  className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105 sm:relative sm:h-44 sm:min-h-0 sm:w-full sm:shrink-0"
                   style={{
                     backgroundImage: `url(${
                       !isPastEvent && event.cover
@@ -319,7 +319,7 @@ export function Filters() {
 
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent sm:hidden" />
 
-                <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-end p-4 sm:justify-start sm:p-6">
+                <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-end p-4 sm:justify-start">
                   <div className="mb-2 flex flex-wrap gap-1.5 sm:mb-3 sm:gap-2">
                     <span className="badge">{event.type}</span>
                     <span className="badge hidden sm:inline-flex">{event.area}</span>
@@ -331,7 +331,7 @@ export function Filters() {
                     {isPastEvent && <span className="badge">Evento pasado</span>}
                   </div>
 
-                  <h3 className="line-clamp-2 text-base font-semibold leading-tight text-white sm:text-2xl">
+                  <h3 className="line-clamp-2 text-base font-semibold leading-tight text-white sm:text-lg">
                     {event.title}
                   </h3>
 
@@ -342,10 +342,6 @@ export function Filters() {
                     {event.endTime?.slice(0, 5)}
                   </p>
 
-                  <p className="mt-4 hidden line-clamp-3 text-sm text-slate-400 sm:block">
-                    {event.description}
-                  </p>
-
                   <div className="mt-3 hidden flex-wrap gap-1.5 sm:mt-5 sm:flex sm:gap-2">
                     {event.music.slice(0, 2).map((item) => (
                       <span key={item} className="badge">
@@ -354,13 +350,13 @@ export function Filters() {
                     ))}
                   </div>
 
-                  <div className="mt-3 flex gap-2 sm:mt-auto sm:gap-3 sm:pt-6">
-                    <Link href={`/eventos/${event.slug}`} className="btn-primary px-3 py-2 text-xs sm:px-5 sm:py-3 sm:text-sm">
-                      Ver evento
+                  <div className="mt-3 flex gap-2 sm:mt-auto sm:gap-3 sm:pt-4">
+                    <Link href={`/eventos/${event.slug}`} className="text-sm font-semibold text-brand-500 hover:underline">
+                      Ver evento →
                     </Link>
 
                     {!isPastEvent && (
-                      <a href="#newsletter" className="btn-secondary hidden px-3 py-2 text-xs sm:inline-flex sm:px-5 sm:py-3 sm:text-sm">
+                      <a href="#newsletter" className="hidden text-sm font-semibold text-slate-400 hover:text-white sm:inline-flex">
                         Recibir planes
                       </a>
                     )}
