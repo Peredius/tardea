@@ -53,6 +53,7 @@ export function Filters() {
   const [price, setPrice] = useState('Todos')
   const [area, setArea] = useState('Todas')
   const [dbEvents, setDbEvents] = useState(events)
+  const [activeEventSlug, setActiveEventSlug] = useState('')
 
   useEffect(() => {
     async function fetchEvents() {
@@ -142,6 +143,10 @@ export function Filters() {
       return true
     })
   }, [area, audience, selectedDates, music, price, type, dbEvents])
+
+  useEffect(() => {
+    setActiveEventSlug(filtered[0]?.slug || '')
+  }, [filtered])
 
   return (
     <section id="eventos" className="container-page py-6">
@@ -254,7 +259,7 @@ export function Filters() {
           </p>
         </div>
       ) : (
-        <div className="-mx-5 mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+        <div className="-mx-5 mt-8 flex snap-x snap-mandatory gap-2 overflow-x-auto px-5 pb-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden">
           {filtered.map((event) => {
             const today = new Date().toISOString().split('T')[0]
             const isPastEvent = event.date < today
@@ -262,7 +267,13 @@ export function Filters() {
             return (
               <article
                 key={event.slug}
-                className="group relative flex aspect-[9/16] min-w-[62vw] snap-start overflow-hidden rounded-3xl border border-white/10 bg-slate-900 sm:card sm:aspect-auto sm:h-full sm:min-h-[170px] sm:min-w-0 sm:flex-col"
+                onTouchStart={() => setActiveEventSlug(event.slug)}
+                onMouseEnter={() => setActiveEventSlug(event.slug)}
+                className={`group relative flex aspect-[9/16] snap-center overflow-hidden rounded-3xl border border-white/10 bg-slate-900 transition duration-300 sm:card sm:aspect-auto sm:h-full sm:min-h-[170px] sm:min-w-0 sm:scale-100 sm:flex-col ${
+                  activeEventSlug === event.slug
+                    ? 'min-w-[56vw] scale-100'
+                    : 'min-w-[50vw] scale-[0.94] opacity-80'
+                }`}
               >
                 <div
                   className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105 sm:relative sm:h-56 sm:min-h-0 sm:w-full sm:shrink-0"

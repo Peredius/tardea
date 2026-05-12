@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 
 export function FeaturedEvents() {
   const [featured, setFeatured] = useState<any[]>([])
+  const [activeEventSlug, setActiveEventSlug] = useState('')
 
   useEffect(() => {
     async function fetchFeaturedEvents() {
@@ -28,6 +29,7 @@ export function FeaturedEvents() {
       }
 
       setFeatured(data || [])
+      setActiveEventSlug(data?.[0]?.slug || '')
     }
 
     fetchFeaturedEvents()
@@ -52,11 +54,17 @@ export function FeaturedEvents() {
         </p>
       </div>
 
-      <div className="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+      <div className="-mx-5 flex snap-x snap-mandatory gap-2 overflow-x-auto px-5 pb-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden">
         {featured.map((event) => (
           <article
             key={event.slug}
-            className="group min-w-[62vw] snap-start overflow-hidden rounded-3xl border border-white/10 bg-white/5 transition hover:-translate-y-1 hover:border-brand-500/40 sm:min-w-0"
+            onTouchStart={() => setActiveEventSlug(event.slug)}
+            onMouseEnter={() => setActiveEventSlug(event.slug)}
+            className={`group snap-center overflow-hidden rounded-3xl border border-white/10 bg-white/5 transition duration-300 hover:border-brand-500/40 sm:min-w-0 sm:scale-100 ${
+              activeEventSlug === event.slug
+                ? 'min-w-[56vw] scale-100'
+                : 'min-w-[50vw] scale-[0.94] opacity-80'
+            }`}
           >
             <Link href={`/eventos/${event.slug}`} className="relative flex aspect-[9/16] overflow-hidden sm:block sm:aspect-auto">
               <div
