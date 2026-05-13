@@ -12,6 +12,7 @@ export function Navbar() {
   const [results, setResults] = useState<any[]>([])
   const [user, setUser] = useState<User | null>(null)
   const [firstName, setFirstName] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState('')
 
   useEffect(() => {
     async function searchEvents() {
@@ -39,16 +40,18 @@ export function Navbar() {
     async function loadUserProfile(currentUser: User | null) {
       if (!currentUser) {
         setFirstName('')
+        setAvatarUrl('')
         return
       }
 
       const { data } = await supabase
         .from('profiles')
-        .select('first_name')
+        .select('first_name, avatar_url')
         .eq('id', currentUser.id)
         .maybeSingle()
 
       setFirstName(data?.first_name ?? '')
+      setAvatarUrl(data?.avatar_url ?? '')
     }
 
     async function loadUser() {
@@ -78,6 +81,8 @@ export function Navbar() {
   async function handleSignOut() {
     await supabase.auth.signOut()
     setUser(null)
+    setFirstName('')
+    setAvatarUrl('')
     window.location.href = '/'
   }
 
@@ -151,9 +156,17 @@ export function Navbar() {
                 href="/cuenta"
                 aria-label="Mi cuenta"
                 title="Mi cuenta"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-brand-500/60 hover:bg-brand-500/15 hover:text-white"
+                className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-brand-500/60 hover:bg-brand-500/15 hover:text-white"
               >
-                <UserRound className="h-5 w-5" />
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={firstName ? `Perfil de ${firstName}` : 'Mi cuenta'}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <UserRound className="h-5 w-5" />
+                )}
               </Link>
 
               <button
