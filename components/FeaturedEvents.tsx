@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import type { MouseEvent } from 'react'
 import Link from 'next/link'
 import { CalendarDays, MapPin } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 export function FeaturedEvents() {
   const carouselRef = useRef<HTMLDivElement | null>(null)
+  const lastTapRef = useRef({ slug: '', time: 0 })
   const [featured, setFeatured] = useState<any[]>([])
   const [activeEventSlug, setActiveEventSlug] = useState('')
 
@@ -64,6 +66,26 @@ export function FeaturedEvents() {
     if (closest?.slug) setActiveEventSlug(closest.slug)
   }
 
+  function openEventOnDoubleTap(
+    slug: string,
+    event: MouseEvent<HTMLElement>
+  ) {
+    if (window.innerWidth >= 640) return
+
+    const target = event.target as HTMLElement
+    if (target.closest('a, button, input, select, textarea')) return
+
+    const now = Date.now()
+    const isSameCard = lastTapRef.current.slug === slug
+    const isDoubleTap = isSameCard && now - lastTapRef.current.time < 360
+
+    lastTapRef.current = { slug, time: now }
+
+    if (isDoubleTap) {
+      window.location.href = `/eventos/${slug}`
+    }
+  }
+
   return (
     <section id="destacados" className="container-page py-8 md:py-12">
       <div className="mb-6 flex items-end justify-between gap-4">
@@ -91,6 +113,7 @@ export function FeaturedEvents() {
             key={event.slug}
             data-event-card
             data-slug={event.slug}
+            onClick={(clickEvent) => openEventOnDoubleTap(event.slug, clickEvent)}
             className={`group snap-center overflow-hidden rounded-3xl border border-white/10 bg-white/5 transition duration-300 hover:border-brand-500/40 sm:min-w-0 sm:scale-100 ${
               activeEventSlug === event.slug
                 ? 'min-w-[56vw] scale-100'
