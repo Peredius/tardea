@@ -1,7 +1,9 @@
 'use client'
 
 import { Suspense, useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 const MUSIC_OPTIONS = [
@@ -175,6 +177,16 @@ function ProfileForm() {
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="container-page py-12">
         <form onSubmit={handleSubmit} className="card mx-auto max-w-xl p-6">
+          {!isFirstTime && (
+            <Link
+              href="/cuenta"
+              className="mb-5 inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-brand-500 transition hover:text-brand-400"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Link>
+          )}
+
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-500">
             {isFirstTime ? 'Antes de seguir' : 'Mi perfil'}
           </p>
