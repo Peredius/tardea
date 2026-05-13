@@ -52,6 +52,9 @@ alter table public.profiles
 add column if not exists promoter_logo_url text;
 
 alter table public.profiles
+add column if not exists avatar_url text;
+
+alter table public.profiles
 add column if not exists billing_name text;
 
 alter table public.profiles

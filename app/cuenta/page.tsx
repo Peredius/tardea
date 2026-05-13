@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   CalendarDays,
@@ -22,6 +22,7 @@ type AccountProfile = {
   municipality: string | null
   province: string | null
   music_preferences: string[] | null
+  avatar_url: string | null
 }
 
 type FavoriteEvent = {
@@ -41,12 +42,17 @@ type FavoriteEvent = {
 type AccountTab = 'favorites' | 'suggestions' | 'compare' | 'chats'
 
 export default function AccountPage() {
+  const avatarInputRef = useRef<HTMLInputElement | null>(null)
+  const [userId, setUserId] = useState('')
   const [email, setEmail] = useState<string | null>(null)
   const [profile, setProfile] = useState<AccountProfile | null>(null)
   const [favoriteEvents, setFavoriteEvents] = useState<FavoriteEvent[]>([])
   const [suggestedEvents, setSuggestedEvents] = useState<FavoriteEvent[]>([])
   const [activeTab, setActiveTab] = useState<AccountTab>('favorites')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState('')
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarMessage, setAvatarMessage] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -61,14 +67,16 @@ export default function AccountPage() {
       }
 
       setEmail(user.email ?? null)
+      setUserId(user.id)
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('first_name, last_name, municipality, province, music_preferences')
+        .select('first_name, last_name, municipality, province, music_preferences, avatar_url')
         .eq('id', user.id)
         .maybeSingle()
 
       setProfile(profileData ?? null)
+      setAvatarUrl(profileData?.avatar_url ?? '')
 
       const { data: favorites } = await supabase
         .from('favorites')
@@ -147,6 +155,54 @@ export default function AccountPage() {
     window.location.href = '/'
   }
 
+  async function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file || !userId) return
+
+    setAvatarUploading(true)
+    setAvatarMessage('')
+
+    const safeFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-')
+    const filePath = `avatars/${userId}/${Date.now()}-${safeFileName}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('events')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true,
+      })
+
+    if (uploadError) {
+      setAvatarUploading(false)
+      setAvatarMessage(`No se pudo subir la foto: ${uploadError.message}`)
+      event.target.value = ''
+      return
+    }
+
+    const { data } = supabase.storage.from('events').getPublicUrl(filePath)
+    const nextAvatarUrl = data.publicUrl
+
+    const { error: profileError } = await supabase.from('profiles').upsert(
+      {
+        id: userId,
+        role: 'user',
+        avatar_url: nextAvatarUrl,
+      },
+      { onConflict: 'id' }
+    )
+
+    setAvatarUploading(false)
+    event.target.value = ''
+
+    if (profileError) {
+      setAvatarMessage(`Foto subida, pero no se pudo guardar: ${profileError.message}`)
+      return
+    }
+
+    setAvatarUrl(nextAvatarUrl)
+    setAvatarMessage('Foto actualizada')
+  }
+
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -220,17 +276,48 @@ export default function AccountPage() {
 
         <section className="px-5 pt-8">
           <div className="grid grid-cols-[auto_1fr] items-center gap-6">
-            <Link
-              href="/cuenta/perfil"
-              className="relative flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 via-fuchsia-500 to-orange-400 p-1 sm:h-36 sm:w-36"
-            >
-              <span className="flex h-full w-full items-center justify-center rounded-full bg-slate-900 text-4xl font-black text-white">
-                {initials || <UserRound className="h-10 w-10" />}
-              </span>
-              <span className="absolute bottom-1 right-1 flex h-11 w-11 items-center justify-center rounded-full border-4 border-slate-950 bg-white text-slate-950">
-                <Plus className="h-6 w-6" />
-              </span>
-            </Link>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                className="relative flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 via-fuchsia-500 to-orange-400 p-1 sm:h-36 sm:w-36"
+                aria-label="Cambiar foto de perfil"
+              >
+                <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-slate-900 text-4xl font-black text-white">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt={displayName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    initials || <UserRound className="h-10 w-10" />
+                  )}
+                </span>
+                <span className="absolute bottom-1 right-1 flex h-11 w-11 items-center justify-center rounded-full border-4 border-slate-950 bg-white text-slate-950">
+                  <Plus className="h-6 w-6" />
+                </span>
+              </button>
+
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
+
+              {avatarUploading && (
+                <p className="mt-2 text-center text-xs font-semibold text-brand-500">
+                  Subiendo...
+                </p>
+              )}
+              {avatarMessage && (
+                <p className="mt-2 text-center text-xs text-slate-400">
+                  {avatarMessage}
+                </p>
+              )}
+            </div>
 
             <div className="min-w-0">
               <h1 className="truncate text-2xl font-black text-white sm:text-4xl">
