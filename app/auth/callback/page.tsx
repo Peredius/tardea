@@ -92,7 +92,7 @@ function AuthCallbackContent() {
       } else if (needsProfile) {
         window.location.href = '/cuenta/perfil?first=1'
       } else {
-        window.location.href = '/'
+        window.location.href = '/cuenta'
       }
     }
 

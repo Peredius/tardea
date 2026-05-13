@@ -219,7 +219,7 @@ export default function AccountPage() {
         <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/90 px-5 py-4 backdrop-blur">
           <div className="flex items-center justify-between gap-4">
             <Link
-              href="/#eventos"
+              href="/"
               aria-label="Buscar planes"
               className="inline-flex h-11 w-11 items-center justify-center rounded-full text-white transition hover:bg-white/10"
             >
@@ -346,7 +346,7 @@ export default function AccountPage() {
 
           <div className="mt-8 grid grid-cols-2 gap-3">
             <Link
-              href="/#eventos"
+              href="/"
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-5 py-3 text-lg font-semibold text-white transition hover:bg-white/15"
             >
               <Search className="h-5 w-5" />
@@ -424,7 +424,7 @@ export default function AccountPage() {
                 <h2 className="mt-4 text-2xl font-bold text-white">
                   Sin favoritos todavia
                 </h2>
-                <Link href="/#eventos" className="btn-primary mt-5">
+                <Link href="/" className="btn-primary mt-5">
                   Buscar planes
                 </Link>
               </div>

@@ -158,7 +158,7 @@ function ProfileForm() {
       return
     }
 
-    window.location.href = '/'
+    window.location.href = '/cuenta'
   }
 
   if (loading) {
