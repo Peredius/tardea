@@ -13,6 +13,7 @@ export function Navbar() {
   const [user, setUser] = useState<User | null>(null)
   const [firstName, setFirstName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
 
   useEffect(() => {
     async function searchEvents() {
@@ -41,6 +42,7 @@ export function Navbar() {
       if (!currentUser) {
         setFirstName('')
         setAvatarUrl('')
+        setAccountMenuOpen(false)
         return
       }
 
@@ -83,6 +85,7 @@ export function Navbar() {
     setUser(null)
     setFirstName('')
     setAvatarUrl('')
+    setAccountMenuOpen(false)
     window.location.href = '/'
   }
 
@@ -152,30 +155,51 @@ export function Navbar() {
                 Hola, {firstName || 'usuario'}
               </span>
 
-              <Link
-                href="/cuenta"
-                aria-label="Mi cuenta"
-                title="Mi cuenta"
-                className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-brand-500/60 hover:bg-brand-500/15 hover:text-white"
-              >
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt={firstName ? `Perfil de ${firstName}` : 'Mi cuenta'}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <UserRound className="h-5 w-5" />
-                )}
-              </Link>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setAccountMenuOpen((current) => !current)}
+                  aria-label="Abrir menu de usuario"
+                  title="Mi cuenta"
+                  className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-brand-500/60 hover:bg-brand-500/15 hover:text-white"
+                >
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt={firstName ? `Perfil de ${firstName}` : 'Mi cuenta'}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <UserRound className="h-5 w-5" />
+                  )}
+                </button>
 
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="hidden text-sm text-slate-300 hover:text-white sm:inline"
-              >
-                Cerrar sesion
-              </button>
+                {accountMenuOpen && (
+                  <div className="absolute right-0 top-12 w-48 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl shadow-black/30">
+                    <Link
+                      href="/cuenta"
+                      onClick={() => setAccountMenuOpen(false)}
+                      className="block border-b border-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                    >
+                      Mi perfil
+                    </Link>
+                    <Link
+                      href="/cuenta/perfil"
+                      onClick={() => setAccountMenuOpen(false)}
+                      className="block border-b border-white/10 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10 hover:text-white"
+                    >
+                      Editar perfil
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
+                      className="block w-full px-4 py-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white"
+                    >
+                      Cerrar sesion
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <>
