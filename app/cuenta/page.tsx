@@ -11,6 +11,7 @@ import {
   MessageSquare,
   Plus,
   Search,
+  Sparkles,
   UserRound,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -20,6 +21,7 @@ type AccountProfile = {
   last_name: string | null
   municipality: string | null
   province: string | null
+  music_preferences: string[] | null
 }
 
 type FavoriteEvent = {
@@ -36,12 +38,13 @@ type FavoriteEvent = {
   cover: string | null
 }
 
-type AccountTab = 'favorites' | 'compare' | 'chats'
+type AccountTab = 'favorites' | 'suggestions' | 'compare' | 'chats'
 
 export default function AccountPage() {
   const [email, setEmail] = useState<string | null>(null)
   const [profile, setProfile] = useState<AccountProfile | null>(null)
   const [favoriteEvents, setFavoriteEvents] = useState<FavoriteEvent[]>([])
+  const [suggestedEvents, setSuggestedEvents] = useState<FavoriteEvent[]>([])
   const [activeTab, setActiveTab] = useState<AccountTab>('favorites')
   const [menuOpen, setMenuOpen] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -61,7 +64,7 @@ export default function AccountPage() {
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('first_name, last_name, municipality, province')
+        .select('first_name, last_name, municipality, province, music_preferences')
         .eq('id', user.id)
         .maybeSingle()
 
@@ -87,6 +90,28 @@ export default function AccountPage() {
 
         setFavoriteEvents(events || [])
       }
+
+      const today = new Date().toISOString().split('T')[0]
+      const musicPreferences = profileData?.music_preferences || []
+      let suggestionsQuery = supabase
+        .from('events')
+        .select(
+          'id, slug, title, venue, area, date, start_time, end_time, type, price_from, cover'
+        )
+        .eq('published', true)
+        .eq('status', 'approved')
+        .gte('date', today)
+        .order('date', { ascending: true })
+        .limit(8)
+
+      if (musicPreferences.length > 0) {
+        suggestionsQuery = suggestionsQuery.overlaps('music', musicPreferences)
+      }
+
+      const { data: suggestions } = await suggestionsQuery
+      setSuggestedEvents(
+        (suggestions || []).filter((event) => !eventIds.includes(event.id))
+      )
 
       setLoading(false)
     }
@@ -234,24 +259,26 @@ export default function AccountPage() {
 
           <div className="mt-8 grid grid-cols-2 gap-3">
             <Link
-              href="/cuenta/perfil"
-              className="rounded-2xl bg-white/10 px-5 py-3 text-center text-lg font-semibold text-white transition hover:bg-white/15"
-            >
-              Editar
-            </Link>
-
-            <Link
               href="/#eventos"
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-5 py-3 text-lg font-semibold text-white transition hover:bg-white/15"
             >
               <Search className="h-5 w-5" />
               Buscar
             </Link>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('suggestions')}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-5 py-3 text-lg font-semibold text-white transition hover:bg-white/15"
+            >
+              <Sparkles className="h-5 w-5" />
+              Sugerencias
+            </button>
           </div>
         </section>
 
         <section className="mt-8 border-b border-white/10 px-5">
-          <div className="grid grid-cols-3 text-center">
+          <div className="grid grid-cols-4 text-center">
             <button
               type="button"
               onClick={() => setActiveTab('favorites')}
@@ -262,6 +289,18 @@ export default function AccountPage() {
               }`}
             >
               <Heart className="h-8 w-8 fill-current" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('suggestions')}
+              className={`flex justify-center border-b-2 py-4 transition ${
+                activeTab === 'suggestions'
+                  ? 'border-white text-white'
+                  : 'border-transparent text-slate-500 hover:text-white'
+              }`}
+            >
+              <Sparkles className="h-8 w-8 fill-current" />
             </button>
 
             <button
@@ -319,6 +358,75 @@ export default function AccountPage() {
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
+
+                  <div className="absolute inset-x-0 bottom-0 p-4">
+                    <div className="mb-2 flex flex-wrap gap-1.5">
+                      <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
+                        {event.type}
+                      </span>
+                      <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
+                        {event.area}
+                      </span>
+                      <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
+                        {event.price_from === 0
+                          ? 'Desde gratis'
+                          : `Desde ${event.price_from} EUR`}
+                      </span>
+                    </div>
+
+                    <h2 className="line-clamp-2 text-base font-black uppercase leading-tight text-white">
+                      {event.title}
+                    </h2>
+                    <p className="mt-2 line-clamp-2 text-xs text-slate-200">
+                      {event.venue} ·{' '}
+                      {new Date(event.date).toLocaleDateString('es-ES')} ·{' '}
+                      {event.start_time?.slice(0, 5)}
+                      {event.end_time ? ` - ${event.end_time.slice(0, 5)}` : ''}
+                    </p>
+                  </div>
+                </Link>
+              ))
+            )}
+          </section>
+        )}
+
+        {activeTab === 'suggestions' && (
+          <section className="grid grid-cols-2 gap-1 px-0 pt-1 sm:grid-cols-3 lg:grid-cols-4">
+            {suggestedEvents.length === 0 ? (
+              <div className="col-span-full px-5 py-12 text-center">
+                <Sparkles className="mx-auto h-10 w-10 text-brand-500" />
+                <h2 className="mt-4 text-2xl font-bold text-white">
+                  Sin sugerencias todavia
+                </h2>
+                <p className="mx-auto mt-2 max-w-sm text-sm text-slate-400">
+                  Completa tus gustos musicales para que podamos recomendarte
+                  planes que encajen contigo.
+                </p>
+                <Link href="/cuenta/perfil" className="btn-primary mt-5">
+                  Completar perfil
+                </Link>
+              </div>
+            ) : (
+              suggestedEvents.map((event) => (
+                <Link
+                  key={event.id}
+                  href={`/eventos/${event.slug}`}
+                  className="group relative aspect-[3/4] overflow-hidden bg-slate-900"
+                >
+                  <div
+                    className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
+                    style={{
+                      backgroundImage: `url(${
+                        event.cover ||
+                        'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
+                      })`,
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
+
+                  <div className="absolute left-3 top-3 rounded-full bg-brand-500 px-3 py-1 text-xs font-bold text-white shadow-lg shadow-brand-500/20">
+                    Para ti
+                  </div>
 
                   <div className="absolute inset-x-0 bottom-0 p-4">
                     <div className="mb-2 flex flex-wrap gap-1.5">
