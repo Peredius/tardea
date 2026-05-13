@@ -18,6 +18,19 @@ import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
 import { supabase } from '@/lib/supabase'
 
+function WhatsAppIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      aria-hidden="true"
+      className={className}
+      fill="currentColor"
+    >
+      <path d="M16 3.2A12.6 12.6 0 0 0 5.3 22.5L4 29l6.7-1.2A12.6 12.6 0 1 0 16 3.2Zm0 2.3a10.3 10.3 0 0 1 8.8 15.7 10.3 10.3 0 0 1-13.4 4.2l-.4-.2-4 .7.8-3.8-.2-.4A10.3 10.3 0 0 1 16 5.5Zm-4.4 5.2c-.2 0-.5 0-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.2 4.9 4.4 2.4 1 2.9.8 3.4.8.5 0 1.7-.7 1.9-1.4.2-.7.2-1.3.2-1.4 0-.1-.2-.2-.5-.4l-1.8-.9c-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1a8.4 8.4 0 0 1-2.5-1.5 9.4 9.4 0 0 1-1.7-2.1c-.2-.3 0-.5.1-.6l.5-.6.3-.5c.1-.2 0-.4 0-.5l-.8-1.9c-.2-.5-.5-.5-.7-.5h-.3Z" />
+    </svg>
+  )
+}
+
 export default function EventDetailPage() {
   const params = useParams()
   const searchParams = useSearchParams()
@@ -115,6 +128,12 @@ export default function EventDetailPage() {
       </main>
     )
   }
+
+  const eventUrl = `https://tardea.com/eventos/${event.slug ?? slug}`
+  const whatsappText = encodeURIComponent(
+    `Mira este plan en TARDEA: ${event.title} ${eventUrl}`
+  )
+  const whatsappShareUrl = `https://wa.me/?text=${whatsappText}`
 
   return (
     <main>
@@ -258,6 +277,16 @@ export default function EventDetailPage() {
 
             <a href="#" className="btn-primary mt-6 w-full">
               Comprar entradas
+            </a>
+
+            <a
+              href={whatsappShareUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-5 py-3 font-semibold text-slate-950 transition hover:bg-[#1fbd5a]"
+            >
+              <WhatsAppIcon className="h-5 w-5" />
+              Compartir por WhatsApp
             </a>
 
             <button
