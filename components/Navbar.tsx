@@ -143,14 +143,17 @@ export function Navbar() {
         <div className="flex shrink-0 items-center gap-2">
           {user ? (
             <>
-              {firstName && (
-                <span className="hidden text-sm font-medium text-slate-200 md:inline">
-                  Hola, {firstName}
-                </span>
-              )}
+              <span className="max-w-[92px] truncate text-xs font-semibold text-slate-200 sm:max-w-none sm:text-sm">
+                Hola, {firstName || 'usuario'}
+              </span>
 
-              <Link href="/cuenta" className="btn-primary">
-                Mi cuenta
+              <Link
+                href="/cuenta"
+                aria-label="Mi cuenta"
+                title="Mi cuenta"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-brand-500/60 hover:bg-brand-500/15 hover:text-white"
+              >
+                <UserRound className="h-5 w-5" />
               </Link>
 
               <button
