@@ -1,4 +1,5 @@
 import { AreasSection } from '@/components/AreasSection';
+import { CreatorsSection } from '@/components/CreatorsSection';
 import { FeaturedEvents } from '@/components/FeaturedEvents';
 import { Filters } from '@/components/Filters';
 import { Footer } from '@/components/Footer';
@@ -14,6 +15,7 @@ export default function HomePage() {
       <Filters />
       <FeaturedEvents />
       <AreasSection />
+      <CreatorsSection />
       <Newsletter />
       <Footer />
     </main>
