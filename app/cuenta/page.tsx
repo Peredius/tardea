@@ -10,6 +10,7 @@ import {
   Menu,
   MessageSquare,
   Plus,
+  ListChecks,
   Search,
   Sparkles,
   UserRound,
@@ -396,10 +397,10 @@ export default function AccountPage() {
               className={`flex justify-center border-b-2 py-4 transition ${
                 activeTab === 'compare'
                   ? 'border-white text-white'
-                  : 'border-transparent text-slate-500 hover:text-white'
+                : 'border-transparent text-slate-500 hover:text-white'
               }`}
             >
-              <Search className="h-8 w-8" />
+              <ListChecks className="h-8 w-8" />
             </button>
 
             <button
@@ -551,10 +552,11 @@ export default function AccountPage() {
             <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center">
               <CalendarDays className="mx-auto h-10 w-10 text-brand-500" />
               <h2 className="mt-4 text-2xl font-bold text-white">
-                Comparador de planes
+                Encuestas para grupos
               </h2>
               <p className="mt-2 text-sm text-slate-400">
-                Aqui prepararemos las encuestas para grupos de WhatsApp.
+                Aqui compararemos eventos para mandarlos por WhatsApp y que el
+                grupo pueda elegir plan.
               </p>
             </div>
           </section>
