@@ -18,6 +18,8 @@ const discoveryPoints = [
   },
 ]
 
+const upcomingAreas = ['Salamanca', 'Chamberi', 'Malasana', 'La Latina', 'Centro', 'Chamartin']
+
 export function AreasSection() {
   return (
     <section id="zonas" className="container-page py-12">
@@ -63,8 +65,21 @@ export function AreasSection() {
             </p>
 
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">
-              Destacados de la semana
+              Zonas de Madrid con eventos
             </h2>
+
+            <p className="mt-3 text-sm text-slate-400">
+              Activaremos paginas por zona para descubrir tardeos cercanos y
+              mejorar las busquedas locales.
+            </p>
+
+            <div className="mt-6 flex flex-wrap gap-2">
+              {upcomingAreas.map((area) => (
+                <span key={area} className="badge">
+                  {area}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
