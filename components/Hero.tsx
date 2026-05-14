@@ -98,9 +98,13 @@ export function Hero() {
     const eventos = document.getElementById('eventos')
 
     if (eventos) {
-      eventos.scrollIntoView({
+      const headerOffset = window.innerWidth < 768 ? 88 : 76
+      const top =
+        eventos.getBoundingClientRect().top + window.scrollY - headerOffset
+
+      window.scrollTo({
+        top: Math.max(top, 0),
         behavior: 'smooth',
-        block: 'start',
       })
     }
   }

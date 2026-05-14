@@ -193,7 +193,7 @@ export function Filters() {
   }
 
   return (
-    <section id="eventos" className="container-page py-6">
+    <section id="eventos" className="container-page scroll-mt-24 py-6 md:scroll-mt-20">
       <div className="card p-5">
         <button
           type="button"
