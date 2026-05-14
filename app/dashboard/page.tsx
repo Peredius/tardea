@@ -4,11 +4,17 @@ import { useEffect, useState } from 'react'
 import {
   BadgeEuro,
   ChevronDown,
+  CheckCircle2,
+  Hourglass,
   ImagePlus,
   LayoutDashboard,
+  LockKeyhole,
   LogOut,
   Megaphone,
+  MessageSquare,
   PencilLine,
+  Plus,
+  PartyPopper,
   ReceiptText,
   Sparkles,
   UploadCloud,
@@ -96,6 +102,7 @@ export default function DashboardPage() {
   const [passwordMessage, setPasswordMessage] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [panelMode, setPanelMode] = useState<'events' | 'data' | 'profile' | 'resources'>('events')
+  const [eventView, setEventView] = useState<'all' | 'approved' | 'pending' | 'chat'>('all')
 
   const [promoterEventName, setPromoterEventName] = useState('')
   const [promoterContactName, setPromoterContactName] = useState('')
@@ -470,6 +477,12 @@ export default function DashboardPage() {
 
   const approvedEvents = events.filter((event) => event.status === 'approved')
   const pendingEvents = events.filter((event) => event.status === 'pending')
+  const visibleEvents =
+    eventView === 'approved'
+      ? approvedEvents
+      : eventView === 'pending'
+        ? pendingEvents
+        : events
   const greetingName = promoterEventName || promoterCompany || 'promotor'
   const showDataForm = panelMode === 'data' || !profileComplete
   const showProfileForm = panelMode === 'profile' && profileComplete
@@ -486,43 +499,56 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="container-page py-8">
-        <header className="mb-8 flex items-start justify-between gap-6">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-500">
-              Tardea Partners
-            </p>
-            <h1 className="mt-2 text-4xl font-bold tracking-tight md:text-5xl">
-              Hola, {greetingName}
-            </h1>
-            <p className="mt-3 max-w-2xl text-slate-400">
-              Gestiona tus eventos, datos de promotor y facturacion.
-            </p>
-          </div>
+      <div className="mx-auto min-h-screen w-full max-w-6xl pb-12">
+        <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/90 px-5 py-4 backdrop-blur">
+          <div className="flex items-center justify-between gap-4">
+            <a
+              href="/"
+              aria-label="Ir a TARDEA"
+              className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5 transition hover:border-brand-500/60 hover:bg-brand-500/15"
+            >
+              <img src="/tardea-icon.svg" alt="TARDEA" className="h-full w-full object-cover" />
+            </a>
 
-          <div className="relative shrink-0">
+            <div className="flex min-w-0 items-center gap-2 text-xl font-black text-white sm:text-2xl">
+              <LockKeyhole className="h-5 w-5 shrink-0 text-slate-300" />
+              <span className="truncate">
+                {greetingName.toLowerCase().replace(/\s+/g, '_')}
+              </span>
+            </div>
+
+            <div className="relative flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setPanelMode('events')
+                  setEventView('chat')
+                }}
+                aria-label="Chat"
+                className="relative inline-flex h-11 w-11 items-center justify-center rounded-full text-white transition hover:bg-white/10"
+              >
+                <MessageSquare className="h-8 w-8 fill-white" />
+                <span className="absolute right-1 top-0 h-5 min-w-5 rounded-full bg-brand-500 px-1 text-xs font-bold leading-5 text-white">
+                  0
+                </span>
+              </button>
+
             <button
               type="button"
               onClick={() => setMenuOpen((open) => !open)}
-              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full text-white transition hover:bg-white/10"
+              aria-label="Abrir menu"
             >
-              <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-brand-500 text-white">
-                {logoDisplay ? (
-                  <img src={logoDisplay} alt={greetingName} className="h-full w-full object-cover" />
-                ) : (
-                  <UserCircle className="h-6 w-6" />
-                )}
-              </span>
-              <span className="hidden sm:inline">{greetingName}</span>
-              <ChevronDown className="h-4 w-4 text-slate-400" />
+              <ChevronDown className="h-8 w-8 text-slate-100" />
             </button>
 
             {menuOpen && (
-              <div className="absolute right-0 z-50 mt-3 w-64 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
+              <div className="absolute right-0 top-14 z-50 w-64 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
                 <button
                   type="button"
                   onClick={() => {
                     setPanelMode('events')
+                    setEventView('all')
                     setMenuOpen(false)
                   }}
                   className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-200 hover:bg-white/5"
@@ -534,13 +560,14 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setPanelMode('data')
+                    setPanelMode('events')
+                    setEventView('all')
                     setMenuOpen(false)
                   }}
                   className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-200 hover:bg-white/5"
                 >
                   <ReceiptText className="h-4 w-4 text-brand-500" />
-                  Editar datos
+                  Editar eventos
                 </button>
 
                 <button
@@ -564,7 +591,19 @@ export default function DashboardPage() {
                   className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-200 hover:bg-white/5"
                 >
                   <Megaphone className="h-4 w-4 text-brand-500" />
-                  Recursos
+                  Lanzamiento
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPanelMode('data')
+                    setMenuOpen(false)
+                  }}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-200 hover:bg-white/5"
+                >
+                  <ReceiptText className="h-4 w-4 text-brand-500" />
+                  Datos y facturacion
                 </button>
 
                 <button
@@ -578,10 +617,114 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+          </div>
         </header>
 
+        <section className="px-5 py-8">
+          <div className="grid grid-cols-[auto_1fr] items-center gap-6">
+            <button
+              type="button"
+              onClick={() => {
+                setPanelMode('profile')
+                window.setTimeout(() => {
+                  document.getElementById('promoter-profile-form')?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                  })
+                }, 50)
+              }}
+              className="relative flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 via-fuchsia-500 to-orange-400 p-1 sm:h-36 sm:w-36"
+            >
+              <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-slate-900 text-white">
+                {logoDisplay ? (
+                  <img src={logoDisplay} alt={greetingName} className="h-full w-full object-cover" />
+                ) : (
+                  <UserCircle className="h-12 w-12" />
+                )}
+              </span>
+              <span className="absolute bottom-1 right-1 flex h-11 w-11 items-center justify-center rounded-full border-4 border-slate-950 bg-white text-slate-950">
+                <Plus className="h-6 w-6" />
+              </span>
+            </button>
+
+            <div className="min-w-0">
+              <h1 className="truncate text-3xl font-black text-white md:text-5xl">
+                {greetingName}
+              </h1>
+              <p className="mt-2 truncate text-sm text-slate-400">{email}</p>
+
+              <div className="mt-6 grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-4xl font-black text-white">{events.length}</p>
+                  <p className="text-sm font-semibold text-slate-300">Total subidos</p>
+                </div>
+                <div>
+                  <p className="text-4xl font-black text-emerald-400">{approvedEvents.length}</p>
+                  <p className="text-sm font-semibold text-slate-300">Aprobados</p>
+                </div>
+                <div>
+                  <p className="text-4xl font-black text-red-500">{pendingEvents.length}</p>
+                  <p className="text-sm font-semibold text-slate-300">Pendientes</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setPanelMode('events')
+                setEventView('all')
+              }}
+              className="rounded-2xl bg-white/10 px-5 py-4 text-center text-lg font-bold text-white transition hover:bg-white/15"
+            >
+              Crear evento
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPanelMode('resources')}
+              className="rounded-2xl bg-white/10 px-5 py-4 text-center text-lg font-bold text-white transition hover:bg-white/15"
+            >
+              Lanzamiento
+            </button>
+          </div>
+
+          <div className="mt-8 grid grid-cols-4 border-b border-white/10 text-center">
+            {[
+              { key: 'all', icon: PartyPopper, label: 'Todos' },
+              { key: 'approved', icon: CheckCircle2, label: 'Aprobados' },
+              { key: 'pending', icon: Hourglass, label: 'Pendientes' },
+              { key: 'chat', icon: MessageSquare, label: 'Chat' },
+            ].map((item) => {
+              const Icon = item.icon
+              const isActive = eventView === item.key && panelMode === 'events'
+
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => {
+                    setPanelMode('events')
+                    setEventView(item.key as 'all' | 'approved' | 'pending' | 'chat')
+                  }}
+                  aria-label={item.label}
+                  className={`flex justify-center border-b-2 py-4 transition ${
+                    isActive
+                      ? 'border-white text-white'
+                      : 'border-transparent text-slate-500 hover:text-white'
+                  }`}
+                >
+                  <Icon className="h-9 w-9" />
+                </button>
+              )
+            })}
+          </div>
+        </section>
+
         {showDataForm && (
-          <form onSubmit={savePromoterProfile} className="card mb-8 space-y-6 p-6">
+          <form onSubmit={savePromoterProfile} className="card mx-5 mb-8 space-y-6 p-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h2 className="text-2xl font-bold">Editar datos</h2>
@@ -699,7 +842,7 @@ export default function DashboardPage() {
         )}
 
         {showProfileForm && (
-          <form onSubmit={savePublicProfile} className="card mb-8 space-y-6 p-6">
+          <form id="promoter-profile-form" onSubmit={savePublicProfile} className="card mx-5 mb-8 space-y-6 p-6">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <h2 className="text-2xl font-bold">Editar perfil</h2>
@@ -752,7 +895,7 @@ export default function DashboardPage() {
         )}
 
         {showResources && (
-          <section className="space-y-6">
+          <section className="space-y-6 px-5">
             <div className="card p-6">
               <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-500">
                 Recursos para promotores
@@ -809,9 +952,24 @@ export default function DashboardPage() {
           </section>
         )}
 
-        {panelMode === 'events' && profileComplete && (
+        {panelMode === 'events' && profileComplete && eventView === 'chat' && (
+          <section className="px-5 pb-10">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center">
+              <MessageSquare className="mx-auto h-10 w-10 text-brand-500" />
+              <h2 className="mt-4 text-2xl font-bold text-white">
+                Chat con usuarios y TARDEA
+              </h2>
+              <p className="mx-auto mt-2 max-w-xl text-sm text-slate-400">
+                Aqui centralizaremos conversaciones sobre reservas, dudas de eventos
+                y campanas cuando activemos la parte de mensajeria.
+              </p>
+            </div>
+          </section>
+        )}
+
+        {panelMode === 'events' && profileComplete && eventView !== 'chat' && (
           <>
-            <section className="mb-8 grid gap-4 md:grid-cols-3">
+            <section className="mb-8 grid gap-4 px-5 md:grid-cols-3">
               <div className="card p-6">
                 <p className="text-sm text-slate-400">Usuario conectado</p>
                 <p className="mt-2 break-all font-semibold">{email}</p>
@@ -826,7 +984,7 @@ export default function DashboardPage() {
               </div>
             </section>
 
-            <section className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+            <section className="grid gap-8 px-5 lg:grid-cols-[0.9fr_1.1fr]">
               <form onSubmit={handleSubmit} className="card space-y-6 p-6">
                 <div>
                   <h2 className="text-2xl font-bold">Crear evento</h2>
@@ -901,9 +1059,9 @@ export default function DashboardPage() {
               <section className="card p-6">
                 <h2 className="text-2xl font-bold">Mis eventos</h2>
                 <p className="mt-2 text-sm text-slate-400">Aqui veras los eventos enviados y su estado.</p>
-                {events.length === 0 && <p className="mt-6 text-slate-400">No tienes eventos todavia.</p>}
+                {visibleEvents.length === 0 && <p className="mt-6 text-slate-400">No tienes eventos en esta vista todavia.</p>}
                 <div className="mt-6 space-y-4">
-                  {events.map((event) => (
+                  {visibleEvents.map((event) => (
                     <div key={event.id} className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 md:flex-row md:items-center md:justify-between">
                       <div>
                         <h3 className="font-semibold">{event.title}</h3>
