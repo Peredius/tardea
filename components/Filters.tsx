@@ -32,7 +32,6 @@ function matchesPrice(range: string, price: number) {
 
 export function Filters() {
   const carouselRef = useRef<HTMLDivElement | null>(null)
-  const lastTapRef = useRef({ slug: '', time: 0 })
   const [selectedDates, setSelectedDates] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       const storedDates = localStorage.getItem('selectedDates')
@@ -179,7 +178,7 @@ export function Filters() {
     if (closest?.slug) setActiveEventSlug(closest.slug)
   }
 
-  function openEventOnDoubleTap(
+  function openActiveEventOnTap(
     slug: string,
     event: MouseEvent<HTMLElement>
   ) {
@@ -188,13 +187,7 @@ export function Filters() {
     const target = event.target as HTMLElement
     if (target.closest('a, button, input, select, textarea')) return
 
-    const now = Date.now()
-    const isSameCard = lastTapRef.current.slug === slug
-    const isDoubleTap = isSameCard && now - lastTapRef.current.time < 360
-
-    lastTapRef.current = { slug, time: now }
-
-    if (isDoubleTap) {
+    if (activeEventSlug === slug) {
       window.location.href = `/eventos/${slug}`
     }
   }
@@ -353,7 +346,7 @@ export function Filters() {
                 key={event.slug}
                 data-event-card
                 data-slug={event.slug}
-                onClick={(clickEvent) => openEventOnDoubleTap(event.slug, clickEvent)}
+                onClick={(clickEvent) => openActiveEventOnTap(event.slug, clickEvent)}
                 className={`group relative flex aspect-[9/16] snap-center overflow-hidden rounded-3xl border border-white/10 bg-slate-900 transition duration-300 sm:card sm:aspect-auto sm:h-full sm:min-h-0 sm:min-w-0 sm:scale-100 sm:flex-col ${
                   activeEventSlug === event.slug
                     ? 'min-w-[56vw] scale-100'
