@@ -29,11 +29,29 @@ function RegisterContent() {
     }
 
     if (data.user) {
-      await supabase.from('profiles').insert({
-        id: data.user.id,
-        role: type === 'venue' ? 'venue' : 'user',
-        venue_name: type === 'venue' ? venueName : null,
+      const profileResponse = await fetch('/api/profiles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: data.user.id,
+          email: data.user.email,
+          role: type === 'venue' ? 'venue' : 'user',
+          venueName,
+        }),
       })
+
+      const profileResult = await profileResponse.json().catch(() => null)
+
+      if (!profileResponse.ok) {
+        setMessage(
+          `Cuenta creada, pero falta guardar el perfil: ${
+            profileResult?.error || 'error interno'
+          }`
+        )
+        return
+      }
     }
 
     setMessage('Cuenta creada. Revisa tu email o inicia sesión.')

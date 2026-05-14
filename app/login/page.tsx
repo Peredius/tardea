@@ -180,27 +180,34 @@ function LoginContent() {
     }
 
     if (data.user) {
-      const { error: profileError } = await supabase.from('profiles').upsert(
-        {
-          id: data.user.id,
-          role: accountType,
-          venue_name: accountType === 'venue' ? venueName : null,
-          first_name: accountType === 'user' ? firstName : null,
-          last_name: accountType === 'user' ? lastName : null,
-          birth_date: accountType === 'user' ? birthDate : null,
-          address: accountType === 'user' ? address : null,
-          postal_code: accountType === 'user' ? postalCode : null,
-          municipality: accountType === 'user' ? municipality : null,
-          province: accountType === 'user' ? province : null,
-          city: accountType === 'user' ? municipality : null,
-          music_preferences: accountType === 'user' ? musicPrefs : [],
-          area_preferences: [],
+      const profileResponse = await fetch('/api/profiles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        { onConflict: 'id' }
-      )
+        body: JSON.stringify({
+          id: data.user.id,
+          email: data.user.email,
+          role: accountType,
+          venueName,
+          firstName,
+          lastName,
+          birthDate,
+          address,
+          postalCode,
+          municipality,
+          province,
+          musicPrefs,
+        }),
+      })
+      const profileResult = await profileResponse.json().catch(() => null)
 
-      if (profileError) {
-        setMessage(`Cuenta creada, pero falta guardar el perfil: ${profileError.message}`)
+      if (!profileResponse.ok) {
+        setMessage(
+          `Cuenta creada, pero falta guardar el perfil: ${
+            profileResult?.error || 'error interno'
+          }`
+        )
         return
       }
     }
