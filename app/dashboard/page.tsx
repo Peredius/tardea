@@ -483,6 +483,18 @@ export default function DashboardPage() {
       : eventView === 'pending'
         ? pendingEvents
         : events
+  const eventsListTitle =
+    eventView === 'approved'
+      ? 'Eventos aprobados'
+      : eventView === 'pending'
+        ? 'Eventos pendientes'
+        : 'Mis eventos'
+  const emptyEventsMessage =
+    eventView === 'approved'
+      ? 'Ningun evento aprobado'
+      : eventView === 'pending'
+        ? 'Ningun evento pendiente'
+        : 'No tienes eventos todavia.'
   const greetingName = promoterEventName || promoterCompany || 'promotor'
   const showDataForm = panelMode === 'data' || !profileComplete
   const showProfileForm = panelMode === 'profile' && profileComplete
@@ -969,7 +981,8 @@ export default function DashboardPage() {
 
         {panelMode === 'events' && profileComplete && eventView !== 'chat' && (
           <>
-            <section className="grid gap-8 px-5 lg:grid-cols-[0.9fr_1.1fr]">
+            <section className={`grid gap-8 px-5 ${eventView === 'all' ? 'lg:grid-cols-[0.9fr_1.1fr]' : ''}`}>
+              {eventView === 'all' && (
               <form onSubmit={handleSubmit} className="card space-y-6 p-6">
                 <div>
                   <h2 className="text-2xl font-bold">Crear evento</h2>
@@ -1040,11 +1053,16 @@ export default function DashboardPage() {
                 </button>
                 {message && <p className="text-sm text-brand-500">{message}</p>}
               </form>
+              )}
 
               <section className="card p-6">
-                <h2 className="text-2xl font-bold">Mis eventos</h2>
-                <p className="mt-2 text-sm text-slate-400">Aqui veras los eventos enviados y su estado.</p>
-                {visibleEvents.length === 0 && <p className="mt-6 text-slate-400">No tienes eventos en esta vista todavia.</p>}
+                <h2 className="text-2xl font-bold">{eventsListTitle}</h2>
+                <p className="mt-2 text-sm text-slate-400">
+                  {eventView === 'all'
+                    ? 'Aqui veras los eventos enviados y su estado.'
+                    : 'Aqui veras solo los eventos de esta categoria.'}
+                </p>
+                {visibleEvents.length === 0 && <p className="mt-6 text-slate-400">{emptyEventsMessage}</p>}
                 <div className="mt-6 space-y-4">
                   {visibleEvents.map((event) => (
                     <div key={event.id} className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 md:flex-row md:items-center md:justify-between">
