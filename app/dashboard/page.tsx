@@ -969,21 +969,6 @@ export default function DashboardPage() {
 
         {panelMode === 'events' && profileComplete && eventView !== 'chat' && (
           <>
-            <section className="mb-8 grid gap-4 px-5 md:grid-cols-3">
-              <div className="card p-6">
-                <p className="text-sm text-slate-400">Usuario conectado</p>
-                <p className="mt-2 break-all font-semibold">{email}</p>
-              </div>
-              <div className="card p-6">
-                <p className="text-sm text-slate-400">Eventos publicados</p>
-                <p className="mt-2 text-4xl font-bold">{approvedEvents.length}</p>
-              </div>
-              <div className="card p-6">
-                <p className="text-sm text-slate-400">Eventos pendientes</p>
-                <p className="mt-2 text-4xl font-bold">{pendingEvents.length}</p>
-              </div>
-            </section>
-
             <section className="grid gap-8 px-5 lg:grid-cols-[0.9fr_1.1fr]">
               <form onSubmit={handleSubmit} className="card space-y-6 p-6">
                 <div>
