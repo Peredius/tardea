@@ -221,10 +221,14 @@ export default function AccountPage() {
           <div className="flex items-center justify-between gap-4">
             <Link
               href="/"
-              aria-label="Buscar planes"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full text-white transition hover:bg-white/10"
+              aria-label="Ir a TARDEA"
+              className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5 transition hover:border-brand-500/60 hover:bg-brand-500/15"
             >
-              <Plus className="h-8 w-8" />
+              <img
+                src="/tardea-icon.svg"
+                alt="TARDEA"
+                className="h-full w-full object-cover"
+              />
             </Link>
 
             <div className="flex min-w-0 items-center gap-2 text-xl font-black text-white sm:text-2xl">
