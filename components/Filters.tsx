@@ -6,6 +6,7 @@ import Link from 'next/link'
 import {
   Clock3,
   Euro,
+  ChevronDown,
   MapPin,
   Music4,
   SlidersHorizontal,
@@ -57,6 +58,7 @@ export function Filters() {
   const [area, setArea] = useState('Todas')
   const [dbEvents, setDbEvents] = useState(events)
   const [activeEventSlug, setActiveEventSlug] = useState('')
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   useEffect(() => {
     async function fetchEvents() {
@@ -200,7 +202,36 @@ export function Filters() {
   return (
     <section id="eventos" className="container-page py-6">
       <div className="card p-5">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <button
+          type="button"
+          onClick={() => setFiltersOpen((current) => !current)}
+          className="flex w-full items-center justify-between gap-4 md:hidden"
+          aria-expanded={filtersOpen}
+        >
+          <span className="inline-flex items-center gap-2 text-sm font-semibold text-brand-500">
+            <SlidersHorizontal className="h-4 w-4" />
+            Filtros de eventos
+          </span>
+
+          <span className="inline-flex items-center gap-3">
+            {selectedDates.length > 0 && (
+              <span className="text-sm font-semibold text-white">
+                {filtered.length} encontrados
+              </span>
+            )}
+            <ChevronDown
+              className={`h-5 w-5 text-slate-400 transition ${
+                filtersOpen ? 'rotate-180' : ''
+              }`}
+            />
+          </span>
+        </button>
+
+        <div
+          className={`mt-5 grid gap-4 md:mt-0 md:grid md:grid-cols-2 xl:grid-cols-5 ${
+            filtersOpen ? 'grid' : 'hidden'
+          }`}
+        >
           <label className="space-y-2 text-sm">
             <span className="inline-flex items-center gap-2 text-slate-300">
               <Clock3 className="h-4 w-4" /> Tipo
@@ -282,7 +313,7 @@ export function Filters() {
           </label>
         </div>
 
-        <div className="mt-5 flex items-center justify-between">
+        <div className="mt-5 hidden items-center justify-between md:flex">
           <h2 className="inline-flex items-center gap-2 text-sm font-semibold text-brand-500">
             <SlidersHorizontal className="h-4 w-4" />
             Filtrador de eventos
