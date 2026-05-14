@@ -5,6 +5,7 @@ import {
   BadgeEuro,
   ChevronDown,
   CheckCircle2,
+  FileText,
   Hourglass,
   ImagePlus,
   LayoutDashboard,
@@ -17,6 +18,7 @@ import {
   PartyPopper,
   ReceiptText,
   Sparkles,
+  Trash2,
   UploadCloud,
   UserCircle,
 } from 'lucide-react'
@@ -101,8 +103,14 @@ export default function DashboardPage() {
   const [profileMessage, setProfileMessage] = useState('')
   const [passwordMessage, setPasswordMessage] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
-  const [panelMode, setPanelMode] = useState<'events' | 'data' | 'profile' | 'resources'>('events')
+  const [panelMode, setPanelMode] = useState<'events' | 'data' | 'profile' | 'resources' | 'templates'>('events')
   const [eventView, setEventView] = useState<'all' | 'approved' | 'pending' | 'chat'>('all')
+  const [templates, setTemplates] = useState<any[]>([])
+  const [selectedTemplateId, setSelectedTemplateId] = useState('')
+  const [saveAsTemplate, setSaveAsTemplate] = useState(false)
+  const [saveAsTemplateName, setSaveAsTemplateName] = useState('')
+  const [templateMessage, setTemplateMessage] = useState('')
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null)
 
   const [promoterEventName, setPromoterEventName] = useState('')
   const [promoterContactName, setPromoterContactName] = useState('')
@@ -146,6 +154,21 @@ export default function DashboardPage() {
   const [previewUrl, setPreviewUrl] = useState('')
   const [description, setDescription] = useState('')
   const [perks, setPerks] = useState('')
+
+  const [templateName, setTemplateName] = useState('')
+  const [templateTitle, setTemplateTitle] = useState('')
+  const [templateVenue, setTemplateVenue] = useState('')
+  const [templateArea, setTemplateArea] = useState('')
+  const [templateCustomArea, setTemplateCustomArea] = useState('')
+  const [templateAddress, setTemplateAddress] = useState('')
+  const [templateMapsUrl, setTemplateMapsUrl] = useState('')
+  const [templateType, setTemplateType] = useState('')
+  const [templateMusic, setTemplateMusic] = useState<string[]>([])
+  const [templateAudience, setTemplateAudience] = useState('25-35')
+  const [templatePriceFrom, setTemplatePriceFrom] = useState('')
+  const [templateIsInvitation, setTemplateIsInvitation] = useState(false)
+  const [templateDescription, setTemplateDescription] = useState('')
+  const [templatePerks, setTemplatePerks] = useState('')
 
   const profileComplete =
     promoterEventName &&
@@ -215,6 +238,14 @@ export default function DashboardPage() {
         .order('date', { ascending: true })
 
       setEvents(data || [])
+
+      const { data: templateData } = await supabase
+        .from('event_templates')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+
+      setTemplates(templateData || [])
       setLoading(false)
     }
 
@@ -233,9 +264,112 @@ export default function DashboardPage() {
     setEvents(data || [])
   }
 
+  async function refreshTemplates() {
+    if (!userId) return
+
+    const { data } = await supabase
+      .from('event_templates')
+      .select('*')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false })
+
+    setTemplates(data || [])
+  }
+
   async function handleSignOut() {
     await supabase.auth.signOut()
     window.location.href = '/'
+  }
+
+  function applyArea(value: string | null, target: 'event' | 'template') {
+    const commonAreas = ['Centro', 'Salamanca', 'Retiro']
+    const nextArea = value || ''
+
+    if (target === 'event') {
+      if (!nextArea || commonAreas.includes(nextArea)) {
+        setArea(nextArea)
+        setCustomArea('')
+      } else {
+        setArea('Otra')
+        setCustomArea(nextArea)
+      }
+      return
+    }
+
+    if (!nextArea || commonAreas.includes(nextArea)) {
+      setTemplateArea(nextArea)
+      setTemplateCustomArea('')
+    } else {
+      setTemplateArea('Otra')
+      setTemplateCustomArea(nextArea)
+    }
+  }
+
+  function applyTemplateToEvent(templateId: string) {
+    setSelectedTemplateId(templateId)
+
+    const template = templates.find((item) => item.id === templateId)
+    if (!template) return
+
+    setTitle(template.title ?? '')
+    setVenue(template.venue ?? '')
+    applyArea(template.area ?? '', 'event')
+    setAddress(template.address ?? '')
+    setMapsUrl(template.maps_url ?? '')
+    setType(template.type ?? '')
+    setMusic(template.music ?? [])
+    setAudience(template.audience ?? '25-35')
+    const templatePrice = Number(template.price_from ?? 0)
+    setIsInvitation(templatePrice === 0)
+    setPriceFrom(templatePrice > 0 ? String(templatePrice) : '')
+    setDescription(template.description ?? '')
+    setPerks((template.perks ?? []).join(', '))
+  }
+
+  function resetTemplateForm() {
+    setEditingTemplateId(null)
+    setTemplateName('')
+    setTemplateTitle('')
+    setTemplateVenue('')
+    setTemplateArea('')
+    setTemplateCustomArea('')
+    setTemplateAddress('')
+    setTemplateMapsUrl('')
+    setTemplateType('')
+    setTemplateMusic([])
+    setTemplateAudience('25-35')
+    setTemplatePriceFrom('')
+    setTemplateIsInvitation(false)
+    setTemplateDescription('')
+    setTemplatePerks('')
+    setTemplateMessage('')
+  }
+
+  function editTemplate(template: any) {
+    setEditingTemplateId(template.id)
+    setTemplateName(template.name ?? '')
+    setTemplateTitle(template.title ?? '')
+    setTemplateVenue(template.venue ?? '')
+    applyArea(template.area ?? '', 'template')
+    setTemplateAddress(template.address ?? '')
+    setTemplateMapsUrl(template.maps_url ?? '')
+    setTemplateType(template.type ?? '')
+    setTemplateMusic(template.music ?? [])
+    setTemplateAudience(template.audience ?? '25-35')
+    const templatePrice = Number(template.price_from ?? 0)
+    setTemplateIsInvitation(templatePrice === 0)
+    setTemplatePriceFrom(templatePrice > 0 ? String(templatePrice) : '')
+    setTemplateDescription(template.description ?? '')
+    setTemplatePerks((template.perks ?? []).join(', '))
+    setTemplateMessage('')
+  }
+
+  function toggleTemplateMusicStyle(style: string) {
+    setTemplateMusic((current) =>
+      current.includes(style)
+        ? current.filter((item) => item !== style)
+        : [...current, style]
+    )
   }
 
   async function savePromoterProfile(e: React.FormEvent) {
@@ -377,6 +511,66 @@ export default function DashboardPage() {
     setProfileMessage('Perfil guardado correctamente')
   }
 
+  async function saveTemplate(e: React.FormEvent) {
+    e.preventDefault()
+    if (!userId) return
+
+    setSaving(true)
+    setTemplateMessage('')
+
+    const finalArea = templateArea === 'Otra' ? templateCustomArea || null : templateArea || null
+    const templatePayload = {
+      user_id: userId,
+      name: templateName,
+      title: templateTitle,
+      venue: templateVenue || null,
+      area: finalArea,
+      address: templateAddress || null,
+      maps_url: templateMapsUrl || null,
+      type: templateType || null,
+      music: templateMusic,
+      audience: templateAudience,
+      price_from: templateIsInvitation ? 0 : templatePriceFrom ? parseFloat(templatePriceFrom) : 0,
+      description: templateDescription || null,
+      perks: templatePerks ? templatePerks.split(',').map((perk) => perk.trim()).filter(Boolean) : [],
+      updated_at: new Date().toISOString(),
+    }
+
+    const query = editingTemplateId
+      ? supabase.from('event_templates').update(templatePayload).eq('id', editingTemplateId)
+      : supabase.from('event_templates').insert(templatePayload)
+
+    const { error } = await query
+
+    setSaving(false)
+
+    if (error) {
+      setTemplateMessage(`No se pudo guardar la ficha: ${error.message}`)
+      return
+    }
+
+    setTemplateMessage(editingTemplateId ? 'Ficha actualizada' : 'Ficha creada')
+    resetTemplateForm()
+    await refreshTemplates()
+  }
+
+  async function deleteTemplate(templateId: string) {
+    setTemplateMessage('')
+
+    const { error } = await supabase
+      .from('event_templates')
+      .delete()
+      .eq('id', templateId)
+
+    if (error) {
+      setTemplateMessage(`No se pudo borrar la ficha: ${error.message}`)
+      return
+    }
+
+    if (selectedTemplateId === templateId) setSelectedTemplateId('')
+    await refreshTemplates()
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
@@ -441,7 +635,38 @@ export default function DashboardPage() {
       return
     }
 
+    if (saveAsTemplate) {
+      const templateNameToSave = saveAsTemplateName || title
+
+      const { error: templateError } = await supabase.from('event_templates').insert({
+        user_id: user.id,
+        name: templateNameToSave,
+        title,
+        venue,
+        area: area === 'Otra' ? customArea || null : area || null,
+        address: address || null,
+        maps_url: mapsUrl || null,
+        type,
+        music,
+        audience,
+        price_from: isInvitation ? 0 : priceFrom ? parseFloat(priceFrom) : 0,
+        description,
+        perks: perks ? perks.split(',').map((p) => p.trim()).filter(Boolean) : [],
+      })
+
+      if (templateError) {
+        setMessage(`Evento enviado, pero no se pudo guardar la ficha: ${templateError.message}`)
+        await refreshEvents()
+        await refreshTemplates()
+        setSaving(false)
+        return
+      }
+    }
+
     setMessage('Evento enviado correctamente. Queda pendiente de revision.')
+    setSelectedTemplateId('')
+    setSaveAsTemplate(false)
+    setSaveAsTemplateName('')
     setTitle('')
     setVenue('')
     setArea('')
@@ -462,6 +687,7 @@ export default function DashboardPage() {
     setPerks('')
 
     await refreshEvents()
+    await refreshTemplates()
     setSaving(false)
   }
 
@@ -499,6 +725,7 @@ export default function DashboardPage() {
   const showDataForm = panelMode === 'data' || !profileComplete
   const showProfileForm = panelMode === 'profile' && profileComplete
   const showResources = panelMode === 'resources' && profileComplete
+  const showTemplates = panelMode === 'templates' && profileComplete
   const logoDisplay = promoterLogoPreview || promoterLogoUrl
 
   function toggleMusicStyle(style: string) {
@@ -580,6 +807,18 @@ export default function DashboardPage() {
                 >
                   <ReceiptText className="h-4 w-4 text-brand-500" />
                   Editar eventos
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPanelMode('templates')
+                    setMenuOpen(false)
+                  }}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-200 hover:bg-white/5"
+                >
+                  <FileText className="h-4 w-4 text-brand-500" />
+                  Fichas de eventos
                 </button>
 
                 <button
@@ -906,6 +1145,128 @@ export default function DashboardPage() {
           </form>
         )}
 
+        {showTemplates && (
+          <section className="grid gap-8 px-5 lg:grid-cols-[0.9fr_1.1fr]">
+            <form onSubmit={saveTemplate} className="card space-y-6 p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold">Fichas de eventos</h2>
+                  <p className="mt-2 text-sm text-slate-400">
+                    Guarda datos base para rellenar eventos futuros en segundos.
+                  </p>
+                </div>
+                {editingTemplateId && (
+                  <button
+                    type="button"
+                    onClick={resetTemplateForm}
+                    className="text-sm font-semibold text-slate-400 hover:text-white"
+                  >
+                    Nueva ficha
+                  </button>
+                )}
+              </div>
+
+              <input className="input" placeholder="Nombre interno de la ficha" value={templateName} onChange={(e) => setTemplateName(e.target.value)} required />
+              <input className="input" placeholder="Nombre del evento" value={templateTitle} onChange={(e) => setTemplateTitle(e.target.value)} required />
+              <select className="select" value={templateType} onChange={(e) => setTemplateType(e.target.value)} required>
+                <option value="">Tipo de evento</option>
+                <option>Tardeo</option>
+                <option>Rooftop</option>
+                <option>Brunch</option>
+                <option>Fitness Party</option>
+                <option>Afterwork</option>
+              </select>
+              <select className="select" value={templateAudience} onChange={(e) => setTemplateAudience(e.target.value)} required>
+                <option value="">Edad recomendada</option>
+                {AUDIENCE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+              <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4">
+                <p className="mb-3 text-sm font-semibold text-slate-300">Estilos musicales</p>
+                <div className="flex flex-wrap gap-2">
+                  {MUSIC_OPTIONS.map((style) => (
+                    <button
+                      key={style}
+                      type="button"
+                      onClick={() => toggleTemplateMusicStyle(style)}
+                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                        templateMusic.includes(style)
+                          ? 'bg-brand-500 text-white'
+                          : 'bg-white/10 text-slate-300 hover:bg-white/15'
+                      }`}
+                    >
+                      {style}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <select className="select" value={templateArea} onChange={(e) => setTemplateArea(e.target.value)} required>
+                <option value="">Zona</option>
+                <option>Centro</option>
+                <option>Salamanca</option>
+                <option>Retiro</option>
+                <option value="Otra">Otra</option>
+              </select>
+              {templateArea === 'Otra' && <input className="input" placeholder="Zona personalizada" value={templateCustomArea} onChange={(e) => setTemplateCustomArea(e.target.value)} required />}
+              <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-slate-100">
+                <input type="checkbox" checked={templateIsInvitation} onChange={(e) => { setTemplateIsInvitation(e.target.checked); if (e.target.checked) setTemplatePriceFrom('') }} />
+                Entrada con invitacion
+              </label>
+              {!templateIsInvitation && <input className="input" type="number" min="0" placeholder="Precio desde" value={templatePriceFrom} onChange={(e) => setTemplatePriceFrom(e.target.value)} />}
+              <input className="input" placeholder="Lugar" value={templateVenue} onChange={(e) => setTemplateVenue(e.target.value)} required />
+              <input className="input" placeholder="Direccion" value={templateAddress} onChange={(e) => setTemplateAddress(e.target.value)} required />
+              <input className="input" placeholder="Link de Google Maps" value={templateMapsUrl} onChange={(e) => setTemplateMapsUrl(e.target.value)} />
+              <textarea className="input min-h-32" placeholder="Descripcion base" value={templateDescription} onChange={(e) => setTemplateDescription(e.target.value)} required />
+              <input className="input" placeholder="Extras separados por comas" value={templatePerks} onChange={(e) => setTemplatePerks(e.target.value)} />
+              <button className="btn-primary w-full" type="submit" disabled={saving}>
+                {saving ? 'Guardando...' : editingTemplateId ? 'Actualizar ficha' : 'Crear ficha'}
+              </button>
+              {templateMessage && <p className="text-sm text-brand-500">{templateMessage}</p>}
+            </form>
+
+            <section className="card p-6">
+              <h2 className="text-2xl font-bold">Fichas guardadas</h2>
+              <p className="mt-2 text-sm text-slate-400">
+                Estas fichas apareceran en el selector de crear evento.
+              </p>
+              {templates.length === 0 && <p className="mt-6 text-slate-400">No tienes fichas guardadas todavia.</p>}
+              <div className="mt-6 space-y-4">
+                {templates.map((template) => (
+                  <div key={template.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="font-semibold text-white">{template.name}</h3>
+                        <p className="mt-1 text-sm text-slate-400">{template.title}</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {[template.venue, template.area, template.audience].filter(Boolean).join(' · ')}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => editTemplate(template)}
+                          className="rounded-full border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteTemplate(template.id)}
+                          className="rounded-full border border-white/10 p-2 text-slate-400 hover:bg-white/10 hover:text-white"
+                          aria-label="Borrar ficha"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </section>
+        )}
+
         {showResources && (
           <section className="space-y-6 px-5">
             <div className="card p-6">
@@ -991,6 +1352,26 @@ export default function DashboardPage() {
                   </p>
                 </div>
 
+                {templates.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-sm font-semibold text-slate-300">
+                      Usar ficha guardada
+                    </p>
+                    <select
+                      className="select"
+                      value={selectedTemplateId}
+                      onChange={(e) => applyTemplateToEvent(e.target.value)}
+                    >
+                      <option value="">Rellenar manualmente</option>
+                      {templates.map((template) => (
+                        <option key={template.id} value={template.id}>
+                          {template.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <input className="input" placeholder="Nombre del evento" value={title} onChange={(e) => setTitle(e.target.value)} required />
                 <select className="select" value={type} onChange={(e) => setType(e.target.value)} required>
                   <option value="">Tipo de evento</option>
@@ -1048,6 +1429,22 @@ export default function DashboardPage() {
                 <input className="input" placeholder="Extras separados por comas" value={perks} onChange={(e) => setPerks(e.target.value)} />
                 <input type="file" accept="image/*" className="input" onChange={(e) => { const file = e.target.files?.[0] || null; setCover(file); setPreviewUrl(file ? URL.createObjectURL(file) : '') }} />
                 {previewUrl && <img src={previewUrl} alt="Preview del evento" className="h-56 w-full rounded-xl object-cover" />}
+                <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-slate-100">
+                  <input
+                    type="checkbox"
+                    checked={saveAsTemplate}
+                    onChange={(e) => setSaveAsTemplate(e.target.checked)}
+                  />
+                  Guardar estos datos como ficha para proximos eventos
+                </label>
+                {saveAsTemplate && (
+                  <input
+                    className="input"
+                    placeholder="Nombre de la ficha"
+                    value={saveAsTemplateName}
+                    onChange={(e) => setSaveAsTemplateName(e.target.value)}
+                  />
+                )}
                 <button className="btn-primary w-full" type="submit" disabled={saving}>
                   {saving ? 'Enviando...' : 'Enviar evento a revision'}
                 </button>

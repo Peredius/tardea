@@ -223,3 +223,54 @@ for update
 to authenticated
 using (bucket_id = 'events')
 with check (bucket_id = 'events');
+
+create table if not exists public.event_templates (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  title text not null,
+  venue text,
+  area text,
+  address text,
+  maps_url text,
+  type text,
+  music text[] default '{}',
+  audience text,
+  price_from numeric default 0,
+  description text,
+  perks text[] default '{}',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.event_templates enable row level security;
+
+drop policy if exists "Users can read own event templates" on public.event_templates;
+drop policy if exists "Users can create own event templates" on public.event_templates;
+drop policy if exists "Users can update own event templates" on public.event_templates;
+drop policy if exists "Users can delete own event templates" on public.event_templates;
+
+create policy "Users can read own event templates"
+on public.event_templates
+for select
+to authenticated
+using (auth.uid() = user_id);
+
+create policy "Users can create own event templates"
+on public.event_templates
+for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+create policy "Users can update own event templates"
+on public.event_templates
+for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+create policy "Users can delete own event templates"
+on public.event_templates
+for delete
+to authenticated
+using (auth.uid() = user_id);
