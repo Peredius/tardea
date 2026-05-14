@@ -17,12 +17,21 @@ export function Footer() {
   return (
     <footer className="border-t border-white/10 py-10">
       <div className="container-page flex flex-col gap-4 text-sm text-slate-400 md:flex-row md:items-center md:justify-between">
-        <p>© 2026 TARDEA. Demo profesional lista para evolucionar a producto real.</p>
+        <p>© 2026 TARDEA. Todos los derechos reservados.</p>
 
-        <div className="flex items-center gap-4">
-          <span>Aviso legal</span>
-          <span>Privacidad</span>
-          <span>Contacto</span>
+        <div className="flex flex-wrap items-center gap-4">
+          <a href="/aviso-legal" className="transition hover:text-white">
+            Aviso legal
+          </a>
+          <a href="/privacidad" className="transition hover:text-white">
+            Privacidad
+          </a>
+          <a href="/cookies" className="transition hover:text-white">
+            Cookies
+          </a>
+          <a href="/condiciones" className="transition hover:text-white">
+            Condiciones
+          </a>
           <a
             href="https://www.instagram.com/tardea__"
             target="_blank"

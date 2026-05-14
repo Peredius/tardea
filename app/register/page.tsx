@@ -13,10 +13,17 @@ function RegisterContent() {
   const [password, setPassword] = useState('')
   const [venueName, setVenueName] = useState('')
   const [message, setMessage] = useState('')
+  const [legalAccepted, setLegalAccepted] = useState(false)
+  const [marketingConsent, setMarketingConsent] = useState(false)
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
     setMessage('')
+
+    if (!legalAccepted) {
+      setMessage('Debes aceptar la politica de privacidad y las condiciones.')
+      return
+    }
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -39,6 +46,7 @@ function RegisterContent() {
           email: data.user.email,
           role: type === 'venue' ? 'venue' : 'user',
           venueName,
+          marketingConsent,
         }),
       })
 
@@ -103,6 +111,41 @@ function RegisterContent() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+
+            <div className="space-y-3 text-sm text-slate-400">
+              <label className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={legalAccepted}
+                  onChange={(e) => setLegalAccepted(e.target.checked)}
+                  required
+                  className="mt-1 h-4 w-4 rounded border-white/20 bg-slate-900 accent-brand-500"
+                />
+                <span>
+                  Acepto la{' '}
+                  <a href="/privacidad" className="text-brand-500 hover:underline">
+                    politica de privacidad
+                  </a>{' '}
+                  y las{' '}
+                  <a href="/condiciones" className="text-brand-500 hover:underline">
+                    condiciones de uso
+                  </a>
+                  .
+                </span>
+              </label>
+
+              <label className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={marketingConsent}
+                  onChange={(e) => setMarketingConsent(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-white/20 bg-slate-900 accent-brand-500"
+                />
+                <span>
+                  Quiero recibir novedades, ofertas y recomendaciones de TARDEA.
+                </span>
+              </label>
+            </div>
 
             <button className="btn-primary w-full" type="submit">
               Crear cuenta
