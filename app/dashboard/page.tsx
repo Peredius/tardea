@@ -872,7 +872,7 @@ export default function DashboardPage() {
         </header>
 
         <section className="px-5 py-8">
-          <div className="grid grid-cols-[auto_1fr] items-center gap-6">
+          <div className="grid grid-cols-[auto_1fr] items-center gap-4">
             <button
               type="button"
               onClick={() => {
@@ -884,17 +884,17 @@ export default function DashboardPage() {
                   })
                 }, 50)
               }}
-              className="relative flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 via-fuchsia-500 to-orange-400 p-1 sm:h-36 sm:w-36"
+              className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 via-fuchsia-500 to-orange-400 p-0.5 sm:h-20 sm:w-20"
             >
               <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-slate-900 text-white">
                 {logoDisplay ? (
                   <img src={logoDisplay} alt={greetingName} className="h-full w-full object-cover" />
                 ) : (
-                  <UserCircle className="h-12 w-12" />
+                  <UserCircle className="h-8 w-8" />
                 )}
               </span>
-              <span className="absolute bottom-1 right-1 flex h-11 w-11 items-center justify-center rounded-full border-4 border-slate-950 bg-white text-slate-950">
-                <Plus className="h-6 w-6" />
+              <span className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border-2 border-slate-950 bg-white text-slate-950">
+                <Plus className="h-4 w-4" />
               </span>
             </button>
 
@@ -904,18 +904,18 @@ export default function DashboardPage() {
               </h1>
               <p className="mt-2 truncate text-sm text-slate-400">{email}</p>
 
-              <div className="mt-6 grid grid-cols-3 gap-4 text-center">
+              <div className="mt-4 grid grid-cols-3 gap-3 text-center">
                 <div>
-                  <p className="text-4xl font-black text-white">{events.length}</p>
-                  <p className="text-sm font-semibold text-slate-300">Total subidos</p>
+                  <p className="text-2xl font-black text-white">{events.length}</p>
+                  <p className="text-xs font-semibold text-slate-300">Total subidos</p>
                 </div>
                 <div>
-                  <p className="text-4xl font-black text-emerald-400">{approvedEvents.length}</p>
-                  <p className="text-sm font-semibold text-slate-300">Aprobados</p>
+                  <p className="text-2xl font-black text-emerald-400">{approvedEvents.length}</p>
+                  <p className="text-xs font-semibold text-slate-300">Aprobados</p>
                 </div>
                 <div>
-                  <p className="text-4xl font-black text-red-500">{pendingEvents.length}</p>
-                  <p className="text-sm font-semibold text-slate-300">Pendientes</p>
+                  <p className="text-2xl font-black text-red-500">{pendingEvents.length}</p>
+                  <p className="text-xs font-semibold text-slate-300">Pendientes</p>
                 </div>
               </div>
             </div>
