@@ -176,7 +176,11 @@ export default function DashboardPage() {
   const [templatePerks, setTemplatePerks] = useState('')
   const [eventProfileName, setEventProfileName] = useState('')
   const [eventProfileLogoUrl, setEventProfileLogoUrl] = useState('')
+  const [eventProfileLogoFile, setEventProfileLogoFile] = useState<File | null>(null)
+  const [eventProfileLogoPreview, setEventProfileLogoPreview] = useState('')
   const [eventProfileBannerUrl, setEventProfileBannerUrl] = useState('')
+  const [eventProfileBannerFile, setEventProfileBannerFile] = useState<File | null>(null)
+  const [eventProfileBannerPreview, setEventProfileBannerPreview] = useState('')
   const [eventProfileDescription, setEventProfileDescription] = useState('')
   const [eventProfileVenueName, setEventProfileVenueName] = useState('')
   const [eventProfileAddress, setEventProfileAddress] = useState('')
@@ -404,7 +408,11 @@ export default function DashboardPage() {
     setEditingEventProfileId(null)
     setEventProfileName('')
     setEventProfileLogoUrl('')
+    setEventProfileLogoFile(null)
+    setEventProfileLogoPreview('')
     setEventProfileBannerUrl('')
+    setEventProfileBannerFile(null)
+    setEventProfileBannerPreview('')
     setEventProfileDescription('')
     setEventProfileVenueName('')
     setEventProfileAddress('')
@@ -424,7 +432,11 @@ export default function DashboardPage() {
     setEditingEventProfileId(profile.id)
     setEventProfileName(profile.name ?? '')
     setEventProfileLogoUrl(profile.logo_url ?? '')
+    setEventProfileLogoFile(null)
+    setEventProfileLogoPreview('')
     setEventProfileBannerUrl(profile.banner_url ?? '')
+    setEventProfileBannerFile(null)
+    setEventProfileBannerPreview('')
     setEventProfileDescription(profile.description ?? '')
     setEventProfileVenueName(profile.venue_name ?? '')
     setEventProfileAddress(profile.address ?? '')
@@ -681,12 +693,47 @@ export default function DashboardPage() {
     setSaving(true)
     setEventProfileMessage('')
 
+    let nextLogoUrl = eventProfileLogoUrl
+    let nextBannerUrl = eventProfileBannerUrl
+
+    if (eventProfileLogoFile) {
+      const fileName = `promoter-event-profiles/${userId}/logos/${Date.now()}-${eventProfileLogoFile.name}`
+      const { error: uploadError } = await supabase.storage
+        .from('events')
+        .upload(fileName, eventProfileLogoFile, { upsert: true })
+
+      if (uploadError) {
+        setEventProfileMessage(`Error subiendo logo: ${uploadError.message}`)
+        setSaving(false)
+        return
+      }
+
+      const { data } = supabase.storage.from('events').getPublicUrl(fileName)
+      nextLogoUrl = data.publicUrl
+    }
+
+    if (eventProfileBannerFile) {
+      const fileName = `promoter-event-profiles/${userId}/banners/${Date.now()}-${eventProfileBannerFile.name}`
+      const { error: uploadError } = await supabase.storage
+        .from('events')
+        .upload(fileName, eventProfileBannerFile, { upsert: true })
+
+      if (uploadError) {
+        setEventProfileMessage(`Error subiendo banner: ${uploadError.message}`)
+        setSaving(false)
+        return
+      }
+
+      const { data } = supabase.storage.from('events').getPublicUrl(fileName)
+      nextBannerUrl = data.publicUrl
+    }
+
     const eventProfilePayload = {
       user_id: userId,
       name: eventProfileName,
       slug: generateSlug(eventProfileName, ''),
-      logo_url: eventProfileLogoUrl || null,
-      banner_url: eventProfileBannerUrl || null,
+      logo_url: nextLogoUrl || null,
+      banner_url: nextBannerUrl || null,
       description: eventProfileDescription || null,
       venue_name: eventProfileVenueName || null,
       address: eventProfileAddress || null,
@@ -719,6 +766,8 @@ export default function DashboardPage() {
     }
 
     setEventProfileMessage(editingEventProfileId ? 'Fiesta actualizada' : 'Fiesta creada')
+    setEventProfileLogoUrl(nextLogoUrl)
+    setEventProfileBannerUrl(nextBannerUrl)
     resetEventProfileForm()
     await refreshEventProfiles()
   }
@@ -1475,8 +1524,69 @@ export default function DashboardPage() {
               </div>
 
               <input className="input" placeholder="Nombre de la fiesta" value={eventProfileName} onChange={(e) => setEventProfileName(e.target.value)} required />
-              <input className="input" placeholder="URL del logo o avatar" value={eventProfileLogoUrl} onChange={(e) => setEventProfileLogoUrl(e.target.value)} />
-              <input className="input" placeholder="URL del banner superior" value={eventProfileBannerUrl} onChange={(e) => setEventProfileBannerUrl(e.target.value)} />
+
+              <div className="grid gap-4 md:grid-cols-[0.75fr_1.25fr]">
+                <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4">
+                  <p className="text-sm font-semibold text-slate-300">Logo o avatar</p>
+                  <div className="mt-4 flex items-center gap-4">
+                    <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-950">
+                      {eventProfileLogoPreview || eventProfileLogoUrl ? (
+                        <img
+                          src={eventProfileLogoPreview || eventProfileLogoUrl}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <ImagePlus className="h-8 w-8 text-slate-500" />
+                      )}
+                    </div>
+                    <label className="cursor-pointer rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-slate-100 hover:bg-white/10">
+                      Subir logo
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null
+                          setEventProfileLogoFile(file)
+                          setEventProfileLogoPreview(file ? URL.createObjectURL(file) : '')
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4">
+                  <p className="text-sm font-semibold text-slate-300">Banner superior</p>
+                  <div className="mt-4 overflow-hidden rounded-2xl bg-slate-950">
+                    {eventProfileBannerPreview || eventProfileBannerUrl ? (
+                      <img
+                        src={eventProfileBannerPreview || eventProfileBannerUrl}
+                        alt=""
+                        className="h-28 w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-28 items-center justify-center">
+                        <ImagePlus className="h-8 w-8 text-slate-500" />
+                      </div>
+                    )}
+                  </div>
+                  <label className="mt-4 inline-flex cursor-pointer rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-slate-100 hover:bg-white/10">
+                    Subir banner
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null
+                        setEventProfileBannerFile(file)
+                        setEventProfileBannerPreview(file ? URL.createObjectURL(file) : '')
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+
               <input className="input" placeholder="Sala o lugar habitual" value={eventProfileVenueName} onChange={(e) => setEventProfileVenueName(e.target.value)} />
               <input className="input" placeholder="Direccion habitual" value={eventProfileAddress} onChange={(e) => setEventProfileAddress(e.target.value)} />
               <div className="grid gap-4 md:grid-cols-2">
