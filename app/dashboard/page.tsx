@@ -18,6 +18,7 @@ import {
   PartyPopper,
   ReceiptText,
   Sparkles,
+  Tags,
   Trash2,
   UploadCloud,
   UserCircle,
@@ -103,14 +104,18 @@ export default function DashboardPage() {
   const [profileMessage, setProfileMessage] = useState('')
   const [passwordMessage, setPasswordMessage] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
-  const [panelMode, setPanelMode] = useState<'events' | 'data' | 'profile' | 'resources' | 'templates'>('events')
+  const [panelMode, setPanelMode] = useState<'events' | 'data' | 'profile' | 'resources' | 'templates' | 'brands'>('events')
   const [eventView, setEventView] = useState<'all' | 'approved' | 'pending' | 'chat'>('all')
   const [templates, setTemplates] = useState<any[]>([])
+  const [eventProfiles, setEventProfiles] = useState<any[]>([])
   const [selectedTemplateId, setSelectedTemplateId] = useState('')
+  const [selectedEventProfileId, setSelectedEventProfileId] = useState('')
   const [saveAsTemplate, setSaveAsTemplate] = useState(false)
   const [saveAsTemplateName, setSaveAsTemplateName] = useState('')
   const [templateMessage, setTemplateMessage] = useState('')
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null)
+  const [editingEventProfileId, setEditingEventProfileId] = useState<string | null>(null)
+  const [eventProfileMessage, setEventProfileMessage] = useState('')
 
   const [promoterEventName, setPromoterEventName] = useState('')
   const [promoterContactName, setPromoterContactName] = useState('')
@@ -169,6 +174,21 @@ export default function DashboardPage() {
   const [templateIsInvitation, setTemplateIsInvitation] = useState(false)
   const [templateDescription, setTemplateDescription] = useState('')
   const [templatePerks, setTemplatePerks] = useState('')
+  const [eventProfileName, setEventProfileName] = useState('')
+  const [eventProfileLogoUrl, setEventProfileLogoUrl] = useState('')
+  const [eventProfileBannerUrl, setEventProfileBannerUrl] = useState('')
+  const [eventProfileDescription, setEventProfileDescription] = useState('')
+  const [eventProfileVenueName, setEventProfileVenueName] = useState('')
+  const [eventProfileAddress, setEventProfileAddress] = useState('')
+  const [eventProfileMunicipality, setEventProfileMunicipality] = useState('')
+  const [eventProfilePostalCode, setEventProfilePostalCode] = useState('')
+  const [eventProfileProvince, setEventProfileProvince] = useState('Madrid')
+  const [eventProfileMusic, setEventProfileMusic] = useState<string[]>([])
+  const [eventProfileAudience, setEventProfileAudience] = useState('25-35')
+  const [eventProfileInstagramUrl, setEventProfileInstagramUrl] = useState('')
+  const [eventProfileTiktokUrl, setEventProfileTiktokUrl] = useState('')
+  const [eventProfileWebsiteUrl, setEventProfileWebsiteUrl] = useState('')
+  const [eventProfileActive, setEventProfileActive] = useState(true)
 
   const profileComplete =
     promoterEventName &&
@@ -246,6 +266,14 @@ export default function DashboardPage() {
         .order('updated_at', { ascending: false })
 
       setTemplates(templateData || [])
+
+      const { data: eventProfileData } = await supabase
+        .from('promoter_event_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+
+      setEventProfiles(eventProfileData || [])
       setLoading(false)
     }
 
@@ -274,6 +302,18 @@ export default function DashboardPage() {
       .order('updated_at', { ascending: false })
 
     setTemplates(data || [])
+  }
+
+  async function refreshEventProfiles() {
+    if (!userId) return
+
+    const { data } = await supabase
+      .from('promoter_event_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false })
+
+    setEventProfiles(data || [])
   }
 
   async function handleSignOut() {
@@ -326,6 +366,21 @@ export default function DashboardPage() {
     setPerks((template.perks ?? []).join(', '))
   }
 
+  function applyEventProfileToEvent(profileId: string) {
+    setSelectedEventProfileId(profileId)
+
+    const profile = eventProfiles.find((item) => item.id === profileId)
+    if (!profile) return
+
+    setTitle(profile.name ?? '')
+    setVenue(profile.venue_name ?? '')
+    applyArea(profile.municipality ?? '', 'event')
+    setAddress(profile.address ?? '')
+    setMusic(profile.music ?? [])
+    setAudience(profile.audience ?? '25-35')
+    setDescription(profile.description ?? '')
+  }
+
   function resetTemplateForm() {
     setEditingTemplateId(null)
     setTemplateName('')
@@ -343,6 +398,46 @@ export default function DashboardPage() {
     setTemplateDescription('')
     setTemplatePerks('')
     setTemplateMessage('')
+  }
+
+  function resetEventProfileForm() {
+    setEditingEventProfileId(null)
+    setEventProfileName('')
+    setEventProfileLogoUrl('')
+    setEventProfileBannerUrl('')
+    setEventProfileDescription('')
+    setEventProfileVenueName('')
+    setEventProfileAddress('')
+    setEventProfileMunicipality('')
+    setEventProfilePostalCode('')
+    setEventProfileProvince('Madrid')
+    setEventProfileMusic([])
+    setEventProfileAudience('25-35')
+    setEventProfileInstagramUrl('')
+    setEventProfileTiktokUrl('')
+    setEventProfileWebsiteUrl('')
+    setEventProfileActive(true)
+    setEventProfileMessage('')
+  }
+
+  function editEventProfile(profile: any) {
+    setEditingEventProfileId(profile.id)
+    setEventProfileName(profile.name ?? '')
+    setEventProfileLogoUrl(profile.logo_url ?? '')
+    setEventProfileBannerUrl(profile.banner_url ?? '')
+    setEventProfileDescription(profile.description ?? '')
+    setEventProfileVenueName(profile.venue_name ?? '')
+    setEventProfileAddress(profile.address ?? '')
+    setEventProfileMunicipality(profile.municipality ?? '')
+    setEventProfilePostalCode(profile.postal_code ?? '')
+    setEventProfileProvince(profile.province ?? 'Madrid')
+    setEventProfileMusic(profile.music ?? [])
+    setEventProfileAudience(profile.audience ?? '25-35')
+    setEventProfileInstagramUrl(profile.instagram_url ?? '')
+    setEventProfileTiktokUrl(profile.tiktok_url ?? '')
+    setEventProfileWebsiteUrl(profile.website_url ?? '')
+    setEventProfileActive(profile.is_active ?? true)
+    setEventProfileMessage('')
   }
 
   function editTemplate(template: any) {
@@ -366,6 +461,14 @@ export default function DashboardPage() {
 
   function toggleTemplateMusicStyle(style: string) {
     setTemplateMusic((current) =>
+      current.includes(style)
+        ? current.filter((item) => item !== style)
+        : [...current, style]
+    )
+  }
+
+  function toggleEventProfileMusicStyle(style: string) {
+    setEventProfileMusic((current) =>
       current.includes(style)
         ? current.filter((item) => item !== style)
         : [...current, style]
@@ -571,6 +674,73 @@ export default function DashboardPage() {
     await refreshTemplates()
   }
 
+  async function saveEventProfile(e: React.FormEvent) {
+    e.preventDefault()
+    if (!userId) return
+
+    setSaving(true)
+    setEventProfileMessage('')
+
+    const eventProfilePayload = {
+      user_id: userId,
+      name: eventProfileName,
+      slug: generateSlug(eventProfileName, ''),
+      logo_url: eventProfileLogoUrl || null,
+      banner_url: eventProfileBannerUrl || null,
+      description: eventProfileDescription || null,
+      venue_name: eventProfileVenueName || null,
+      address: eventProfileAddress || null,
+      municipality: eventProfileMunicipality || null,
+      postal_code: eventProfilePostalCode || null,
+      province: eventProfileProvince || null,
+      music: eventProfileMusic,
+      audience: eventProfileAudience,
+      instagram_url: eventProfileInstagramUrl || null,
+      tiktok_url: eventProfileTiktokUrl || null,
+      website_url: eventProfileWebsiteUrl || null,
+      is_active: eventProfileActive,
+      updated_at: new Date().toISOString(),
+    }
+
+    const query = editingEventProfileId
+      ? supabase
+          .from('promoter_event_profiles')
+          .update(eventProfilePayload)
+          .eq('id', editingEventProfileId)
+      : supabase.from('promoter_event_profiles').insert(eventProfilePayload)
+
+    const { error } = await query
+
+    setSaving(false)
+
+    if (error) {
+      setEventProfileMessage(`No se pudo guardar la fiesta: ${error.message}`)
+      return
+    }
+
+    setEventProfileMessage(editingEventProfileId ? 'Fiesta actualizada' : 'Fiesta creada')
+    resetEventProfileForm()
+    await refreshEventProfiles()
+  }
+
+  async function deleteEventProfile(profileId: string) {
+    setEventProfileMessage('')
+
+    const { error } = await supabase
+      .from('promoter_event_profiles')
+      .delete()
+      .eq('id', profileId)
+
+    if (error) {
+      setEventProfileMessage(`No se pudo borrar la fiesta: ${error.message}`)
+      return
+    }
+
+    if (selectedEventProfileId === profileId) setSelectedEventProfileId('')
+    await refreshEventProfiles()
+    await refreshEvents()
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
@@ -625,6 +795,7 @@ export default function DashboardPage() {
       status: 'pending',
       published: false,
       user_id: user.id,
+      event_profile_id: selectedEventProfileId || null,
     }
 
     const { error } = await supabase.from('events').insert(eventData)
@@ -665,6 +836,7 @@ export default function DashboardPage() {
 
     setMessage('Evento enviado correctamente. Queda pendiente de revision.')
     setSelectedTemplateId('')
+    setSelectedEventProfileId('')
     setSaveAsTemplate(false)
     setSaveAsTemplateName('')
     setTitle('')
@@ -688,6 +860,7 @@ export default function DashboardPage() {
 
     await refreshEvents()
     await refreshTemplates()
+    await refreshEventProfiles()
     setSaving(false)
   }
 
@@ -726,6 +899,7 @@ export default function DashboardPage() {
   const showProfileForm = panelMode === 'profile' && profileComplete
   const showResources = panelMode === 'resources' && profileComplete
   const showTemplates = panelMode === 'templates' && profileComplete
+  const showEventProfiles = panelMode === 'brands' && profileComplete
   const logoDisplay = promoterLogoPreview || promoterLogoUrl
 
   function toggleMusicStyle(style: string) {
@@ -819,6 +993,18 @@ export default function DashboardPage() {
                 >
                   <FileText className="h-4 w-4 text-brand-500" />
                   Fichas de eventos
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPanelMode('brands')
+                    setMenuOpen(false)
+                  }}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-200 hover:bg-white/5"
+                >
+                  <Tags className="h-4 w-4 text-brand-500" />
+                  Mis fiestas
                 </button>
 
                 <button
@@ -1267,6 +1453,150 @@ export default function DashboardPage() {
           </section>
         )}
 
+        {showEventProfiles && (
+          <section className="grid gap-8 px-5 lg:grid-cols-[0.9fr_1.1fr]">
+            <form onSubmit={saveEventProfile} className="card space-y-6 p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold">Mis fiestas</h2>
+                  <p className="mt-2 text-sm text-slate-400">
+                    Crea marcas de tardeo independientes dentro de tu empresa.
+                  </p>
+                </div>
+                {editingEventProfileId && (
+                  <button
+                    type="button"
+                    onClick={resetEventProfileForm}
+                    className="text-sm font-semibold text-slate-400 hover:text-white"
+                  >
+                    Nueva fiesta
+                  </button>
+                )}
+              </div>
+
+              <input className="input" placeholder="Nombre de la fiesta" value={eventProfileName} onChange={(e) => setEventProfileName(e.target.value)} required />
+              <input className="input" placeholder="URL del logo o avatar" value={eventProfileLogoUrl} onChange={(e) => setEventProfileLogoUrl(e.target.value)} />
+              <input className="input" placeholder="URL del banner superior" value={eventProfileBannerUrl} onChange={(e) => setEventProfileBannerUrl(e.target.value)} />
+              <input className="input" placeholder="Sala o lugar habitual" value={eventProfileVenueName} onChange={(e) => setEventProfileVenueName(e.target.value)} />
+              <input className="input" placeholder="Direccion habitual" value={eventProfileAddress} onChange={(e) => setEventProfileAddress(e.target.value)} />
+              <div className="grid gap-4 md:grid-cols-2">
+                <input className="input" placeholder="Municipio" value={eventProfileMunicipality} onChange={(e) => setEventProfileMunicipality(e.target.value)} />
+                <input className="input" placeholder="Codigo postal" inputMode="numeric" maxLength={5} value={eventProfilePostalCode} onChange={(e) => setEventProfilePostalCode(e.target.value)} />
+              </div>
+              <select className="select" value={eventProfileProvince} onChange={(e) => setEventProfileProvince(e.target.value)}>
+                {PROVINCE_OPTIONS.map((province) => (
+                  <option key={province} value={province}>{province}</option>
+                ))}
+              </select>
+              <select className="select" value={eventProfileAudience} onChange={(e) => setEventProfileAudience(e.target.value)}>
+                {AUDIENCE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+              <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4">
+                <p className="mb-3 text-sm font-semibold text-slate-300">Estilos musicales</p>
+                <div className="flex flex-wrap gap-2">
+                  {MUSIC_OPTIONS.map((style) => (
+                    <button
+                      key={style}
+                      type="button"
+                      onClick={() => toggleEventProfileMusicStyle(style)}
+                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                        eventProfileMusic.includes(style)
+                          ? 'bg-brand-500 text-white'
+                          : 'bg-white/10 text-slate-300 hover:bg-white/15'
+                      }`}
+                    >
+                      {style}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <textarea className="input min-h-32" placeholder="Descripcion de la fiesta, publico y propuesta" value={eventProfileDescription} onChange={(e) => setEventProfileDescription(e.target.value)} />
+              <input className="input" placeholder="Instagram" value={eventProfileInstagramUrl} onChange={(e) => setEventProfileInstagramUrl(e.target.value)} />
+              <input className="input" placeholder="TikTok" value={eventProfileTiktokUrl} onChange={(e) => setEventProfileTiktokUrl(e.target.value)} />
+              <input className="input" placeholder="Web o entradas" value={eventProfileWebsiteUrl} onChange={(e) => setEventProfileWebsiteUrl(e.target.value)} />
+              <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-slate-100">
+                <input type="checkbox" checked={eventProfileActive} onChange={(e) => setEventProfileActive(e.target.checked)} />
+                Fiesta activa
+              </label>
+              <button className="btn-primary w-full" type="submit" disabled={saving}>
+                {saving ? 'Guardando...' : editingEventProfileId ? 'Actualizar fiesta' : 'Crear fiesta'}
+              </button>
+              {eventProfileMessage && <p className="text-sm text-brand-500">{eventProfileMessage}</p>}
+            </form>
+
+            <section className="card p-6">
+              <h2 className="text-2xl font-bold">Fiestas creadas</h2>
+              <p className="mt-2 text-sm text-slate-400">
+                Cada fiesta tendra sus propios eventos y contadores.
+              </p>
+              {eventProfiles.length === 0 && <p className="mt-6 text-slate-400">Aun no tienes fiestas creadas.</p>}
+              <div className="mt-6 space-y-4">
+                {eventProfiles.map((profile) => {
+                  const profileEvents = events.filter((event) => event.event_profile_id === profile.id)
+                  const profileApproved = profileEvents.filter((event) => event.status === 'approved')
+                  const profilePending = profileEvents.filter((event) => event.status === 'pending')
+
+                  return (
+                    <div key={profile.id} className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+                      {profile.banner_url && <img src={profile.banner_url} alt="" className="h-28 w-full object-cover" />}
+                      <div className="p-4">
+                        <div className="flex items-start gap-4">
+                          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-900">
+                            {profile.logo_url ? (
+                              <img src={profile.logo_url} alt={profile.name} className="h-full w-full object-cover" />
+                            ) : (
+                              <Tags className="h-6 w-6 text-brand-500" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="truncate font-semibold text-white">{profile.name}</h3>
+                            <p className="mt-1 text-xs text-slate-500">
+                              {[profile.venue_name, profile.municipality, profile.audience].filter(Boolean).join(' · ')}
+                            </p>
+                            <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+                              <div className="rounded-xl bg-white/5 p-2">
+                                <p className="text-lg font-black text-white">{profileEvents.length}</p>
+                                <p className="text-slate-400">Total</p>
+                              </div>
+                              <div className="rounded-xl bg-white/5 p-2">
+                                <p className="text-lg font-black text-emerald-400">{profileApproved.length}</p>
+                                <p className="text-slate-400">Aprobados</p>
+                              </div>
+                              <div className="rounded-xl bg-white/5 p-2">
+                                <p className="text-lg font-black text-yellow-300">{profilePending.length}</p>
+                                <p className="text-slate-400">Pendientes</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-4 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => editEventProfile(profile)}
+                            className="rounded-full border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteEventProfile(profile.id)}
+                            className="rounded-full border border-white/10 p-2 text-slate-400 hover:bg-white/10 hover:text-white"
+                            aria-label="Borrar fiesta"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          </section>
+        )}
+
         {showResources && (
           <section className="space-y-6 px-5">
             <div className="card p-6">
@@ -1351,6 +1681,26 @@ export default function DashboardPage() {
                     El evento se enviara como pendiente para revision.
                   </p>
                 </div>
+
+                {eventProfiles.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-sm font-semibold text-slate-300">
+                      Asociar a una fiesta
+                    </p>
+                    <select
+                      className="select"
+                      value={selectedEventProfileId}
+                      onChange={(e) => applyEventProfileToEvent(e.target.value)}
+                    >
+                      <option value="">Evento suelto</option>
+                      {eventProfiles.map((profile) => (
+                        <option key={profile.id} value={profile.id}>
+                          {profile.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 {templates.length > 0 && (
                   <div>
