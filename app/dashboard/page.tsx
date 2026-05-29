@@ -385,6 +385,13 @@ export default function DashboardPage() {
     setDescription(profile.description ?? '')
   }
 
+  function enterEventProfile(profile: any) {
+    applyEventProfileToEvent(profile.id)
+    setPanelMode('events')
+    setEventView('all')
+    setMessage('')
+  }
+
   function resetTemplateForm() {
     setEditingTemplateId(null)
     setTemplateName('')
@@ -885,7 +892,6 @@ export default function DashboardPage() {
 
     setMessage('Evento enviado correctamente. Queda pendiente de revision.')
     setSelectedTemplateId('')
-    setSelectedEventProfileId('')
     setSaveAsTemplate(false)
     setSaveAsTemplateName('')
     setTitle('')
@@ -907,6 +913,19 @@ export default function DashboardPage() {
     setDescription('')
     setPerks('')
 
+    const activeProfile = eventProfiles.find(
+      (profile) => profile.id === selectedEventProfileId
+    )
+    if (activeProfile) {
+      setTitle(activeProfile.name ?? '')
+      setVenue(activeProfile.venue_name ?? '')
+      applyArea(activeProfile.municipality ?? '', 'event')
+      setAddress(activeProfile.address ?? '')
+      setMusic(activeProfile.music ?? [])
+      setAudience(activeProfile.audience ?? '25-35')
+      setDescription(activeProfile.description ?? '')
+    }
+
     await refreshEvents()
     await refreshTemplates()
     await refreshEventProfiles()
@@ -923,20 +942,34 @@ export default function DashboardPage() {
     )
   }
 
-  const approvedEvents = events.filter((event) => event.status === 'approved')
-  const pendingEvents = events.filter((event) => event.status === 'pending')
+  const selectedEventProfile = eventProfiles.find(
+    (profile) => profile.id === selectedEventProfileId
+  )
+  const scopedEvents = selectedEventProfile
+    ? events.filter((event) => event.event_profile_id === selectedEventProfile.id)
+    : events
+  const allApprovedEvents = events.filter((event) => event.status === 'approved')
+  const allPendingEvents = events.filter((event) => event.status === 'pending')
+  const approvedEvents = scopedEvents.filter((event) => event.status === 'approved')
+  const pendingEvents = scopedEvents.filter((event) => event.status === 'pending')
   const visibleEvents =
     eventView === 'approved'
       ? approvedEvents
       : eventView === 'pending'
         ? pendingEvents
-        : events
+        : scopedEvents
   const eventsListTitle =
-    eventView === 'approved'
-      ? 'Eventos aprobados'
-      : eventView === 'pending'
-        ? 'Eventos pendientes'
-        : 'Mis eventos'
+    selectedEventProfile
+      ? eventView === 'approved'
+        ? `${selectedEventProfile.name}: aprobados`
+        : eventView === 'pending'
+          ? `${selectedEventProfile.name}: pendientes`
+          : `${selectedEventProfile.name}: eventos`
+      : eventView === 'approved'
+        ? 'Eventos aprobados'
+        : eventView === 'pending'
+          ? 'Eventos pendientes'
+          : 'Mis eventos'
   const emptyEventsMessage =
     eventView === 'approved'
       ? 'Ningun evento aprobado'
@@ -1009,6 +1042,7 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => {
+                    setSelectedEventProfileId('')
                     setPanelMode('events')
                     setEventView('all')
                     setMenuOpen(false)
@@ -1022,6 +1056,7 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => {
+                    setSelectedEventProfileId('')
                     setPanelMode('events')
                     setEventView('all')
                     setMenuOpen(false)
@@ -1145,11 +1180,11 @@ export default function DashboardPage() {
                   <p className="text-xs font-semibold text-slate-300">Total subidos</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-black text-emerald-400">{approvedEvents.length}</p>
+                  <p className="text-2xl font-black text-emerald-400">{allApprovedEvents.length}</p>
                   <p className="text-xs font-semibold text-slate-300">Aprobados</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-black text-red-500">{pendingEvents.length}</p>
+                  <p className="text-2xl font-black text-red-500">{allPendingEvents.length}</p>
                   <p className="text-xs font-semibold text-slate-300">Pendientes</p>
                 </div>
               </div>
@@ -1160,12 +1195,11 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={() => {
-                setPanelMode('events')
-                setEventView('all')
+                setPanelMode('brands')
               }}
               className="rounded-2xl bg-white/10 px-5 py-4 text-center text-lg font-bold text-white transition hover:bg-white/15"
             >
-              Crear evento
+              Mis fiestas
             </button>
 
             <button
@@ -1684,6 +1718,13 @@ export default function DashboardPage() {
                         <div className="mt-4 flex gap-2">
                           <button
                             type="button"
+                            onClick={() => enterEventProfile(profile)}
+                            className="rounded-full bg-brand-500 px-4 py-2 text-xs font-bold text-white hover:bg-brand-600"
+                          >
+                            Entrar
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => editEventProfile(profile)}
                             className="rounded-full border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10"
                           >
@@ -1782,17 +1823,80 @@ export default function DashboardPage() {
 
         {panelMode === 'events' && profileComplete && eventView !== 'chat' && (
           <>
+            {selectedEventProfile && (
+              <section className="px-5 pb-6">
+                <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5">
+                  {selectedEventProfile.banner_url && (
+                    <img
+                      src={selectedEventProfile.banner_url}
+                      alt=""
+                      className="h-36 w-full object-cover"
+                    />
+                  )}
+                  <div className="p-5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPanelMode('brands')
+                        setEventView('all')
+                      }}
+                      className="text-sm font-semibold text-brand-500 hover:underline"
+                    >
+                      ← Volver a mis fiestas
+                    </button>
+                    <div className="mt-4 flex items-start gap-4">
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-900">
+                        {selectedEventProfile.logo_url ? (
+                          <img
+                            src={selectedEventProfile.logo_url}
+                            alt={selectedEventProfile.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <Tags className="h-7 w-7 text-brand-500" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h2 className="truncate text-3xl font-black text-white">
+                          {selectedEventProfile.name}
+                        </h2>
+                        <p className="mt-1 text-sm text-slate-400">
+                          {[selectedEventProfile.venue_name, selectedEventProfile.municipality, selectedEventProfile.audience].filter(Boolean).join(' · ')}
+                        </p>
+                        <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+                          <div className="rounded-xl bg-slate-950/60 p-3">
+                            <p className="text-xl font-black text-white">{scopedEvents.length}</p>
+                            <p className="text-slate-400">Total</p>
+                          </div>
+                          <div className="rounded-xl bg-slate-950/60 p-3">
+                            <p className="text-xl font-black text-emerald-400">{approvedEvents.length}</p>
+                            <p className="text-slate-400">Aprobados</p>
+                          </div>
+                          <div className="rounded-xl bg-slate-950/60 p-3">
+                            <p className="text-xl font-black text-yellow-300">{pendingEvents.length}</p>
+                            <p className="text-slate-400">Pendientes</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+
             <section className={`grid gap-8 px-5 ${eventView === 'all' ? 'lg:grid-cols-[0.9fr_1.1fr]' : ''}`}>
               {eventView === 'all' && (
               <form onSubmit={handleSubmit} className="card space-y-6 p-6">
                 <div>
                   <h2 className="text-2xl font-bold">Crear evento</h2>
                   <p className="mt-2 text-sm text-slate-400">
-                    El evento se enviara como pendiente para revision.
+                    {selectedEventProfile
+                      ? `Este evento quedara asociado a ${selectedEventProfile.name}.`
+                      : 'El evento se enviara como pendiente para revision.'}
                   </p>
                 </div>
 
-                {eventProfiles.length > 0 && (
+                {!selectedEventProfile && eventProfiles.length > 0 && (
                   <div>
                     <p className="mb-2 text-sm font-semibold text-slate-300">
                       Asociar a una fiesta
