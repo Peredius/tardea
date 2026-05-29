@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -68,6 +68,8 @@ const PROVINCE_OPTIONS = [
   'Zaragoza',
 ]
 
+const REMEMBERED_PROMOTER_EMAIL_KEY = 'tardea_promoter_email'
+
 function LoginContent() {
   const searchParams = useSearchParams()
   const type = searchParams.get('type')
@@ -90,6 +92,15 @@ function LoginContent() {
   const [municipality, setMunicipality] = useState('')
   const [province, setProvince] = useState('Madrid')
   const [musicPrefs, setMusicPrefs] = useState<string[]>([])
+
+  useEffect(() => {
+    if (accountType !== 'venue') return
+
+    const rememberedEmail = localStorage.getItem(REMEMBERED_PROMOTER_EMAIL_KEY)
+    if (rememberedEmail) {
+      setEmail(rememberedEmail)
+    }
+  }, [accountType])
 
   function toggleSelection(value: string) {
     setMusicPrefs((current) =>
@@ -131,6 +142,10 @@ function LoginContent() {
     if (error) {
       setMessage('Error al iniciar sesion')
       return
+    }
+
+    if (accountType === 'venue') {
+      localStorage.setItem(REMEMBERED_PROMOTER_EMAIL_KEY, email)
     }
 
     const {
@@ -358,6 +373,7 @@ function LoginContent() {
               className="input"
               type="email"
               placeholder="Email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -367,6 +383,7 @@ function LoginContent() {
               className="input"
               type="password"
               placeholder="Contrasena"
+              autoComplete={isRegister ? 'new-password' : 'current-password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

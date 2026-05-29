@@ -98,6 +98,7 @@ function RegisterContent() {
               className="input"
               type="email"
               placeholder="Email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -106,6 +107,7 @@ function RegisterContent() {
             <input
               className="input"
               type="password"
+              autoComplete="new-password"
               placeholder="Contraseña"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
