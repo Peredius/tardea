@@ -129,6 +129,7 @@ export default function DashboardPage() {
   const [eventProfiles, setEventProfiles] = useState<any[]>([])
   const [selectedTemplateId, setSelectedTemplateId] = useState('')
   const [selectedEventProfileId, setSelectedEventProfileId] = useState('')
+  const [openedEventProfileId, setOpenedEventProfileId] = useState('')
   const [saveAsTemplate, setSaveAsTemplate] = useState(false)
   const [saveAsTemplateName, setSaveAsTemplateName] = useState('')
   const [promotionOpen, setPromotionOpen] = useState(false)
@@ -420,6 +421,7 @@ export default function DashboardPage() {
 
   function enterEventProfile(profile: any) {
     applyEventProfileToEvent(profile.id)
+    setOpenedEventProfileId(profile.id)
     setPanelMode('events')
     setEventView('all')
     setMessage('')
@@ -862,6 +864,7 @@ export default function DashboardPage() {
     }
 
     if (selectedEventProfileId === profileId) setSelectedEventProfileId('')
+    if (openedEventProfileId === profileId) setOpenedEventProfileId('')
     await refreshEventProfiles()
     await refreshEvents()
   }
@@ -1091,7 +1094,7 @@ export default function DashboardPage() {
   }
 
   const selectedEventProfile = eventProfiles.find(
-    (profile) => profile.id === selectedEventProfileId
+    (profile) => profile.id === openedEventProfileId
   )
   const scopedEvents = selectedEventProfile
     ? events.filter((event) => event.event_profile_id === selectedEventProfile.id)
@@ -1191,6 +1194,7 @@ export default function DashboardPage() {
                   type="button"
                   onClick={() => {
                     setSelectedEventProfileId('')
+                    setOpenedEventProfileId('')
                     setPanelMode('events')
                     setEventView('all')
                     setMenuOpen(false)
@@ -1205,6 +1209,7 @@ export default function DashboardPage() {
                   type="button"
                   onClick={() => {
                     setSelectedEventProfileId('')
+                    setOpenedEventProfileId('')
                     setPanelMode('events')
                     setEventView('all')
                     setMenuOpen(false)
@@ -1331,6 +1336,7 @@ export default function DashboardPage() {
               type="button"
               onClick={() => {
                 setSelectedEventProfileId('')
+                setOpenedEventProfileId('')
                 setPanelMode('events')
                 setEventView('all')
               }}
