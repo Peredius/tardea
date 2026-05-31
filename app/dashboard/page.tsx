@@ -137,8 +137,10 @@ export default function DashboardPage() {
   const [templateMessage, setTemplateMessage] = useState('')
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null)
   const [editingEventProfileId, setEditingEventProfileId] = useState<string | null>(null)
+  const [editingEventId, setEditingEventId] = useState<string | null>(null)
   const [eventProfileMessage, setEventProfileMessage] = useState('')
-  const [duplicateDates, setDuplicateDates] = useState<Record<string, string>>({})
+  const [duplicateDateDrafts, setDuplicateDateDrafts] = useState<Record<string, string>>({})
+  const [duplicateDates, setDuplicateDates] = useState<Record<string, string[]>>({})
 
   const [promoterEventName, setPromoterEventName] = useState('')
   const [promoterContactName, setPromoterContactName] = useState('')
@@ -422,9 +424,65 @@ export default function DashboardPage() {
   function enterEventProfile(profile: any) {
     applyEventProfileToEvent(profile.id)
     setOpenedEventProfileId(profile.id)
+    setEditingEventId(null)
     setPanelMode('events')
     setEventView('all')
     setMessage('')
+  }
+
+  function addDuplicateDate(eventId: string) {
+    const nextDate = duplicateDateDrafts[eventId]
+    if (!nextDate) return
+
+    setDuplicateDates((current) => {
+      const dates = current[eventId] ?? []
+      if (dates.includes(nextDate)) return current
+      return { ...current, [eventId]: [...dates, nextDate].sort() }
+    })
+    setDuplicateDateDrafts((current) => ({ ...current, [eventId]: '' }))
+  }
+
+  function removeDuplicateDate(eventId: string, dateToRemove: string) {
+    setDuplicateDates((current) => ({
+      ...current,
+      [eventId]: (current[eventId] ?? []).filter((dateItem) => dateItem !== dateToRemove),
+    }))
+  }
+
+  function editEvent(event: any) {
+    setEditingEventId(event.id)
+    setSelectedEventProfileId(event.event_profile_id ?? '')
+    setOpenedEventProfileId('')
+    setPanelMode('events')
+    setEventView('all')
+    setMessage('')
+    setTitle(event.title ?? '')
+    setType(event.type ?? '')
+    setVenue(event.venue ?? '')
+    applyArea(event.area ?? '', 'event')
+    setAddress(event.address ?? '')
+    setMapsUrl(event.maps_url ?? '')
+    setDate(event.date ?? '')
+    setStartTime(event.start_time ?? '17:00')
+    setEndTime(event.end_time ?? '23:00')
+    const eventPrice = Number(event.price_from ?? 0)
+    setIsInvitation(eventPrice === 0)
+    setPriceFrom(eventPrice > 0 ? String(eventPrice) : '')
+    setMusic(event.music ?? [])
+    setAudience(event.audience ?? '25-35')
+    setDescription(event.description ?? '')
+    setPerks((event.perks ?? []).join(', '))
+    setCover(null)
+    setPreviewUrl(event.cover ?? '')
+    setPromotionOpen(false)
+    setSelectedPromotionPackage('')
+
+    window.setTimeout(() => {
+      document.getElementById('promoter-event-form')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    }, 50)
   }
 
   function resetTemplateForm() {
@@ -869,6 +927,30 @@ export default function DashboardPage() {
     await refreshEvents()
   }
 
+  async function deleteEvent(eventId: string) {
+    const confirmed = window.confirm('Quieres eliminar este evento?')
+    if (!confirmed) return
+
+    setSaving(true)
+    setMessage('')
+
+    const { error } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', eventId)
+
+    if (error) {
+      setMessage(`No se pudo eliminar el evento: ${error.message}`)
+      setSaving(false)
+      return
+    }
+
+    if (editingEventId === eventId) setEditingEventId(null)
+    setMessage('Evento eliminado.')
+    await refreshEvents()
+    setSaving(false)
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
@@ -883,7 +965,11 @@ export default function DashboardPage() {
       return
     }
 
-    let imageUrl = ''
+    const editingEvent = editingEventId
+      ? events.find((event) => event.id === editingEventId)
+      : null
+
+    let imageUrl = editingEvent?.cover || ''
 
     if (cover) {
       const fileName = `${Date.now()}-${cover.name}`
@@ -939,15 +1025,24 @@ export default function DashboardPage() {
         : {}),
     }
 
-    const { error } = await supabase.from('events').insert(eventData)
+    const { error } = editingEventId
+      ? await supabase
+          .from('events')
+          .update({
+            ...eventData,
+            status: editingEvent?.status || 'pending',
+            published: Boolean(editingEvent?.published),
+          })
+          .eq('id', editingEventId)
+      : await supabase.from('events').insert(eventData)
 
     if (error) {
-      setMessage(`Error al crear evento: ${error.message}`)
+      setMessage(`Error al ${editingEventId ? 'actualizar' : 'crear'} evento: ${error.message}`)
       setSaving(false)
       return
     }
 
-    if (saveAsTemplate) {
+    if (!editingEventId && saveAsTemplate) {
       const templateNameToSave = saveAsTemplateName || title
 
       const { error: templateError } = await supabase.from('event_templates').insert({
@@ -975,7 +1070,12 @@ export default function DashboardPage() {
       }
     }
 
-    setMessage('Evento enviado correctamente. Queda pendiente de revision.')
+    setMessage(
+      editingEventId
+        ? 'Evento actualizado correctamente.'
+        : 'Evento enviado correctamente. Queda pendiente de revision.'
+    )
+    setEditingEventId(null)
     setSelectedTemplateId('')
     setSaveAsTemplate(false)
     setSaveAsTemplateName('')
@@ -1024,11 +1124,11 @@ export default function DashboardPage() {
     setSaving(false)
   }
 
-  async function duplicateEventForDate(event: any) {
-    const nextDate = duplicateDates[event.id]
+  async function duplicateEventForDates(event: any) {
+    const datesToCreate = duplicateDates[event.id] ?? []
 
-    if (!nextDate) {
-      setMessage('Elige una fecha para duplicar el evento.')
+    if (datesToCreate.length === 0) {
+      setMessage('Elige una o varias fechas para duplicar el evento.')
       return
     }
 
@@ -1044,7 +1144,7 @@ export default function DashboardPage() {
       return
     }
 
-    const duplicateData = {
+    const duplicateRows = datesToCreate.map((nextDate) => ({
       title: event.title,
       slug: generateSlug(event.title, nextDate),
       venue: event.venue,
@@ -1066,18 +1166,22 @@ export default function DashboardPage() {
       published: false,
       user_id: user.id,
       event_profile_id: event.event_profile_id ?? (selectedEventProfileId || null),
-    }
+    }))
 
-    const { error } = await supabase.from('events').insert(duplicateData)
+    const { error } = await supabase.from('events').insert(duplicateRows)
 
     if (error) {
-      setMessage(`No se pudo duplicar el evento: ${error.message}`)
+      setMessage(`No se pudieron duplicar los eventos: ${error.message}`)
       setSaving(false)
       return
     }
 
-    setDuplicateDates((current) => ({ ...current, [event.id]: '' }))
-    setMessage('Evento duplicado como pendiente.')
+    setDuplicateDates((current) => ({ ...current, [event.id]: [] }))
+    setMessage(
+      datesToCreate.length === 1
+        ? 'Evento duplicado como pendiente.'
+        : `${datesToCreate.length} eventos duplicados como pendientes.`
+    )
     await refreshEvents()
     setSaving(false)
   }
@@ -1336,6 +1440,7 @@ export default function DashboardPage() {
               onClick={() => {
                 setSelectedEventProfileId('')
                 setOpenedEventProfileId('')
+                setEditingEventId(null)
                 setPanelMode('events')
                 setEventView('all')
               }}
@@ -2154,12 +2259,14 @@ export default function DashboardPage() {
 
             <section className={`grid gap-8 px-5 ${eventView === 'all' && !selectedEventProfile ? 'lg:grid-cols-[0.9fr_1.1fr]' : ''}`}>
               {eventView === 'all' && !selectedEventProfile && (
-              <form onSubmit={handleSubmit} className="card space-y-6 p-6">
+              <form id="promoter-event-form" onSubmit={handleSubmit} className="card space-y-6 p-6">
                 <div>
-                  <h2 className="text-2xl font-bold">Crear evento</h2>
+                  <h2 className="text-2xl font-bold">
+                    {editingEventId ? 'Editar evento' : 'Crear evento'}
+                  </h2>
                   <p className="mt-2 text-sm text-slate-400">
-                    {selectedEventProfile
-                      ? `Este evento quedara asociado a ${selectedEventProfile.name}.`
+                    {editingEventId
+                      ? 'Actualiza los datos del evento. Si estaba pendiente, seguira pendiente hasta revision.'
                       : 'El evento se enviara como pendiente para revision.'}
                   </p>
                 </div>
@@ -2341,8 +2448,42 @@ export default function DashboardPage() {
                   />
                 )}
                 <button className="btn-primary w-full" type="submit" disabled={saving}>
-                  {saving ? 'Enviando...' : 'Enviar evento a revision'}
+                  {saving
+                    ? 'Guardando...'
+                    : editingEventId
+                      ? 'Guardar cambios'
+                      : 'Enviar evento a revision'}
                 </button>
+                {editingEventId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingEventId(null)
+                      setTitle('')
+                      setVenue('')
+                      setArea('')
+                      setCustomArea('')
+                      setDate('')
+                      setType('')
+                      setAddress('')
+                      setMapsUrl('')
+                      setStartTime('17:00')
+                      setEndTime('23:00')
+                      setPriceFrom('')
+                      setIsInvitation(false)
+                      setMusic([])
+                      setAudience('25-35')
+                      setCover(null)
+                      setPreviewUrl('')
+                      setDescription('')
+                      setPerks('')
+                      setMessage('')
+                    }}
+                    className="w-full rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:border-brand-500 hover:text-brand-500"
+                  >
+                    Cancelar edicion
+                  </button>
+                )}
                 {message && <p className="text-sm text-brand-500">{message}</p>}
               </form>
               )}
@@ -2372,30 +2513,70 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex flex-col gap-3 md:items-end">
                         {selectedEventProfile && (
-                          <div className="flex flex-col gap-2 sm:flex-row">
-                            <input
-                              type="date"
-                              className="input min-h-0 px-3 py-2 text-sm"
-                              value={duplicateDates[event.id] ?? ''}
-                              onChange={(e) =>
-                                setDuplicateDates((current) => ({
-                                  ...current,
-                                  [event.id]: e.target.value,
-                                }))
-                              }
-                              aria-label="Fecha para duplicar evento"
-                            />
+                          <div className="w-full space-y-2 md:w-auto">
+                            <div className="flex flex-col gap-2 sm:flex-row">
+                              <input
+                                type="date"
+                                className="input min-h-0 px-3 py-2 text-sm"
+                                value={duplicateDateDrafts[event.id] ?? ''}
+                                onChange={(e) =>
+                                  setDuplicateDateDrafts((current) => ({
+                                    ...current,
+                                    [event.id]: e.target.value,
+                                  }))
+                                }
+                                aria-label="Fecha para duplicar evento"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => addDuplicateDate(event.id)}
+                                className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:border-brand-500 hover:text-brand-500"
+                              >
+                                Anadir fecha
+                              </button>
+                            </div>
+                            {(duplicateDates[event.id] ?? []).length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {(duplicateDates[event.id] ?? []).map((duplicateDate) => (
+                                  <button
+                                    key={duplicateDate}
+                                    type="button"
+                                    onClick={() => removeDuplicateDate(event.id, duplicateDate)}
+                                    className="rounded-full bg-brand-500/20 px-3 py-1 text-xs font-semibold text-brand-100"
+                                  >
+                                    {new Date(duplicateDate).toLocaleDateString('es-ES')} x
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                             <button
                               type="button"
-                              onClick={() => duplicateEventForDate(event)}
-                              disabled={saving}
-                              className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:border-brand-500 hover:text-brand-500 disabled:opacity-60"
+                              onClick={() => duplicateEventForDates(event)}
+                              disabled={saving || (duplicateDates[event.id] ?? []).length === 0}
+                              className="w-full rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:border-brand-500 hover:text-brand-500 disabled:opacity-60"
                             >
-                              Duplicar
+                              Duplicar en fechas
                             </button>
                           </div>
                         )}
-                        <a href={`/eventos/${event.slug}?from=dashboard`} className="text-sm font-medium text-brand-500 hover:underline">Vista previa</a>
+                        <div className="flex flex-wrap gap-3 md:justify-end">
+                          <button
+                            type="button"
+                            onClick={() => editEvent(event)}
+                            className="text-sm font-medium text-slate-200 hover:text-brand-500"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteEvent(event.id)}
+                            disabled={saving}
+                            className="text-sm font-medium text-slate-400 hover:text-red-400 disabled:opacity-60"
+                          >
+                            Eliminar
+                          </button>
+                          <a href={`/eventos/${event.slug}?from=dashboard`} className="text-sm font-medium text-brand-500 hover:underline">Vista previa</a>
+                        </div>
                       </div>
                     </div>
                   ))}
