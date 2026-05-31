@@ -205,12 +205,17 @@ export default function DashboardPage() {
   const [eventProfileDescription, setEventProfileDescription] = useState('')
   const [eventProfileType, setEventProfileType] = useState('Tardeo')
   const [eventProfileVenueName, setEventProfileVenueName] = useState('')
+  const [eventProfileArea, setEventProfileArea] = useState('')
+  const [eventProfileCustomArea, setEventProfileCustomArea] = useState('')
   const [eventProfileAddress, setEventProfileAddress] = useState('')
+  const [eventProfileMapsUrl, setEventProfileMapsUrl] = useState('')
   const [eventProfileMunicipality, setEventProfileMunicipality] = useState('')
   const [eventProfilePostalCode, setEventProfilePostalCode] = useState('')
   const [eventProfileProvince, setEventProfileProvince] = useState('Madrid')
   const [eventProfileMusic, setEventProfileMusic] = useState<string[]>([])
   const [eventProfileAudience, setEventProfileAudience] = useState('25-35')
+  const [eventProfilePriceFrom, setEventProfilePriceFrom] = useState('')
+  const [eventProfileIsInvitation, setEventProfileIsInvitation] = useState(false)
   const [eventProfileInstagramUrl, setEventProfileInstagramUrl] = useState('')
   const [eventProfileTiktokUrl, setEventProfileTiktokUrl] = useState('')
   const [eventProfileWebsiteUrl, setEventProfileWebsiteUrl] = useState('')
@@ -401,10 +406,14 @@ export default function DashboardPage() {
     setTitle(profile.name ?? '')
     setType(profile.type ?? 'Tardeo')
     setVenue(profile.venue_name ?? '')
-    applyArea(profile.municipality ?? '', 'event')
+    applyArea(profile.area ?? '', 'event')
     setAddress(profile.address ?? '')
+    setMapsUrl(profile.maps_url ?? '')
     setMusic(profile.music ?? [])
     setAudience(profile.audience ?? '25-35')
+    const profilePrice = Number(profile.price_from ?? 0)
+    setIsInvitation(profilePrice === 0)
+    setPriceFrom(profilePrice > 0 ? String(profilePrice) : '')
     setDescription(profile.description ?? '')
   }
 
@@ -446,17 +455,36 @@ export default function DashboardPage() {
     setEventProfileDescription('')
     setEventProfileType('Tardeo')
     setEventProfileVenueName('')
+    setEventProfileArea('')
+    setEventProfileCustomArea('')
     setEventProfileAddress('')
+    setEventProfileMapsUrl('')
     setEventProfileMunicipality('')
     setEventProfilePostalCode('')
     setEventProfileProvince('Madrid')
     setEventProfileMusic([])
     setEventProfileAudience('25-35')
+    setEventProfilePriceFrom('')
+    setEventProfileIsInvitation(false)
     setEventProfileInstagramUrl('')
     setEventProfileTiktokUrl('')
     setEventProfileWebsiteUrl('')
     setEventProfileActive(true)
     setEventProfileMessage('')
+  }
+
+  function applyEventProfileArea(value: string | null) {
+    const commonAreas = ['Centro', 'Salamanca', 'Retiro']
+    const nextArea = value || ''
+
+    if (!nextArea || commonAreas.includes(nextArea)) {
+      setEventProfileArea(nextArea)
+      setEventProfileCustomArea('')
+      return
+    }
+
+    setEventProfileArea('Otra')
+    setEventProfileCustomArea(nextArea)
   }
 
   function editEventProfile(profile: any) {
@@ -471,12 +499,17 @@ export default function DashboardPage() {
     setEventProfileDescription(profile.description ?? '')
     setEventProfileType(profile.type ?? 'Tardeo')
     setEventProfileVenueName(profile.venue_name ?? '')
+    applyEventProfileArea(profile.area ?? '')
     setEventProfileAddress(profile.address ?? '')
+    setEventProfileMapsUrl(profile.maps_url ?? '')
     setEventProfileMunicipality(profile.municipality ?? '')
     setEventProfilePostalCode(profile.postal_code ?? '')
     setEventProfileProvince(profile.province ?? 'Madrid')
     setEventProfileMusic(profile.music ?? [])
     setEventProfileAudience(profile.audience ?? '25-35')
+    const profilePrice = Number(profile.price_from ?? 0)
+    setEventProfileIsInvitation(profilePrice === 0)
+    setEventProfilePriceFrom(profilePrice > 0 ? String(profilePrice) : '')
     setEventProfileInstagramUrl(profile.instagram_url ?? '')
     setEventProfileTiktokUrl(profile.tiktok_url ?? '')
     setEventProfileWebsiteUrl(profile.website_url ?? '')
@@ -769,12 +802,15 @@ export default function DashboardPage() {
       description: eventProfileDescription || null,
       type: eventProfileType || null,
       venue_name: eventProfileVenueName || null,
+      area: eventProfileArea === 'Otra' ? eventProfileCustomArea || null : eventProfileArea || null,
       address: eventProfileAddress || null,
+      maps_url: eventProfileMapsUrl || null,
       municipality: eventProfileMunicipality || null,
       postal_code: eventProfilePostalCode || null,
       province: eventProfileProvince || null,
       music: eventProfileMusic,
       audience: eventProfileAudience,
+      price_from: eventProfileIsInvitation ? 0 : eventProfilePriceFrom ? parseFloat(eventProfilePriceFrom) : 0,
       instagram_url: eventProfileInstagramUrl || null,
       tiktok_url: eventProfileTiktokUrl || null,
       website_url: eventProfileWebsiteUrl || null,
@@ -963,10 +999,14 @@ export default function DashboardPage() {
       setTitle(activeProfile.name ?? '')
       setType(activeProfile.type ?? 'Tardeo')
       setVenue(activeProfile.venue_name ?? '')
-      applyArea(activeProfile.municipality ?? '', 'event')
+      applyArea(activeProfile.area ?? '', 'event')
       setAddress(activeProfile.address ?? '')
+      setMapsUrl(activeProfile.maps_url ?? '')
       setMusic(activeProfile.music ?? [])
       setAudience(activeProfile.audience ?? '25-35')
+      const activeProfilePrice = Number(activeProfile.price_from ?? 0)
+      setIsInvitation(activeProfilePrice === 0)
+      setPriceFrom(activeProfilePrice > 0 ? String(activeProfilePrice) : '')
       setDescription(activeProfile.description ?? '')
     }
 
@@ -1666,7 +1706,18 @@ export default function DashboardPage() {
               </div>
 
               <input className="input" placeholder="Sala o lugar habitual" value={eventProfileVenueName} onChange={(e) => setEventProfileVenueName(e.target.value)} />
+              <select className="select" value={eventProfileArea} onChange={(e) => setEventProfileArea(e.target.value)}>
+                <option value="">Zona habitual</option>
+                <option>Centro</option>
+                <option>Salamanca</option>
+                <option>Retiro</option>
+                <option value="Otra">Otra</option>
+              </select>
+              {eventProfileArea === 'Otra' && (
+                <input className="input" placeholder="Zona personalizada" value={eventProfileCustomArea} onChange={(e) => setEventProfileCustomArea(e.target.value)} />
+              )}
               <input className="input" placeholder="Direccion habitual" value={eventProfileAddress} onChange={(e) => setEventProfileAddress(e.target.value)} />
+              <input className="input" placeholder="Link de Google Maps habitual" value={eventProfileMapsUrl} onChange={(e) => setEventProfileMapsUrl(e.target.value)} />
               <div className="grid gap-4 md:grid-cols-2">
                 <input className="input" placeholder="Municipio" value={eventProfileMunicipality} onChange={(e) => setEventProfileMunicipality(e.target.value)} />
                 <input className="input" placeholder="Codigo postal" inputMode="numeric" maxLength={5} value={eventProfilePostalCode} onChange={(e) => setEventProfilePostalCode(e.target.value)} />
@@ -1681,6 +1732,11 @@ export default function DashboardPage() {
                   <option key={option} value={option}>{option}</option>
                 ))}
               </select>
+              <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-slate-100">
+                <input type="checkbox" checked={eventProfileIsInvitation} onChange={(e) => { setEventProfileIsInvitation(e.target.checked); if (e.target.checked) setEventProfilePriceFrom('') }} />
+                Entrada con invitacion
+              </label>
+              {!eventProfileIsInvitation && <input className="input" type="number" min="0" placeholder="Precio habitual desde" value={eventProfilePriceFrom} onChange={(e) => setEventProfilePriceFrom(e.target.value)} />}
               <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4">
                 <p className="mb-3 text-sm font-semibold text-slate-300">Estilos musicales</p>
                 <div className="flex flex-wrap gap-2">
