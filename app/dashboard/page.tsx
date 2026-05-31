@@ -1188,19 +1188,21 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={() => {
-                setPanelMode('brands')
+                setSelectedEventProfileId('')
+                setPanelMode('events')
+                setEventView('all')
               }}
               className="rounded-2xl bg-white/10 px-5 py-4 text-center text-lg font-bold text-white transition hover:bg-white/15"
             >
-              Mis fiestas
+              Crear evento
             </button>
 
             <button
               type="button"
-              onClick={() => setPanelMode('resources')}
+              onClick={() => setPanelMode('brands')}
               className="rounded-2xl bg-white/10 px-5 py-4 text-center text-lg font-bold text-white transition hover:bg-white/15"
             >
-              Lanzamiento
+              Mis fiestas
             </button>
           </div>
 
