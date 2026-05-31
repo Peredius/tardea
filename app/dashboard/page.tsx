@@ -1379,21 +1379,6 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setSelectedEventProfileId('')
-                    setOpenedEventProfileId('')
-                    setPanelMode('events')
-                    setEventView('all')
-                    setMenuOpen(false)
-                  }}
-                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-200 hover:bg-white/5"
-                >
-                  <ReceiptText className="h-4 w-4 text-brand-500" />
-                  Editar eventos
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
                     setPanelMode('brands')
                     setMenuOpen(false)
                   }}
