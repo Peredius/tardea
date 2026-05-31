@@ -84,19 +84,19 @@ const PROMOTION_PACKAGES = [
     id: 'launch',
     name: 'Lanzamiento',
     price: 149,
-    description: 'Destacado en web + redes sociales + newsletter',
+    description: 'Destacado en web y app + redes sociales + newsletter',
   },
   {
     id: 'amplified',
     name: 'Amplificado',
     price: 99,
-    description: 'Destacado en web + redes sociales',
+    description: 'Destacado en web y app + redes sociales',
   },
   {
     id: 'boost',
     name: 'Impulso',
     price: 49,
-    description: 'Destacado en web',
+    description: 'Destacado en web y app',
   },
 ]
 
