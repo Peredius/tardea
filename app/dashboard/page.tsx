@@ -137,6 +137,7 @@ export default function DashboardPage() {
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null)
   const [editingEventProfileId, setEditingEventProfileId] = useState<string | null>(null)
   const [eventProfileMessage, setEventProfileMessage] = useState('')
+  const [duplicateDates, setDuplicateDates] = useState<Record<string, string>>({})
 
   const [promoterEventName, setPromoterEventName] = useState('')
   const [promoterContactName, setPromoterContactName] = useState('')
@@ -1013,6 +1014,69 @@ export default function DashboardPage() {
     await refreshEvents()
     await refreshTemplates()
     await refreshEventProfiles()
+    setSaving(false)
+  }
+
+  async function duplicateEventForDate(event: any) {
+    const nextDate = duplicateDates[event.id]
+
+    if (!nextDate) {
+      setMessage('Elige una fecha para duplicar el evento.')
+      return
+    }
+
+    setSaving(true)
+    setMessage('')
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      window.location.href = '/login?type=venue'
+      return
+    }
+
+    const duplicateData = {
+      title: event.title,
+      slug: generateSlug(event.title, nextDate),
+      venue: event.venue,
+      area: event.area,
+      address: event.address,
+      maps_url: event.maps_url,
+      date: nextDate,
+      start_time: event.start_time,
+      end_time: event.end_time,
+      type: event.type,
+      music: event.music ?? [],
+      audience: event.audience,
+      price_from: event.price_from ?? 0,
+      cover: event.cover,
+      featured: false,
+      description: event.description,
+      perks: event.perks ?? [],
+      status: 'pending',
+      published: false,
+      user_id: user.id,
+      event_profile_id: event.event_profile_id ?? (selectedEventProfileId || null),
+      promotion_package: null,
+      promotion_package_name: null,
+      promotion_price: null,
+      promotion_status: 'none',
+      promotion_requested_at: null,
+    }
+
+    const { error } = await supabase.from('events').insert(duplicateData)
+
+    if (error) {
+      setMessage(`No se pudo duplicar el evento: ${error.message}`)
+      setSaving(false)
+      return
+    }
+
+    setDuplicateDates((current) => ({ ...current, [event.id]: '' }))
+    setMessage('Evento duplicado como pendiente.')
+    await refreshEvents()
     setSaving(false)
   }
 
@@ -2010,8 +2074,81 @@ export default function DashboardPage() {
               </section>
             )}
 
-            <section className={`grid gap-8 px-5 ${eventView === 'all' ? 'lg:grid-cols-[0.9fr_1.1fr]' : ''}`}>
-              {eventView === 'all' && (
+            {selectedEventProfile && (
+              <section className="px-5 pb-6">
+                <div className="card p-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPanelMode('brands')
+                      setEventView('all')
+                      setMessage('')
+                    }}
+                    className="mb-5 text-sm font-semibold text-brand-500 hover:underline"
+                  >
+                    &larr; Volver a mis fiestas
+                  </button>
+                  <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-950">
+                        {selectedEventProfile.logo_url ? (
+                          <img
+                            src={selectedEventProfile.logo_url}
+                            alt={selectedEventProfile.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <Tags className="h-7 w-7 text-brand-500" />
+                        )}
+                      </div>
+                      <div>
+                        <h2 className="text-2xl font-black text-white">
+                          {selectedEventProfile.name}
+                        </h2>
+                        <p className="mt-2 max-w-2xl text-sm text-slate-400">
+                          {selectedEventProfile.description || 'Anade una descripcion para explicar que tipo de evento es y que publico atrae.'}
+                        </p>
+                        <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-300">
+                          {selectedEventProfile.type && (
+                            <span className="rounded-full bg-white/10 px-3 py-1">{selectedEventProfile.type}</span>
+                          )}
+                          {selectedEventProfile.area && (
+                            <span className="rounded-full bg-white/10 px-3 py-1">{selectedEventProfile.area}</span>
+                          )}
+                          {selectedEventProfile.audience && (
+                            <span className="rounded-full bg-white/10 px-3 py-1">{selectedEventProfile.audience}</span>
+                          )}
+                          {Number(selectedEventProfile.price_from ?? 0) > 0 ? (
+                            <span className="rounded-full bg-white/10 px-3 py-1">
+                              Desde {selectedEventProfile.price_from} EUR
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-white/10 px-3 py-1">Invitacion</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-center text-xs md:min-w-72">
+                      <div className="rounded-2xl bg-slate-950/70 p-3">
+                        <p className="text-2xl font-black text-white">{scopedEvents.length}</p>
+                        <p className="text-slate-400">Subidos</p>
+                      </div>
+                      <div className="rounded-2xl bg-slate-950/70 p-3">
+                        <p className="text-2xl font-black text-emerald-400">{approvedEvents.length}</p>
+                        <p className="text-slate-400">Aprobados</p>
+                      </div>
+                      <div className="rounded-2xl bg-slate-950/70 p-3">
+                        <p className="text-2xl font-black text-brand-500">{pendingEvents.length}</p>
+                        <p className="text-slate-400">Pendientes</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            <section className={`grid gap-8 px-5 ${eventView === 'all' && !selectedEventProfile ? 'lg:grid-cols-[0.9fr_1.1fr]' : ''}`}>
+              {eventView === 'all' && !selectedEventProfile && (
               <form onSubmit={handleSubmit} className="card space-y-6 p-6">
                 <div>
                   <h2 className="text-2xl font-bold">Crear evento</h2>
@@ -2228,10 +2365,39 @@ export default function DashboardPage() {
                           </span>
                         )}
                       </div>
-                      <a href={`/eventos/${event.slug}?from=dashboard`} className="text-sm font-medium text-brand-500 hover:underline">Vista previa</a>
+                      <div className="flex flex-col gap-3 md:items-end">
+                        {selectedEventProfile && (
+                          <div className="flex flex-col gap-2 sm:flex-row">
+                            <input
+                              type="date"
+                              className="input min-h-0 px-3 py-2 text-sm"
+                              value={duplicateDates[event.id] ?? ''}
+                              onChange={(e) =>
+                                setDuplicateDates((current) => ({
+                                  ...current,
+                                  [event.id]: e.target.value,
+                                }))
+                              }
+                              aria-label="Fecha para duplicar evento"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => duplicateEventForDate(event)}
+                              disabled={saving}
+                              className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:border-brand-500 hover:text-brand-500 disabled:opacity-60"
+                            >
+                              Duplicar
+                            </button>
+                          </div>
+                        )}
+                        <a href={`/eventos/${event.slug}?from=dashboard`} className="text-sm font-medium text-brand-500 hover:underline">Vista previa</a>
+                      </div>
                     </div>
                   ))}
                 </div>
+                {message && selectedEventProfile && (
+                  <p className="mt-4 text-sm text-brand-500">{message}</p>
+                )}
               </section>
             </section>
           </>
