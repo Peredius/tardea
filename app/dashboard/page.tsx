@@ -1452,6 +1452,21 @@ export default function DashboardPage() {
           </div>
         </header>
 
+        {message && (
+          <div className="sticky top-[77px] z-20 px-5 pt-3">
+            <div className="flex items-start justify-between gap-3 rounded-2xl border border-brand-500/30 bg-slate-900/95 px-4 py-3 text-sm text-white shadow-2xl shadow-slate-950/40 backdrop-blur">
+              <p>{message}</p>
+              <button
+                type="button"
+                onClick={() => setMessage('')}
+                className="shrink-0 text-xs font-bold uppercase tracking-[0.18em] text-brand-500"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        )}
+
         <section className="px-5 py-8">
           <div className="grid grid-cols-[auto_1fr] items-center gap-4">
             <button
@@ -2550,7 +2565,6 @@ export default function DashboardPage() {
                     Cancelar edicion
                   </button>
                 )}
-                {message && <p className="text-sm text-brand-500">{message}</p>}
               </form>
               )}
 
@@ -2698,9 +2712,6 @@ export default function DashboardPage() {
                     </div>
                   ))}
                 </div>
-                {message && selectedEventProfile && (
-                  <p className="mt-4 text-sm text-brand-500">{message}</p>
-                )}
               </section>
             </section>
           </>
