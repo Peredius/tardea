@@ -100,6 +100,14 @@ const PROMOTION_PACKAGES = [
   },
 ]
 
+const DELETE_REASON_OPTIONS = [
+  'Evento cancelado',
+  'Evento erroneo',
+  'Cambio de fecha',
+  'Entradas agotadas',
+  'Otro motivo',
+]
+
 function generateSlug(title: string, date: string) {
   const cleanTitle = title
     .toLowerCase()
@@ -141,6 +149,9 @@ export default function DashboardPage() {
   const [eventProfileMessage, setEventProfileMessage] = useState('')
   const [duplicateDateDrafts, setDuplicateDateDrafts] = useState<Record<string, string>>({})
   const [duplicateDates, setDuplicateDates] = useState<Record<string, string[]>>({})
+  const [deletingEventId, setDeletingEventId] = useState<string | null>(null)
+  const [deleteReason, setDeleteReason] = useState('Evento cancelado')
+  const [deleteReasonDetail, setDeleteReasonDetail] = useState('')
 
   const [promoterEventName, setPromoterEventName] = useState('')
   const [promoterContactName, setPromoterContactName] = useState('')
@@ -927,9 +938,11 @@ export default function DashboardPage() {
     await refreshEvents()
   }
 
-  async function deleteEvent(eventId: string) {
-    const confirmed = window.confirm('Quieres eliminar este evento?')
-    if (!confirmed) return
+  async function deleteEvent(event: any) {
+    if (!deleteReason) {
+      setMessage('Elige un motivo para eliminar el evento.')
+      return
+    }
 
     setSaving(true)
     setMessage('')
@@ -943,10 +956,19 @@ export default function DashboardPage() {
       return
     }
 
+    await supabase.from('event_deletion_logs').insert({
+      event_id: event.id,
+      user_id: user.id,
+      event_title: event.title ?? null,
+      event_date: event.date ?? null,
+      reason: deleteReason,
+      reason_detail: deleteReasonDetail || null,
+    })
+
     const { data, error } = await supabase
       .from('events')
       .delete()
-      .eq('id', eventId)
+      .eq('id', event.id)
       .eq('user_id', user.id)
       .select('id')
 
@@ -962,8 +984,11 @@ export default function DashboardPage() {
       return
     }
 
-    if (editingEventId === eventId) setEditingEventId(null)
-    setMessage('Evento eliminado.')
+    if (editingEventId === event.id) setEditingEventId(null)
+    setDeletingEventId(null)
+    setDeleteReason('Evento cancelado')
+    setDeleteReasonDetail('')
+    setMessage(`Evento eliminado. Motivo: ${deleteReason}.`)
     await refreshEvents()
     setSaving(false)
   }
@@ -2585,7 +2610,11 @@ export default function DashboardPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => deleteEvent(event.id)}
+                            onClick={() => {
+                              setDeletingEventId(event.id)
+                              setDeleteReason('Evento cancelado')
+                              setDeleteReasonDetail('')
+                            }}
                             disabled={saving}
                             className="text-sm font-medium text-slate-400 hover:text-red-400 disabled:opacity-60"
                           >
@@ -2593,6 +2622,52 @@ export default function DashboardPage() {
                           </button>
                           <a href={`/eventos/${event.slug}?from=dashboard`} className="text-sm font-medium text-brand-500 hover:underline">Vista previa</a>
                         </div>
+                        {deletingEventId === event.id && (
+                          <div className="w-full rounded-2xl border border-red-400/20 bg-red-500/10 p-3 md:w-72">
+                            <p className="text-sm font-semibold text-white">
+                              Motivo de eliminacion
+                            </p>
+                            <select
+                              className="select mt-2 min-h-0 px-3 py-2 text-sm"
+                              value={deleteReason}
+                              onChange={(e) => setDeleteReason(e.target.value)}
+                            >
+                              {DELETE_REASON_OPTIONS.map((reason) => (
+                                <option key={reason} value={reason}>
+                                  {reason}
+                                </option>
+                              ))}
+                            </select>
+                            {deleteReason === 'Otro motivo' && (
+                              <input
+                                className="input mt-2 min-h-0 px-3 py-2 text-sm"
+                                placeholder="Escribe el motivo"
+                                value={deleteReasonDetail}
+                                onChange={(e) => setDeleteReasonDetail(e.target.value)}
+                              />
+                            )}
+                            <div className="mt-3 flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => deleteEvent(event)}
+                                disabled={saving}
+                                className="rounded-full bg-red-500 px-4 py-2 text-xs font-bold text-white hover:bg-red-600 disabled:opacity-60"
+                              >
+                                Confirmar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDeletingEventId(null)
+                                  setDeleteReasonDetail('')
+                                }}
+                                className="rounded-full border border-white/10 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
