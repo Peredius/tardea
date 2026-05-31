@@ -1297,6 +1297,7 @@ export default function DashboardPage() {
       : eventView === 'pending'
         ? 'Ningun evento pendiente'
         : 'No tienes eventos todavia.'
+  const showPromoterEventList = Boolean(selectedEventProfile) || eventView !== 'all'
   const greetingName = promoterEventName || promoterCompany || 'promotor'
   const showDataForm = panelMode === 'data' || !profileComplete
   const showProfileForm = panelMode === 'profile' && profileComplete
@@ -1542,7 +1543,7 @@ export default function DashboardPage() {
 
           <div className="mt-8 grid grid-cols-4 border-b border-white/10 text-center">
             {[
-              { key: 'all', icon: PartyPopper, label: 'Todos' },
+              { key: 'all', icon: PartyPopper, label: 'Crear evento' },
               { key: 'approved', icon: CheckCircle2, label: 'Aprobados' },
               { key: 'pending', icon: Hourglass, label: 'Pendientes' },
               { key: 'chat', icon: MessageSquare, label: 'Chat' },
@@ -1559,13 +1560,17 @@ export default function DashboardPage() {
                     setEventView(item.key as 'all' | 'approved' | 'pending' | 'chat')
                   }}
                   aria-label={item.label}
-                  className={`flex justify-center border-b-2 py-4 transition ${
+                  title={item.label}
+                  className={`group relative flex justify-center border-b-2 py-4 transition ${
                     isActive
                       ? 'border-white text-white'
                       : 'border-transparent text-slate-500 hover:text-white'
                   }`}
                 >
                   <Icon className="h-9 w-9" />
+                  <span className="pointer-events-none absolute -bottom-9 left-1/2 z-20 hidden -translate-x-1/2 whitespace-nowrap rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-950 shadow-xl group-hover:block">
+                    {item.label}
+                  </span>
                 </button>
               )
             })}
@@ -2338,7 +2343,7 @@ export default function DashboardPage() {
               </section>
             )}
 
-            <section className={`grid gap-8 px-5 ${eventView === 'all' && !selectedEventProfile ? 'lg:grid-cols-[0.9fr_1.1fr]' : ''}`}>
+            <section className="grid gap-8 px-5">
               {eventView === 'all' && !selectedEventProfile && (
               <form id="promoter-event-form" onSubmit={handleSubmit} className="card space-y-6 p-6">
                 <div>
@@ -2568,6 +2573,7 @@ export default function DashboardPage() {
               </form>
               )}
 
+              {showPromoterEventList && (
               <section className="card p-6">
                 <h2 className="text-2xl font-bold">{eventsListTitle}</h2>
                 <p className="mt-2 text-sm text-slate-400">
@@ -2713,6 +2719,7 @@ export default function DashboardPage() {
                   ))}
                 </div>
               </section>
+              )}
             </section>
           </>
         )}
