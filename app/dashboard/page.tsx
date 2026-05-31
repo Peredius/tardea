@@ -928,11 +928,15 @@ export default function DashboardPage() {
       published: false,
       user_id: user.id,
       event_profile_id: selectedEventProfileId || null,
-      promotion_package: promotionPackage?.id ?? null,
-      promotion_package_name: promotionPackage?.name ?? null,
-      promotion_price: promotionPackage?.price ?? null,
-      promotion_status: promotionPackage ? 'requested' : 'none',
-      promotion_requested_at: promotionPackage ? new Date().toISOString() : null,
+      ...(promotionPackage
+        ? {
+            promotion_package: promotionPackage.id,
+            promotion_package_name: promotionPackage.name,
+            promotion_price: promotionPackage.price,
+            promotion_status: 'requested',
+            promotion_requested_at: new Date().toISOString(),
+          }
+        : {}),
     }
 
     const { error } = await supabase.from('events').insert(eventData)
@@ -1062,11 +1066,6 @@ export default function DashboardPage() {
       published: false,
       user_id: user.id,
       event_profile_id: event.event_profile_id ?? (selectedEventProfileId || null),
-      promotion_package: null,
-      promotion_package_name: null,
-      promotion_price: null,
-      promotion_status: 'none',
-      promotion_requested_at: null,
     }
 
     const { error } = await supabase.from('events').insert(duplicateData)
