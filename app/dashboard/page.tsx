@@ -181,6 +181,7 @@ export default function DashboardPage() {
   const [eventProfileBannerFile, setEventProfileBannerFile] = useState<File | null>(null)
   const [eventProfileBannerPreview, setEventProfileBannerPreview] = useState('')
   const [eventProfileDescription, setEventProfileDescription] = useState('')
+  const [eventProfileType, setEventProfileType] = useState('Tardeo')
   const [eventProfileVenueName, setEventProfileVenueName] = useState('')
   const [eventProfileAddress, setEventProfileAddress] = useState('')
   const [eventProfileMunicipality, setEventProfileMunicipality] = useState('')
@@ -376,6 +377,7 @@ export default function DashboardPage() {
     if (!profile) return
 
     setTitle(profile.name ?? '')
+    setType(profile.type ?? 'Tardeo')
     setVenue(profile.venue_name ?? '')
     applyArea(profile.municipality ?? '', 'event')
     setAddress(profile.address ?? '')
@@ -420,6 +422,7 @@ export default function DashboardPage() {
     setEventProfileBannerFile(null)
     setEventProfileBannerPreview('')
     setEventProfileDescription('')
+    setEventProfileType('Tardeo')
     setEventProfileVenueName('')
     setEventProfileAddress('')
     setEventProfileMunicipality('')
@@ -444,6 +447,7 @@ export default function DashboardPage() {
     setEventProfileBannerFile(null)
     setEventProfileBannerPreview('')
     setEventProfileDescription(profile.description ?? '')
+    setEventProfileType(profile.type ?? 'Tardeo')
     setEventProfileVenueName(profile.venue_name ?? '')
     setEventProfileAddress(profile.address ?? '')
     setEventProfileMunicipality(profile.municipality ?? '')
@@ -741,6 +745,7 @@ export default function DashboardPage() {
       logo_url: nextLogoUrl || null,
       banner_url: nextBannerUrl || null,
       description: eventProfileDescription || null,
+      type: eventProfileType || null,
       venue_name: eventProfileVenueName || null,
       address: eventProfileAddress || null,
       municipality: eventProfileMunicipality || null,
@@ -923,6 +928,7 @@ export default function DashboardPage() {
     )
     if (activeProfile) {
       setTitle(activeProfile.name ?? '')
+      setType(activeProfile.type ?? 'Tardeo')
       setVenue(activeProfile.venue_name ?? '')
       applyArea(activeProfile.municipality ?? '', 'event')
       setAddress(activeProfile.address ?? '')
@@ -1554,6 +1560,15 @@ export default function DashboardPage() {
               </div>
 
               <input className="input" placeholder="Nombre de la fiesta" value={eventProfileName} onChange={(e) => setEventProfileName(e.target.value)} required />
+
+              <select className="select" value={eventProfileType} onChange={(e) => setEventProfileType(e.target.value)} required>
+                <option value="">Tipo de evento</option>
+                <option>Tardeo</option>
+                <option>Rooftop</option>
+                <option>Brunch</option>
+                <option>Fitness Party</option>
+                <option>Afterwork</option>
+              </select>
 
               <div className="grid gap-4 md:grid-cols-[0.75fr_1.25fr]">
                 <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4">

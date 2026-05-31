@@ -6,6 +6,7 @@ create table if not exists public.promoter_event_profiles (
   logo_url text,
   banner_url text,
   description text,
+  type text,
   venue_name text,
   address text,
   municipality text,
