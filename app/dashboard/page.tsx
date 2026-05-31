@@ -441,14 +441,28 @@ export default function DashboardPage() {
     setMessage('')
   }
 
-  function addDuplicateDate(eventId: string, nextDate: string) {
+  function addDuplicateDate(event: any, nextDate: string) {
     if (!nextDate) return
 
+    const dateAlreadyExists = events.some(
+      (eventItem) =>
+        eventItem.id !== event.id &&
+        eventItem.event_profile_id === event.event_profile_id &&
+        eventItem.title === event.title &&
+        eventItem.date === nextDate
+    )
+
+    if (nextDate === event.date || dateAlreadyExists) {
+      setMessage('Esa fecha ya existe para este evento.')
+      return
+    }
+
     setDuplicateDates((current) => {
-      const dates = current[eventId] ?? []
+      const dates = current[event.id] ?? []
       if (dates.includes(nextDate)) return current
-      return { ...current, [eventId]: [...dates, nextDate].sort() }
+      return { ...current, [event.id]: [...dates, nextDate].sort() }
     })
+    setMessage('')
   }
 
   function removeDuplicateDate(eventId: string, dateToRemove: string) {
@@ -1165,10 +1179,20 @@ export default function DashboardPage() {
   }
 
   async function duplicateEventForDates(event: any) {
-    const datesToCreate = duplicateDates[event.id] ?? []
+    const selectedDates = duplicateDates[event.id] ?? []
+    const existingDates = new Set(
+      events
+        .filter(
+          (eventItem) =>
+            eventItem.event_profile_id === event.event_profile_id &&
+            eventItem.title === event.title
+        )
+        .map((eventItem) => eventItem.date)
+    )
+    const datesToCreate = selectedDates.filter((dateItem) => !existingDates.has(dateItem))
 
     if (datesToCreate.length === 0) {
-      setMessage('Elige una o varias fechas para anadir al evento.')
+      setMessage('Elige una o varias fechas nuevas para anadir al evento.')
       return
     }
 
@@ -2571,7 +2595,7 @@ export default function DashboardPage() {
                                     ...current,
                                     [event.id]: nextDate,
                                   }))
-                                  addDuplicateDate(event.id, nextDate)
+                                  addDuplicateDate(event, nextDate)
                                 }}
                                 aria-label="Seleccionar fecha para anadir al evento"
                               />
