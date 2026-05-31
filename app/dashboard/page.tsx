@@ -1524,13 +1524,15 @@ export default function DashboardPage() {
         )}
 
         {showEventProfiles && (
-          <section className="grid gap-8 px-5 lg:grid-cols-[0.9fr_1.1fr]">
-            <form onSubmit={saveEventProfile} className="card space-y-6 p-6">
+          <section className="flex flex-col gap-8 px-5">
+            <form id="create-event-profile-form" onSubmit={saveEventProfile} className="card order-2 scroll-mt-24 space-y-6 p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-bold">Mis fiestas</h2>
+                  <h2 className="text-2xl font-bold">
+                    {editingEventProfileId ? 'Editar fiesta' : 'Crear fiesta'}
+                  </h2>
                   <p className="mt-2 text-sm text-slate-400">
-                    Crea marcas de tardeo independientes dentro de tu empresa.
+                    Crea marcas de eventos independientes dentro de tu empresa.
                   </p>
                 </div>
                 {editingEventProfileId && (
@@ -1657,11 +1659,30 @@ export default function DashboardPage() {
               {eventProfileMessage && <p className="text-sm text-brand-500">{eventProfileMessage}</p>}
             </form>
 
-            <section className="card p-6">
-              <h2 className="text-2xl font-bold">Fiestas creadas</h2>
-              <p className="mt-2 text-sm text-slate-400">
-                Cada fiesta tendra sus propios eventos y contadores.
-              </p>
+            <section className="card order-1 p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold">Mis fiestas</h2>
+                  <p className="mt-2 text-sm text-slate-400">
+                    Cada fiesta tendra sus propios eventos y contadores.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetEventProfileForm()
+                    window.setTimeout(() => {
+                      document.getElementById('create-event-profile-form')?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start',
+                      })
+                    }, 50)
+                  }}
+                  className="shrink-0 text-sm font-bold text-brand-500 hover:underline"
+                >
+                  Crear fiesta
+                </button>
+              </div>
               {eventProfiles.length === 0 && <p className="mt-6 text-slate-400">Aun no tienes fiestas creadas.</p>}
               <div className="mt-6 space-y-4">
                 {eventProfiles.map((profile) => {
@@ -1712,7 +1733,15 @@ export default function DashboardPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => editEventProfile(profile)}
+                            onClick={() => {
+                              editEventProfile(profile)
+                              window.setTimeout(() => {
+                                document.getElementById('create-event-profile-form')?.scrollIntoView({
+                                  behavior: 'smooth',
+                                  block: 'start',
+                                })
+                              }, 50)
+                            }}
                             className="rounded-full border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10"
                           >
                             Editar
