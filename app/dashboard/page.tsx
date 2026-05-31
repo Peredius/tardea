@@ -1643,6 +1643,58 @@ export default function DashboardPage() {
                 <option>Afterwork</option>
               </select>
 
+              <input className="input" placeholder="Sala o lugar habitual" value={eventProfileVenueName} onChange={(e) => setEventProfileVenueName(e.target.value)} />
+              <select className="select" value={eventProfileArea} onChange={(e) => setEventProfileArea(e.target.value)}>
+                <option value="">Zona habitual</option>
+                <option>Centro</option>
+                <option>Salamanca</option>
+                <option>Retiro</option>
+                <option value="Otra">Otra</option>
+              </select>
+              {eventProfileArea === 'Otra' && (
+                <input className="input" placeholder="Zona personalizada" value={eventProfileCustomArea} onChange={(e) => setEventProfileCustomArea(e.target.value)} />
+              )}
+              <input className="input" placeholder="Direccion habitual" value={eventProfileAddress} onChange={(e) => setEventProfileAddress(e.target.value)} />
+              <input className="input" placeholder="Link de Google Maps habitual" value={eventProfileMapsUrl} onChange={(e) => setEventProfileMapsUrl(e.target.value)} />
+              <div className="grid gap-4 md:grid-cols-2">
+                <input className="input" placeholder="Municipio" value={eventProfileMunicipality} onChange={(e) => setEventProfileMunicipality(e.target.value)} />
+                <input className="input" placeholder="Codigo postal" inputMode="numeric" maxLength={5} value={eventProfilePostalCode} onChange={(e) => setEventProfilePostalCode(e.target.value)} />
+              </div>
+              <select className="select" value={eventProfileProvince} onChange={(e) => setEventProfileProvince(e.target.value)}>
+                {PROVINCE_OPTIONS.map((province) => (
+                  <option key={province} value={province}>{province}</option>
+                ))}
+              </select>
+              <select className="select" value={eventProfileAudience} onChange={(e) => setEventProfileAudience(e.target.value)}>
+                {AUDIENCE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+              <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-slate-100">
+                <input type="checkbox" checked={eventProfileIsInvitation} onChange={(e) => { setEventProfileIsInvitation(e.target.checked); if (e.target.checked) setEventProfilePriceFrom('') }} />
+                Entrada con invitacion
+              </label>
+              {!eventProfileIsInvitation && <input className="input" type="number" min="0" placeholder="Precio habitual desde" value={eventProfilePriceFrom} onChange={(e) => setEventProfilePriceFrom(e.target.value)} />}
+              <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4">
+                <p className="mb-3 text-sm font-semibold text-slate-300">Estilos musicales</p>
+                <div className="flex flex-wrap gap-2">
+                  {MUSIC_OPTIONS.map((style) => (
+                    <button
+                      key={style}
+                      type="button"
+                      onClick={() => toggleEventProfileMusicStyle(style)}
+                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                        eventProfileMusic.includes(style)
+                          ? 'bg-brand-500 text-white'
+                          : 'bg-white/10 text-slate-300 hover:bg-white/15'
+                      }`}
+                    >
+                      {style}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <textarea className="input min-h-32" placeholder="Descripcion de la fiesta, publico y propuesta" value={eventProfileDescription} onChange={(e) => setEventProfileDescription(e.target.value)} />
               <div className="grid gap-4 md:grid-cols-[0.75fr_1.25fr]">
                 <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4">
                   <p className="text-sm font-semibold text-slate-300">Logo o avatar</p>
@@ -1704,59 +1756,6 @@ export default function DashboardPage() {
                   </label>
                 </div>
               </div>
-
-              <input className="input" placeholder="Sala o lugar habitual" value={eventProfileVenueName} onChange={(e) => setEventProfileVenueName(e.target.value)} />
-              <select className="select" value={eventProfileArea} onChange={(e) => setEventProfileArea(e.target.value)}>
-                <option value="">Zona habitual</option>
-                <option>Centro</option>
-                <option>Salamanca</option>
-                <option>Retiro</option>
-                <option value="Otra">Otra</option>
-              </select>
-              {eventProfileArea === 'Otra' && (
-                <input className="input" placeholder="Zona personalizada" value={eventProfileCustomArea} onChange={(e) => setEventProfileCustomArea(e.target.value)} />
-              )}
-              <input className="input" placeholder="Direccion habitual" value={eventProfileAddress} onChange={(e) => setEventProfileAddress(e.target.value)} />
-              <input className="input" placeholder="Link de Google Maps habitual" value={eventProfileMapsUrl} onChange={(e) => setEventProfileMapsUrl(e.target.value)} />
-              <div className="grid gap-4 md:grid-cols-2">
-                <input className="input" placeholder="Municipio" value={eventProfileMunicipality} onChange={(e) => setEventProfileMunicipality(e.target.value)} />
-                <input className="input" placeholder="Codigo postal" inputMode="numeric" maxLength={5} value={eventProfilePostalCode} onChange={(e) => setEventProfilePostalCode(e.target.value)} />
-              </div>
-              <select className="select" value={eventProfileProvince} onChange={(e) => setEventProfileProvince(e.target.value)}>
-                {PROVINCE_OPTIONS.map((province) => (
-                  <option key={province} value={province}>{province}</option>
-                ))}
-              </select>
-              <select className="select" value={eventProfileAudience} onChange={(e) => setEventProfileAudience(e.target.value)}>
-                {AUDIENCE_OPTIONS.map((option) => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-              <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-slate-100">
-                <input type="checkbox" checked={eventProfileIsInvitation} onChange={(e) => { setEventProfileIsInvitation(e.target.checked); if (e.target.checked) setEventProfilePriceFrom('') }} />
-                Entrada con invitacion
-              </label>
-              {!eventProfileIsInvitation && <input className="input" type="number" min="0" placeholder="Precio habitual desde" value={eventProfilePriceFrom} onChange={(e) => setEventProfilePriceFrom(e.target.value)} />}
-              <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4">
-                <p className="mb-3 text-sm font-semibold text-slate-300">Estilos musicales</p>
-                <div className="flex flex-wrap gap-2">
-                  {MUSIC_OPTIONS.map((style) => (
-                    <button
-                      key={style}
-                      type="button"
-                      onClick={() => toggleEventProfileMusicStyle(style)}
-                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                        eventProfileMusic.includes(style)
-                          ? 'bg-brand-500 text-white'
-                          : 'bg-white/10 text-slate-300 hover:bg-white/15'
-                      }`}
-                    >
-                      {style}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <textarea className="input min-h-32" placeholder="Descripcion de la fiesta, publico y propuesta" value={eventProfileDescription} onChange={(e) => setEventProfileDescription(e.target.value)} />
               <input className="input" placeholder="Instagram" value={eventProfileInstagramUrl} onChange={(e) => setEventProfileInstagramUrl(e.target.value)} />
               <input className="input" placeholder="TikTok" value={eventProfileTiktokUrl} onChange={(e) => setEventProfileTiktokUrl(e.target.value)} />
               <input className="input" placeholder="Web o entradas" value={eventProfileWebsiteUrl} onChange={(e) => setEventProfileWebsiteUrl(e.target.value)} />
