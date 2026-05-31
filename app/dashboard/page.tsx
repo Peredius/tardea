@@ -1976,6 +1976,11 @@ export default function DashboardPage() {
 
                   return (
                     <div key={profile.id} className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+                      <button
+                        type="button"
+                        onClick={() => enterEventProfile(profile)}
+                        className="block w-full text-left transition hover:bg-white/5"
+                      >
                       {profile.banner_url && <img src={profile.banner_url} alt="" className="h-28 w-full object-cover" />}
                       <div className="p-4">
                         <div className="flex items-start gap-4">
@@ -2007,14 +2012,9 @@ export default function DashboardPage() {
                             </div>
                           </div>
                         </div>
-                        <div className="mt-4 flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => enterEventProfile(profile)}
-                            className="rounded-full bg-brand-500 px-4 py-2 text-xs font-bold text-white hover:bg-brand-600"
-                          >
-                            Entrar
-                          </button>
+                      </div>
+                      </button>
+                        <div className="flex gap-2 px-4 pb-4">
                           <button
                             type="button"
                             onClick={() => {
@@ -2039,7 +2039,6 @@ export default function DashboardPage() {
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
-                      </div>
                     </div>
                   )
                 })}
