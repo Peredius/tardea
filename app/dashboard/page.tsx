@@ -1846,7 +1846,7 @@ export default function DashboardPage() {
 
         {panelMode === 'events' && profileComplete && eventView !== 'chat' && (
           <>
-            {selectedEventProfile && (
+            {false && selectedEventProfile && (
               <section className="px-5 pb-6">
                 <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5">
                   {selectedEventProfile.banner_url && (
