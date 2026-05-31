@@ -5,7 +5,6 @@ import {
   BadgeEuro,
   ChevronDown,
   CheckCircle2,
-  FileText,
   Hourglass,
   ImagePlus,
   LayoutDashboard,
@@ -104,7 +103,7 @@ export default function DashboardPage() {
   const [profileMessage, setProfileMessage] = useState('')
   const [passwordMessage, setPasswordMessage] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
-  const [panelMode, setPanelMode] = useState<'events' | 'data' | 'profile' | 'resources' | 'templates' | 'brands'>('events')
+  const [panelMode, setPanelMode] = useState<'events' | 'data' | 'profile' | 'resources' | 'brands'>('events')
   const [eventView, setEventView] = useState<'all' | 'approved' | 'pending' | 'chat'>('all')
   const [templates, setTemplates] = useState<any[]>([])
   const [eventProfiles, setEventProfiles] = useState<any[]>([])
@@ -980,7 +979,7 @@ export default function DashboardPage() {
   const showDataForm = panelMode === 'data' || !profileComplete
   const showProfileForm = panelMode === 'profile' && profileComplete
   const showResources = panelMode === 'resources' && profileComplete
-  const showTemplates = panelMode === 'templates' && profileComplete
+  const showTemplates = false
   const showEventProfiles = panelMode === 'brands' && profileComplete
   const logoDisplay = promoterLogoPreview || promoterLogoUrl
 
@@ -1065,18 +1064,6 @@ export default function DashboardPage() {
                 >
                   <ReceiptText className="h-4 w-4 text-brand-500" />
                   Editar eventos
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPanelMode('templates')
-                    setMenuOpen(false)
-                  }}
-                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-200 hover:bg-white/5"
-                >
-                  <FileText className="h-4 w-4 text-brand-500" />
-                  Fichas de eventos
                 </button>
 
                 <button
@@ -1916,7 +1903,7 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                {templates.length > 0 && (
+                {false && templates.length > 0 && (
                   <div>
                     <p className="mb-2 text-sm font-semibold text-slate-300">
                       Usar ficha guardada
