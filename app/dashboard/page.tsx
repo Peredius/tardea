@@ -1560,7 +1560,6 @@ export default function DashboardPage() {
                     setEventView(item.key as 'all' | 'approved' | 'pending' | 'chat')
                   }}
                   aria-label={item.label}
-                  title={item.label}
                   className={`group relative flex justify-center border-b-2 py-4 transition ${
                     isActive
                       ? 'border-white text-white'
