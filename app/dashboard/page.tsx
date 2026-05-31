@@ -934,13 +934,30 @@ export default function DashboardPage() {
     setSaving(true)
     setMessage('')
 
-    const { error } = await supabase
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      window.location.href = '/login?type=venue'
+      return
+    }
+
+    const { data, error } = await supabase
       .from('events')
       .delete()
       .eq('id', eventId)
+      .eq('user_id', user.id)
+      .select('id')
 
     if (error) {
       setMessage(`No se pudo eliminar el evento: ${error.message}`)
+      setSaving(false)
+      return
+    }
+
+    if (!data || data.length === 0) {
+      setMessage('No se pudo eliminar el evento. Revisa la politica de borrado en Supabase.')
       setSaving(false)
       return
     }
