@@ -35,6 +35,7 @@ export default function AdminPage() {
   const [audience, setAudience] = useState('25-35')
   const [cover, setCover] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState('')
+  const [reelUrl, setReelUrl] = useState('')
   const [message, setMessage] = useState('')
   const [description, setDescription] = useState('')
   const [perks, setPerks] = useState('')
@@ -144,6 +145,7 @@ export default function AdminPage() {
       audience,
       price_from: priceFrom ? Number(priceFrom) : 0,
       cover: imageUrl,
+      reel_url: reelUrl || null,
       featured: false,
       description,
       perks: perks ? perks.split(',').map((p) => p.trim()) : [],
@@ -195,6 +197,7 @@ export default function AdminPage() {
     setAudience('25-35')
     setCover(null)
     setPreviewUrl('')
+    setReelUrl('')
     setDescription('')
     setPerks('')
   }
@@ -217,6 +220,7 @@ export default function AdminPage() {
     setPriceFrom(event.price_from?.toString() || '')
     setPreviewUrl(cleanCover || '')
     setCover(null)
+    setReelUrl(event.reel_url || '')
     setDescription(event.description || '')
     setPerks(event.perks?.join(', ') || '')
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -318,20 +322,33 @@ export default function AdminPage() {
         <textarea className="input" placeholder="Descripción" value={description} onChange={(e) => setDescription(e.target.value)} />
         <input className="input" placeholder="Extras" value={perks} onChange={(e) => setPerks(e.target.value)} />
 
-        <input
-          type="file"
-          accept="image/*"
-          className="input"
-          onChange={(e) => {
-            const file = e.target.files?.[0] || null
-            setCover(file)
-            setPreviewUrl(file ? URL.createObjectURL(file) : '')
-          }}
-        />
+        <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4">
+          <p className="text-sm font-semibold text-slate-300">Cartel del evento</p>
+          <p className="mt-1 text-xs text-slate-500">
+            Imagen principal del evento. Recomendado 4:5 o cuadrado.
+          </p>
+          <input
+            type="file"
+            accept="image/*"
+            className="input mt-4"
+            onChange={(e) => {
+              const file = e.target.files?.[0] || null
+              setCover(file)
+              setPreviewUrl(file ? URL.createObjectURL(file) : '')
+            }}
+          />
+        </div>
 
         {previewUrl && (
-          <img src={previewUrl} alt="Preview del evento" className="h-56 w-full rounded-xl object-cover" />
+          <img src={previewUrl} alt="Preview del cartel" className="max-h-[520px] w-full rounded-xl object-contain" />
         )}
+
+        <input
+          className="input"
+          placeholder="Link del reel o video"
+          value={reelUrl}
+          onChange={(e) => setReelUrl(e.target.value)}
+        />
 
         <button className="btn-primary w-full" type="submit">
           {editingEvent ? 'Guardar cambios' : 'Crear evento'}

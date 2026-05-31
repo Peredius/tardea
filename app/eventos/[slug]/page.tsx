@@ -267,6 +267,16 @@ export default function EventDetailPage() {
         </div>
 
         <aside className="space-y-6">
+          {event.cover && (
+            <div className="card overflow-hidden p-0">
+              <img
+                src={event.cover}
+                alt={`Cartel de ${event.title}`}
+                className="w-full object-cover"
+              />
+            </div>
+          )}
+
           <div className="card p-6">
             <h3 className="text-xl font-semibold">Reserva o compra entradas</h3>
 
@@ -296,6 +306,23 @@ export default function EventDetailPage() {
               {isFavorite ? '❤️ Guardado' : '🤍 Guardar en favoritos'}
             </button>
           </div>
+
+          {event.reel_url && (
+            <div className="card p-6">
+              <h3 className="text-xl font-semibold">Video del evento</h3>
+              <p className="mt-2 text-sm text-slate-400">
+                Mira el reel o video que ha compartido el promotor.
+              </p>
+              <a
+                href={event.reel_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-secondary mt-5 w-full"
+              >
+                Ver reel
+              </a>
+            </div>
+          )}
         </aside>
       </section>
 

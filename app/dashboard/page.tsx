@@ -193,6 +193,7 @@ export default function DashboardPage() {
   const [audience, setAudience] = useState('25-35')
   const [cover, setCover] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState('')
+  const [reelUrl, setReelUrl] = useState('')
   const [description, setDescription] = useState('')
   const [perks, setPerks] = useState('')
 
@@ -497,6 +498,7 @@ export default function DashboardPage() {
     setAudience(event.audience ?? '25-35')
     setDescription(event.description ?? '')
     setPerks((event.perks ?? []).join(', '))
+    setReelUrl(event.reel_url ?? '')
     setCover(null)
     setPreviewUrl(event.cover ?? '')
     setPromotionOpen(false)
@@ -1063,6 +1065,7 @@ export default function DashboardPage() {
       audience,
       price_from: isInvitation ? 0 : priceFrom ? parseFloat(priceFrom) : 0,
       cover: imageUrl,
+      reel_url: reelUrl || null,
       featured: false,
       description,
       perks: perks ? perks.split(',').map((p) => p.trim()) : [],
@@ -1153,6 +1156,7 @@ export default function DashboardPage() {
     setAudience('25-35')
     setCover(null)
     setPreviewUrl('')
+    setReelUrl('')
     setDescription('')
     setPerks('')
 
@@ -1225,6 +1229,7 @@ export default function DashboardPage() {
       audience: event.audience,
       price_from: event.price_from ?? 0,
       cover: event.cover,
+      reel_url: event.reel_url ?? null,
       featured: false,
       description: event.description,
       perks: event.perks ?? [],
@@ -2436,8 +2441,29 @@ export default function DashboardPage() {
                 <input className="input" placeholder="Link de Google Maps" value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} />
                 <textarea className="input min-h-32" placeholder="Descripcion" value={description} onChange={(e) => setDescription(e.target.value)} required />
                 <input className="input" placeholder="Extras separados por comas" value={perks} onChange={(e) => setPerks(e.target.value)} />
-                <input type="file" accept="image/*" className="input" onChange={(e) => { const file = e.target.files?.[0] || null; setCover(file); setPreviewUrl(file ? URL.createObjectURL(file) : '') }} />
-                {previewUrl && <img src={previewUrl} alt="Preview del evento" className="h-56 w-full rounded-xl object-cover" />}
+                <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4">
+                  <p className="text-sm font-semibold text-slate-300">Cartel del evento</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Sube el cartel del feed de Instagram. Recomendado 4:5 o cuadrado.
+                  </p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="input mt-4"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null
+                      setCover(file)
+                      setPreviewUrl(file ? URL.createObjectURL(file) : '')
+                    }}
+                  />
+                  {previewUrl && <img src={previewUrl} alt="Preview del cartel" className="mt-4 max-h-[520px] w-full rounded-xl object-contain" />}
+                </div>
+                <input
+                  className="input"
+                  placeholder="Link del reel o video (Instagram, TikTok o YouTube)"
+                  value={reelUrl}
+                  onChange={(e) => setReelUrl(e.target.value)}
+                />
 
                 <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4">
                   <button
@@ -2545,6 +2571,7 @@ export default function DashboardPage() {
                       setAudience('25-35')
                       setCover(null)
                       setPreviewUrl('')
+                      setReelUrl('')
                       setDescription('')
                       setPerks('')
                       setMessage('')
