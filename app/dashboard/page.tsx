@@ -441,8 +441,7 @@ export default function DashboardPage() {
     setMessage('')
   }
 
-  function addDuplicateDate(eventId: string) {
-    const nextDate = duplicateDateDrafts[eventId]
+  function addDuplicateDate(eventId: string, nextDate: string) {
     if (!nextDate) return
 
     setDuplicateDates((current) => {
@@ -450,7 +449,6 @@ export default function DashboardPage() {
       if (dates.includes(nextDate)) return current
       return { ...current, [eventId]: [...dates, nextDate].sort() }
     })
-    setDuplicateDateDrafts((current) => ({ ...current, [eventId]: '' }))
   }
 
   function removeDuplicateDate(eventId: string, dateToRemove: string) {
@@ -1170,7 +1168,7 @@ export default function DashboardPage() {
     const datesToCreate = duplicateDates[event.id] ?? []
 
     if (datesToCreate.length === 0) {
-      setMessage('Elige una o varias fechas para duplicar el evento.')
+      setMessage('Elige una o varias fechas para anadir al evento.')
       return
     }
 
@@ -1213,16 +1211,17 @@ export default function DashboardPage() {
     const { error } = await supabase.from('events').insert(duplicateRows)
 
     if (error) {
-      setMessage(`No se pudieron duplicar los eventos: ${error.message}`)
+      setMessage(`No se pudieron anadir las fechas: ${error.message}`)
       setSaving(false)
       return
     }
 
     setDuplicateDates((current) => ({ ...current, [event.id]: [] }))
+    setDuplicateDateDrafts((current) => ({ ...current, [event.id]: '' }))
     setMessage(
       datesToCreate.length === 1
-        ? 'Evento duplicado como pendiente.'
-        : `${datesToCreate.length} eventos duplicados como pendientes.`
+        ? 'Fecha anadida como evento pendiente.'
+        : `${datesToCreate.length} fechas anadidas como eventos pendientes.`
     )
     await refreshEvents()
     setSaving(false)
@@ -2554,50 +2553,51 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex flex-col gap-3 md:items-end">
                         {selectedEventProfile && (
-                          <div className="w-full space-y-2 md:w-auto">
-                            <div className="flex flex-col gap-2 sm:flex-row">
+                          <div className="w-full rounded-2xl border border-white/10 bg-slate-950/50 p-3 md:w-80">
+                            <p className="text-sm font-semibold text-white">
+                              Anadir fechas al evento
+                            </p>
+                            <p className="mt-1 text-xs text-slate-400">
+                              Selecciona las fechas en las que se va a hacer el evento.
+                            </p>
+                            <div className="mt-3 space-y-2">
                               <input
                                 type="date"
                                 className="input min-h-0 px-3 py-2 text-sm"
                                 value={duplicateDateDrafts[event.id] ?? ''}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                  const nextDate = e.target.value
                                   setDuplicateDateDrafts((current) => ({
                                     ...current,
-                                    [event.id]: e.target.value,
+                                    [event.id]: nextDate,
                                   }))
-                                }
-                                aria-label="Fecha para duplicar evento"
+                                  addDuplicateDate(event.id, nextDate)
+                                }}
+                                aria-label="Seleccionar fecha para anadir al evento"
                               />
+                              {(duplicateDates[event.id] ?? []).length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                  {(duplicateDates[event.id] ?? []).map((duplicateDate) => (
+                                    <button
+                                      key={duplicateDate}
+                                      type="button"
+                                      onClick={() => removeDuplicateDate(event.id, duplicateDate)}
+                                      className="rounded-full bg-brand-500/20 px-3 py-1 text-xs font-semibold text-brand-100"
+                                    >
+                                      {new Date(duplicateDate).toLocaleDateString('es-ES')} x
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
                               <button
                                 type="button"
-                                onClick={() => addDuplicateDate(event.id)}
-                                className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:border-brand-500 hover:text-brand-500"
+                                onClick={() => duplicateEventForDates(event)}
+                                disabled={saving || (duplicateDates[event.id] ?? []).length === 0}
+                                className="w-full rounded-full bg-brand-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-600 disabled:opacity-60"
                               >
-                                Anadir fecha
+                                Anadir fecha/s
                               </button>
                             </div>
-                            {(duplicateDates[event.id] ?? []).length > 0 && (
-                              <div className="flex flex-wrap gap-2">
-                                {(duplicateDates[event.id] ?? []).map((duplicateDate) => (
-                                  <button
-                                    key={duplicateDate}
-                                    type="button"
-                                    onClick={() => removeDuplicateDate(event.id, duplicateDate)}
-                                    className="rounded-full bg-brand-500/20 px-3 py-1 text-xs font-semibold text-brand-100"
-                                  >
-                                    {new Date(duplicateDate).toLocaleDateString('es-ES')} x
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => duplicateEventForDates(event)}
-                              disabled={saving || (duplicateDates[event.id] ?? []).length === 0}
-                              className="w-full rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:border-brand-500 hover:text-brand-500 disabled:opacity-60"
-                            >
-                              Duplicar en fechas
-                            </button>
                           </div>
                         )}
                         <div className="flex flex-wrap gap-3 md:justify-end">
