@@ -1162,10 +1162,9 @@ export default function DashboardPage() {
             </button>
 
             <div className="min-w-0">
-              <h1 className="truncate text-3xl font-black text-white md:text-5xl">
+              <h1 className="truncate text-xl font-black text-white md:text-3xl">
                 {greetingName}
               </h1>
-              <p className="mt-2 truncate text-sm text-slate-400">{email}</p>
 
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
                 <div>
