@@ -369,6 +369,13 @@ export default function AdminPage() {
                 <p className="mt-2 text-xs text-slate-500">Edad: {event.audience}</p>
               )}
 
+              {event.promotion_package_name && (
+                <p className="mt-2 rounded-full bg-brand-500/20 px-3 py-1 text-xs font-semibold text-brand-200">
+                  Promo solicitada: {event.promotion_package_name}
+                  {event.promotion_price ? ` · ${event.promotion_price} EUR` : ''}
+                </p>
+              )}
+
               {event.music?.length > 0 && (
                 <p className="mt-1 text-xs text-slate-500">{event.music.join(', ')}</p>
               )}
@@ -424,6 +431,13 @@ export default function AdminPage() {
 
               {event.address && (
                 <p className="mt-1 text-sm text-slate-400">{event.address}</p>
+              )}
+
+              {event.promotion_package_name && (
+                <p className="mt-2 rounded-full bg-brand-500/20 px-3 py-1 text-xs font-semibold text-brand-200">
+                  Promo solicitada: {event.promotion_package_name}
+                  {event.promotion_price ? ` · ${event.promotion_price} EUR` : ''}
+                </p>
               )}
 
               {event.maps_url && (

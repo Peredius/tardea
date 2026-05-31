@@ -79,6 +79,26 @@ const PROVINCE_OPTIONS = [
 
 const MUSIC_OPTIONS = ['Comercial', 'Electrónica', 'Pop', 'Indie', 'Flamenquito', 'Remember']
 const AUDIENCE_OPTIONS = ['18-25', '25-35', '30+', 'Mixto']
+const PROMOTION_PACKAGES = [
+  {
+    id: 'launch',
+    name: 'Lanzamiento',
+    price: 149,
+    description: 'Destacado en web + redes sociales + newsletter',
+  },
+  {
+    id: 'amplified',
+    name: 'Amplificado',
+    price: 99,
+    description: 'Destacado en web + redes sociales',
+  },
+  {
+    id: 'boost',
+    name: 'Impulso',
+    price: 49,
+    description: 'Destacado en web',
+  },
+]
 
 function generateSlug(title: string, date: string) {
   const cleanTitle = title
@@ -111,6 +131,8 @@ export default function DashboardPage() {
   const [selectedEventProfileId, setSelectedEventProfileId] = useState('')
   const [saveAsTemplate, setSaveAsTemplate] = useState(false)
   const [saveAsTemplateName, setSaveAsTemplateName] = useState('')
+  const [promotionOpen, setPromotionOpen] = useState(false)
+  const [selectedPromotionPackage, setSelectedPromotionPackage] = useState('')
   const [templateMessage, setTemplateMessage] = useState('')
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null)
   const [editingEventProfileId, setEditingEventProfileId] = useState<string | null>(null)
@@ -840,6 +862,10 @@ export default function DashboardPage() {
       imageUrl = data.publicUrl
     }
 
+    const promotionPackage = PROMOTION_PACKAGES.find(
+      (item) => item.id === selectedPromotionPackage
+    )
+
     const eventData = {
       title,
       slug: generateSlug(title, date),
@@ -862,6 +888,11 @@ export default function DashboardPage() {
       published: false,
       user_id: user.id,
       event_profile_id: selectedEventProfileId || null,
+      promotion_package: promotionPackage?.id ?? null,
+      promotion_package_name: promotionPackage?.name ?? null,
+      promotion_price: promotionPackage?.price ?? null,
+      promotion_status: promotionPackage ? 'requested' : 'none',
+      promotion_requested_at: promotionPackage ? new Date().toISOString() : null,
     }
 
     const { error } = await supabase.from('events').insert(eventData)
@@ -904,6 +935,8 @@ export default function DashboardPage() {
     setSelectedTemplateId('')
     setSaveAsTemplate(false)
     setSaveAsTemplateName('')
+    setPromotionOpen(false)
+    setSelectedPromotionPackage('')
     setTitle('')
     setVenue('')
     setArea('')
@@ -2031,6 +2064,68 @@ export default function DashboardPage() {
                 <input className="input" placeholder="Extras separados por comas" value={perks} onChange={(e) => setPerks(e.target.value)} />
                 <input type="file" accept="image/*" className="input" onChange={(e) => { const file = e.target.files?.[0] || null; setCover(file); setPreviewUrl(file ? URL.createObjectURL(file) : '') }} />
                 {previewUrl && <img src={previewUrl} alt="Preview del evento" className="h-56 w-full rounded-xl object-cover" />}
+
+                <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4">
+                  <button
+                    type="button"
+                    onClick={() => setPromotionOpen((open) => !open)}
+                    className="flex w-full items-center justify-between gap-4 text-left"
+                  >
+                    <span>
+                      <span className="block text-sm font-bold text-white">Promocionar evento</span>
+                      <span className="mt-1 block text-xs text-slate-400">
+                        Solicita destacado, redes sociales o newsletter. El pago se activara en el siguiente paso.
+                      </span>
+                    </span>
+                    <span className="text-sm font-bold text-brand-500">
+                      {promotionOpen ? 'Cerrar' : 'Abrir'}
+                    </span>
+                  </button>
+
+                  {promotionOpen && (
+                    <div className="mt-4 grid gap-3">
+                      <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                        <input
+                          type="radio"
+                          name="promotion-package"
+                          checked={selectedPromotionPackage === ''}
+                          onChange={() => setSelectedPromotionPackage('')}
+                          className="mt-1"
+                        />
+                        <span>
+                          <span className="block text-sm font-bold text-white">Sin promocion</span>
+                          <span className="block text-xs text-slate-400">Enviar como evento normal.</span>
+                        </span>
+                      </label>
+
+                      {PROMOTION_PACKAGES.map((promotionPackage) => (
+                        <label
+                          key={promotionPackage.id}
+                          className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4"
+                        >
+                          <input
+                            type="radio"
+                            name="promotion-package"
+                            checked={selectedPromotionPackage === promotionPackage.id}
+                            onChange={() => setSelectedPromotionPackage(promotionPackage.id)}
+                            className="mt-1"
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className="flex items-center justify-between gap-3">
+                              <span className="text-sm font-bold text-white">{promotionPackage.name}</span>
+                              <span className="text-sm font-black text-brand-500">{promotionPackage.price} EUR</span>
+                            </span>
+                            <span className="mt-1 block text-xs text-slate-400">
+                              {promotionPackage.description}
+                            </span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {false && (
                 <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-slate-100">
                   <input
                     type="checkbox"
@@ -2039,6 +2134,7 @@ export default function DashboardPage() {
                   />
                   Guardar estos datos como ficha para proximos eventos
                 </label>
+                )}
                 {saveAsTemplate && (
                   <input
                     className="input"
@@ -2071,6 +2167,11 @@ export default function DashboardPage() {
                         <span className={`mt-2 inline-block rounded-full px-3 py-1 text-xs ${event.status === 'approved' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-yellow-500/20 text-yellow-300'}`}>
                           {event.status === 'approved' ? 'Publicado' : 'Pendiente'}
                         </span>
+                        {event.promotion_package_name && (
+                          <span className="ml-2 mt-2 inline-block rounded-full bg-brand-500/20 px-3 py-1 text-xs text-brand-200">
+                            Promo: {event.promotion_package_name}
+                          </span>
+                        )}
                       </div>
                       <a href={`/eventos/${event.slug}?from=dashboard`} className="text-sm font-medium text-brand-500 hover:underline">Vista previa</a>
                     </div>
