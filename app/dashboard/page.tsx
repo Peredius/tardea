@@ -453,7 +453,9 @@ export default function DashboardPage() {
     )
 
     if (nextDate === event.date || dateAlreadyExists) {
-      setMessage('Esa fecha ya existe para este evento.')
+      setMessage(
+        `La fecha ${new Date(nextDate).toLocaleDateString('es-ES')} ya esta creada. Selecciona otra.`
+      )
       return
     }
 
