@@ -776,6 +776,12 @@ export default function DashboardPage() {
     setEventProfileBannerUrl(nextBannerUrl)
     resetEventProfileForm()
     await refreshEventProfiles()
+    window.setTimeout(() => {
+      document.getElementById('event-profiles-list')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    }, 50)
   }
 
   async function deleteEventProfile(profileId: string) {
@@ -1659,7 +1665,7 @@ export default function DashboardPage() {
               {eventProfileMessage && <p className="text-sm text-brand-500">{eventProfileMessage}</p>}
             </form>
 
-            <section className="card order-1 p-6">
+            <section id="event-profiles-list" className="card order-1 scroll-mt-24 p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-2xl font-bold">Mis fiestas</h2>
