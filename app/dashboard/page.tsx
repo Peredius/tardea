@@ -1568,7 +1568,7 @@ export default function DashboardPage() {
                   }`}
                 >
                   <Icon className="h-9 w-9" />
-                  <span className="pointer-events-none absolute -bottom-9 left-1/2 z-20 hidden -translate-x-1/2 whitespace-nowrap rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-950 shadow-xl group-hover:block">
+                  <span className="pointer-events-none absolute -bottom-8 left-1/2 z-20 hidden -translate-x-1/2 whitespace-nowrap rounded-full border border-white/10 bg-slate-900/90 px-2.5 py-1 text-[10px] font-semibold text-slate-300 shadow-lg shadow-slate-950/30 backdrop-blur group-hover:block">
                     {item.label}
                   </span>
                 </button>
