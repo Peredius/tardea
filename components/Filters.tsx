@@ -353,13 +353,15 @@ export function Filters() {
                     : 'min-w-[50vw] scale-[0.94] opacity-80'
                 }`}
               >
-                <div
+                <Link
+                  href={`/eventos/${event.slug}`}
+                  aria-label={`Ver ${event.title}`}
                   className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105 sm:relative sm:h-44 sm:min-h-0 sm:w-full sm:shrink-0"
                   style={{
                     backgroundImage: `url(${
                       !isPastEvent && event.cover
                         ? event.cover
-                        : 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
+                      : 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
                     })`,
                   }}
                 />

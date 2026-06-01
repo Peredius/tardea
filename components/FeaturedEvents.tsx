@@ -114,7 +114,9 @@ export function FeaturedEvents() {
             }`}
           >
             <div className="relative flex aspect-[9/16] overflow-hidden sm:block sm:aspect-auto">
-              <div
+              <Link
+                href={`/eventos/${event.slug}`}
+                aria-label={`Ver ${event.title}`}
                 className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105 sm:relative sm:h-44 sm:w-full"
                 style={{
                   backgroundImage: `url(${event.cover || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80'})`,
