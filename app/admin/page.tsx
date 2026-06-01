@@ -41,6 +41,7 @@ export default function AdminPage() {
   const [perks, setPerks] = useState('')
   const [events, setEvents] = useState<any[]>([])
   const [pendingEvents, setPendingEvents] = useState<any[]>([])
+  const [eventClaims, setEventClaims] = useState<any[]>([])
   const [editingEvent, setEditingEvent] = useState<any | null>(null)
 
   useEffect(() => {
@@ -91,6 +92,22 @@ export default function AdminPage() {
 
     setEvents(data || [])
     setPendingEvents(pendingData || [])
+    fetchEventClaims()
+  }
+
+  async function fetchEventClaims() {
+    const { data, error } = await supabase
+      .from('event_claims')
+      .select('*, events(title, date, venue, slug)')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    setEventClaims(data || [])
   }
 
   async function approveEvent(eventId: string) {
@@ -107,6 +124,55 @@ export default function AdminPage() {
 
     setMessage('Evento aprobado correctamente')
     fetchEvents()
+  }
+
+  async function approveClaim(claim: any) {
+    const { error: eventError } = await supabase
+      .from('events')
+      .update({
+        user_id: claim.promoter_user_id,
+        claimed_at: new Date().toISOString(),
+      })
+      .eq('id', claim.event_id)
+
+    if (eventError) {
+      setMessage(`Error al asignar evento: ${eventError.message}`)
+      return
+    }
+
+    const { error: claimError } = await supabase
+      .from('event_claims')
+      .update({
+        status: 'approved',
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq('id', claim.id)
+
+    if (claimError) {
+      setMessage(`Evento asignado, pero no se pudo cerrar la solicitud: ${claimError.message}`)
+      return
+    }
+
+    setMessage('Reclamacion aprobada y evento asignado al promotor')
+    fetchEvents()
+  }
+
+  async function rejectClaim(claimId: string) {
+    const { error } = await supabase
+      .from('event_claims')
+      .update({
+        status: 'rejected',
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq('id', claimId)
+
+    if (error) {
+      setMessage(`Error al rechazar solicitud: ${error.message}`)
+      return
+    }
+
+    setMessage('Reclamacion rechazada')
+    fetchEventClaims()
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -356,6 +422,58 @@ export default function AdminPage() {
 
         {message && <p className="text-sm text-brand-500">{message}</p>}
       </form>
+
+      <div className="mt-12">
+        <h2 className="mb-4 text-2xl font-bold">Reclamaciones de eventos</h2>
+
+        {eventClaims.length === 0 && (
+          <p className="text-slate-400">No hay reclamaciones pendientes</p>
+        )}
+
+        <div className="space-y-4">
+          {eventClaims.map((claim) => (
+            <div key={claim.id} className="rounded-2xl border border-white/10 bg-slate-900/80 p-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-500">
+                    Solicitud pendiente
+                  </p>
+                  <h3 className="mt-2 text-xl font-bold">
+                    {claim.events?.title || 'Evento sin titulo'}
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-400">
+                    {[claim.events?.venue, claim.events?.date ? new Date(claim.events.date).toLocaleDateString('es-ES') : null].filter(Boolean).join(' · ')}
+                  </p>
+                  <div className="mt-4 grid gap-2 text-sm text-slate-300 sm:grid-cols-2">
+                    <p><span className="text-slate-500">Contacto:</span> {claim.contact_name}</p>
+                    <p><span className="text-slate-500">Empresa:</span> {claim.company}</p>
+                    <p><span className="text-slate-500">Email:</span> {claim.email}</p>
+                    <p><span className="text-slate-500">Telefono:</span> {claim.phone || 'No indicado'}</p>
+                    <p className="sm:col-span-2"><span className="text-slate-500">Web/Instagram:</span> {claim.website || 'No indicado'}</p>
+                    {claim.message && (
+                      <p className="sm:col-span-2"><span className="text-slate-500">Mensaje:</span> {claim.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  {claim.events?.slug && (
+                    <Link href={`/eventos/${claim.events.slug}?from=admin`} className="btn-secondary">
+                      Ver evento
+                    </Link>
+                  )}
+                  <button className="btn-primary" onClick={() => approveClaim(claim)}>
+                    Aprobar
+                  </button>
+                  <button className="btn-secondary" onClick={() => rejectClaim(claim.id)}>
+                    Rechazar
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="mt-12">
         <h2 className="mb-4 text-2xl font-bold">Eventos creados</h2>

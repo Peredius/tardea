@@ -43,6 +43,15 @@ export default function EventDetailPage() {
   const [loading, setLoading] = useState(true)
   const [isFavorite, setIsFavorite] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
+  const [userEmail, setUserEmail] = useState('')
+  const [claimOpen, setClaimOpen] = useState(false)
+  const [claimName, setClaimName] = useState('')
+  const [claimCompany, setClaimCompany] = useState('')
+  const [claimPhone, setClaimPhone] = useState('')
+  const [claimWebsite, setClaimWebsite] = useState('')
+  const [claimMessage, setClaimMessage] = useState('')
+  const [claimStatus, setClaimStatus] = useState('')
+  const [claimSubmitting, setClaimSubmitting] = useState(false)
 
   useEffect(() => {
     async function loadEvent() {
@@ -62,6 +71,16 @@ export default function EventDetailPage() {
       if (!user || !data) return
 
       setUserId(user.id)
+      setUserEmail(user.email ?? '')
+
+      const { data: existingClaim } = await supabase
+        .from('event_claims')
+        .select('status')
+        .eq('event_id', data.id)
+        .eq('promoter_user_id', user.id)
+        .maybeSingle()
+
+      if (existingClaim?.status) setClaimStatus(existingClaim.status)
 
       const { data: favorite } = await supabase
         .from('favorites')
@@ -100,6 +119,47 @@ export default function EventDetailPage() {
 
       setIsFavorite(true)
     }
+  }
+
+  async function submitClaim(e: React.FormEvent) {
+    e.preventDefault()
+
+    if (!event) return
+
+    if (!userId) {
+      window.location.href = '/login?type=venue'
+      return
+    }
+
+    setClaimSubmitting(true)
+    setClaimStatus('')
+
+    const { error } = await supabase.from('event_claims').insert({
+      event_id: event.id,
+      promoter_user_id: userId,
+      contact_name: claimName,
+      company: claimCompany,
+      email: userEmail,
+      phone: claimPhone || null,
+      website: claimWebsite || null,
+      message: claimMessage || null,
+      status: 'pending',
+    })
+
+    setClaimSubmitting(false)
+
+    if (error) {
+      setClaimStatus(`error:${error.message}`)
+      return
+    }
+
+    setClaimStatus('pending')
+    setClaimOpen(false)
+    setClaimName('')
+    setClaimCompany('')
+    setClaimPhone('')
+    setClaimWebsite('')
+    setClaimMessage('')
   }
 
   if (loading) {
@@ -321,6 +381,87 @@ export default function EventDetailPage() {
               >
                 Ver reel
               </a>
+            </div>
+          )}
+
+          {!event.user_id && (
+            <div className="card p-6">
+              <h3 className="text-xl font-semibold">¿Eres el promotor?</h3>
+              <p className="mt-2 text-sm text-slate-400">
+                Si este evento es tuyo, puedes reclamarlo para gestionarlo desde tu panel.
+              </p>
+
+              {claimStatus === 'pending' ? (
+                <p className="mt-4 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
+                  Solicitud enviada. TARDEA la revisara manualmente.
+                </p>
+              ) : claimStatus === 'approved' ? (
+                <p className="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+                  Reclamacion aprobada.
+                </p>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!userId) {
+                        window.location.href = '/login?type=venue'
+                        return
+                      }
+                      setClaimOpen((open) => !open)
+                    }}
+                    className="btn-secondary mt-5 w-full"
+                  >
+                    Reclamar evento
+                  </button>
+
+                  {claimOpen && (
+                    <form onSubmit={submitClaim} className="mt-5 space-y-3">
+                      <input
+                        className="input"
+                        placeholder="Persona de contacto"
+                        value={claimName}
+                        onChange={(e) => setClaimName(e.target.value)}
+                        required
+                      />
+                      <input
+                        className="input"
+                        placeholder="Empresa o promotora"
+                        value={claimCompany}
+                        onChange={(e) => setClaimCompany(e.target.value)}
+                        required
+                      />
+                      <input
+                        className="input"
+                        placeholder="Telefono"
+                        value={claimPhone}
+                        onChange={(e) => setClaimPhone(e.target.value)}
+                      />
+                      <input
+                        className="input"
+                        placeholder="Web o Instagram oficial"
+                        value={claimWebsite}
+                        onChange={(e) => setClaimWebsite(e.target.value)}
+                      />
+                      <textarea
+                        className="input min-h-24"
+                        placeholder="Cuéntanos brevemente por qué puedes reclamar este evento"
+                        value={claimMessage}
+                        onChange={(e) => setClaimMessage(e.target.value)}
+                      />
+                      <button className="btn-primary w-full" type="submit" disabled={claimSubmitting}>
+                        {claimSubmitting ? 'Enviando...' : 'Enviar reclamacion'}
+                      </button>
+                    </form>
+                  )}
+
+                  {claimStatus.startsWith('error:') && (
+                    <p className="mt-4 text-sm text-brand-500">
+                      No se pudo enviar: {claimStatus.replace('error:', '')}
+                    </p>
+                  )}
+                </>
+              )}
             </div>
           )}
         </aside>
