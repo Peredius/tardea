@@ -240,6 +240,21 @@ export default function EventDetailPage() {
               />
               {isFavorite ? 'Guardado en favoritos' : 'Guardar evento'}
             </button>
+
+            {!event.user_id && (
+              <button
+                type="button"
+                onClick={() => {
+                  document.getElementById('claim-event')?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                  })
+                }}
+                className="btn-secondary mt-5 w-full sm:hidden"
+              >
+                ¿Eres el promotor? Reclamar evento
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -385,7 +400,7 @@ export default function EventDetailPage() {
           )}
 
           {!event.user_id && (
-            <div className="card p-6">
+            <div id="claim-event" className="card scroll-mt-24 p-6">
               <h3 className="text-xl font-semibold">¿Eres el promotor?</h3>
               <p className="mt-2 text-sm text-slate-400">
                 Si este evento es tuyo, puedes reclamarlo para gestionarlo desde tu panel.
