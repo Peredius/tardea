@@ -586,64 +586,55 @@ export default function AdminPage() {
           <p className="text-slate-400">No hay eventos publicados</p>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="space-y-3">
           {events.map((event) => (
-          <div key={event.id} className="flex min-h-56 flex-col justify-between rounded-xl bg-slate-800 p-4">
-            <div>
-              <p className="font-semibold">{event.title}</p>
+            <div
+              key={event.id}
+              className="flex flex-col gap-4 rounded-xl border border-white/10 bg-slate-800/80 p-4 lg:flex-row lg:items-center lg:justify-between"
+            >
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-semibold lg:truncate">{event.title}</p>
+                  <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs text-emerald-300">
+                    Publicado
+                  </span>
+                  {event.promotion_package_name && (
+                    <span className="rounded-full bg-brand-500/20 px-3 py-1 text-xs font-semibold text-brand-200">
+                      Promo: {event.promotion_package_name}
+                    </span>
+                  )}
+                </div>
 
-              <span className="mt-2 inline-block rounded-full bg-emerald-500/20 px-3 py-1 text-xs text-emerald-300">
-                Publicado
-              </span>
-
-              <p className="text-sm text-slate-400">
-                {new Date(event.date).toLocaleDateString('es-ES')}
-              </p>
-
-              {event.address && (
-                <p className="mt-1 text-sm text-slate-400">{event.address}</p>
-              )}
-
-              {event.audience && (
-                <p className="mt-2 text-xs text-slate-500">Edad: {event.audience}</p>
-              )}
-
-              {event.promotion_package_name && (
-                <p className="mt-2 rounded-full bg-brand-500/20 px-3 py-1 text-xs font-semibold text-brand-200">
-                  Promo solicitada: {event.promotion_package_name}
-                  {event.promotion_price ? ` - ${event.promotion_price} EUR` : ''}
+                <p className="mt-1 text-sm text-slate-400">
+                  {[new Date(event.date).toLocaleDateString('es-ES'), event.venue, event.address].filter(Boolean).join(' - ')}
                 </p>
-              )}
 
-              {event.music?.length > 0 && (
-                <p className="mt-1 text-xs text-slate-500">{event.music.join(' - ')}</p>
-              )}
+                <p className="mt-1 text-xs text-slate-500">
+                  {[event.audience ? `Edad: ${event.audience}` : null, event.music?.length ? event.music.join(' - ') : null].filter(Boolean).join(' - ')}
+                </p>
+              </div>
 
-              {event.maps_url && (
-                <a
-                  href={event.maps_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-1 inline-block text-sm text-brand-500"
-                >
-                  Ver en Google Maps
-                </a>
-              )}
+              <div className="flex shrink-0 flex-wrap gap-2">
+                {event.maps_url && (
+                  <a
+                    href={event.maps_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-secondary"
+                  >
+                    Maps
+                  </a>
+                )}
+
+                <Link href={`/eventos/${event.slug}?from=admin`} className="btn-secondary">
+                  Vista previa
+                </Link>
+
+                <button className="btn-primary" onClick={() => loadEventForEdit(event)}>
+                  Editar
+                </button>
+              </div>
             </div>
-
-            <div className="mt-4 flex gap-2">
-              <Link href={`/eventos/${event.slug}?from=admin`} className="btn-secondary flex-1 text-center">
-                Vista previa
-              </Link>
-
-              <button
-                className="btn-primary flex-1"
-                onClick={() => loadEventForEdit(event)}
-              >
-                Editar
-              </button>
-            </div>
-          </div>
           ))}
         </div>
       </div>
@@ -655,60 +646,57 @@ export default function AdminPage() {
           <p className="text-slate-400">No hay eventos pendientes</p>
         )}
 
-        {pendingEvents.map((event) => (
-          <div key={event.id} className="mb-3 flex items-center justify-between rounded-xl bg-yellow-900/30 p-4">
-            <div>
-              <p className="font-semibold">{event.title}</p>
+        <div className="space-y-3">
+          {pendingEvents.map((event) => (
+            <div
+              key={event.id}
+              className="flex flex-col gap-4 rounded-xl border border-yellow-500/20 bg-yellow-900/20 p-4 lg:flex-row lg:items-center lg:justify-between"
+            >
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-semibold lg:truncate">{event.title}</p>
+                  <span className="rounded-full bg-yellow-500/20 px-3 py-1 text-xs text-yellow-300">
+                    Pendiente
+                  </span>
+                  {event.promotion_package_name && (
+                    <span className="rounded-full bg-brand-500/20 px-3 py-1 text-xs font-semibold text-brand-200">
+                      Promo: {event.promotion_package_name}
+                    </span>
+                  )}
+                </div>
 
-              <span className="mt-2 inline-block rounded-full bg-yellow-500/20 px-3 py-1 text-xs text-yellow-300">
-                Pendiente
-              </span>
-
-              <p className="text-sm text-slate-400">
-                {new Date(event.date).toLocaleDateString('es-ES')}
-              </p>
-
-              {event.address && (
-                <p className="mt-1 text-sm text-slate-400">{event.address}</p>
-              )}
-
-              {event.promotion_package_name && (
-                <p className="mt-2 rounded-full bg-brand-500/20 px-3 py-1 text-xs font-semibold text-brand-200">
-                  Promo solicitada: {event.promotion_package_name}
-                  {event.promotion_price ? ` - ${event.promotion_price} EUR` : ''}
+                <p className="mt-1 text-sm text-slate-400">
+                  {[new Date(event.date).toLocaleDateString('es-ES'), event.venue, event.address].filter(Boolean).join(' - ')}
                 </p>
-              )}
+              </div>
 
-              {event.maps_url && (
-                <a
-                  href={event.maps_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-1 inline-block text-sm text-brand-500"
-                >
-                  Ver en Google Maps
-                </a>
-              )}
+              <div className="flex shrink-0 flex-wrap gap-2">
+                {event.maps_url && (
+                  <a
+                    href={event.maps_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-secondary"
+                  >
+                    Maps
+                  </a>
+                )}
+
+                <Link href={`/eventos/${event.slug}?from=admin`} className="btn-secondary">
+                  Vista previa
+                </Link>
+
+                <button className="btn-secondary" onClick={() => loadEventForEdit(event)}>
+                  Editar
+                </button>
+
+                <button className="btn-primary" onClick={() => approveEvent(event.id)}>
+                  Aprobar
+                </button>
+              </div>
             </div>
-
-            <div className="flex gap-3">
-              <Link href={`/eventos/${event.slug}?from=admin`} className="btn-secondary">
-                Vista previa
-              </Link>
-
-              <button
-                className="text-sm text-brand-500"
-                onClick={() => loadEventForEdit(event)}
-              >
-                Editar
-              </button>
-
-              <button className="btn-primary" onClick={() => approveEvent(event.id)}>
-                Aprobar
-              </button>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </main>
   )
