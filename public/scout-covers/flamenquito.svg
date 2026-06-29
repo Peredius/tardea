@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#170817"/>
+      <stop offset="0.5" stop-color="#3b1026"/>
+      <stop offset="1" stop-color="#f97316"/>
+    </linearGradient>
+  </defs>
+  <rect width="1080" height="1350" fill="url(#bg)"/>
+  <path d="M280 770c65-255 180-390 345-405 108-10 188 38 240 142-142-22-247 10-315 96-66 84-156 140-270 167Z" fill="#fa3b68"/>
+  <path d="M235 865c145-48 260-115 345-201 84-86 190-122 317-110-74 144-184 236-330 276-105 29-216 41-332 35Z" fill="#fff" opacity="0.9"/>
+  <circle cx="255" cy="300" r="120" fill="#fff" opacity="0.08"/>
+  <text x="96" y="1035" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="76" font-weight="800">FLAMENQUITO</text>
+  <text x="96" y="1115" fill="#ffffff" opacity="0.72" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700" letter-spacing="8">IMAGEN PROVISIONAL</text>
+</svg>

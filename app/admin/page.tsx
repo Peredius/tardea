@@ -15,7 +15,7 @@ function generateSlug(title: string, date: string) {
   return date ? `${cleanTitle}-${date}` : cleanTitle
 }
 
-const MUSIC_OPTIONS = ['Comercial', 'Electrónica', 'Pop', 'Indie', 'Flamenquito', 'Remember']
+const MUSIC_OPTIONS = ['Comercial', 'Electronica', 'Pop', 'Indie', 'Flamenquito', 'Remember']
 const AUDIENCE_OPTIONS = ['18-25', '25-35', '30+', 'Mixto']
 
 export default function AdminPage() {
@@ -42,6 +42,7 @@ export default function AdminPage() {
   const [events, setEvents] = useState<any[]>([])
   const [pendingEvents, setPendingEvents] = useState<any[]>([])
   const [eventClaims, setEventClaims] = useState<any[]>([])
+  const [scoutEvents, setScoutEvents] = useState<any[]>([])
   const [editingEvent, setEditingEvent] = useState<any | null>(null)
 
   useEffect(() => {
@@ -83,15 +84,24 @@ export default function AdminPage() {
       .from('events')
       .select('*')
       .eq('status', 'pending')
+      .or('needs_review.is.null,needs_review.eq.false')
       .order('date', { ascending: true })
 
-    if (error || pendingError) {
-      console.error(error || pendingError)
+    const { data: scoutData, error: scoutError } = await supabase
+      .from('events')
+      .select('*')
+      .eq('imported_by_agent', true)
+      .eq('needs_review', true)
+      .order('date', { ascending: true })
+
+    if (error || pendingError || scoutError) {
+      console.error(error || pendingError || scoutError)
       return
     }
 
     setEvents(data || [])
     setPendingEvents(pendingData || [])
+    setScoutEvents(scoutData || [])
     fetchEventClaims()
   }
 
@@ -175,6 +185,42 @@ export default function AdminPage() {
     fetchEventClaims()
   }
 
+  async function approveScoutEvent(eventId: string) {
+    const { error } = await supabase
+      .from('events')
+      .update({
+        status: 'approved',
+        published: true,
+        needs_review: false,
+      })
+      .eq('id', eventId)
+
+    if (error) {
+      setMessage(`Error al aprobar evento Scout: ${error.message}`)
+      return
+    }
+
+    setMessage('Evento Scout aprobado y publicado')
+    fetchEvents()
+  }
+
+  async function discardScoutEvent(eventId: string) {
+    const confirmed = window.confirm('Quieres descartar este evento encontrado por Scout?')
+    if (!confirmed) return
+
+    const { error } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', eventId)
+
+    if (error) {
+      setMessage(`Error al descartar evento Scout: ${error.message}`)
+      return
+    }
+
+    setMessage('Evento Scout descartado')
+    fetchEvents()
+  }
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
@@ -288,7 +334,7 @@ export default function AdminPage() {
     setCover(null)
     setReelUrl(event.reel_url || '')
     setDescription(event.description || '')
-    setPerks(event.perks?.join(', ') || '')
+    setPerks(event.perks?.join(' - ') || '')
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
@@ -315,7 +361,7 @@ export default function AdminPage() {
           }}
           className="shrink-0 text-sm text-slate-400 hover:text-white"
         >
-          Cerrar sesión
+          Cerrar sesion
         </button>
       </section>
 
@@ -380,12 +426,12 @@ export default function AdminPage() {
         <input type="time" className="input" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
         <input type="time" className="input" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
 
-        <input className="input" placeholder="Precio (€)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
+        <input className="input" placeholder="Precio (EUR)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
         <input className="input" placeholder="Lugar" value={venue} onChange={(e) => setVenue(e.target.value)} />
-        <input className="input" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} />
+        <input className="input" placeholder="Direccion" value={address} onChange={(e) => setAddress(e.target.value)} />
         <input className="input" placeholder="Link de Google Maps" value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} />
 
-        <textarea className="input" placeholder="Descripción" value={description} onChange={(e) => setDescription(e.target.value)} />
+        <textarea className="input" placeholder="Descripcion" value={description} onChange={(e) => setDescription(e.target.value)} />
         <input className="input" placeholder="Extras" value={perks} onChange={(e) => setPerks(e.target.value)} />
 
         <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4">
@@ -424,6 +470,64 @@ export default function AdminPage() {
       </form>
 
       <div className="mt-12">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-500">TARDEA Scout</p>
+            <h2 className="text-2xl font-bold">Eventos encontrados para revisar</h2>
+          </div>
+          <p className="text-sm text-slate-400">Se publican solo despues de revisar datos, imagen y fuente.</p>
+        </div>
+
+        {scoutEvents.length === 0 && (
+          <p className="text-slate-400">No hay eventos encontrados pendientes de revisar</p>
+        )}
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          {scoutEvents.map((event) => (
+            <div key={event.id} className="overflow-hidden rounded-2xl border border-brand-500/30 bg-slate-900/80">
+              {event.cover && (
+                <img src={event.cover} alt="Imagen provisional del evento" className="h-52 w-full object-cover" />
+              )}
+              <div className="p-5">
+                <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-brand-500">
+                  <span>Pendiente</span>
+                  <span>Imagen provisional</span>
+                </div>
+                <h3 className="mt-3 text-xl font-bold">{event.title}</h3>
+                <p className="mt-1 text-sm text-slate-400">
+                  {[event.venue, event.date ? new Date(event.date).toLocaleDateString('es-ES') : null, event.area].filter(Boolean).join(' - ')}
+                </p>
+                <p className="mt-3 line-clamp-3 text-sm text-slate-300">{event.description}</p>
+                <div className="mt-4 space-y-1 text-sm text-slate-400">
+                  <p>Fuente: {event.source_name || 'No indicada'}</p>
+                  {event.source_url && (
+                    <a href={event.source_url} target="_blank" rel="noreferrer" className="text-brand-500 hover:text-brand-400">
+                      Ver fuente original
+                    </a>
+                  )}
+                </div>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {event.slug && (
+                    <Link href={`/eventos/${event.slug}?from=admin`} className="btn-secondary">
+                      Vista previa
+                    </Link>
+                  )}
+                  <button className="btn-secondary" onClick={() => loadEventForEdit(event)}>
+                    Editar
+                  </button>
+                  <button className="btn-primary" onClick={() => approveScoutEvent(event.id)}>
+                    Aprobar y publicar
+                  </button>
+                  <button className="btn-secondary" onClick={() => discardScoutEvent(event.id)}>
+                    Descartar
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="mt-12">
         <h2 className="mb-4 text-2xl font-bold">Reclamaciones de eventos</h2>
 
         {eventClaims.length === 0 && (
@@ -442,7 +546,7 @@ export default function AdminPage() {
                     {claim.events?.title || 'Evento sin titulo'}
                   </h3>
                   <p className="mt-1 text-sm text-slate-400">
-                    {[claim.events?.venue, claim.events?.date ? new Date(claim.events.date).toLocaleDateString('es-ES') : null].filter(Boolean).join(' · ')}
+                    {[claim.events?.venue, claim.events?.date ? new Date(claim.events.date).toLocaleDateString('es-ES') : null].filter(Boolean).join(' - ')}
                   </p>
                   <div className="mt-4 grid gap-2 text-sm text-slate-300 sm:grid-cols-2">
                     <p><span className="text-slate-500">Contacto:</span> {claim.contact_name}</p>
@@ -507,12 +611,12 @@ export default function AdminPage() {
               {event.promotion_package_name && (
                 <p className="mt-2 rounded-full bg-brand-500/20 px-3 py-1 text-xs font-semibold text-brand-200">
                   Promo solicitada: {event.promotion_package_name}
-                  {event.promotion_price ? ` · ${event.promotion_price} EUR` : ''}
+                  {event.promotion_price ? ` - ${event.promotion_price} EUR` : ''}
                 </p>
               )}
 
               {event.music?.length > 0 && (
-                <p className="mt-1 text-xs text-slate-500">{event.music.join(', ')}</p>
+                <p className="mt-1 text-xs text-slate-500">{event.music.join(' - ')}</p>
               )}
 
               {event.maps_url && (
@@ -571,7 +675,7 @@ export default function AdminPage() {
               {event.promotion_package_name && (
                 <p className="mt-2 rounded-full bg-brand-500/20 px-3 py-1 text-xs font-semibold text-brand-200">
                   Promo solicitada: {event.promotion_package_name}
-                  {event.promotion_price ? ` · ${event.promotion_price} EUR` : ''}
+                  {event.promotion_price ? ` - ${event.promotion_price} EUR` : ''}
                 </p>
               )}
 

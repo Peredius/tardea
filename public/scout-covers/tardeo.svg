@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#070b1d"/>
+      <stop offset="0.48" stop-color="#19142e"/>
+      <stop offset="1" stop-color="#fa3b68"/>
+    </linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffb703"/>
+      <stop offset="0.45" stop-color="#fa3b68"/>
+      <stop offset="1" stop-color="#a855f7"/>
+    </linearGradient>
+  </defs>
+  <rect width="1080" height="1350" fill="url(#bg)"/>
+  <circle cx="860" cy="160" r="210" fill="#ffffff" opacity="0.06"/>
+  <circle cx="210" cy="1160" r="260" fill="#ffffff" opacity="0.05"/>
+  <g opacity="0.9">
+    <rect x="170" y="360" width="42" height="360" rx="21" fill="url(#line)"/>
+    <rect x="255" y="270" width="42" height="560" rx="21" fill="url(#line)"/>
+    <rect x="340" y="440" width="42" height="470" rx="21" fill="url(#line)"/>
+    <rect x="425" y="320" width="42" height="390" rx="21" fill="url(#line)"/>
+  </g>
+  <path d="M545 330h320l-26 94H721l-108 420H494l108-420H518l27-94Z" fill="#fff"/>
+  <circle cx="810" cy="815" r="44" fill="#fa3b68"/>
+  <text x="96" y="1035" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="86" font-weight="800">TARDEO</text>
+  <text x="96" y="1115" fill="#ffffff" opacity="0.72" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700" letter-spacing="8">IMAGEN PROVISIONAL</text>
+</svg>

@@ -1,0 +1,18 @@
+[
+  {
+    "source_name": "Fourvenues",
+    "source_url": "https://site.fourvenues.com/es/ejemplo/events/tardeo-ejemplo-20-09-2026-XXXX",
+    "title": "Tardeo ejemplo pendiente de revisar",
+    "venue": "Sala por revisar",
+    "area": "Madrid",
+    "address": "Madrid",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Madrid",
+    "date": "2026-09-20",
+    "start_time": "18:00",
+    "end_time": "23:00",
+    "type": "Tardeo",
+    "music": ["Comercial"],
+    "audience": "25-35",
+    "price_from": 0
+  }
+]
