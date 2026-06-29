@@ -40,6 +40,7 @@ export default function AdminPage() {
   const [description, setDescription] = useState('')
   const [perks, setPerks] = useState('')
   const [events, setEvents] = useState<any[]>([])
+  const [eventListTab, setEventListTab] = useState<'created' | 'past'>('created')
   const [pendingEvents, setPendingEvents] = useState<any[]>([])
   const [eventClaims, setEventClaims] = useState<any[]>([])
   const [scoutEvents, setScoutEvents] = useState<any[]>([])
@@ -346,6 +347,14 @@ export default function AdminPage() {
     )
   }
 
+  const todayDate = new Date().toISOString().split('T')[0]
+  const createdEvents = events.filter((event) => !event.date || event.date >= todayDate)
+  const pastEvents = events
+    .filter((event) => event.date && event.date < todayDate)
+    .slice()
+    .reverse()
+  const visibleEvents = eventListTab === 'past' ? pastEvents : createdEvents
+
   return (
     <main className="container-page py-16">
       <section className="mb-10 flex items-start justify-between gap-6">
@@ -580,14 +589,35 @@ export default function AdminPage() {
       </div>
 
       <div className="mt-12">
-        <h2 className="mb-4 text-2xl font-bold">Eventos creados</h2>
+        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-2xl font-bold">Eventos</h2>
 
-        {events.length === 0 && (
-          <p className="text-slate-400">No hay eventos publicados</p>
+          <div className="flex rounded-full border border-white/10 bg-slate-900/80 p-1 text-sm">
+            <button
+              type="button"
+              onClick={() => setEventListTab('created')}
+              className={`rounded-full px-4 py-2 font-semibold transition ${eventListTab === 'created' ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white'}`}
+            >
+              Eventos creados ({createdEvents.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setEventListTab('past')}
+              className={`rounded-full px-4 py-2 font-semibold transition ${eventListTab === 'past' ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white'}`}
+            >
+              Eventos pasados ({pastEvents.length})
+            </button>
+          </div>
+        </div>
+
+        {visibleEvents.length === 0 && (
+          <p className="text-slate-400">
+            {eventListTab === 'past' ? 'No hay eventos pasados' : 'No hay eventos publicados activos'}
+          </p>
         )}
 
         <div className="space-y-3">
-          {events.map((event) => (
+          {visibleEvents.map((event) => (
             <div
               key={event.id}
               className="flex flex-col gap-4 rounded-xl border border-white/10 bg-slate-800/80 p-4 lg:flex-row lg:items-center lg:justify-between"
@@ -595,8 +625,8 @@ export default function AdminPage() {
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-semibold lg:truncate">{event.title}</p>
-                  <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs text-emerald-300">
-                    Publicado
+                  <span className={`rounded-full px-3 py-1 text-xs ${eventListTab === 'past' ? 'bg-slate-500/20 text-slate-300' : 'bg-emerald-500/20 text-emerald-300'}`}>
+                    {eventListTab === 'past' ? 'Pasado' : 'Publicado'}
                   </span>
                   {event.promotion_package_name && (
                     <span className="rounded-full bg-brand-500/20 px-3 py-1 text-xs font-semibold text-brand-200">
