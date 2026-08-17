@@ -1,9 +1,13 @@
 [
   {
     "source_name": "Fourvenues",
+    "source_type": "ticketing",
+    "platform": "Fourvenues",
     "source_url": "https://site.fourvenues.com/es/ejemplo/events/tardeo-ejemplo-20-09-2026-XXXX",
     "title": "Tardeo ejemplo pendiente de revisar",
     "venue": "Sala por revisar",
+    "city": "Madrid",
+    "province": "Madrid",
     "area": "Madrid",
     "address": "Madrid",
     "maps_url": "https://www.google.com/maps/search/?api=1&query=Madrid",
@@ -13,6 +17,24 @@
     "type": "Tardeo",
     "music": ["Comercial"],
     "audience": "25-35",
-    "price_from": 0
+    "price_from": 0,
+    "notes": "Plantilla de ejemplo. Sustituir por una URL real antes de importar."
+  },
+  {
+    "source_name": "Instagram",
+    "source_type": "instagram",
+    "platform": "Instagram",
+    "source_url": "https://www.instagram.com/p/REEMPLAZAR/",
+    "title": "Rooftop pendiente de revisar desde Instagram",
+    "venue": "Pendiente de revisar",
+    "city": "Madrid",
+    "province": "Madrid",
+    "area": "Madrid",
+    "date": "2026-09-21",
+    "type": "Rooftop",
+    "music": ["Comercial"],
+    "audience": "Mixto",
+    "price_from": 0,
+    "notes": "No copiar imagen ni texto del post. Usar solo como pista editorial."
   }
 ]

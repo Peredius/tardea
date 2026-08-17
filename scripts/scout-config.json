@@ -1,0 +1,38 @@
+{
+  "defaults": {
+    "city": "Madrid",
+    "province": "Madrid",
+    "municipality": "Madrid",
+    "area": "Madrid",
+    "audience": "Mixto",
+    "start_time": "18:00",
+    "end_time": "23:00",
+    "price_from": 0
+  },
+  "allowed_types": ["Tardeo", "Rooftop", "Brunch", "Afterwork"],
+  "allowed_music": ["Comercial", "Indie", "Electronica", "Flamenquito", "Pop", "Remember"],
+  "cover_by_type": {
+    "Tardeo": "/scout-covers/tardeo.svg",
+    "Rooftop": "/scout-covers/rooftop.svg",
+    "Brunch": "/scout-covers/brunch.svg",
+    "Afterwork": "/scout-covers/tardeo.svg"
+  },
+  "cover_by_music": {
+    "Electronica": "/scout-covers/electronica.svg",
+    "Flamenquito": "/scout-covers/flamenquito.svg"
+  },
+  "type_keywords": {
+    "Brunch": ["brunch", "desayuno", "rooftop brunch"],
+    "Rooftop": ["rooftop", "terraza", "azotea"],
+    "Afterwork": ["afterwork", "jueves", "after work"],
+    "Tardeo": ["tardeo", "tardear", "fiesta tarde"]
+  },
+  "music_keywords": {
+    "Electronica": ["electronica", "electrónica", "techno", "house", "dj set"],
+    "Flamenquito": ["flamenquito", "rumba", "flamenco", "sevillanas"],
+    "Indie": ["indie", "alternativo"],
+    "Remember": ["remember", "90s", "2000", "clasicos", "clásicos"],
+    "Pop": ["pop"],
+    "Comercial": ["comercial", "hits", "reggaeton", "urbano"]
+  }
+}
