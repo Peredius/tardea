@@ -505,7 +505,11 @@ export default function AdminPage() {
         )
       )
 
-      setMessage(`Informacion extraida de ${data.sourceName || 'la fuente'}. Revisala antes de crear el evento.`)
+      setMessage(
+        data.confidence === 'low'
+          ? `He leido ${data.sourceName || 'la fuente'}, pero esa pagina da pocos datos. Revisa y completa la fila antes de crear el evento.`
+          : `Informacion extraida de ${data.sourceName || 'la fuente'}. Revisala antes de crear el evento.`
+      )
     } catch {
       setMessage('No se pudo extraer informacion del enlace')
     } finally {

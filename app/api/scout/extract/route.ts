@@ -13,6 +13,23 @@ type ExtractedEvent = {
   priceFrom: string
   mapsUrl: string
   sourceName: string
+  confidence: 'high' | 'medium' | 'low'
+}
+
+const SPANISH_MONTHS: Record<string, string> = {
+  enero: '01',
+  febrero: '02',
+  marzo: '03',
+  abril: '04',
+  mayo: '05',
+  junio: '06',
+  julio: '07',
+  agosto: '08',
+  septiembre: '09',
+  setiembre: '09',
+  octubre: '10',
+  noviembre: '11',
+  diciembre: '12',
 }
 
 function stripHtml(value: string) {
@@ -24,6 +41,12 @@ function stripHtml(value: string) {
     .replace(/&amp;/g, '&')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    .replace(/&aacute;/g, 'a')
+    .replace(/&eacute;/g, 'e')
+    .replace(/&iacute;/g, 'i')
+    .replace(/&oacute;/g, 'o')
+    .replace(/&uacute;/g, 'u')
+    .replace(/&ntilde;/g, 'n')
     .replace(/\s+/g, ' ')
     .trim()
 }
@@ -40,6 +63,38 @@ function metaContent(html: string, property: string) {
   for (const pattern of patterns) {
     const match = html.match(pattern)
     if (match?.[1]) return stripHtml(match[1])
+  }
+
+  return ''
+}
+
+function titleFromUrl(url: string) {
+  try {
+    const parsed = new URL(url)
+    const segments = parsed.pathname
+      .split('/')
+      .filter(Boolean)
+      .map((segment) => decodeURIComponent(segment))
+      .filter((segment) => !/^\d+$/.test(segment))
+
+    const bestSegment = segments.reverse().find((segment) => /[a-zA-Z]/.test(segment)) || ''
+
+    return bestSegment
+      .replace(/\.(html|php)$/i, '')
+      .replace(/[-_]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/\b\w/g, (letter) => letter.toUpperCase())
+  } catch {
+    return ''
+  }
+}
+
+function jsonValue(html: string, keys: string[]) {
+  for (const key of keys) {
+    const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const match = html.match(new RegExp(`"${escaped}"\\s*:\\s*"([^"]+)"`, 'i'))
+    if (match?.[1]) return stripHtml(match[1].replace(/\\u([0-9a-f]{4})/gi, (_, code) => String.fromCharCode(parseInt(code, 16))))
   }
 
   return ''
@@ -99,6 +154,9 @@ function inferDate(text: string) {
 
   const slash = text.match(/\b(0?\d|[12]\d|3[01])[/-](0?\d|1[0-2])[/-](20\d{2})\b/)
   if (slash) return `${slash[3]}-${slash[2].padStart(2, '0')}-${slash[1].padStart(2, '0')}`
+
+  const spanish = text.toLowerCase().match(/\b(0?\d|[12]\d|3[01])\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)\s+de\s+(20\d{2})\b/)
+  if (spanish) return `${spanish[3]}-${SPANISH_MONTHS[spanish[2]]}-${spanish[1].padStart(2, '0')}`
 
   return ''
 }
@@ -164,6 +222,16 @@ function eventFromJsonLd(event: any) {
   }
 }
 
+function countUsefulFields(data: ExtractedEvent) {
+  return [
+    data.title,
+    data.description,
+    data.date,
+    data.venue,
+    data.priceFrom,
+  ].filter(Boolean).length
+}
+
 export async function POST(request: Request) {
   try {
     const { url } = await request.json()
@@ -190,23 +258,36 @@ export async function POST(request: Request) {
     const fromJsonLd = jsonLdEvent ? eventFromJsonLd(jsonLdEvent) : null
     const titleTag = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || ''
     const text = stripHtml(html).slice(0, 20000)
-    const title = fromJsonLd?.title || metaContent(html, 'og:title') || stripHtml(titleTag)
-    const description = fromJsonLd?.description || metaContent(html, 'og:description') || text.slice(0, 260)
+    const title = fromJsonLd?.title
+      || metaContent(html, 'og:title')
+      || metaContent(html, 'twitter:title')
+      || jsonValue(html, ['name', 'title', 'eventName'])
+      || stripHtml(titleTag)
+      || titleFromUrl(parsedUrl.toString())
+    const description = fromJsonLd?.description
+      || metaContent(html, 'og:description')
+      || metaContent(html, 'twitter:description')
+      || metaContent(html, 'description')
+      || jsonValue(html, ['description', 'summary'])
 
     const data: ExtractedEvent = {
       title,
-      description,
-      date: fromJsonLd?.date || inferDate(text),
-      startTime: fromJsonLd?.startTime || normalizeTime(text) || '18:00',
+      description: description || 'Evento importado desde enlace. Revisa y completa la informacion antes de publicarlo.',
+      date: fromJsonLd?.date || normalizeDate(jsonValue(html, ['startDate', 'eventDate', 'date'])) || inferDate(`${title} ${description} ${text}`),
+      startTime: fromJsonLd?.startTime || normalizeTime(jsonValue(html, ['startDate', 'startTime', 'doorTime'])) || normalizeTime(text) || '18:00',
       endTime: fromJsonLd?.endTime || '23:00',
       type: inferType(`${title} ${description} ${text.slice(0, 2000)}`),
       music: inferMusic(`${title} ${description} ${text.slice(0, 2000)}`),
-      venue: fromJsonLd?.venue || '',
+      venue: fromJsonLd?.venue || jsonValue(html, ['venueName', 'locationName', 'placeName']),
       area: fromJsonLd?.area || 'Madrid',
       priceFrom: fromJsonLd?.priceFrom || inferPrice(text),
       mapsUrl: fromJsonLd?.mapsUrl || '',
       sourceName: sourceNameFromUrl(parsedUrl.toString()),
+      confidence: 'low',
     }
+
+    const usefulFields = countUsefulFields(data)
+    data.confidence = usefulFields >= 4 ? 'high' : usefulFields >= 2 ? 'medium' : 'low'
 
     return NextResponse.json(data)
   } catch {
