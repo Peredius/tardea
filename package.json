@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "import-events": "tsx --env-file=.env.local scripts/import-events.ts",
-    "scout-events": "tsx --env-file=.env.local scripts/tardea-scout.ts"
+    "scout-events": "tsx --env-file=.env.local scripts/tardea-scout.ts",
+    "scout-discover": "tsx --env-file=.env.local scripts/tardea-scout-discover.ts",
+    "scout-auto": "npm run scout-discover && npm run scout-events -- --sources=scripts/scout-sources.generated.json"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.8",
