@@ -1,0 +1,214 @@
+[
+  {
+    "platform": "Fourvenues",
+    "priority": 1,
+    "source_type": "ticketing",
+    "base_url": "https://site.fourvenues.com/",
+    "search_patterns": [
+      "site:site.fourvenues.com/es Madrid tardeo",
+      "site:site.fourvenues.com/es Madrid brunch",
+      "site:site.fourvenues.com/es Madrid rooftop",
+      "site:site.fourvenues.com/es Madrid afterwork"
+    ],
+    "best_for": ["Tardeo", "Discotecas", "Promotoras", "Rooftop", "Brunch"],
+    "signals": ["venta de entradas", "listas", "reservas", "RRPP", "discotecas", "promotores"],
+    "scout_strategy": "Alta prioridad. Buscar por URL de evento y cargar manualmente en scout-sources.json. Es una fuente muy alineada con discotecas y promotores.",
+    "image_policy": "No copiar imagen. Usar cover provisional hasta aprobacion o reclamacion.",
+    "notes": "Ya tenemos ejemplos importados desde Fourvenues."
+  },
+  {
+    "platform": "Fever",
+    "priority": 1,
+    "source_type": "ticketing",
+    "base_url": "https://feverup.com/es/madrid",
+    "search_patterns": [
+      "site:feverup.com/es/madrid brunch",
+      "site:feverup.com/es/madrid rooftop",
+      "site:feverup.com/es/madrid afterwork",
+      "site:feverup.com/es/madrid tardeo"
+    ],
+    "best_for": ["Brunch", "Rooftop", "Afterwork", "Experiencias", "Planes con amigos"],
+    "signals": ["Brunch", "Rooftops y Terrazas", "Bebidas y Afterwork", "Desde", "local", "fecha"],
+    "scout_strategy": "Alta prioridad para planes de tarde, brunch, terraza y afterwork. Revisar categorias de Madrid semanalmente.",
+    "image_policy": "No copiar imagen ni texto largo. Usar solo datos basicos y fuente.",
+    "notes": "Muy buena para captar planes tipo rooftop/brunch que no salen en tiqueteras de discoteca."
+  },
+  {
+    "platform": "Xceed",
+    "priority": 1,
+    "source_type": "ticketing",
+    "base_url": "https://xceed.me/es/madrid/events/",
+    "search_patterns": [
+      "site:xceed.me/es/madrid/events tardeo",
+      "site:xceed.me/es/madrid/events rooftop",
+      "site:xceed.me/es/madrid/events club Madrid"
+    ],
+    "best_for": ["Clubbing", "Discotecas", "Electronica", "Tardeo noche"],
+    "signals": ["clubs", "eventos", "listas de invitados", "mesas", "ticketing"],
+    "scout_strategy": "Alta prioridad para eventos de clubbing y salas. Separar electronica de comercial para recomendaciones.",
+    "image_policy": "No copiar imagen. Cover provisional TARDEA.",
+    "notes": "Interesante para eventos mas nocturnos o clubbing que puedan encajar en tardeo extendido."
+  },
+  {
+    "platform": "Entradium",
+    "priority": 1,
+    "source_type": "ticketing",
+    "base_url": "https://entradium.com/",
+    "search_patterns": [
+      "site:entradium.com Madrid tardeo",
+      "site:entradium.com Madrid brunch",
+      "site:entradium.com Madrid terraza",
+      "site:entradium.com Madrid afterwork"
+    ],
+    "best_for": ["Tardeo", "Fiestas independientes", "Salas medianas", "Eventos recurrentes"],
+    "signals": ["varias fechas", "organizado por", "politica de acceso", "precio"],
+    "scout_strategy": "Alta prioridad para fiestas independientes y eventos con varias fechas. Revisar por busquedas de tardeo + Madrid.",
+    "image_policy": "No copiar imagen. Usar fuente y datos basicos.",
+    "notes": "Suele tener eventos creados por promotores independientes."
+  },
+  {
+    "platform": "Eventbrite",
+    "priority": 2,
+    "source_type": "ticketing",
+    "base_url": "https://www.eventbrite.es/",
+    "search_patterns": [
+      "site:eventbrite.es Madrid afterwork rooftop",
+      "site:eventbrite.es Madrid networking afterwork",
+      "site:eventbrite.es Madrid brunch"
+    ],
+    "best_for": ["Afterwork", "Networking", "Rooftop profesional", "Comunidades"],
+    "signals": ["networking", "rooftop", "comunidad", "entrada gratuita", "aforo limitado"],
+    "scout_strategy": "Prioridad media. Muy util para afterworks profesionales, menos para tardeos de fiesta pura.",
+    "image_policy": "No copiar imagen. Revisar si el evento encaja con TARDEA antes de importar.",
+    "notes": "Buen canal para abrir categoria afterwork."
+  },
+  {
+    "platform": "Meetup",
+    "priority": 2,
+    "source_type": "community",
+    "base_url": "https://www.meetup.com/",
+    "search_patterns": [
+      "site:meetup.com Madrid rooftop drinks",
+      "site:meetup.com Madrid tardeo rooftop",
+      "site:meetup.com Madrid afterwork",
+      "site:meetup.com Madrid social drinks"
+    ],
+    "best_for": ["Rooftop social", "Afterwork", "Conocer gente", "Comunidades"],
+    "signals": ["rooftop drinks", "social drinks", "conocer gente", "rango de edad", "asistentes"],
+    "scout_strategy": "Prioridad media. Cargar solo eventos claramente publicos y revisar manualmente. Muchos no son tiquetera pura.",
+    "image_policy": "No copiar imagen. Tratar como pista editorial.",
+    "notes": "Muy interesante para detectar tendencias, comunidades e influencers/promotores sociales."
+  },
+  {
+    "platform": "Resident Advisor",
+    "priority": 2,
+    "source_type": "ticketing",
+    "base_url": "https://ra.co/events/es/Madrid",
+    "search_patterns": [
+      "site:ra.co/events/es/Madrid techno",
+      "site:ra.co/events/es/Madrid house",
+      "site:ra.co/events/es/Madrid electronic"
+    ],
+    "best_for": ["Electronica", "Clubbing", "Techno", "House"],
+    "signals": ["genre", "venue", "lineup", "RA picks"],
+    "scout_strategy": "Prioridad media para electronica. No mezclar con comercial; segmentar claramente como Electronica.",
+    "image_policy": "No copiar artwork. Cover provisional electronica.",
+    "notes": "Muy bueno para descubrir oferta electronica real de Madrid."
+  },
+  {
+    "platform": "Shotgun",
+    "priority": 2,
+    "source_type": "ticketing",
+    "base_url": "https://shotgun.live/es/",
+    "search_patterns": [
+      "site:shotgun.live Madrid tardeo",
+      "site:shotgun.live Madrid Fabrik",
+      "site:shotgun.live Madrid techno",
+      "site:shotgun.live Madrid brunch"
+    ],
+    "best_for": ["Electronica", "Festivales", "Discotecas", "Eventos de promotor"],
+    "signals": ["venue", "upcoming events", "organizer", "tickets"],
+    "scout_strategy": "Prioridad media. Buena para electronica/festivales y fiestas de promotor.",
+    "image_policy": "No copiar imagen. Fuente y cover provisional.",
+    "notes": "Vigilar especialmente Fabrik y promotoras electronicas."
+  },
+  {
+    "platform": "DICE",
+    "priority": 3,
+    "source_type": "ticketing_app",
+    "base_url": "https://dice.fm/",
+    "search_patterns": [
+      "site:dice.fm Madrid club",
+      "site:dice.fm Madrid live shows",
+      "site:dice.fm Madrid tickets"
+    ],
+    "best_for": ["Musica en vivo", "Club nights", "Conciertos", "Festivales"],
+    "signals": ["club nights", "shows", "venues", "artists"],
+    "scout_strategy": "Prioridad baja/media porque muchas cosas viven mejor en app. Revisar si hay URL publica util.",
+    "image_policy": "No copiar imagen. Usar solo datos verificables.",
+    "notes": "Puede ser interesante para eventos musicales, menos directo para brunch/rooftop."
+  },
+  {
+    "platform": "Wegow",
+    "priority": 3,
+    "source_type": "ticketing",
+    "base_url": "https://www.wegow.com/",
+    "search_patterns": [
+      "site:wegow.com Madrid conciertos",
+      "site:wegow.com Madrid festivales",
+      "site:wegow.com Madrid club"
+    ],
+    "best_for": ["Conciertos", "Festivales", "Musica en vivo"],
+    "signals": ["artistas", "sala", "ciudad", "genero"],
+    "scout_strategy": "Prioridad baja para TARDEA salvo eventos con horario/ambiente de tarde o afterwork.",
+    "image_policy": "No copiar imagen.",
+    "notes": "Mas musical/conciertos que tardeo."
+  },
+  {
+    "platform": "Somo Social",
+    "priority": 3,
+    "source_type": "community_ticketing",
+    "base_url": "https://somo.social/",
+    "search_patterns": [
+      "site:somo.social Madrid rooftop",
+      "site:somo.social Madrid afterwork",
+      "site:somo.social Madrid social"
+    ],
+    "best_for": ["Afterwork", "Rooftop social", "Conocer gente"],
+    "signals": ["afterwork", "rooftop", "social", "buy tickets"],
+    "scout_strategy": "Prioridad baja/media. Revisar manualmente porque puede mezclar quedadas sociales y eventos pequenos.",
+    "image_policy": "No copiar imagen.",
+    "notes": "Fuente secundaria para eventos sociales."
+  },
+  {
+    "platform": "Instagram",
+    "priority": 1,
+    "source_type": "social_manual",
+    "base_url": "https://www.instagram.com/",
+    "search_patterns": [
+      "hashtags: #tardeomadrid #brunchmadrid #rooftopmadrid #afterworkmadrid",
+      "perfiles de salas, rooftops, promotores y fiestas recurrentes"
+    ],
+    "best_for": ["Descubrimiento temprano", "Promotores", "Fiestas nuevas", "Reels"],
+    "signals": ["fecha en cartel", "ubicacion", "link en bio", "promotor", "hashtags", "comentarios"],
+    "scout_strategy": "Alta prioridad como pista manual. No hacer scraping agresivo; usar post/reel como referencia y meter datos verificados manualmente.",
+    "image_policy": "No copiar imagen ni reel sin permiso. Guardar URL de referencia y cover provisional.",
+    "notes": "Clave para descubrir fiestas antes de que esten bien indexadas."
+  },
+  {
+    "platform": "Webs de salas y rooftops",
+    "priority": 2,
+    "source_type": "website",
+    "base_url": "manual",
+    "search_patterns": [
+      "site:[web sala] eventos Madrid",
+      "[nombre sala] tardeo Madrid",
+      "[nombre rooftop] brunch Madrid"
+    ],
+    "best_for": ["Eventos propios", "Rooftop", "Brunch", "Reservas"],
+    "signals": ["agenda", "reservas", "calendario", "DJ", "menu brunch"],
+    "scout_strategy": "Prioridad media. Fuente buena cuando el evento no aparece en tiquetera o tiene venta propia.",
+    "image_policy": "No copiar imagen salvo permiso o material oficial cedido.",
+    "notes": "Ideal para futuro contacto comercial directo."
+  }
+]
