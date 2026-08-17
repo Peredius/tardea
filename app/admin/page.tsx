@@ -28,6 +28,7 @@ export default function AdminPage() {
   const [type, setType] = useState('')
   const [address, setAddress] = useState('')
   const [mapsUrl, setMapsUrl] = useState('')
+  const [ticketUrl, setTicketUrl] = useState('')
   const [startTime, setStartTime] = useState('17:00')
   const [endTime, setEndTime] = useState('23:00')
   const [priceFrom, setPriceFrom] = useState('')
@@ -44,6 +45,8 @@ export default function AdminPage() {
   const [pendingEvents, setPendingEvents] = useState<any[]>([])
   const [eventClaims, setEventClaims] = useState<any[]>([])
   const [scoutEvents, setScoutEvents] = useState<any[]>([])
+  const [scoutTypeFilter, setScoutTypeFilter] = useState('Todos')
+  const [eventTypeFilter, setEventTypeFilter] = useState('Todos')
   const [editingEvent, setEditingEvent] = useState<any | null>(null)
 
   useEffect(() => {
@@ -250,6 +253,7 @@ export default function AdminPage() {
       area: area === 'Otra' ? customArea : area,
       address,
       maps_url: mapsUrl || null,
+      source_url: ticketUrl || null,
       date,
       start_time: startTime,
       end_time: endTime,
@@ -303,6 +307,7 @@ export default function AdminPage() {
     setType('')
     setAddress('')
     setMapsUrl('')
+    setTicketUrl('')
     setStartTime('17:00')
     setEndTime('23:00')
     setPriceFrom('')
@@ -323,6 +328,7 @@ export default function AdminPage() {
     setVenue(event.venue || '')
     setAddress(event.address || '')
     setMapsUrl(event.maps_url || '')
+    setTicketUrl(event.source_url || '')
     setArea(event.area || '')
     setDate(event.date || '')
     setStartTime(event.start_time || '17:00')
@@ -353,7 +359,15 @@ export default function AdminPage() {
     .filter((event) => event.date && event.date < todayDate)
     .slice()
     .reverse()
-  const visibleEvents = eventListTab === 'past' ? pastEvents : createdEvents
+  const scoutTypes = ['Todos', ...Array.from(new Set(scoutEvents.map((event) => event.type || 'Tardeo')))]
+  const eventTypes = ['Todos', ...Array.from(new Set(events.map((event) => event.type || 'Tardeo')))]
+  const filteredScoutEvents = scoutTypeFilter === 'Todos'
+    ? scoutEvents
+    : scoutEvents.filter((event) => (event.type || 'Tardeo') === scoutTypeFilter)
+  const filteredVisibleEvents = eventTypeFilter === 'Todos'
+    ? (eventListTab === 'past' ? pastEvents : createdEvents)
+    : (eventListTab === 'past' ? pastEvents : createdEvents).filter((event) => (event.type || 'Tardeo') === eventTypeFilter)
+  const visibleEvents = filteredVisibleEvents
 
   return (
     <main className="container-page py-16">
@@ -439,6 +453,7 @@ export default function AdminPage() {
         <input className="input" placeholder="Lugar" value={venue} onChange={(e) => setVenue(e.target.value)} />
         <input className="input" placeholder="Direccion" value={address} onChange={(e) => setAddress(e.target.value)} />
         <input className="input" placeholder="Link de Google Maps" value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} />
+        <input className="input" placeholder="Link de compra / tiquetera" value={ticketUrl} onChange={(e) => setTicketUrl(e.target.value)} />
 
         <textarea className="input" placeholder="Descripcion" value={description} onChange={(e) => setDescription(e.target.value)} />
         <input className="input" placeholder="Extras" value={perks} onChange={(e) => setPerks(e.target.value)} />
@@ -487,8 +502,21 @@ export default function AdminPage() {
           <p className="text-sm text-slate-400">Se publican solo despues de revisar datos, imagen y fuente.</p>
         </div>
 
-        {scoutEvents.length === 0 && (
-          <p className="text-slate-400">No hay eventos encontrados pendientes de revisar</p>
+        <div className="mb-4 flex flex-wrap gap-2">
+          {scoutTypes.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setScoutTypeFilter(option)}
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${scoutTypeFilter === option ? 'bg-brand-500 text-white' : 'bg-white/10 text-slate-300 hover:bg-white/15'}`}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+
+        {filteredScoutEvents.length === 0 && (
+          <p className="text-slate-400">No hay eventos encontrados para este filtro</p>
         )}
 
         <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/70">
@@ -501,7 +529,7 @@ export default function AdminPage() {
             <span className="text-right">Acciones</span>
           </div>
 
-          {scoutEvents.map((event) => (
+          {filteredScoutEvents.map((event) => (
             <div
               key={event.id}
               className="grid gap-3 border-b border-white/5 px-4 py-3 last:border-b-0 xl:grid-cols-[92px_minmax(220px,1.4fr)_120px_130px_minmax(150px,1fr)_auto] xl:items-center"
@@ -624,6 +652,19 @@ export default function AdminPage() {
           </div>
         </div>
 
+        <div className="mb-4 flex flex-wrap gap-2">
+          {eventTypes.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setEventTypeFilter(option)}
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${eventTypeFilter === option ? 'bg-brand-500 text-white' : 'bg-white/10 text-slate-300 hover:bg-white/15'}`}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+
         {visibleEvents.length === 0 && (
           <p className="text-slate-400">
             {eventListTab === 'past' ? 'No hay eventos pasados' : 'No hay eventos publicados activos'}
@@ -642,6 +683,10 @@ export default function AdminPage() {
                   <span className={`rounded-full px-3 py-1 text-xs ${eventListTab === 'past' ? 'bg-slate-500/20 text-slate-300' : 'bg-emerald-500/20 text-emerald-300'}`}>
                     {eventListTab === 'past' ? 'Pasado' : 'Publicado'}
                   </span>
+                  <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-slate-300">{event.type || 'Tardeo'}</span>
+                  {event.source_url && (
+                    <span className="rounded-full bg-sky-500/15 px-3 py-1 text-xs text-sky-200">Entradas</span>
+                  )}
                   {event.promotion_package_name && (
                     <span className="rounded-full bg-brand-500/20 px-3 py-1 text-xs font-semibold text-brand-200">
                       Promo: {event.promotion_package_name}
@@ -659,6 +704,17 @@ export default function AdminPage() {
               </div>
 
               <div className="flex shrink-0 flex-wrap gap-2">
+                {event.source_url && (
+                  <a
+                    href={event.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60"
+                  >
+                    Tiquetera
+                  </a>
+                )}
+
                 {event.maps_url && (
                   <a
                     href={event.maps_url}

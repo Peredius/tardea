@@ -354,16 +354,21 @@ export default function EventDetailPage() {
 
           <div className="card p-6">
             <h3 className="text-xl font-semibold">Reserva o compra entradas</h3>
-
             <p className="mt-3 text-sm text-slate-400">
-              En producción, aquí conectaríamos Eventbrite, Fourvenues, Xceed o
-              una URL directa del organizador.
+              {event.source_url
+                ? 'Compra o reserva directamente en la tiquetera o web oficial del organizador.'
+                : 'Estamos revisando el enlace de compra o reserva de este evento.'}
             </p>
 
-            <a href="#" className="btn-primary mt-6 w-full">
-              Comprar entradas
-            </a>
-
+            {event.source_url ? (
+              <a href={event.source_url} target="_blank" rel="noopener noreferrer" className="btn-primary mt-6 w-full">
+                Comprar entradas
+              </a>
+            ) : (
+              <button type="button" disabled className="btn-primary mt-6 w-full opacity-50">
+                Entradas por confirmar
+              </button>
+            )}
             <a
               href={whatsappShareUrl}
               target="_blank"
