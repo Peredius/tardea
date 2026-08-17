@@ -491,46 +491,60 @@ export default function AdminPage() {
           <p className="text-slate-400">No hay eventos encontrados pendientes de revisar</p>
         )}
 
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/70">
+          <div className="hidden grid-cols-[92px_minmax(220px,1.4fr)_120px_130px_minmax(150px,1fr)_auto] gap-3 border-b border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 xl:grid">
+            <span>Fecha</span>
+            <span>Evento</span>
+            <span>Tipo</span>
+            <span>Zona</span>
+            <span>Fuente</span>
+            <span className="text-right">Acciones</span>
+          </div>
+
           {scoutEvents.map((event) => (
-            <div key={event.id} className="overflow-hidden rounded-2xl border border-brand-500/30 bg-slate-900/80">
-              {event.cover && (
-                <img src={event.cover} alt="Imagen provisional del evento" className="h-52 w-full object-cover" />
-              )}
-              <div className="p-5">
-                <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-brand-500">
-                  <span>Pendiente</span>
-                  <span>Imagen provisional</span>
+            <div
+              key={event.id}
+              className="grid gap-3 border-b border-white/5 px-4 py-3 last:border-b-0 xl:grid-cols-[92px_minmax(220px,1.4fr)_120px_130px_minmax(150px,1fr)_auto] xl:items-center"
+            >
+              <div className="text-sm font-semibold text-slate-300">
+                {event.date ? new Date(event.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) : 'Sin fecha'}
+              </div>
+
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="truncate font-semibold">{event.title}</p>
+                  <span className="rounded-full bg-brand-500/15 px-2 py-0.5 text-[11px] font-semibold text-brand-200">Scout</span>
                 </div>
-                <h3 className="mt-3 text-xl font-bold">{event.title}</h3>
-                <p className="mt-1 text-sm text-slate-400">
-                  {[event.venue, event.date ? new Date(event.date).toLocaleDateString('es-ES') : null, event.area].filter(Boolean).join(' - ')}
-                </p>
-                <p className="mt-3 line-clamp-3 text-sm text-slate-300">{event.description}</p>
-                <div className="mt-4 space-y-1 text-sm text-slate-400">
-                  <p>Fuente: {event.source_name || 'No indicada'}</p>
-                  {event.source_url && (
-                    <a href={event.source_url} target="_blank" rel="noreferrer" className="text-brand-500 hover:text-brand-400">
-                      Ver fuente original
-                    </a>
-                  )}
-                </div>
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {event.slug && (
-                    <Link href={`/eventos/${event.slug}?from=admin`} className="btn-secondary">
-                      Vista previa
-                    </Link>
-                  )}
-                  <button className="btn-secondary" onClick={() => loadEventForEdit(event)}>
-                    Editar
-                  </button>
-                  <button className="btn-primary" onClick={() => approveScoutEvent(event.id)}>
-                    Aprobar y publicar
-                  </button>
-                  <button className="btn-secondary" onClick={() => discardScoutEvent(event.id)}>
-                    Descartar
-                  </button>
-                </div>
+                <p className="mt-0.5 truncate text-xs text-slate-500">{event.venue || "Sala por revisar"}</p>
+              </div>
+
+              <p className="text-sm text-slate-400">{event.type || "Tardeo"}</p>
+              <p className="text-sm text-slate-400">{event.area || "Madrid"}</p>
+
+              <div className="min-w-0 text-sm text-slate-400">
+                <p className="truncate">{event.source_name || "No indicada"}</p>
+                {event.source_url && (
+                  <a href={event.source_url} target="_blank" rel="noreferrer" className="text-xs text-brand-500 hover:text-brand-400">
+                    Fuente
+                  </a>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2 xl:justify-end">
+                {event.slug && (
+                  <Link href={`/eventos/${event.slug}?from=admin`} className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60">
+                    Vista
+                  </Link>
+                )}
+                <button className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60" onClick={() => loadEventForEdit(event)}>
+                  Editar
+                </button>
+                <button className="rounded-full bg-brand-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-600" onClick={() => approveScoutEvent(event.id)}>
+                  Aprobar
+                </button>
+                <button className="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-red-300" onClick={() => discardScoutEvent(event.id)}>
+                  Descartar
+                </button>
               </div>
             </div>
           ))}
@@ -571,14 +585,14 @@ export default function AdminPage() {
 
                 <div className="flex gap-2">
                   {claim.events?.slug && (
-                    <Link href={`/eventos/${claim.events.slug}?from=admin`} className="btn-secondary">
+                    <Link href={`/eventos/${claim.events.slug}?from=admin`} className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60">
                       Ver evento
                     </Link>
                   )}
-                  <button className="btn-primary" onClick={() => approveClaim(claim)}>
+                  <button className="rounded-full bg-brand-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-600" onClick={() => approveClaim(claim)}>
                     Aprobar
                   </button>
-                  <button className="btn-secondary" onClick={() => rejectClaim(claim.id)}>
+                  <button className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60" onClick={() => rejectClaim(claim.id)}>
                     Rechazar
                   </button>
                 </div>
@@ -620,7 +634,7 @@ export default function AdminPage() {
           {visibleEvents.map((event) => (
             <div
               key={event.id}
-              className="flex flex-col gap-4 rounded-xl border border-white/10 bg-slate-800/80 p-4 lg:flex-row lg:items-center lg:justify-between"
+              className="flex flex-col gap-3 rounded-xl border border-white/10 bg-slate-800/80 px-4 py-3 lg:flex-row lg:items-center lg:justify-between"
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
@@ -650,17 +664,17 @@ export default function AdminPage() {
                     href={event.maps_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn-secondary"
+                    className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60"
                   >
                     Maps
                   </a>
                 )}
 
-                <Link href={`/eventos/${event.slug}?from=admin`} className="btn-secondary">
+                <Link href={`/eventos/${event.slug}?from=admin`} className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60">
                   Vista previa
                 </Link>
 
-                <button className="btn-primary" onClick={() => loadEventForEdit(event)}>
+                <button className="rounded-full bg-brand-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-600" onClick={() => loadEventForEdit(event)}>
                   Editar
                 </button>
               </div>
@@ -680,7 +694,7 @@ export default function AdminPage() {
           {pendingEvents.map((event) => (
             <div
               key={event.id}
-              className="flex flex-col gap-4 rounded-xl border border-yellow-500/20 bg-yellow-900/20 p-4 lg:flex-row lg:items-center lg:justify-between"
+              className="flex flex-col gap-3 rounded-xl border border-yellow-500/20 bg-yellow-900/20 px-4 py-3 lg:flex-row lg:items-center lg:justify-between"
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
@@ -706,21 +720,21 @@ export default function AdminPage() {
                     href={event.maps_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn-secondary"
+                    className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60"
                   >
                     Maps
                   </a>
                 )}
 
-                <Link href={`/eventos/${event.slug}?from=admin`} className="btn-secondary">
+                <Link href={`/eventos/${event.slug}?from=admin`} className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60">
                   Vista previa
                 </Link>
 
-                <button className="btn-secondary" onClick={() => loadEventForEdit(event)}>
+                <button className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60" onClick={() => loadEventForEdit(event)}>
                   Editar
                 </button>
 
-                <button className="btn-primary" onClick={() => approveEvent(event.id)}>
+                <button className="rounded-full bg-brand-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-600" onClick={() => approveEvent(event.id)}>
                   Aprobar
                 </button>
               </div>
