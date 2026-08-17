@@ -17,6 +17,56 @@ function generateSlug(title: string, date: string) {
 
 const MUSIC_OPTIONS = ['Comercial', 'Electronica', 'Pop', 'Indie', 'Flamenquito', 'Remember']
 const AUDIENCE_OPTIONS = ['18-25', '25-35', '30+', 'Mixto']
+const EVENT_TYPE_OPTIONS = ['Tardeo', 'Rooftop', 'Brunch', 'Afterwork', 'Fitness Party']
+
+type BulkEventRow = {
+  id: string
+  active: boolean
+  title: string
+  type: string
+  music: string
+  audience: string
+  venue: string
+  area: string
+  date: string
+  startTime: string
+  endTime: string
+  priceFrom: string
+  ticketUrl: string
+  mapsUrl: string
+  description: string
+}
+
+function createBulkRow(values: Partial<BulkEventRow> = {}): BulkEventRow {
+  const { id: _id, ...rowValues } = values
+
+  return {
+    id: Date.now().toString() + '-' + Math.random().toString(16).slice(2),
+    active: true,
+    title: '',
+    type: 'Tardeo',
+    music: 'Comercial',
+    audience: 'Mixto',
+    venue: '',
+    area: 'Madrid',
+    date: '',
+    startTime: '18:00',
+    endTime: '23:00',
+    priceFrom: '0',
+    ticketUrl: '',
+    mapsUrl: '',
+    description: '',
+    ...rowValues,
+  }
+}
+
+function scoutCoverFor(type: string, music: string) {
+  if (music === 'Electronica') return '/scout-covers/electronica.svg'
+  if (music === 'Flamenquito') return '/scout-covers/flamenquito.svg'
+  if (type === 'Brunch') return '/scout-covers/brunch.svg'
+  if (type === 'Rooftop') return '/scout-covers/rooftop.svg'
+  return '/scout-covers/tardeo.svg'
+}
 
 export default function AdminPage() {
   const formRef = useRef<HTMLFormElement | null>(null)
@@ -48,6 +98,10 @@ export default function AdminPage() {
   const [scoutTypeFilter, setScoutTypeFilter] = useState('Todos')
   const [eventTypeFilter, setEventTypeFilter] = useState('Todos')
   const [editingEvent, setEditingEvent] = useState<any | null>(null)
+  const [bulkRows, setBulkRows] = useState<BulkEventRow[]>([createBulkRow()])
+  const [bulkDuplicateRowId, setBulkDuplicateRowId] = useState('')
+  const [bulkDuplicateDate, setBulkDuplicateDate] = useState('')
+  const [bulkDuplicateDates, setBulkDuplicateDates] = useState<string[]>([])
 
   useEffect(() => {
     async function checkAdmin() {
@@ -352,6 +406,115 @@ export default function AdminPage() {
         : [...current, style]
     )
   }
+  function updateBulkRow(rowId: string, field: keyof BulkEventRow, value: string | boolean) {
+    setBulkRows((rows) =>
+      rows.map((row) => row.id === rowId ? { ...row, [field]: value } : row)
+    )
+  }
+
+  function addBulkRow() {
+    setBulkRows((rows) => [...rows, createBulkRow()])
+  }
+
+  function removeBulkRow(rowId: string) {
+    setBulkRows((rows) => rows.length === 1 ? [createBulkRow()] : rows.filter((row) => row.id !== rowId))
+  }
+
+  function pasteBulkRows(text: string) {
+    const rows = text
+      .trim()
+      .split(/\r?\n/)
+      .map((line) => line.split('\t'))
+      .filter((cells) => cells.some(Boolean))
+      .map((cells) => createBulkRow({
+        title: cells[0] || '',
+        type: cells[1] || 'Tardeo',
+        music: cells[2] || 'Comercial',
+        audience: cells[3] || 'Mixto',
+        venue: cells[4] || '',
+        area: cells[5] || 'Madrid',
+        date: cells[6] || '',
+        startTime: cells[7] || '18:00',
+        endTime: cells[8] || '23:00',
+        priceFrom: cells[9] || '0',
+        ticketUrl: cells[10] || '',
+        mapsUrl: cells[11] || '',
+        description: cells[12] || '',
+      }))
+
+    if (rows.length) setBulkRows(rows)
+  }
+
+  function addDuplicateDate() {
+    if (!bulkDuplicateDate || bulkDuplicateDates.includes(bulkDuplicateDate)) return
+    setBulkDuplicateDates((dates) => [...dates, bulkDuplicateDate].sort())
+    setBulkDuplicateDate('')
+  }
+
+  function duplicateBulkRowOnDates() {
+    const source = bulkRows.find((row) => row.id === bulkDuplicateRowId) || bulkRows[0]
+    if (!source || bulkDuplicateDates.length === 0) return
+
+    const duplicates = bulkDuplicateDates.map((dateValue) => createBulkRow({ ...source, date: dateValue }))
+    setBulkRows((rows) => [...rows, ...duplicates])
+    setBulkDuplicateDates([])
+  }
+
+  async function createBulkEvents() {
+    const validRows = bulkRows.filter((row) => row.active && row.title && row.date)
+
+    if (validRows.length === 0) {
+      setMessage('No hay filas activas con evento y fecha')
+      return
+    }
+
+    const rowsToInsert = validRows.map((row) => {
+      const musicList = row.music
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean)
+
+      return {
+        title: row.title,
+        slug: generateSlug(row.title, row.date),
+        venue: row.venue || 'Pendiente de revisar',
+        area: row.area || 'Madrid',
+        address: row.venue || row.area || 'Madrid',
+        maps_url: row.mapsUrl || null,
+        date: row.date,
+        start_time: row.startTime || '18:00',
+        end_time: row.endTime || '23:00',
+        type: row.type || 'Tardeo',
+        music: musicList.length ? musicList : ['Comercial'],
+        audience: row.audience || 'Mixto',
+        price_from: row.priceFrom ? Number(row.priceFrom) : 0,
+        cover: scoutCoverFor(row.type, musicList[0] || row.music),
+        reel_url: null,
+        featured: false,
+        description: row.description || 'Evento cargado desde la tabla editorial de TARDEA. Pendiente de revision antes de publicar.',
+        perks: [row.type, row.area, ...(musicList.length ? musicList : [row.music])].filter(Boolean),
+        status: 'pending',
+        published: false,
+        source_name: 'Carga admin',
+        source_url: row.ticketUrl || null,
+        external_id: row.ticketUrl || row.title + '-' + row.date,
+        imported_by_agent: true,
+        image_status: 'provisional',
+        needs_review: true,
+      }
+    })
+
+    const { error } = await supabase.from('events').upsert(rowsToInsert, { onConflict: 'slug' })
+
+    if (error) {
+      setMessage(`Error al crear eventos desde tabla: ${error.message}`)
+      return
+    }
+
+    setMessage(`${rowsToInsert.length} eventos enviados a revision`)
+    setBulkRows([createBulkRow()])
+    fetchEvents()
+  }
 
   const todayDate = new Date().toISOString().split('T')[0]
   const createdEvents = events.filter((event) => !event.date || event.date >= todayDate)
@@ -493,6 +656,96 @@ export default function AdminPage() {
         {message && <p className="text-sm text-brand-500">{message}</p>}
       </form>
 
+      <section className="mt-12 rounded-3xl border border-white/10 bg-slate-900/70 p-5">
+        <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-500">Carga rapida tipo Excel</p>
+            <h2 className="text-2xl font-bold">Listado editorial de eventos</h2>
+            <p className="mt-2 text-sm text-slate-400">Anade eventos en filas, duplica por fechas y mandalos a revision. Solo se crean las filas activas.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={addBulkRow} className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-slate-200 hover:border-brand-500/60">Anadir fila</button>
+            <button type="button" onClick={createBulkEvents} className="rounded-full bg-brand-500 px-4 py-2 text-sm font-bold text-white hover:bg-brand-600">Crear en revision</button>
+          </div>
+        </div>
+
+        <textarea
+          className="input mb-4 min-h-20 text-sm"
+          placeholder="Pega aqui desde Excel/Sheets: evento, tipo, musica, edad, sala, zona, fecha, inicio, fin, precio, link entradas, maps, descripcion"
+          onPaste={(event) => {
+            const text = event.clipboardData.getData('text')
+            if (text.includes('\t')) {
+              event.preventDefault()
+              pasteBulkRows(text)
+            }
+          }}
+        />
+
+        <div className="mb-4 rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+          <p className="mb-3 text-sm font-semibold text-slate-300">Duplicar evento por varios dias</p>
+          <div className="grid gap-3 lg:grid-cols-[1fr_auto_auto] lg:items-center">
+            <select className="select" value={bulkDuplicateRowId} onChange={(event) => setBulkDuplicateRowId(event.target.value)}>
+              <option value="">Selecciona evento de la tabla</option>
+              {bulkRows.map((row) => (
+                <option key={row.id} value={row.id}>{row.title || 'Fila sin titulo'} {row.date ? `- ${row.date}` : ''}</option>
+              ))}
+            </select>
+            <div className="flex gap-2">
+              <input type="date" className="input" value={bulkDuplicateDate} onChange={(event) => setBulkDuplicateDate(event.target.value)} />
+              <button type="button" onClick={addDuplicateDate} className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-slate-200 hover:border-brand-500/60">Anadir fecha</button>
+            </div>
+            <button type="button" onClick={duplicateBulkRowOnDates} className="rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-white hover:bg-white/15">Duplicar</button>
+          </div>
+          {bulkDuplicateDates.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {bulkDuplicateDates.map((dateValue) => (
+                <button key={dateValue} type="button" onClick={() => setBulkDuplicateDates((dates) => dates.filter((item) => item !== dateValue))} className="rounded-full bg-brand-500/20 px-3 py-1 text-xs font-semibold text-brand-100">
+                  {new Date(dateValue).toLocaleDateString('es-ES')} x
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="overflow-x-auto rounded-2xl border border-white/10">
+          <table className="w-full min-w-[1420px] border-collapse text-left text-sm">
+            <thead className="bg-slate-950/70 text-xs uppercase tracking-[0.12em] text-slate-500">
+              <tr>
+                <th className="px-3 py-3">Activo</th>
+                <th className="px-3 py-3">Evento</th>
+                <th className="px-3 py-3">Tipo</th>
+                <th className="px-3 py-3">Musica</th>
+                <th className="px-3 py-3">Edad</th>
+                <th className="px-3 py-3">Sala</th>
+                <th className="px-3 py-3">Ubicacion</th>
+                <th className="px-3 py-3">Fecha</th>
+                <th className="px-3 py-3">Horario</th>
+                <th className="px-3 py-3">Precio</th>
+                <th className="px-3 py-3">Enlace</th>
+                <th className="px-3 py-3">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bulkRows.map((row) => (
+                <tr key={row.id} className="border-t border-white/5 align-top">
+                  <td className="px-3 py-2"><input type="checkbox" checked={row.active} onChange={(event) => updateBulkRow(row.id, 'active', event.target.checked)} /></td>
+                  <td className="px-3 py-2"><input className="w-56 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10 focus:ring-brand-500" value={row.title} onChange={(event) => updateBulkRow(row.id, 'title', event.target.value)} placeholder="Nombre" /></td>
+                  <td className="px-3 py-2"><select className="w-36 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.type} onChange={(event) => updateBulkRow(row.id, 'type', event.target.value)}>{EVENT_TYPE_OPTIONS.map((option) => <option key={option}>{option}</option>)}</select></td>
+                  <td className="px-3 py-2"><input className="w-44 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.music} onChange={(event) => updateBulkRow(row.id, 'music', event.target.value)} placeholder="Comercial, Pop" /></td>
+                  <td className="px-3 py-2"><select className="w-32 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.audience} onChange={(event) => updateBulkRow(row.id, 'audience', event.target.value)}>{['Mixto', ...AUDIENCE_OPTIONS].map((option) => <option key={option}>{option}</option>)}</select></td>
+                  <td className="px-3 py-2"><input className="w-44 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.venue} onChange={(event) => updateBulkRow(row.id, 'venue', event.target.value)} placeholder="Sala" /></td>
+                  <td className="px-3 py-2"><input className="w-40 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.area} onChange={(event) => updateBulkRow(row.id, 'area', event.target.value)} placeholder="Zona" /></td>
+                  <td className="px-3 py-2"><input type="date" className="w-40 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.date} onChange={(event) => updateBulkRow(row.id, 'date', event.target.value)} /></td>
+                  <td className="px-3 py-2"><div className="flex gap-2"><input type="time" className="w-28 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.startTime} onChange={(event) => updateBulkRow(row.id, 'startTime', event.target.value)} /><input type="time" className="w-28 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.endTime} onChange={(event) => updateBulkRow(row.id, 'endTime', event.target.value)} /></div></td>
+                  <td className="px-3 py-2"><input className="w-24 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.priceFrom} onChange={(event) => updateBulkRow(row.id, 'priceFrom', event.target.value)} /></td>
+                  <td className="px-3 py-2"><input className="w-64 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.ticketUrl} onChange={(event) => updateBulkRow(row.id, 'ticketUrl', event.target.value)} placeholder="Tiquetera" /></td>
+                  <td className="px-3 py-2"><button type="button" onClick={() => removeBulkRow(row.id)} className="text-xs font-semibold text-slate-500 hover:text-red-300">Eliminar</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
       <div className="mt-12">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
