@@ -181,6 +181,108 @@
     "notes": "Fuente secundaria para eventos sociales."
   },
   {
+    "platform": "Ticketmaster",
+    "priority": 3,
+    "source_type": "ticketing",
+    "base_url": "https://www.ticketmaster.es/",
+    "search_patterns": [
+      "site:ticketmaster.es Madrid brunch",
+      "site:ticketmaster.es Madrid rooftop",
+      "site:ticketmaster.es Madrid fiesta",
+      "site:ticketmaster.es Madrid afterwork"
+    ],
+    "best_for": ["Eventos grandes", "Conciertos", "Festivales", "Experiencias"],
+    "signals": ["entradas", "Madrid", "fecha", "recinto"],
+    "scout_strategy": "Prioridad baja/media. Revisar solo eventos que encajen con tardeo, rooftop, brunch o plan de grupo.",
+    "image_policy": "No copiar imagen. Usar cover provisional y fuente original.",
+    "notes": "Puede aportar eventos grandes, pero requiere mucho filtrado editorial."
+  },
+  {
+    "platform": "See Tickets",
+    "priority": 3,
+    "source_type": "ticketing",
+    "base_url": "https://www.seetickets.com/es/",
+    "search_patterns": [
+      "site:seetickets.com/es Madrid tardeo",
+      "site:seetickets.com/es Madrid brunch",
+      "site:seetickets.com/es Madrid rooftop",
+      "site:seetickets.com/es Madrid fiesta"
+    ],
+    "best_for": ["Promotoras", "Musica en vivo", "Fiestas", "Experiencias"],
+    "signals": ["tickets", "venue", "Madrid", "fecha"],
+    "scout_strategy": "Prioridad baja/media. Buscar eventos compatibles y revisar fuente antes de importar.",
+    "image_policy": "No copiar imagen. Usar cover provisional.",
+    "notes": "Fuente complementaria para eventos de ocio y musica."
+  },
+  {
+    "platform": "Ticketandroll",
+    "priority": 2,
+    "source_type": "ticketing",
+    "base_url": "https://ticketandroll.com/",
+    "search_patterns": [
+      "site:ticketandroll.com Madrid tardeo",
+      "site:ticketandroll.com Madrid brunch",
+      "site:ticketandroll.com Madrid terraza",
+      "site:ticketandroll.com Madrid afterwork"
+    ],
+    "best_for": ["Eventos independientes", "Promotoras", "Fiestas", "Musica"],
+    "signals": ["entradas", "Madrid", "organizador", "fecha"],
+    "scout_strategy": "Prioridad media. Buena fuente para promotores independientes si los resultados son publicos.",
+    "image_policy": "No copiar imagen. Guardar URL de referencia.",
+    "notes": "Interesante para descubrir eventos que no salen en plataformas mas grandes."
+  },
+  {
+    "platform": "Atrapalo",
+    "priority": 3,
+    "source_type": "ticketing",
+    "base_url": "https://www.atrapalo.com/",
+    "search_patterns": [
+      "site:atrapalo.com Madrid brunch",
+      "site:atrapalo.com Madrid rooftop",
+      "site:atrapalo.com Madrid experiencias",
+      "site:atrapalo.com Madrid afterwork"
+    ],
+    "best_for": ["Brunch", "Experiencias", "Planes gastronomicos", "Ocio"],
+    "signals": ["oferta", "experiencia", "Madrid", "precio"],
+    "scout_strategy": "Prioridad baja/media. Usar para brunch, terrazas y experiencias que encajen con planes de tarde.",
+    "image_policy": "No copiar imagen. Cover provisional TARDEA.",
+    "notes": "Mas orientado a ocio/experiencias; filtrar bien para no meter planes fuera de TARDEA."
+  },
+  {
+    "platform": "Taquilla",
+    "priority": 3,
+    "source_type": "ticketing_aggregator",
+    "base_url": "https://www.taquilla.com/",
+    "search_patterns": [
+      "site:taquilla.com Madrid tardeo",
+      "site:taquilla.com Madrid brunch",
+      "site:taquilla.com Madrid rooftop",
+      "site:taquilla.com Madrid fiesta"
+    ],
+    "best_for": ["Agregador", "Eventos grandes", "Conciertos", "Experiencias"],
+    "signals": ["entradas", "comparador", "Madrid", "fecha"],
+    "scout_strategy": "Prioridad baja. Usar como radar para descubrir eventos y luego confirmar en la fuente principal.",
+    "image_policy": "No copiar imagen. Confirmar fuente final antes de publicar.",
+    "notes": "Util como pista, no como fuente definitiva si apunta a otra tiquetera."
+  },
+  {
+    "platform": "Clubbingspain",
+    "priority": 2,
+    "source_type": "agenda",
+    "base_url": "https://www.clubbingspain.com/",
+    "search_patterns": [
+      "site:clubbingspain.com Madrid techno",
+      "site:clubbingspain.com Madrid house",
+      "site:clubbingspain.com Madrid club",
+      "site:clubbingspain.com Madrid electronica"
+    ],
+    "best_for": ["Electronica", "Techno", "House", "Clubbing"],
+    "signals": ["lineup", "club", "Madrid", "fecha"],
+    "scout_strategy": "Prioridad media para electronica. Usar como agenda de descubrimiento y confirmar ticketing.",
+    "image_policy": "No copiar imagen ni flyer. Cover provisional electronica.",
+    "notes": "Muy util para segmentar electronica sin mezclarla con comercial."
+  },
+  {
     "platform": "Instagram",
     "priority": 1,
     "source_type": "social_manual",

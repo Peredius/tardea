@@ -70,6 +70,7 @@ function scoutCoverFor(type: string, music: string) {
 
 export default function AdminPage() {
   const formRef = useRef<HTMLFormElement | null>(null)
+  const bulkSectionRef = useRef<HTMLElement | null>(null)
   const [title, setTitle] = useState('')
   const [venue, setVenue] = useState('')
   const [area, setArea] = useState('')
@@ -96,6 +97,7 @@ export default function AdminPage() {
   const [eventClaims, setEventClaims] = useState<any[]>([])
   const [scoutEvents, setScoutEvents] = useState<any[]>([])
   const [scoutTypeFilter, setScoutTypeFilter] = useState('Todos')
+  const [selectedScoutEventIds, setSelectedScoutEventIds] = useState<string[]>([])
   const [eventTypeFilter, setEventTypeFilter] = useState('Todos')
   const [editingEvent, setEditingEvent] = useState<any | null>(null)
   const [bulkRows, setBulkRows] = useState<BulkEventRow[]>([createBulkRow()])
@@ -279,6 +281,54 @@ export default function AdminPage() {
 
     setMessage('Evento Scout descartado')
     fetchEvents()
+  }
+
+  function scoutEventToBulkRow(event: any) {
+    return createBulkRow({
+      title: event.title || '',
+      type: event.type || 'Tardeo',
+      music: Array.isArray(event.music) ? event.music.join(', ') : event.music || 'Comercial',
+      audience: event.audience || 'Mixto',
+      venue: event.venue || '',
+      area: event.area || 'Madrid',
+      date: event.date || '',
+      startTime: event.start_time || '18:00',
+      endTime: event.end_time || '23:00',
+      priceFrom: event.price_from?.toString() || '0',
+      ticketUrl: event.source_url || '',
+      mapsUrl: event.maps_url || '',
+      description: event.description || '',
+    })
+  }
+
+  function toggleScoutSelection(eventId: string) {
+    setSelectedScoutEventIds((current) =>
+      current.includes(eventId)
+        ? current.filter((item) => item !== eventId)
+        : [...current, eventId]
+    )
+  }
+
+  function addScoutEventsToBulkRows(eventsToAdd: any[]) {
+    if (eventsToAdd.length === 0) {
+      setMessage('Selecciona al menos un evento encontrado')
+      return
+    }
+
+    const rows = eventsToAdd.map(scoutEventToBulkRow)
+    setBulkRows((current) => {
+      const emptyInitialRow = current.length === 1 && !current[0].title && !current[0].ticketUrl
+      return emptyInitialRow ? rows : [...current, ...rows]
+    })
+    setSelectedScoutEventIds([])
+    setMessage(`${rows.length} evento${rows.length === 1 ? '' : 's'} pasado${rows.length === 1 ? '' : 's'} a la tabla editorial para revisar y duplicar fechas.`)
+    window.setTimeout(() => {
+      bulkSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 50)
+  }
+
+  function addSelectedScoutEventsToBulkRows() {
+    addScoutEventsToBulkRows(scoutEvents.filter((event) => selectedScoutEventIds.includes(event.id)))
   }
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -713,7 +763,7 @@ export default function AdminPage() {
         {message && <p className="text-sm text-brand-500">{message}</p>}
       </form>
 
-      <section className="mt-12 rounded-3xl border border-white/10 bg-slate-900/70 p-5">
+      <section ref={bulkSectionRef} className="mt-12 rounded-3xl border border-white/10 bg-slate-900/70 p-5">
         <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-500">Carga rapida tipo Excel</p>
@@ -824,17 +874,29 @@ export default function AdminPage() {
           <p className="text-sm text-slate-400">Se publican solo despues de revisar datos, imagen y fuente.</p>
         </div>
 
-        <div className="mb-4 flex flex-wrap gap-2">
-          {scoutTypes.map((option) => (
+        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap gap-2">
+            {scoutTypes.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setScoutTypeFilter(option)}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${scoutTypeFilter === option ? 'bg-brand-500 text-white' : 'bg-white/10 text-slate-300 hover:bg-white/15'}`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+
+          {selectedScoutEventIds.length > 0 && (
             <button
-              key={option}
               type="button"
-              onClick={() => setScoutTypeFilter(option)}
-              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${scoutTypeFilter === option ? 'bg-brand-500 text-white' : 'bg-white/10 text-slate-300 hover:bg-white/15'}`}
+              onClick={addSelectedScoutEventsToBulkRows}
+              className="rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-white hover:bg-white/15"
             >
-              {option}
+              Pasar {selectedScoutEventIds.length} a tabla
             </button>
-          ))}
+          )}
         </div>
 
         {filteredScoutEvents.length === 0 && (
@@ -842,7 +904,8 @@ export default function AdminPage() {
         )}
 
         <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/70">
-          <div className="hidden grid-cols-[92px_minmax(220px,1.4fr)_120px_130px_minmax(150px,1fr)_auto] gap-3 border-b border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 xl:grid">
+          <div className="hidden grid-cols-[34px_92px_minmax(220px,1.4fr)_120px_130px_minmax(150px,1fr)_auto] gap-3 border-b border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 xl:grid">
+            <span></span>
             <span>Fecha</span>
             <span>Evento</span>
             <span>Tipo</span>
@@ -854,8 +917,16 @@ export default function AdminPage() {
           {filteredScoutEvents.map((event) => (
             <div
               key={event.id}
-              className="grid gap-3 border-b border-white/5 px-4 py-3 last:border-b-0 xl:grid-cols-[92px_minmax(220px,1.4fr)_120px_130px_minmax(150px,1fr)_auto] xl:items-center"
+              className="grid gap-3 border-b border-white/5 px-4 py-3 last:border-b-0 xl:grid-cols-[34px_92px_minmax(220px,1.4fr)_120px_130px_minmax(150px,1fr)_auto] xl:items-center"
             >
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={selectedScoutEventIds.includes(event.id)}
+                  onChange={() => toggleScoutSelection(event.id)}
+                />
+              </label>
+
               <div className="text-sm font-semibold text-slate-300">
                 {event.date ? new Date(event.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) : 'Sin fecha'}
               </div>
@@ -888,6 +959,9 @@ export default function AdminPage() {
                 )}
                 <button className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60" onClick={() => loadEventForEdit(event)}>
                   Editar
+                </button>
+                <button className="rounded-full border border-brand-500/40 px-3 py-1.5 text-xs font-semibold text-brand-100 hover:bg-brand-500/10" onClick={() => addScoutEventsToBulkRows([event])}>
+                  A tabla
                 </button>
                 <button className="rounded-full bg-brand-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-600" onClick={() => approveScoutEvent(event.id)}>
                   Aprobar
