@@ -102,6 +102,7 @@ export default function AdminPage() {
   const [bulkDuplicateRowId, setBulkDuplicateRowId] = useState('')
   const [bulkDuplicateDate, setBulkDuplicateDate] = useState('')
   const [bulkDuplicateDates, setBulkDuplicateDates] = useState<string[]>([])
+  const [bulkExtractingRowId, setBulkExtractingRowId] = useState('')
 
   useEffect(() => {
     async function checkAdmin() {
@@ -460,6 +461,58 @@ export default function AdminPage() {
     setBulkDuplicateDates([])
   }
 
+  async function extractBulkRowFromUrl(rowId: string) {
+    const row = bulkRows.find((item) => item.id === rowId)
+
+    if (!row?.ticketUrl) {
+      setMessage('Pega primero un enlace en la fila')
+      return
+    }
+
+    setBulkExtractingRowId(rowId)
+
+    try {
+      const response = await fetch('/api/scout/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: row.ticketUrl }),
+      })
+      const data = await response.json()
+
+      if (!response.ok) {
+        setMessage(data.error || 'No se pudo extraer informacion del enlace')
+        return
+      }
+
+      setBulkRows((rows) =>
+        rows.map((item) =>
+          item.id === rowId
+            ? {
+                ...item,
+                title: data.title || item.title,
+                description: data.description || item.description,
+                date: data.date || item.date,
+                startTime: data.startTime || item.startTime,
+                endTime: data.endTime || item.endTime,
+                type: data.type || item.type,
+                music: data.music || item.music,
+                venue: data.venue || item.venue,
+                area: data.area || item.area,
+                priceFrom: data.priceFrom || item.priceFrom,
+                mapsUrl: data.mapsUrl || item.mapsUrl,
+              }
+            : item
+        )
+      )
+
+      setMessage(`Informacion extraida de ${data.sourceName || 'la fuente'}. Revisala antes de crear el evento.`)
+    } catch {
+      setMessage('No se pudo extraer informacion del enlace')
+    } finally {
+      setBulkExtractingRowId('')
+    }
+  }
+
   async function createBulkEvents() {
     const validRows = bulkRows.filter((row) => row.active && row.title && row.date)
 
@@ -661,7 +714,7 @@ export default function AdminPage() {
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-500">Carga rapida tipo Excel</p>
             <h2 className="text-2xl font-bold">Listado editorial de eventos</h2>
-            <p className="mt-2 text-sm text-slate-400">Anade eventos en filas, duplica por fechas y mandalos a revision. Solo se crean las filas activas.</p>
+            <p className="mt-2 text-sm text-slate-400">Pega un enlace, extrae la informacion, revisa los datos, duplica por fechas y mandalo a revision. Solo se crean las filas activas.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={addBulkRow} className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-slate-200 hover:border-brand-500/60">Anadir fila</button>
@@ -671,7 +724,7 @@ export default function AdminPage() {
 
         <textarea
           className="input mb-4 min-h-20 text-sm"
-          placeholder="Pega aqui desde Excel/Sheets: evento, tipo, musica, edad, sala, zona, fecha, inicio, fin, precio, link entradas, maps, descripcion"
+          placeholder="Pega aqui desde Excel/Sheets o rellena una fila con un enlace y pulsa Extraer: evento, tipo, musica, edad, sala, zona, fecha, inicio, fin, precio, link entradas, maps, descripcion"
           onPaste={(event) => {
             const text = event.clipboardData.getData('text')
             if (text.includes('\t')) {
@@ -739,7 +792,19 @@ export default function AdminPage() {
                   <td className="px-3 py-2"><div className="flex gap-2"><input type="time" className="w-28 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.startTime} onChange={(event) => updateBulkRow(row.id, 'startTime', event.target.value)} /><input type="time" className="w-28 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.endTime} onChange={(event) => updateBulkRow(row.id, 'endTime', event.target.value)} /></div></td>
                   <td className="px-3 py-2"><input className="w-24 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.priceFrom} onChange={(event) => updateBulkRow(row.id, 'priceFrom', event.target.value)} /></td>
                   <td className="px-3 py-2"><input className="w-64 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.ticketUrl} onChange={(event) => updateBulkRow(row.id, 'ticketUrl', event.target.value)} placeholder="Tiquetera" /></td>
-                  <td className="px-3 py-2"><button type="button" onClick={() => removeBulkRow(row.id)} className="text-xs font-semibold text-slate-500 hover:text-red-300">Eliminar</button></td>
+                  <td className="px-3 py-2">
+                    <div className="flex flex-col gap-2">
+                      <button
+                        type="button"
+                        onClick={() => extractBulkRowFromUrl(row.id)}
+                        disabled={bulkExtractingRowId === row.id}
+                        className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60 disabled:cursor-wait disabled:opacity-60"
+                      >
+                        {bulkExtractingRowId === row.id ? 'Leyendo...' : 'Extraer'}
+                      </button>
+                      <button type="button" onClick={() => removeBulkRow(row.id)} className="text-xs font-semibold text-slate-500 hover:text-red-300">Eliminar</button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
