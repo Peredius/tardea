@@ -1089,6 +1089,9 @@ export default function AdminPage() {
                   {scoutSearchReport.rawError ? ` - ${scoutSearchReport.rawError}` : ''}
                 </p>
               )}
+              {scoutSearchReport.version && (
+                <p className="mt-2 text-slate-500">Scout: {scoutSearchReport.version}</p>
+              )}
               {scoutSearchReport.checks?.length > 0 && (
                 <div className="mt-3 space-y-1">
                   <p className="font-semibold text-slate-200">Pruebas Serper</p>

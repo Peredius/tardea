@@ -6,6 +6,8 @@ import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'nodejs'
 
+const SCOUT_SEARCH_VERSION = '2026-08-18-force-fallback'
+
 type ScoutPlatform = {
   platform: string
   priority: number
@@ -423,7 +425,25 @@ export async function POST(request: Request) {
       .filter((platform) => platformMatchesType(platform, eventType))
       .sort((a, b) => a.priority - b.priority)
 
-    const queries = buildSearchQueries(platforms, startDate, endDate, eventType).slice(0, maxQueries)
+    const fallbackPlatform: ScoutPlatform = {
+      platform: 'Radar web',
+      priority: 0,
+      source_type: 'web_search',
+      search_patterns: [],
+      best_for: eventType === 'Todos' ? ['Tardeo', 'Brunch', 'Rooftop', 'Afterwork'] : [eventType],
+    }
+    const fallbackTerm = eventType === 'Todos' ? 'tardeo' : eventType.toLowerCase()
+    const builtQueries = buildSearchQueries(platforms, startDate, endDate, eventType)
+    const queries = (
+      builtQueries.length
+        ? builtQueries
+        : [
+            { platform: fallbackPlatform, query: `${fallbackTerm} Madrid entradas` },
+            { platform: fallbackPlatform, query: `${fallbackTerm} Madrid eventos` },
+            { platform: fallbackPlatform, query: `${fallbackTerm} Madrid agenda` },
+            { platform: fallbackPlatform, query: `${fallbackTerm} Madrid reservas` },
+          ]
+    ).slice(0, maxQueries)
 
     const seen = new Set<string>()
     const events: any[] = []
@@ -519,6 +539,7 @@ export async function POST(request: Request) {
     if (events.length === 0) {
       return NextResponse.json({
         imported: 0,
+        version: SCOUT_SEARCH_VERSION,
         skipped,
         needsDateReview,
         searchesRun,
@@ -533,6 +554,7 @@ export async function POST(request: Request) {
     if (dryRun) {
       return NextResponse.json({
         imported: 0,
+        version: SCOUT_SEARCH_VERSION,
         preview: events.length,
         skipped,
         needsDateReview,
@@ -553,6 +575,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       imported: events.length,
+      version: SCOUT_SEARCH_VERSION,
       skipped,
       needsDateReview,
       searchesRun,
