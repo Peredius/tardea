@@ -98,15 +98,6 @@ function slugify(text: string) {
     .replace(/^-+|-+$/g, '')
 }
 
-function normalizeEventTitle(text: string) {
-  return normalize(text)
-    .replace(/\b\d{1,2}\s*(?:de\s*)?(?:ene|enero|feb|febrero|mar|marzo|abr|abril|may|mayo|jun|junio|jul|julio|ago|agosto|sep|septiembre|oct|octubre|nov|noviembre|dic|diciembre)\b/gi, ' ')
-    .replace(/\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g, ' ')
-    .replace(/\b20\d{2}\b/g, ' ')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-}
-
 function shortHash(text: string) {
   return createHash('sha1').update(text).digest('hex').slice(0, 8)
 }
@@ -502,9 +493,7 @@ export async function POST(request: Request) {
     const byPlatform: Record<string, number> = {}
     const samples: { title: string; link: string; platform: string; query: string }[] = []
     const queriesRun: string[] = []
-    const eventKeys = new Set<string>()
     let skipped = 0
-    let duplicatesSkipped = 0
     let needsDateReview = 0
     let searchesRun = 0
     let resultsReceived = 0
@@ -545,15 +534,8 @@ export async function POST(request: Request) {
         }
 
         const type = eventType === 'Todos' ? inferType(platform, text) : eventType
-        const reviewDate = hasReliableDate ? date : startDate
-        const duplicateKey = `${type}-${normalizeEventTitle(title)}-${reviewDate}`
-        if (eventKeys.has(duplicateKey)) {
-          duplicatesSkipped += 1
-          continue
-        }
-        eventKeys.add(duplicateKey)
-
         const music = inferMusic(text)
+        const reviewDate = hasReliableDate ? date : startDate
         const eventHash = shortHash(`${result.link}-${reviewDate}`)
 
         if (!hasReliableDate) needsDateReview += 1
@@ -602,7 +584,6 @@ export async function POST(request: Request) {
         imported: 0,
         version: SCOUT_SEARCH_VERSION,
         skipped,
-        duplicatesSkipped,
         needsDateReview,
         searchesRun,
         resultsReceived,
@@ -619,7 +600,6 @@ export async function POST(request: Request) {
         version: SCOUT_SEARCH_VERSION,
         preview: events.length,
         skipped,
-        duplicatesSkipped,
         needsDateReview,
         searchesRun,
         resultsReceived,
@@ -639,7 +619,6 @@ export async function POST(request: Request) {
           version: SCOUT_SEARCH_VERSION,
           searchesRun,
           resultsReceived,
-          duplicatesSkipped,
           queriesRun,
         },
         { status: 400 }
@@ -650,7 +629,6 @@ export async function POST(request: Request) {
       imported: events.length,
       version: SCOUT_SEARCH_VERSION,
       skipped,
-      duplicatesSkipped,
       needsDateReview,
       searchesRun,
       resultsReceived,
