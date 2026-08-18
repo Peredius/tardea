@@ -315,6 +315,31 @@ function buildSearchQueries(platforms: ScoutPlatform[], startDate: string, endDa
   })
 }
 
+export async function GET(request: Request) {
+  const url = new URL(request.url)
+  const startDate = url.searchParams.get('startDate') || new Date().toISOString().slice(0, 10)
+  const endDate = url.searchParams.get('endDate') || startDate
+  const eventType = url.searchParams.get('eventType') || 'Todos'
+  const maxQueries = Number(url.searchParams.get('maxQueries') || 10)
+  const platforms = readPlatforms()
+    .filter((platform) => platform.search_patterns.some(canSearch))
+    .filter((platform) => platformMatchesType(platform, eventType))
+    .sort((a, b) => a.priority - b.priority)
+  const queries = buildSearchQueries(platforms, startDate, endDate, eventType).slice(0, maxQueries)
+
+  return NextResponse.json({
+    ok: true,
+    version: SCOUT_SEARCH_VERSION,
+    hasKey: Boolean(serperApiKey),
+    eventType,
+    startDate,
+    endDate,
+    platforms: platforms.length,
+    queryCount: queries.length,
+    examples: queries.map((item) => item.query),
+  })
+}
+
 function metaContent(html: string, property: string) {
   const escaped = property.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const patterns = [
@@ -588,7 +613,16 @@ export async function POST(request: Request) {
     const { error } = await admin.serviceClient.from('events').upsert(events, { onConflict: 'slug' })
 
     if (error) {
-      return NextResponse.json({ error: `Error guardando eventos: ${error.message}` }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: `Error guardando eventos: ${error.message}`,
+          version: SCOUT_SEARCH_VERSION,
+          searchesRun,
+          resultsReceived,
+          queriesRun,
+        },
+        { status: 400 }
+      )
     }
 
     return NextResponse.json({
@@ -605,7 +639,12 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'No se pudo buscar eventos' },
+      {
+        error: error instanceof Error ? error.message : 'No se pudo buscar eventos',
+        version: SCOUT_SEARCH_VERSION,
+        searchesRun: 0,
+        resultsReceived: 0,
+      },
       { status: 400 }
     )
   }
