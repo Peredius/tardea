@@ -940,7 +940,7 @@ export default function AdminPage() {
         )}
 
         <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/70">
-          <div className="hidden grid-cols-[34px_92px_minmax(220px,1.4fr)_120px_130px_minmax(150px,1fr)_auto] gap-3 border-b border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 xl:grid">
+          <div className="hidden grid-cols-[30px_76px_minmax(220px,1.4fr)_96px_110px_minmax(130px,1fr)_auto] gap-2 border-b border-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 xl:grid">
             <span></span>
             <span>Fecha</span>
             <span>Evento</span>
@@ -953,7 +953,7 @@ export default function AdminPage() {
           {filteredScoutEvents.map((event) => (
             <div
               key={event.id}
-              className="grid gap-3 border-b border-white/5 px-4 py-3 last:border-b-0 xl:grid-cols-[34px_92px_minmax(220px,1.4fr)_120px_130px_minmax(150px,1fr)_auto] xl:items-center"
+              className="grid gap-2 border-b border-white/5 px-3 py-2.5 last:border-b-0 xl:grid-cols-[30px_76px_minmax(220px,1.4fr)_96px_110px_minmax(130px,1fr)_auto] xl:items-center"
             >
               <label className="flex items-center">
                 <input
@@ -963,46 +963,46 @@ export default function AdminPage() {
                 />
               </label>
 
-              <div className="text-sm font-semibold text-slate-300">
+              <div className="text-xs font-semibold text-slate-300">
                 {event.date ? new Date(event.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) : 'Sin fecha'}
               </div>
 
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="truncate font-semibold">{event.title}</p>
+                  <p className="truncate text-sm font-semibold">{event.title}</p>
                   <span className="rounded-full bg-brand-500/15 px-2 py-0.5 text-[11px] font-semibold text-brand-200">Scout</span>
                 </div>
                 <p className="mt-0.5 truncate text-xs text-slate-500">{event.venue || "Sala por revisar"}</p>
               </div>
 
-              <p className="text-sm text-slate-400">{event.type || "Tardeo"}</p>
-              <p className="text-sm text-slate-400">{event.area || "Madrid"}</p>
+              <p className="text-xs text-slate-400">{event.type || "Tardeo"}</p>
+              <p className="text-xs text-slate-400">{event.area || "Madrid"}</p>
 
-              <div className="min-w-0 text-sm text-slate-400">
+              <div className="min-w-0 text-xs text-slate-400">
                 <p className="truncate">{event.source_name || "No indicada"}</p>
                 {event.source_url && (
-                  <a href={event.source_url} target="_blank" rel="noreferrer" className="text-xs text-brand-500 hover:text-brand-400">
+                  <a href={event.source_url} target="_blank" rel="noreferrer" className="text-[11px] text-brand-500 hover:text-brand-400">
                     Fuente
                   </a>
                 )}
               </div>
 
-              <div className="flex flex-wrap gap-2 xl:justify-end">
+              <div className="flex flex-wrap gap-1.5 xl:justify-end">
                 {event.slug && (
-                  <Link href={`/eventos/${event.slug}?from=admin`} className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60">
+                  <Link href={`/eventos/${event.slug}?from=admin`} className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:border-brand-500/60">
                     Vista
                   </Link>
                 )}
-                <button className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60" onClick={() => loadEventForEdit(event)}>
+                <button className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:border-brand-500/60" onClick={() => loadEventForEdit(event)}>
                   Editar
                 </button>
-                <button className="rounded-full border border-brand-500/40 px-3 py-1.5 text-xs font-semibold text-brand-100 hover:bg-brand-500/10" onClick={() => addScoutEventsToBulkRows([event])}>
+                <button className="rounded-full border border-brand-500/40 px-2.5 py-1 text-[11px] font-semibold text-brand-100 hover:bg-brand-500/10" onClick={() => addScoutEventsToBulkRows([event])}>
                   A tabla
                 </button>
-                <button className="rounded-full bg-brand-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-600" onClick={() => approveScoutEvent(event.id)}>
+                <button className="rounded-full bg-brand-500 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-brand-600" onClick={() => approveScoutEvent(event.id)}>
                   Aprobar
                 </button>
-                <button className="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-red-300" onClick={() => discardScoutEvent(event.id)}>
+                <button className="rounded-full px-2.5 py-1 text-[11px] font-semibold text-slate-500 hover:text-red-300" onClick={() => discardScoutEvent(event.id)}>
                   Descartar
                 </button>
               </div>
