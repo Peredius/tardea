@@ -398,6 +398,7 @@ export async function POST(request: Request) {
     const events: any[] = []
     const byPlatform: Record<string, number> = {}
     let skipped = 0
+    let needsDateReview = 0
     let searchesRun = 0
 
     for (const { platform, query } of queries) {
@@ -414,8 +415,9 @@ export async function POST(request: Request) {
         const details: any = await fetchDetails(result.link)
         const text = `${result.title} ${result.snippet || ''} ${details.title || ''} ${details.description || ''} ${details.text || ''}`
         const date = details.date || inferDate(text)
+        const hasReliableDate = Boolean(date && isBetween(date, startDate, endDate))
 
-        if (!date || !isBetween(date, startDate, endDate)) {
+        if (date && !isBetween(date, startDate, endDate)) {
           skipped += 1
           continue
         }
@@ -428,16 +430,19 @@ export async function POST(request: Request) {
 
         const type = eventType === 'Todos' ? inferType(platform, text) : eventType
         const music = inferMusic(text)
-        const eventHash = shortHash(`${result.link}-${date}`)
+        const reviewDate = hasReliableDate ? date : startDate
+        const eventHash = shortHash(`${result.link}-${reviewDate}`)
+
+        if (!hasReliableDate) needsDateReview += 1
 
         events.push({
           title,
-          slug: `${slugify(title)}-${date}-${eventHash}`,
+          slug: `${slugify(title)}-${reviewDate}-${eventHash}`,
           venue: details.venue || 'Pendiente de revisar',
           area: 'Madrid',
           address: 'Madrid, Madrid',
           maps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(details.venue || 'Madrid')}`,
-          date,
+          date: reviewDate,
           start_time: details.startTime || '18:00',
           end_time: details.endTime || '23:00',
           type,
@@ -453,8 +458,8 @@ export async function POST(request: Request) {
                 : '/scout-covers/tardeo.svg',
           reel_url: null,
           featured: false,
-          description: `Evento detectado por TARDEA Scout en ${platform.platform}. Pendiente de revision editorial, imagen definitiva y posible reclamacion del promotor. Fuente: ${result.link}`,
-          perks: [type, 'Madrid', platform.platform, ...music],
+          description: `${hasReliableDate ? '' : 'FECHA POR REVISAR: no se pudo detectar la fecha exacta en la fuente. '}Evento detectado por TARDEA Scout en ${platform.platform}. Pendiente de revision editorial, imagen definitiva y posible reclamacion del promotor. Fuente: ${result.link}`,
+          perks: [type, 'Madrid', platform.platform, hasReliableDate ? 'Fecha detectada' : 'Fecha por revisar', ...music],
           status: 'pending',
           published: false,
           source_name: `${platform.platform} (${platform.source_type})`,
@@ -473,9 +478,10 @@ export async function POST(request: Request) {
       return NextResponse.json({
         imported: 0,
         skipped,
+        needsDateReview,
         searchesRun,
         byPlatform,
-        message: `No se encontraron eventos con fecha clara para esa semana. Busquedas realizadas: ${searchesRun}`,
+        message: `No se encontraron candidatos para revisar. Busquedas realizadas: ${searchesRun}`,
       })
     }
 
@@ -488,9 +494,10 @@ export async function POST(request: Request) {
     return NextResponse.json({
       imported: events.length,
       skipped,
+      needsDateReview,
       searchesRun,
       byPlatform,
-      message: `${events.length} eventos ${eventType === 'Todos' ? '' : `de ${eventType} `}reales encontrados y enviados a revision`,
+      message: `${events.length} candidatos reales ${eventType === 'Todos' ? '' : `de ${eventType} `}enviados a revision${needsDateReview ? `, ${needsDateReview} con fecha por revisar` : ''}`,
     })
   } catch (error) {
     return NextResponse.json(

@@ -1074,13 +1074,16 @@ export default function AdminPage() {
               </label>
 
               <div className="text-xs font-semibold text-slate-300">
-                {event.date ? new Date(event.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) : 'Sin fecha'}
+                {event.perks?.includes('Fecha por revisar') ? 'Revisar' : event.date ? new Date(event.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) : 'Sin fecha'}
               </div>
 
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="truncate text-sm font-semibold">{event.title}</p>
                   <span className="rounded-full bg-brand-500/15 px-2 py-0.5 text-[11px] font-semibold text-brand-200">Scout</span>
+                  {event.perks?.includes('Fecha por revisar') && (
+                    <span className="rounded-full bg-yellow-500/15 px-2 py-0.5 text-[11px] font-semibold text-yellow-200">Fecha por revisar</span>
+                  )}
                 </div>
                 <p className="mt-0.5 truncate text-xs text-slate-500">{event.venue || "Sala por revisar"}</p>
               </div>
