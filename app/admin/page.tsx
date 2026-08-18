@@ -114,6 +114,7 @@ export default function AdminPage() {
   const [scoutSearching, setScoutSearching] = useState(false)
   const [scoutDryRun, setScoutDryRun] = useState(false)
   const [scoutSearchReport, setScoutSearchReport] = useState<any | null>(null)
+  const [scoutPingLoading, setScoutPingLoading] = useState(false)
   const [eventTypeFilter, setEventTypeFilter] = useState('Todos')
   const [editingEvent, setEditingEvent] = useState<any | null>(null)
   const [bulkRows, setBulkRows] = useState<BulkEventRow[]>([createBulkRow()])
@@ -344,6 +345,39 @@ export default function AdminPage() {
       setMessage('No se pudo buscar eventos')
     } finally {
       setScoutSearching(false)
+    }
+  }
+
+  async function pingScoutSearch() {
+    setScoutPingLoading(true)
+    setScoutSearchReport(null)
+    setMessage('Probando conexion con Serper...')
+
+    try {
+      const response = await fetch('/api/scout/ping')
+      const data = await response.json()
+      setScoutSearchReport({
+        ...data,
+        searchesRun: 1,
+        resultsReceived: data.results || 0,
+        preview: 0,
+        samples: data.examples?.map((item: any) => ({
+          ...item,
+          platform: 'Serper',
+        })) || [],
+        queriesRun: ['tardeo Madrid entradas'],
+      })
+
+      if (!response.ok) {
+        setMessage(data.error || data.rawError || 'Serper no responde correctamente')
+        return
+      }
+
+      setMessage(`Serper responde: ${data.results || 0} resultados para una busqueda simple`)
+    } catch {
+      setMessage('No se pudo probar Serper')
+    } finally {
+      setScoutPingLoading(false)
     }
   }
 
@@ -1018,6 +1052,16 @@ export default function AdminPage() {
               className="rounded-full bg-brand-500 px-5 py-3 text-sm font-bold text-white hover:bg-brand-600 disabled:cursor-wait disabled:opacity-60"
             >
               {scoutSearching ? 'Buscando...' : 'Buscar eventos'}
+            </button>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={pingScoutSearch}
+              disabled={scoutPingLoading}
+              className="rounded-full border border-white/10 px-4 py-2 text-xs font-bold text-slate-200 hover:border-brand-500/60 disabled:cursor-wait disabled:opacity-60"
+            >
+              {scoutPingLoading ? 'Probando...' : 'Probar conexion Serper'}
             </button>
           </div>
           <p className="mt-3 text-xs text-slate-400">
