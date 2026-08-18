@@ -314,9 +314,13 @@ export default function AdminPage() {
       const {
         data: { session },
       } = await supabase.auth.getSession()
+      const debugUrl = `/api/scout/search?eventType=${encodeURIComponent(scoutSearchType)}&startDate=${encodeURIComponent(scoutSearchStartDate)}&endDate=${encodeURIComponent(scoutSearchEndDate)}`
+      const debugResponse = await fetch(debugUrl, { cache: 'no-store' })
+      const debugData = await debugResponse.json()
 
       const response = await fetch('/api/scout/search', {
         method: 'POST',
+        cache: 'no-store',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session?.access_token || ''}`,
@@ -336,6 +340,7 @@ export default function AdminPage() {
         ...data,
         status: response.status,
         ok: response.ok,
+        debug: debugData,
       })
 
       if (!response.ok) {
@@ -345,7 +350,12 @@ export default function AdminPage() {
 
       setMessage(data.message || `${data.imported || 0} eventos encontrados`)
       if (!scoutDryRun) fetchEvents()
-    } catch {
+    } catch (error) {
+      setScoutSearchReport({
+        error: error instanceof Error ? error.message : 'No se pudo buscar eventos',
+        searchesRun: 0,
+        resultsReceived: 0,
+      })
       setMessage('No se pudo buscar eventos')
     } finally {
       setScoutSearching(false)
@@ -1096,6 +1106,16 @@ export default function AdminPage() {
               )}
               {scoutSearchReport.version && (
                 <p className="mt-2 text-slate-500">Scout: {scoutSearchReport.version}</p>
+              )}
+              {scoutSearchReport.debug && (
+                <div className="mt-2 text-slate-400">
+                  <p>
+                    <span className="text-slate-500">Diagnostico:</span> {scoutSearchReport.debug.queryCount ?? 0} consultas preparadas, {scoutSearchReport.debug.platforms ?? 0} fuentes, clave {scoutSearchReport.debug.hasKey ? 'activa' : 'no detectada'}
+                  </p>
+                  {scoutSearchReport.debug.examples?.length > 0 && (
+                    <p className="mt-1 truncate text-slate-500">Primera busqueda: {scoutSearchReport.debug.examples[0]}</p>
+                  )}
+                </div>
               )}
               {scoutSearchReport.checks?.length > 0 && (
                 <div className="mt-3 space-y-1">
