@@ -255,6 +255,11 @@ function buildSearchQueries(platforms: ScoutPlatform[], startDate: string, endDa
       .filter(canSearch)
       .filter((pattern) => patternMatchesType(pattern, eventType))
       .forEach((pattern) => {
+        queries.push({ platform, query: pattern })
+        queries.push({ platform, query: `${pattern} entradas` })
+        queries.push({ platform, query: `${pattern} eventos` })
+        queries.push({ platform, query: `${pattern} agenda` })
+
         monthLabels.forEach((monthLabel) => {
           queries.push({ platform, query: `${pattern} entradas Madrid ${monthLabel}` })
           queries.push({ platform, query: `${pattern} eventos Madrid ${monthLabel}` })
@@ -416,11 +421,6 @@ export async function POST(request: Request) {
         const text = `${result.title} ${result.snippet || ''} ${details.title || ''} ${details.description || ''} ${details.text || ''}`
         const date = details.date || inferDate(text)
         const hasReliableDate = Boolean(date && isBetween(date, startDate, endDate))
-
-        if (date && !isBetween(date, startDate, endDate)) {
-          skipped += 1
-          continue
-        }
 
         const title = cleanTitle(details.title || result.title)
         if (!title) {

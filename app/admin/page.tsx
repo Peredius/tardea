@@ -322,7 +322,7 @@ export default function AdminPage() {
           endDate: scoutSearchEndDate,
           eventType: scoutSearchType,
           maxResults: 50,
-          limitPerQuery: 5,
+          limitPerQuery: 10,
           maxQueries: 70,
         }),
       })
