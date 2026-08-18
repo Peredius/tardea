@@ -387,6 +387,7 @@ export async function POST(request: Request) {
     const maxResults = Number(body.maxResults || 50)
     const limitPerQuery = Number(body.limitPerQuery || 4)
     const maxQueries = Number(body.maxQueries || 70)
+    const dryRun = Boolean(body.dryRun)
 
     if (!startDate || !endDate) {
       return NextResponse.json({ error: 'Selecciona una semana para buscar' }, { status: 400 })
@@ -402,15 +403,29 @@ export async function POST(request: Request) {
     const seen = new Set<string>()
     const events: any[] = []
     const byPlatform: Record<string, number> = {}
+    const samples: { title: string; link: string; platform: string; query: string }[] = []
     let skipped = 0
     let needsDateReview = 0
     let searchesRun = 0
+    let resultsReceived = 0
 
     for (const { platform, query } of queries) {
       if (events.length >= maxResults) break
 
       searchesRun += 1
       const results = await searchSerper(query, limitPerQuery)
+      resultsReceived += results.length
+
+      results.slice(0, 2).forEach((result) => {
+        if (samples.length < 12 && result.title && result.link) {
+          samples.push({
+            title: cleanTitle(result.title),
+            link: result.link,
+            platform: platform.platform,
+            query,
+          })
+        }
+      })
 
       for (const result of results) {
         if (events.length >= maxResults) break
@@ -480,8 +495,24 @@ export async function POST(request: Request) {
         skipped,
         needsDateReview,
         searchesRun,
+        resultsReceived,
         byPlatform,
-        message: `No se encontraron candidatos para revisar. Busquedas realizadas: ${searchesRun}`,
+        samples,
+        message: `No se encontraron candidatos para revisar. Busquedas: ${searchesRun}. Resultados recibidos: ${resultsReceived}.`,
+      })
+    }
+
+    if (dryRun) {
+      return NextResponse.json({
+        imported: 0,
+        preview: events.length,
+        skipped,
+        needsDateReview,
+        searchesRun,
+        resultsReceived,
+        byPlatform,
+        samples,
+        message: `Prueba correcta: ${events.length} candidatos preparados, sin guardar en Supabase.`,
       })
     }
 
@@ -496,7 +527,9 @@ export async function POST(request: Request) {
       skipped,
       needsDateReview,
       searchesRun,
+      resultsReceived,
       byPlatform,
+      samples,
       message: `${events.length} candidatos reales ${eventType === 'Todos' ? '' : `de ${eventType} `}enviados a revision${needsDateReview ? `, ${needsDateReview} con fecha por revisar` : ''}`,
     })
   } catch (error) {

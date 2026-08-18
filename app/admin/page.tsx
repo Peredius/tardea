@@ -112,6 +112,8 @@ export default function AdminPage() {
   const [scoutSearchEndDate, setScoutSearchEndDate] = useState(formatInputDate(addDays(new Date(), 6)))
   const [scoutSearchType, setScoutSearchType] = useState('Todos')
   const [scoutSearching, setScoutSearching] = useState(false)
+  const [scoutDryRun, setScoutDryRun] = useState(false)
+  const [scoutSearchReport, setScoutSearchReport] = useState<any | null>(null)
   const [eventTypeFilter, setEventTypeFilter] = useState('Todos')
   const [editingEvent, setEditingEvent] = useState<any | null>(null)
   const [bulkRows, setBulkRows] = useState<BulkEventRow[]>([createBulkRow()])
@@ -304,6 +306,7 @@ export default function AdminPage() {
     }
 
     setScoutSearching(true)
+    setScoutSearchReport(null)
     setMessage('Buscando eventos en tiqueteras y redes publicas...')
 
     try {
@@ -324,9 +327,11 @@ export default function AdminPage() {
           maxResults: 50,
           limitPerQuery: 10,
           maxQueries: 70,
+          dryRun: scoutDryRun,
         }),
       })
       const data = await response.json()
+      setScoutSearchReport(data)
 
       if (!response.ok) {
         setMessage(data.error || 'No se pudo buscar eventos')
@@ -334,7 +339,7 @@ export default function AdminPage() {
       }
 
       setMessage(data.message || `${data.imported || 0} eventos encontrados`)
-      fetchEvents()
+      if (!scoutDryRun) fetchEvents()
     } catch {
       setMessage('No se pudo buscar eventos')
     } finally {
@@ -1018,6 +1023,40 @@ export default function AdminPage() {
           <p className="mt-3 text-xs text-slate-400">
             Busca candidatos publicos en tiqueteras, Instagram, TikTok y Facebook. Quedan en revision y nunca se publican solos.
           </p>
+          <label className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-300">
+            <input
+              type="checkbox"
+              checked={scoutDryRun}
+              onChange={(event) => setScoutDryRun(event.target.checked)}
+            />
+            Solo probar busqueda, sin guardar
+          </label>
+          {scoutSearchReport && (
+            <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-xs text-slate-300">
+              <div className="grid gap-2 sm:grid-cols-4">
+                <p><span className="text-slate-500">Busquedas:</span> {scoutSearchReport.searchesRun ?? 0}</p>
+                <p><span className="text-slate-500">Resultados:</span> {scoutSearchReport.resultsReceived ?? 0}</p>
+                <p><span className="text-slate-500">Preparados:</span> {scoutSearchReport.preview ?? scoutSearchReport.imported ?? 0}</p>
+                <p><span className="text-slate-500">Fecha revisar:</span> {scoutSearchReport.needsDateReview ?? 0}</p>
+              </div>
+              {scoutSearchReport.samples?.length > 0 && (
+                <div className="mt-3 space-y-1">
+                  <p className="font-semibold text-slate-200">Ejemplos recibidos</p>
+                  {scoutSearchReport.samples.slice(0, 5).map((sample: any, index: number) => (
+                    <a
+                      key={`${sample.link}-${index}`}
+                      href={sample.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block truncate text-brand-300 hover:text-brand-200"
+                    >
+                      {sample.platform}: {sample.title}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
