@@ -5,6 +5,8 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 const SCOUT_SEARCH_VERSION = '2026-08-18-force-fallback'
 
@@ -400,10 +402,23 @@ async function assertAdmin(request: Request) {
 
 export async function POST(request: Request) {
   const admin = await assertAdmin(request)
-  if ('error' in admin) return NextResponse.json({ error: admin.error }, { status: 401 })
+  if ('error' in admin) {
+    return NextResponse.json(
+      { error: admin.error, version: SCOUT_SEARCH_VERSION, searchesRun: 0, resultsReceived: 0 },
+      { status: 401 }
+    )
+  }
 
   if (!serperApiKey) {
-    return NextResponse.json({ error: 'Falta SERPER_API_KEY en Vercel para buscar eventos automaticamente' }, { status: 400 })
+    return NextResponse.json(
+      {
+        error: 'Falta SERPER_API_KEY en Vercel para buscar eventos automaticamente',
+        version: SCOUT_SEARCH_VERSION,
+        searchesRun: 0,
+        resultsReceived: 0,
+      },
+      { status: 400 }
+    )
   }
 
   try {
@@ -417,7 +432,10 @@ export async function POST(request: Request) {
     const dryRun = Boolean(body.dryRun)
 
     if (!startDate || !endDate) {
-      return NextResponse.json({ error: 'Selecciona una semana para buscar' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Selecciona una semana para buscar', version: SCOUT_SEARCH_VERSION, searchesRun: 0, resultsReceived: 0 },
+        { status: 400 }
+      )
     }
 
     const platforms = readPlatforms()

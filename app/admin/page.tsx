@@ -332,7 +332,11 @@ export default function AdminPage() {
         }),
       })
       const data = await response.json()
-      setScoutSearchReport(data)
+      setScoutSearchReport({
+        ...data,
+        status: response.status,
+        ok: response.ok,
+      })
 
       if (!response.ok) {
         setMessage(data.error || 'No se pudo buscar eventos')
@@ -1086,6 +1090,7 @@ export default function AdminPage() {
               {scoutSearchReport.status && (
                 <p className="mt-2 text-slate-400">
                   <span className="text-slate-500">Estado API:</span> {scoutSearchReport.status}
+                  {scoutSearchReport.error ? ` - ${scoutSearchReport.error}` : ''}
                   {scoutSearchReport.rawError ? ` - ${scoutSearchReport.rawError}` : ''}
                 </p>
               )}
