@@ -78,6 +78,33 @@ function addDays(date: Date, days: number) {
   return nextDate
 }
 
+function normalizeListText(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\b\d{1,2}\s*(?:de\s*)?(?:ene|enero|feb|febrero|mar|marzo|abr|abril|may|mayo|jun|junio|jul|julio|ago|agosto|sep|septiembre|oct|octubre|nov|noviembre|dic|diciembre)\b/gi, ' ')
+    .replace(/\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g, ' ')
+    .replace(/\b20\d{2}\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+function scoutSeriesKey(event: any) {
+  const title = normalizeListText(event.title || '')
+  const venue = normalizeListText(event.venue || '')
+  return `${event.type || 'Tardeo'}-${title}-${venue}`.slice(0, 180)
+}
+
+function formatShortDate(date: string) {
+  if (!date) return 'Sin fecha'
+  return new Date(date).toLocaleDateString('es-ES', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  })
+}
+
 export default function AdminPage() {
   const formRef = useRef<HTMLFormElement | null>(null)
   const bulkSectionRef = useRef<HTMLElement | null>(null)
@@ -746,6 +773,24 @@ export default function AdminPage() {
   const filteredScoutEvents = scoutTypeFilter === 'Todos'
     ? scoutEvents
     : scoutEvents.filter((event) => (event.type || 'Tardeo') === scoutTypeFilter)
+  const groupedScoutEvents = filteredScoutEvents.reduce<Record<string, Record<string, any[]>>>((groups, event) => {
+    const typeName = event.type || 'Tardeo'
+    const groupKey = scoutSeriesKey(event)
+
+    if (!groups[typeName]) groups[typeName] = {}
+    if (!groups[typeName][groupKey]) groups[typeName][groupKey] = []
+    groups[typeName][groupKey].push(event)
+
+    return groups
+  }, {})
+  const groupedScoutTypes = Object.entries(groupedScoutEvents)
+    .map(([typeName, groups]) => ({
+      typeName,
+      groups: Object.values(groups)
+        .map((items) => items.slice().sort((a, b) => (a.date || '').localeCompare(b.date || '')))
+        .sort((a, b) => (a[0]?.title || '').localeCompare(b[0]?.title || '')),
+    }))
+    .sort((a, b) => a.typeName.localeCompare(b.typeName))
   const filteredVisibleEvents = eventTypeFilter === 'Todos'
     ? (eventListTab === 'past' ? pastEvents : createdEvents)
     : (eventListTab === 'past' ? pastEvents : createdEvents).filter((event) => (event.type || 'Tardeo') === eventTypeFilter)
@@ -1091,11 +1136,12 @@ export default function AdminPage() {
           </label>
           {scoutSearchReport && (
             <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-xs text-slate-300">
-              <div className="grid gap-2 sm:grid-cols-4">
+              <div className="grid gap-2 sm:grid-cols-5">
                 <p><span className="text-slate-500">Busquedas:</span> {scoutSearchReport.searchesRun ?? 0}</p>
                 <p><span className="text-slate-500">Resultados:</span> {scoutSearchReport.resultsReceived ?? 0}</p>
                 <p><span className="text-slate-500">Preparados:</span> {scoutSearchReport.preview ?? scoutSearchReport.imported ?? 0}</p>
                 <p><span className="text-slate-500">Fecha revisar:</span> {scoutSearchReport.needsDateReview ?? 0}</p>
+                <p><span className="text-slate-500">Duplicados:</span> {scoutSearchReport.duplicatesSkipped ?? 0}</p>
               </div>
               {scoutSearchReport.status && (
                 <p className="mt-2 text-slate-400">
@@ -1186,77 +1232,94 @@ export default function AdminPage() {
           <p className="text-slate-400">No hay eventos encontrados para este filtro</p>
         )}
 
-        <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/70">
-          <div className="hidden grid-cols-[30px_76px_minmax(220px,1.4fr)_96px_110px_minmax(130px,1fr)_auto] gap-2 border-b border-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 xl:grid">
-            <span></span>
-            <span>Fecha</span>
-            <span>Evento</span>
-            <span>Tipo</span>
-            <span>Zona</span>
-            <span>Fuente</span>
-            <span className="text-right">Acciones</span>
-          </div>
-
-          {filteredScoutEvents.map((event) => (
-            <div
-              key={event.id}
-              className="grid gap-2 border-b border-white/5 px-3 py-2.5 last:border-b-0 xl:grid-cols-[30px_76px_minmax(220px,1.4fr)_96px_110px_minmax(130px,1fr)_auto] xl:items-center"
-            >
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={selectedScoutEventIds.includes(event.id)}
-                  onChange={() => toggleScoutSelection(event.id)}
-                />
-              </label>
-
-              <div className="text-xs font-semibold text-slate-300">
-                {event.perks?.includes('Fecha por revisar') ? 'Revisar' : event.date ? new Date(event.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) : 'Sin fecha'}
+        <div className="space-y-4">
+          {groupedScoutTypes.map(({ typeName, groups }) => (
+            <section key={typeName} className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="text-sm font-black uppercase tracking-[0.18em] text-brand-300">{typeName}</h3>
+                <p className="text-xs text-slate-500">
+                  {groups.reduce((total, group) => total + group.length, 0)} fechas en {groups.length} eventos
+                </p>
               </div>
 
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="truncate text-sm font-semibold">{event.title}</p>
-                  <span className="rounded-full bg-brand-500/15 px-2 py-0.5 text-[11px] font-semibold text-brand-200">Scout</span>
-                  {event.perks?.includes('Fecha por revisar') && (
-                    <span className="rounded-full bg-yellow-500/15 px-2 py-0.5 text-[11px] font-semibold text-yellow-200">Fecha por revisar</span>
-                  )}
-                </div>
-                <p className="mt-0.5 truncate text-xs text-slate-500">{event.venue || "Sala por revisar"}</p>
-              </div>
+              <div className="space-y-3">
+                {groups.map((group) => {
+                  const firstEvent = group[0]
+                  const selectedInGroup = group.filter((event) => selectedScoutEventIds.includes(event.id)).length
 
-              <p className="text-xs text-slate-400">{event.type || "Tardeo"}</p>
-              <p className="text-xs text-slate-400">{event.area || "Madrid"}</p>
+                  return (
+                    <article key={scoutSeriesKey(firstEvent)} className="rounded-xl border border-white/10 bg-slate-950/50 p-3">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-bold text-white lg:truncate">{firstEvent.title}</p>
+                            <span className="rounded-full bg-brand-500/15 px-2 py-0.5 text-[11px] font-semibold text-brand-200">Scout</span>
+                            {group.some((event) => event.perks?.includes('Fecha por revisar')) && (
+                              <span className="rounded-full bg-yellow-500/15 px-2 py-0.5 text-[11px] font-semibold text-yellow-200">Fecha por revisar</span>
+                            )}
+                          </div>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {[firstEvent.venue || 'Sala por revisar', firstEvent.area || 'Madrid', firstEvent.source_name || 'Fuente no indicada'].filter(Boolean).join(' - ')}
+                          </p>
+                        </div>
 
-              <div className="min-w-0 text-xs text-slate-400">
-                <p className="truncate">{event.source_name || "No indicada"}</p>
-                {event.source_url && (
-                  <a href={event.source_url} target="_blank" rel="noreferrer" className="text-[11px] text-brand-500 hover:text-brand-400">
-                    Fuente
-                  </a>
-                )}
-              </div>
+                        <div className="flex shrink-0 flex-wrap gap-1.5">
+                          <button className="rounded-full border border-brand-500/40 px-2.5 py-1 text-[11px] font-semibold text-brand-100 hover:bg-brand-500/10" onClick={() => addScoutEventsToBulkRows(group)}>
+                            A tabla ({group.length})
+                          </button>
+                          <span className="rounded-full bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-400">
+                            {selectedInGroup} seleccionados
+                          </span>
+                        </div>
+                      </div>
 
-              <div className="flex flex-wrap gap-1.5 xl:justify-end">
-                {event.slug && (
-                  <Link href={`/eventos/${event.slug}?from=admin`} className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:border-brand-500/60">
-                    Vista
-                  </Link>
-                )}
-                <button className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:border-brand-500/60" onClick={() => loadEventForEdit(event)}>
-                  Editar
-                </button>
-                <button className="rounded-full border border-brand-500/40 px-2.5 py-1 text-[11px] font-semibold text-brand-100 hover:bg-brand-500/10" onClick={() => addScoutEventsToBulkRows([event])}>
-                  A tabla
-                </button>
-                <button className="rounded-full bg-brand-500 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-brand-600" onClick={() => approveScoutEvent(event.id)}>
-                  Aprobar
-                </button>
-                <button className="rounded-full px-2.5 py-1 text-[11px] font-semibold text-slate-500 hover:text-red-300" onClick={() => discardScoutEvent(event.id)}>
-                  Descartar
-                </button>
+                      <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                        {group.map((event) => (
+                          <div key={event.id} className="rounded-lg border border-white/10 bg-white/[0.03] p-2">
+                            <div className="flex items-start gap-2">
+                              <input
+                                type="checkbox"
+                                className="mt-1"
+                                checked={selectedScoutEventIds.includes(event.id)}
+                                onChange={() => toggleScoutSelection(event.id)}
+                              />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-bold text-slate-200">
+                                  {event.perks?.includes('Fecha por revisar') ? 'Fecha por revisar' : formatShortDate(event.date)}
+                                </p>
+                                <p className="mt-0.5 truncate text-[11px] text-slate-500">{event.source_name || 'Fuente no indicada'}</p>
+                                {event.source_url && (
+                                  <a href={event.source_url} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-brand-500 hover:text-brand-400">
+                                    Fuente
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {event.slug && (
+                                <Link href={`/eventos/${event.slug}?from=admin`} className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-200 hover:border-brand-500/60">
+                                  Vista
+                                </Link>
+                              )}
+                              <button className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-200 hover:border-brand-500/60" onClick={() => loadEventForEdit(event)}>
+                                Editar
+                              </button>
+                              <button className="rounded-full bg-brand-500 px-2 py-0.5 text-[10px] font-bold text-white hover:bg-brand-600" onClick={() => approveScoutEvent(event.id)}>
+                                Aprobar
+                              </button>
+                              <button className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-slate-500 hover:text-red-300" onClick={() => discardScoutEvent(event.id)}>
+                                Descartar
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </article>
+                  )
+                })}
               </div>
-            </div>
+            </section>
           ))}
         </div>
       </div>
