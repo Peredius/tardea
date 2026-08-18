@@ -369,11 +369,11 @@ export default function AdminPage() {
       })
 
       if (!response.ok) {
-        setMessage(data.error || data.rawError || 'Serper no responde correctamente')
+        setMessage(data.error || data.rawError || `Serper no responde correctamente. Estado ${data.status || response.status}`)
         return
       }
 
-      setMessage(`Serper responde: ${data.results || 0} resultados para una busqueda simple`)
+      setMessage(`Serper responde: ${data.results || 0} resultados en las pruebas`)
     } catch {
       setMessage('No se pudo probar Serper')
     } finally {
@@ -1083,6 +1083,22 @@ export default function AdminPage() {
                 <p><span className="text-slate-500">Preparados:</span> {scoutSearchReport.preview ?? scoutSearchReport.imported ?? 0}</p>
                 <p><span className="text-slate-500">Fecha revisar:</span> {scoutSearchReport.needsDateReview ?? 0}</p>
               </div>
+              {scoutSearchReport.status && (
+                <p className="mt-2 text-slate-400">
+                  <span className="text-slate-500">Estado API:</span> {scoutSearchReport.status}
+                  {scoutSearchReport.rawError ? ` - ${scoutSearchReport.rawError}` : ''}
+                </p>
+              )}
+              {scoutSearchReport.checks?.length > 0 && (
+                <div className="mt-3 space-y-1">
+                  <p className="font-semibold text-slate-200">Pruebas Serper</p>
+                  {scoutSearchReport.checks.map((check: any) => (
+                    <p key={check.query} className="text-slate-400">
+                      {check.query}: {check.results} resultados, estado {check.status}, claves {check.responseKeys?.join(', ') || 'sin datos'}
+                    </p>
+                  ))}
+                </div>
+              )}
               {scoutSearchReport.samples?.length > 0 && (
                 <div className="mt-3 space-y-1">
                   <p className="font-semibold text-slate-200">Ejemplos recibidos</p>

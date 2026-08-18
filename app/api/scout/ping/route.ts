@@ -14,34 +14,58 @@ export async function GET() {
   }
 
   try {
-    const response = await fetch('https://google.serper.dev/search', {
-      method: 'POST',
-      headers: {
-        'X-API-KEY': apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        q: 'tardeo Madrid entradas',
-        gl: 'es',
-        hl: 'es',
-        num: 5,
-      }),
-    })
+    const queries = [
+      'Real Madrid',
+      'tardeo Madrid',
+      'tardeo Madrid entradas',
+      'brunch Madrid entradas',
+    ]
+    const checks = []
 
-    const data = await response.json()
-    const organic = data.organic || []
+    for (const query of queries) {
+      const response = await fetch('https://google.serper.dev/search', {
+        method: 'POST',
+        headers: {
+          'X-API-KEY': apiKey.trim(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          q: query,
+          gl: 'es',
+          hl: 'es',
+          num: 5,
+        }),
+      })
+
+      const data = await response.json()
+      const organic = data.organic || []
+
+      checks.push({
+        query,
+        ok: response.ok,
+        status: response.status,
+        results: organic.length,
+        responseKeys: Object.keys(data),
+        rawError: data.message || data.error || null,
+        examples: organic.slice(0, 3).map((item: any) => ({
+          title: item.title || '',
+          link: item.link || '',
+        })),
+      })
+    }
+
+    const totalResults = checks.reduce((total, check) => total + check.results, 0)
+    const firstError = checks.find((check) => !check.ok)
 
     return NextResponse.json({
-      ok: response.ok,
-      status: response.status,
+      ok: checks.every((check) => check.ok),
+      status: firstError?.status || 200,
       hasKey: true,
-      results: organic.length,
-      examples: organic.slice(0, 5).map((item: any) => ({
-        title: item.title || '',
-        link: item.link || '',
-      })),
-      rawError: data.message || data.error || null,
-    }, { status: response.ok ? 200 : 400 })
+      results: totalResults,
+      checks,
+      examples: checks.flatMap((check) => check.examples).slice(0, 5),
+      rawError: firstError?.rawError || null,
+    }, { status: firstError ? 400 : 200 })
   } catch (error) {
     return NextResponse.json({
       ok: false,
