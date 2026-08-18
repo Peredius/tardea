@@ -29,7 +29,16 @@ const typeKeywords: Record<string, string[]> = {
   Brunch: ['brunch', 'desayuno'],
   Rooftop: ['rooftop', 'terraza', 'azotea'],
   Afterwork: ['afterwork', 'after work', 'networking'],
+  'Fitness Party': ['fitness', 'running', 'yoga', 'wellness'],
   Tardeo: ['tardeo', 'tardear', 'fiesta tarde', 'club', 'party'],
+}
+
+const typeSearchTerms: Record<string, string[]> = {
+  Tardeo: ['tardeo', 'fiesta tarde', 'tardear'],
+  Rooftop: ['rooftop', 'terraza', 'azotea'],
+  Brunch: ['brunch'],
+  Afterwork: ['afterwork', 'after work'],
+  'Fitness Party': ['fitness party', 'wellness party', 'running club'],
 }
 
 const musicKeywords: Record<string, string[]> = {
@@ -133,6 +142,17 @@ function inferType(platform: ScoutPlatform, text: string) {
   if (platform.best_for.includes('Brunch')) return 'Brunch'
   if (platform.best_for.includes('Rooftop')) return 'Rooftop'
   return 'Tardeo'
+}
+
+function platformMatchesType(platform: ScoutPlatform, type: string) {
+  if (!type || type === 'Todos') return true
+  const text = `${platform.best_for.join(' ')} ${platform.search_patterns.join(' ')}`
+  return normalize(text).includes(normalize(type)) || typeSearchTerms[type]?.some((term) => normalize(text).includes(normalize(term)))
+}
+
+function patternMatchesType(pattern: string, type: string) {
+  if (!type || type === 'Todos') return true
+  return typeSearchTerms[type]?.some((term) => normalize(pattern).includes(normalize(term))) || false
 }
 
 function inferMusic(text: string) {
@@ -308,6 +328,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     const startDate = body.startDate
     const endDate = body.endDate
+    const eventType = typeof body.eventType === 'string' ? body.eventType : 'Todos'
     const maxResults = Number(body.maxResults || 50)
     const limitPerQuery = Number(body.limitPerQuery || 4)
 
@@ -317,12 +338,14 @@ export async function POST(request: Request) {
 
     const platforms = readPlatforms()
       .filter((platform) => platform.search_patterns.some(canSearch))
+      .filter((platform) => platformMatchesType(platform, eventType))
       .sort((a, b) => a.priority - b.priority)
 
     const weekLabel = weekQueryLabel(startDate, endDate)
     const queries = platforms.flatMap((platform) =>
       platform.search_patterns
         .filter(canSearch)
+        .filter((pattern) => patternMatchesType(pattern, eventType))
         .map((pattern) => ({
           platform,
           query: `${pattern} "${weekLabel}"`,
@@ -360,6 +383,12 @@ export async function POST(request: Request) {
         }
 
         const type = inferType(platform, text)
+
+        if (eventType !== 'Todos' && type !== eventType) {
+          skipped += 1
+          continue
+        }
+
         const music = inferMusic(text)
         const eventHash = shortHash(`${result.link}-${date}`)
 
@@ -421,7 +450,7 @@ export async function POST(request: Request) {
       imported: events.length,
       skipped,
       byPlatform,
-      message: `${events.length} eventos encontrados y enviados a revision`,
+      message: `${events.length} eventos ${eventType === 'Todos' ? '' : `de ${eventType} `}encontrados y enviados a revision`,
     })
   } catch (error) {
     return NextResponse.json(

@@ -110,6 +110,7 @@ export default function AdminPage() {
   const [selectedScoutEventIds, setSelectedScoutEventIds] = useState<string[]>([])
   const [scoutSearchStartDate, setScoutSearchStartDate] = useState(formatInputDate(new Date()))
   const [scoutSearchEndDate, setScoutSearchEndDate] = useState(formatInputDate(addDays(new Date(), 6)))
+  const [scoutSearchType, setScoutSearchType] = useState('Todos')
   const [scoutSearching, setScoutSearching] = useState(false)
   const [eventTypeFilter, setEventTypeFilter] = useState('Todos')
   const [editingEvent, setEditingEvent] = useState<any | null>(null)
@@ -319,6 +320,7 @@ export default function AdminPage() {
         body: JSON.stringify({
           startDate: scoutSearchStartDate,
           endDate: scoutSearchEndDate,
+          eventType: scoutSearchType,
           maxResults: 50,
         }),
       })
@@ -966,7 +968,7 @@ export default function AdminPage() {
         </div>
 
         <div className="mb-4 rounded-2xl border border-brand-500/20 bg-brand-500/10 p-4">
-          <div className="grid gap-3 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
+          <div className="grid gap-3 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-end">
             <label className="text-sm font-semibold text-slate-300">
               Desde
               <input
@@ -988,6 +990,19 @@ export default function AdminPage() {
                 value={scoutSearchEndDate}
                 onChange={(event) => setScoutSearchEndDate(event.target.value)}
               />
+            </label>
+            <label className="text-sm font-semibold text-slate-300">
+              Tipo
+              <select
+                className="select mt-2"
+                value={scoutSearchType}
+                onChange={(event) => setScoutSearchType(event.target.value)}
+              >
+                <option>Todos</option>
+                {EVENT_TYPE_OPTIONS.map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
+              </select>
             </label>
             <button
               type="button"
