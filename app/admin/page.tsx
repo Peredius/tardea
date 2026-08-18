@@ -1055,6 +1055,16 @@ export default function AdminPage() {
                   ))}
                 </div>
               )}
+              {scoutSearchReport.queriesRun?.length > 0 && (
+                <details className="mt-3">
+                  <summary className="cursor-pointer font-semibold text-slate-200">Busquedas ejecutadas</summary>
+                  <div className="mt-2 space-y-1 text-slate-500">
+                    {scoutSearchReport.queriesRun.map((query: string, index: number) => (
+                      <p key={`${query}-${index}`} className="truncate">{query}</p>
+                    ))}
+                  </div>
+                </details>
+              )}
             </div>
           )}
         </div>

@@ -248,7 +248,32 @@ function buildSearchQueries(platforms: ScoutPlatform[], startDate: string, endDa
   const typeTerms = eventType === 'Todos'
     ? ['tardeo', 'brunch', 'rooftop', 'afterwork']
     : typeSearchTerms[eventType] || [eventType]
+  const radarPlatform: ScoutPlatform = {
+    platform: 'Radar web',
+    priority: 0,
+    source_type: 'web_search',
+    search_patterns: [],
+    best_for: eventType === 'Todos' ? ['Tardeo', 'Brunch', 'Rooftop', 'Afterwork'] : [eventType],
+  }
   const queries: { platform: ScoutPlatform; query: string }[] = []
+
+  typeTerms.forEach((term) => {
+    queries.push({ platform: radarPlatform, query: `${term} Madrid entradas` })
+    queries.push({ platform: radarPlatform, query: `${term} Madrid eventos` })
+    queries.push({ platform: radarPlatform, query: `${term} Madrid agenda` })
+    queries.push({ platform: radarPlatform, query: `${term} Madrid reservas` })
+    queries.push({ platform: radarPlatform, query: `${term} Madrid este fin de semana` })
+    queries.push({ platform: radarPlatform, query: `${term} Madrid proximos eventos` })
+
+    monthLabels.forEach((monthLabel) => {
+      queries.push({ platform: radarPlatform, query: `${term} Madrid ${monthLabel}` })
+      queries.push({ platform: radarPlatform, query: `${term} entradas Madrid ${monthLabel}` })
+    })
+
+    dayLabels.slice(0, 14).forEach((dayLabel) => {
+      queries.push({ platform: radarPlatform, query: `${term} Madrid ${dayLabel}` })
+    })
+  })
 
   platforms.forEach((platform) => {
     platform.search_patterns
@@ -404,6 +429,7 @@ export async function POST(request: Request) {
     const events: any[] = []
     const byPlatform: Record<string, number> = {}
     const samples: { title: string; link: string; platform: string; query: string }[] = []
+    const queriesRun: string[] = []
     let skipped = 0
     let needsDateReview = 0
     let searchesRun = 0
@@ -413,6 +439,7 @@ export async function POST(request: Request) {
       if (events.length >= maxResults) break
 
       searchesRun += 1
+      if (queriesRun.length < 15) queriesRun.push(query)
       const results = await searchSerper(query, limitPerQuery)
       resultsReceived += results.length
 
@@ -498,6 +525,7 @@ export async function POST(request: Request) {
         resultsReceived,
         byPlatform,
         samples,
+        queriesRun,
         message: `No se encontraron candidatos para revisar. Busquedas: ${searchesRun}. Resultados recibidos: ${resultsReceived}.`,
       })
     }
@@ -512,6 +540,7 @@ export async function POST(request: Request) {
         resultsReceived,
         byPlatform,
         samples,
+        queriesRun,
         message: `Prueba correcta: ${events.length} candidatos preparados, sin guardar en Supabase.`,
       })
     }
@@ -530,6 +559,7 @@ export async function POST(request: Request) {
       resultsReceived,
       byPlatform,
       samples,
+      queriesRun,
       message: `${events.length} candidatos reales ${eventType === 'Todos' ? '' : `de ${eventType} `}enviados a revision${needsDateReview ? `, ${needsDateReview} con fecha por revisar` : ''}`,
     })
   } catch (error) {
