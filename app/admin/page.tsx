@@ -766,35 +766,39 @@ export default function AdminPage() {
       <section ref={bulkSectionRef} className="mt-12 rounded-3xl border border-white/10 bg-slate-900/70 p-5">
         <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-500">Carga rapida tipo Excel</p>
-            <h2 className="text-2xl font-bold">Listado editorial de eventos</h2>
-            <p className="mt-2 text-sm text-slate-400">Pega un enlace, extrae la informacion, revisa los datos, duplica por fechas y mandalo a revision. Solo se crean las filas activas.</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-500">Bandeja editorial</p>
+            <h2 className="text-2xl font-bold">Eventos preparados para revisar</h2>
+            <p className="mt-2 text-sm text-slate-400">Importa enlaces o eventos Scout, edita lo necesario, duplica fechas y mandalo todo a revision.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={addBulkRow} className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-slate-200 hover:border-brand-500/60">Anadir fila</button>
+            <button type="button" onClick={addBulkRow} className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-slate-200 hover:border-brand-500/60">Nuevo evento</button>
             <button type="button" onClick={createBulkEvents} className="rounded-full bg-brand-500 px-4 py-2 text-sm font-bold text-white hover:bg-brand-600">Crear en revision</button>
           </div>
         </div>
 
-        <textarea
-          className="input mb-4 min-h-20 text-sm"
-          placeholder="Pega aqui desde Excel/Sheets o rellena una fila con un enlace y pulsa Extraer: evento, tipo, musica, edad, sala, zona, fecha, inicio, fin, precio, link entradas, maps, descripcion"
-          onPaste={(event) => {
-            const text = event.clipboardData.getData('text')
-            if (text.includes('\t')) {
-              event.preventDefault()
-              pasteBulkRows(text)
-            }
-          }}
-        />
+        <details className="mb-4 rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+          <summary className="cursor-pointer text-sm font-semibold text-slate-200">Importar varios desde Excel, Sheets o enlaces</summary>
+          <textarea
+            className="input mt-4 min-h-20 text-sm"
+            placeholder="Pega aqui varias filas: evento, tipo, musica, edad, sala, zona, fecha, inicio, fin, precio, link entradas, maps, descripcion"
+            onPaste={(event) => {
+              const text = event.clipboardData.getData('text')
+              if (text.includes('\t')) {
+                event.preventDefault()
+                pasteBulkRows(text)
+              }
+            }}
+          />
+          <p className="mt-2 text-xs text-slate-500">Tambien puedes crear un evento nuevo, pegar solo el enlace de la tiquetera y pulsar Extraer.</p>
+        </details>
 
         <div className="mb-4 rounded-2xl border border-white/10 bg-slate-950/50 p-4">
           <p className="mb-3 text-sm font-semibold text-slate-300">Duplicar evento por varios dias</p>
           <div className="grid gap-3 lg:grid-cols-[1fr_auto_auto] lg:items-center">
             <select className="select" value={bulkDuplicateRowId} onChange={(event) => setBulkDuplicateRowId(event.target.value)}>
-              <option value="">Selecciona evento de la tabla</option>
+              <option value="">Selecciona evento de la bandeja</option>
               {bulkRows.map((row) => (
-                <option key={row.id} value={row.id}>{row.title || 'Fila sin titulo'} {row.date ? `- ${row.date}` : ''}</option>
+                <option key={row.id} value={row.id}>{row.title || 'Evento sin titulo'} {row.date ? `- ${row.date}` : ''}</option>
               ))}
             </select>
             <div className="flex gap-2">
@@ -814,55 +818,87 @@ export default function AdminPage() {
           )}
         </div>
 
-        <div className="overflow-x-auto rounded-2xl border border-white/10">
-          <table className="w-full min-w-[1420px] border-collapse text-left text-sm">
-            <thead className="bg-slate-950/70 text-xs uppercase tracking-[0.12em] text-slate-500">
-              <tr>
-                <th className="px-3 py-3">Activo</th>
-                <th className="px-3 py-3">Evento</th>
-                <th className="px-3 py-3">Tipo</th>
-                <th className="px-3 py-3">Musica</th>
-                <th className="px-3 py-3">Edad</th>
-                <th className="px-3 py-3">Sala</th>
-                <th className="px-3 py-3">Ubicacion</th>
-                <th className="px-3 py-3">Fecha</th>
-                <th className="px-3 py-3">Horario</th>
-                <th className="px-3 py-3">Precio</th>
-                <th className="px-3 py-3">Enlace</th>
-                <th className="px-3 py-3">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bulkRows.map((row) => (
-                <tr key={row.id} className="border-t border-white/5 align-top">
-                  <td className="px-3 py-2"><input type="checkbox" checked={row.active} onChange={(event) => updateBulkRow(row.id, 'active', event.target.checked)} /></td>
-                  <td className="px-3 py-2"><input className="w-56 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10 focus:ring-brand-500" value={row.title} onChange={(event) => updateBulkRow(row.id, 'title', event.target.value)} placeholder="Nombre" /></td>
-                  <td className="px-3 py-2"><select className="w-36 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.type} onChange={(event) => updateBulkRow(row.id, 'type', event.target.value)}>{EVENT_TYPE_OPTIONS.map((option) => <option key={option}>{option}</option>)}</select></td>
-                  <td className="px-3 py-2"><input className="w-44 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.music} onChange={(event) => updateBulkRow(row.id, 'music', event.target.value)} placeholder="Comercial, Pop" /></td>
-                  <td className="px-3 py-2"><select className="w-32 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.audience} onChange={(event) => updateBulkRow(row.id, 'audience', event.target.value)}>{['Mixto', ...AUDIENCE_OPTIONS].map((option) => <option key={option}>{option}</option>)}</select></td>
-                  <td className="px-3 py-2"><input className="w-44 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.venue} onChange={(event) => updateBulkRow(row.id, 'venue', event.target.value)} placeholder="Sala" /></td>
-                  <td className="px-3 py-2"><input className="w-40 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.area} onChange={(event) => updateBulkRow(row.id, 'area', event.target.value)} placeholder="Zona" /></td>
-                  <td className="px-3 py-2"><input type="date" className="w-40 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.date} onChange={(event) => updateBulkRow(row.id, 'date', event.target.value)} /></td>
-                  <td className="px-3 py-2"><div className="flex gap-2"><input type="time" className="w-28 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.startTime} onChange={(event) => updateBulkRow(row.id, 'startTime', event.target.value)} /><input type="time" className="w-28 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.endTime} onChange={(event) => updateBulkRow(row.id, 'endTime', event.target.value)} /></div></td>
-                  <td className="px-3 py-2"><input className="w-24 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.priceFrom} onChange={(event) => updateBulkRow(row.id, 'priceFrom', event.target.value)} /></td>
-                  <td className="px-3 py-2"><input className="w-64 rounded-lg bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10" value={row.ticketUrl} onChange={(event) => updateBulkRow(row.id, 'ticketUrl', event.target.value)} placeholder="Tiquetera" /></td>
-                  <td className="px-3 py-2">
-                    <div className="flex flex-col gap-2">
-                      <button
-                        type="button"
-                        onClick={() => extractBulkRowFromUrl(row.id)}
-                        disabled={bulkExtractingRowId === row.id}
-                        className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60 disabled:cursor-wait disabled:opacity-60"
-                      >
-                        {bulkExtractingRowId === row.id ? 'Leyendo...' : 'Extraer'}
-                      </button>
-                      <button type="button" onClick={() => removeBulkRow(row.id)} className="text-xs font-semibold text-slate-500 hover:text-red-300">Eliminar</button>
+        <div className="space-y-3">
+          {bulkRows.map((row, index) => (
+            <details key={row.id} open={!row.title && index === 0} className={`rounded-2xl border p-4 ${row.active ? 'border-white/10 bg-slate-950/50' : 'border-white/5 bg-slate-950/25 opacity-60'}`}>
+              <summary className="cursor-pointer list-none">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={row.active}
+                        onClick={(event) => event.stopPropagation()}
+                        onChange={(event) => updateBulkRow(row.id, 'active', event.target.checked)}
+                      />
+                      <p className="truncate text-base font-bold text-white">{row.title || 'Evento sin titulo'}</p>
+                      <span className="rounded-full bg-brand-500/15 px-2 py-0.5 text-[11px] font-semibold text-brand-100">{row.type || 'Tardeo'}</span>
+                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-slate-300">{row.music || 'Musica por revisar'}</span>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    <p className="mt-1 text-sm text-slate-400">
+                      {[row.date ? new Date(row.date).toLocaleDateString('es-ES') : 'Sin fecha', row.venue || 'Sala por revisar', row.area || 'Madrid', row.priceFrom ? `Desde ${row.priceFrom} EUR` : null].filter(Boolean).join(' - ')}
+                    </p>
+                  </div>
+
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault()
+                        extractBulkRowFromUrl(row.id)
+                      }}
+                      disabled={bulkExtractingRowId === row.id}
+                      className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60 disabled:cursor-wait disabled:opacity-60"
+                    >
+                      {bulkExtractingRowId === row.id ? 'Leyendo...' : 'Extraer'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault()
+                        setBulkDuplicateRowId(row.id)
+                      }}
+                      className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60"
+                    >
+                      Duplicar fechas
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault()
+                        removeBulkRow(row.id)
+                      }}
+                      className="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-red-300"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              </summary>
+
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                <input className="input" value={row.title} onChange={(event) => updateBulkRow(row.id, 'title', event.target.value)} placeholder="Nombre del evento" />
+                <input className="input" value={row.ticketUrl} onChange={(event) => updateBulkRow(row.id, 'ticketUrl', event.target.value)} placeholder="Link de compra / tiquetera" />
+                <select className="select" value={row.type} onChange={(event) => updateBulkRow(row.id, 'type', event.target.value)}>
+                  {EVENT_TYPE_OPTIONS.map((option) => <option key={option}>{option}</option>)}
+                </select>
+                <input className="input" value={row.music} onChange={(event) => updateBulkRow(row.id, 'music', event.target.value)} placeholder="Musica: Comercial, Pop..." />
+                <select className="select" value={row.audience} onChange={(event) => updateBulkRow(row.id, 'audience', event.target.value)}>
+                  {['Mixto', ...AUDIENCE_OPTIONS].map((option) => <option key={option}>{option}</option>)}
+                </select>
+                <input className="input" value={row.priceFrom} onChange={(event) => updateBulkRow(row.id, 'priceFrom', event.target.value)} placeholder="Precio desde" />
+                <input className="input" value={row.venue} onChange={(event) => updateBulkRow(row.id, 'venue', event.target.value)} placeholder="Sala o lugar" />
+                <input className="input" value={row.area} onChange={(event) => updateBulkRow(row.id, 'area', event.target.value)} placeholder="Zona" />
+                <input type="date" className="input" value={row.date} onChange={(event) => updateBulkRow(row.id, 'date', event.target.value)} />
+                <div className="grid grid-cols-2 gap-3">
+                  <input type="time" className="input" value={row.startTime} onChange={(event) => updateBulkRow(row.id, 'startTime', event.target.value)} />
+                  <input type="time" className="input" value={row.endTime} onChange={(event) => updateBulkRow(row.id, 'endTime', event.target.value)} />
+                </div>
+                <input className="input lg:col-span-2" value={row.mapsUrl} onChange={(event) => updateBulkRow(row.id, 'mapsUrl', event.target.value)} placeholder="Link de Google Maps" />
+                <textarea className="input lg:col-span-2" value={row.description} onChange={(event) => updateBulkRow(row.id, 'description', event.target.value)} placeholder="Descripcion" />
+              </div>
+            </details>
+          ))}
         </div>
       </section>
       <div className="mt-12">
