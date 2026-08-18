@@ -285,9 +285,14 @@
   {
     "platform": "Instagram",
     "priority": 1,
-    "source_type": "social_manual",
+    "source_type": "social_search",
     "base_url": "https://www.instagram.com/",
     "search_patterns": [
+      "site:instagram.com/p Madrid tardeo",
+      "site:instagram.com/reel Madrid tardeo",
+      "site:instagram.com/p Madrid brunch",
+      "site:instagram.com/reel Madrid rooftop",
+      "site:instagram.com/reel Madrid afterwork",
       "hashtags: #tardeomadrid #brunchmadrid #rooftopmadrid #afterworkmadrid",
       "perfiles de salas, rooftops, promotores y fiestas recurrentes"
     ],
@@ -296,6 +301,42 @@
     "scout_strategy": "Alta prioridad como pista manual. No hacer scraping agresivo; usar post/reel como referencia y meter datos verificados manualmente.",
     "image_policy": "No copiar imagen ni reel sin permiso. Guardar URL de referencia y cover provisional.",
     "notes": "Clave para descubrir fiestas antes de que esten bien indexadas."
+  },
+  {
+    "platform": "TikTok",
+    "priority": 2,
+    "source_type": "social_search",
+    "base_url": "https://www.tiktok.com/",
+    "search_patterns": [
+      "site:tiktok.com Madrid tardeo",
+      "site:tiktok.com Madrid brunch",
+      "site:tiktok.com Madrid rooftop",
+      "site:tiktok.com Madrid afterwork",
+      "site:tiktok.com #tardeomadrid"
+    ],
+    "best_for": ["Descubrimiento social", "Tendencias", "Promotores", "Fiestas nuevas"],
+    "signals": ["video publico", "fecha en descripcion", "link en bio", "hashtag", "ubicacion"],
+    "scout_strategy": "Usar como radar de tendencia. Confirmar datos en tiquetera o fuente oficial antes de aprobar.",
+    "image_policy": "No copiar video ni imagen sin permiso. Guardar URL como referencia y usar cover provisional.",
+    "notes": "Buena fuente para detectar fiestas jovenes y virales, pero requiere revision manual."
+  },
+  {
+    "platform": "Facebook Events",
+    "priority": 3,
+    "source_type": "social_search",
+    "base_url": "https://www.facebook.com/events/",
+    "search_patterns": [
+      "site:facebook.com/events Madrid tardeo",
+      "site:facebook.com/events Madrid brunch",
+      "site:facebook.com/events Madrid rooftop",
+      "site:facebook.com/events Madrid afterwork",
+      "site:facebook.com/events Madrid fiesta"
+    ],
+    "best_for": ["Eventos publicos", "Comunidades", "Afterwork", "Fiestas recurrentes"],
+    "signals": ["evento publico", "fecha", "ubicacion", "organizador"],
+    "scout_strategy": "Usar como fuente secundaria. Facebook puede ocultar datos; revisar y confirmar antes de publicar.",
+    "image_policy": "No copiar imagen. Guardar URL y usar cover provisional.",
+    "notes": "Puede aportar eventos de comunidades y promotores pequenos."
   },
   {
     "platform": "Webs de salas y rooftops",

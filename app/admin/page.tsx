@@ -68,6 +68,16 @@ function scoutCoverFor(type: string, music: string) {
   return '/scout-covers/tardeo.svg'
 }
 
+function formatInputDate(date: Date) {
+  return date.toISOString().slice(0, 10)
+}
+
+function addDays(date: Date, days: number) {
+  const nextDate = new Date(date)
+  nextDate.setDate(nextDate.getDate() + days)
+  return nextDate
+}
+
 export default function AdminPage() {
   const formRef = useRef<HTMLFormElement | null>(null)
   const bulkSectionRef = useRef<HTMLElement | null>(null)
@@ -98,6 +108,9 @@ export default function AdminPage() {
   const [scoutEvents, setScoutEvents] = useState<any[]>([])
   const [scoutTypeFilter, setScoutTypeFilter] = useState('Todos')
   const [selectedScoutEventIds, setSelectedScoutEventIds] = useState<string[]>([])
+  const [scoutSearchStartDate, setScoutSearchStartDate] = useState(formatInputDate(new Date()))
+  const [scoutSearchEndDate, setScoutSearchEndDate] = useState(formatInputDate(addDays(new Date(), 6)))
+  const [scoutSearching, setScoutSearching] = useState(false)
   const [eventTypeFilter, setEventTypeFilter] = useState('Todos')
   const [editingEvent, setEditingEvent] = useState<any | null>(null)
   const [bulkRows, setBulkRows] = useState<BulkEventRow[]>([createBulkRow()])
@@ -281,6 +294,48 @@ export default function AdminPage() {
 
     setMessage('Evento Scout descartado')
     fetchEvents()
+  }
+
+  async function searchScoutEvents() {
+    if (!scoutSearchStartDate || !scoutSearchEndDate) {
+      setMessage('Selecciona una semana para buscar eventos')
+      return
+    }
+
+    setScoutSearching(true)
+    setMessage('Buscando eventos en tiqueteras y redes publicas...')
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      const response = await fetch('/api/scout/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token || ''}`,
+        },
+        body: JSON.stringify({
+          startDate: scoutSearchStartDate,
+          endDate: scoutSearchEndDate,
+          maxResults: 50,
+        }),
+      })
+      const data = await response.json()
+
+      if (!response.ok) {
+        setMessage(data.error || 'No se pudo buscar eventos')
+        return
+      }
+
+      setMessage(data.message || `${data.imported || 0} eventos encontrados`)
+      fetchEvents()
+    } catch {
+      setMessage('No se pudo buscar eventos')
+    } finally {
+      setScoutSearching(false)
+    }
   }
 
   function scoutEventToBulkRow(event: any) {
@@ -908,6 +963,44 @@ export default function AdminPage() {
             <h2 className="text-2xl font-bold">Eventos encontrados para revisar</h2>
           </div>
           <p className="text-sm text-slate-400">Se publican solo despues de revisar datos, imagen y fuente.</p>
+        </div>
+
+        <div className="mb-4 rounded-2xl border border-brand-500/20 bg-brand-500/10 p-4">
+          <div className="grid gap-3 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
+            <label className="text-sm font-semibold text-slate-300">
+              Desde
+              <input
+                type="date"
+                className="input mt-2"
+                value={scoutSearchStartDate}
+                onChange={(event) => {
+                  const nextStart = event.target.value
+                  setScoutSearchStartDate(nextStart)
+                  if (nextStart) setScoutSearchEndDate(formatInputDate(addDays(new Date(`${nextStart}T12:00:00`), 6)))
+                }}
+              />
+            </label>
+            <label className="text-sm font-semibold text-slate-300">
+              Hasta
+              <input
+                type="date"
+                className="input mt-2"
+                value={scoutSearchEndDate}
+                onChange={(event) => setScoutSearchEndDate(event.target.value)}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={searchScoutEvents}
+              disabled={scoutSearching}
+              className="rounded-full bg-brand-500 px-5 py-3 text-sm font-bold text-white hover:bg-brand-600 disabled:cursor-wait disabled:opacity-60"
+            >
+              {scoutSearching ? 'Buscando...' : 'Buscar eventos'}
+            </button>
+          </div>
+          <p className="mt-3 text-xs text-slate-400">
+            Busca candidatos publicos en tiqueteras, Instagram, TikTok y Facebook. Quedan en revision y nunca se publican solos.
+          </p>
         </div>
 
         <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
