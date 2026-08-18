@@ -200,17 +200,6 @@ function isBetween(date: string, startDate: string, endDate: string) {
   return date >= startDate && date <= endDate
 }
 
-function weekQueryLabel(startDate: string, endDate: string) {
-  const start = new Date(`${startDate}T12:00:00`)
-  const end = new Date(`${endDate}T12:00:00`)
-  const startMonth = monthNames[start.getMonth()]
-  const endMonth = monthNames[end.getMonth()]
-  const year = end.getFullYear()
-
-  if (startMonth === endMonth) return `${start.getDate()} ${end.getDate()} ${startMonth} ${year}`
-  return `${start.getDate()} ${startMonth} ${end.getDate()} ${endMonth} ${year}`
-}
-
 async function searchSerper(query: string, limitPerQuery: number): Promise<SearchResult[]> {
   const response = await fetch('https://google.serper.dev/search', {
     method: 'POST',
@@ -229,6 +218,67 @@ async function searchSerper(query: string, limitPerQuery: number): Promise<Searc
     link: item.link || '',
     snippet: item.snippet || '',
   }))
+}
+
+function datesBetween(startDate: string, endDate: string) {
+  const dates: Date[] = []
+  const current = new Date(`${startDate}T12:00:00`)
+  const end = new Date(`${endDate}T12:00:00`)
+
+  while (current <= end) {
+    dates.push(new Date(current))
+    current.setDate(current.getDate() + 1)
+  }
+
+  return dates
+}
+
+function buildSearchQueries(platforms: ScoutPlatform[], startDate: string, endDate: string, eventType: string) {
+  const dates = datesBetween(startDate, endDate)
+  const monthLabels = Array.from(
+    new Set(dates.map((date) => `${monthNames[date.getMonth()]} ${date.getFullYear()}`))
+  )
+  const dayLabels = dates.flatMap((date) => {
+    const day = date.getDate()
+    const month = monthNames[date.getMonth()]
+    const year = date.getFullYear()
+
+    return [`"${day} ${month}"`, `"${day} de ${month}"`, `"${day} ${month} ${year}"`]
+  })
+  const typeTerms = eventType === 'Todos'
+    ? ['tardeo', 'brunch', 'rooftop', 'afterwork']
+    : typeSearchTerms[eventType] || [eventType]
+  const queries: { platform: ScoutPlatform; query: string }[] = []
+
+  platforms.forEach((platform) => {
+    platform.search_patterns
+      .filter(canSearch)
+      .filter((pattern) => patternMatchesType(pattern, eventType))
+      .forEach((pattern) => {
+        monthLabels.forEach((monthLabel) => {
+          queries.push({ platform, query: `${pattern} entradas Madrid ${monthLabel}` })
+          queries.push({ platform, query: `${pattern} eventos Madrid ${monthLabel}` })
+        })
+
+        typeTerms.slice(0, 2).forEach((term) => {
+          monthLabels.forEach((monthLabel) => {
+            queries.push({ platform, query: `${pattern} ${term} Madrid ${monthLabel}` })
+          })
+        })
+
+        dayLabels.forEach((dayLabel) => {
+          queries.push({ platform, query: `${pattern} ${dayLabel} Madrid entradas` })
+        })
+      })
+  })
+
+  const seen = new Set<string>()
+  return queries.filter(({ query }) => {
+    const key = normalize(query)
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
 
 function metaContent(html: string, property: string) {
@@ -331,6 +381,7 @@ export async function POST(request: Request) {
     const eventType = typeof body.eventType === 'string' ? body.eventType : 'Todos'
     const maxResults = Number(body.maxResults || 50)
     const limitPerQuery = Number(body.limitPerQuery || 4)
+    const maxQueries = Number(body.maxQueries || 70)
 
     if (!startDate || !endDate) {
       return NextResponse.json({ error: 'Selecciona una semana para buscar' }, { status: 400 })
@@ -341,25 +392,18 @@ export async function POST(request: Request) {
       .filter((platform) => platformMatchesType(platform, eventType))
       .sort((a, b) => a.priority - b.priority)
 
-    const weekLabel = weekQueryLabel(startDate, endDate)
-    const queries = platforms.flatMap((platform) =>
-      platform.search_patterns
-        .filter(canSearch)
-        .filter((pattern) => patternMatchesType(pattern, eventType))
-        .map((pattern) => ({
-          platform,
-          query: `${pattern} "${weekLabel}"`,
-        }))
-    )
+    const queries = buildSearchQueries(platforms, startDate, endDate, eventType).slice(0, maxQueries)
 
     const seen = new Set<string>()
     const events: any[] = []
     const byPlatform: Record<string, number> = {}
     let skipped = 0
+    let searchesRun = 0
 
     for (const { platform, query } of queries) {
       if (events.length >= maxResults) break
 
+      searchesRun += 1
       const results = await searchSerper(query, limitPerQuery)
 
       for (const result of results) {
@@ -382,13 +426,7 @@ export async function POST(request: Request) {
           continue
         }
 
-        const type = inferType(platform, text)
-
-        if (eventType !== 'Todos' && type !== eventType) {
-          skipped += 1
-          continue
-        }
-
+        const type = eventType === 'Todos' ? inferType(platform, text) : eventType
         const music = inferMusic(text)
         const eventHash = shortHash(`${result.link}-${date}`)
 
@@ -435,8 +473,9 @@ export async function POST(request: Request) {
       return NextResponse.json({
         imported: 0,
         skipped,
+        searchesRun,
         byPlatform,
-        message: 'No se encontraron eventos con fecha clara para esa semana',
+        message: `No se encontraron eventos con fecha clara para esa semana. Busquedas realizadas: ${searchesRun}`,
       })
     }
 
@@ -449,8 +488,9 @@ export async function POST(request: Request) {
     return NextResponse.json({
       imported: events.length,
       skipped,
+      searchesRun,
       byPlatform,
-      message: `${events.length} eventos ${eventType === 'Todos' ? '' : `de ${eventType} `}encontrados y enviados a revision`,
+      message: `${events.length} eventos ${eventType === 'Todos' ? '' : `de ${eventType} `}reales encontrados y enviados a revision`,
     })
   } catch (error) {
     return NextResponse.json(

@@ -322,6 +322,8 @@ export default function AdminPage() {
           endDate: scoutSearchEndDate,
           eventType: scoutSearchType,
           maxResults: 50,
+          limitPerQuery: 5,
+          maxQueries: 70,
         }),
       })
       const data = await response.json()
