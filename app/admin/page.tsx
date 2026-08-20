@@ -117,6 +117,14 @@ function compactOptions(values: string[]) {
   return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)))
 }
 
+function compactValue(value: string, fallback: string) {
+  return (value || fallback).trim() || fallback
+}
+
+function compactOptionsWithCurrent(options: string[], currentValue: string, fallback: string) {
+  return compactOptions([compactValue(currentValue, fallback), ...options])
+}
+
 function addDays(date: Date, days: number) {
   const nextDate = new Date(date)
   nextDate.setDate(nextDate.getDate() + days)
@@ -1122,10 +1130,10 @@ export default function AdminPage() {
   const researchAreaOptions = compactOptions([...AREA_OPTIONS, ...researchRows.map((row) => row.area || '')])
   const researchStatuses = ['Todos', 'nuevo', 'revisando', 'listo', 'pasado', 'descartado']
   const researchStatusOptions = researchStatuses.filter((option) => option !== 'Todos')
-  const compactSelectClass = 'select h-7 min-h-0 rounded-full bg-slate-950/80 px-2 py-0 text-[10px] leading-none text-white [color-scheme:dark]'
+  const compactSelectClass = 'select h-8 min-h-0 rounded-full bg-slate-950/80 px-2 py-1 text-[9px] leading-4 text-white [color-scheme:dark]'
   const visibleResearchRows = researchRows.filter((row) => {
-    const typeMatches = researchTypeFilter === 'Todos' || (row.type || 'Tardeo') === researchTypeFilter
-    const statusMatches = researchStatusFilter === 'Todos' || (row.status || 'nuevo') === researchStatusFilter
+    const typeMatches = researchTypeFilter === 'Todos' || compactValue(row.type, 'Tardeo') === researchTypeFilter
+    const statusMatches = researchStatusFilter === 'Todos' || compactValue(row.status, 'nuevo') === researchStatusFilter
     return typeMatches && statusMatches
   })
   const filteredScoutEvents = scoutTypeFilter === 'Todos'
@@ -1241,6 +1249,11 @@ export default function AdminPage() {
               {visibleResearchRows.map((row) => {
                 const rowIndex = researchRows.indexOf(row)
                 const rowKey = row.id || rowIndex.toString()
+                const rowType = compactValue(row.type, 'Tardeo')
+                const rowMusic = compactValue(row.music, 'Comercial')
+                const rowAudience = compactValue(row.audience, 'Mixto')
+                const rowArea = compactValue(row.area, 'Madrid')
+                const rowStatus = compactValue(row.status, 'nuevo')
 
                 return (
                   <div key={rowKey} className="grid grid-cols-[28px_72px_minmax(150px,1.2fr)_100px_105px_70px_115px_95px_75px_135px_128px] gap-1.5 border-b border-white/5 px-2 py-1.5 text-[10px] last:border-b-0">
@@ -1259,23 +1272,23 @@ export default function AdminPage() {
                     ) : (
                       <input className="input h-7 px-2 text-[10px]" value={row.title} onChange={(event) => updateResearchRow(rowIndex, 'title', event.target.value)} placeholder="Nombre" />
                     )}
-                    <select className={compactSelectClass} value={row.type || 'Tardeo'} onChange={(event) => updateResearchRow(rowIndex, 'type', event.target.value)}>
-                      {researchTypeOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                    <select className={compactSelectClass} value={rowType} onChange={(event) => updateResearchRow(rowIndex, 'type', event.target.value)}>
+                      {compactOptionsWithCurrent(researchTypeOptions, row.type, 'Tardeo').map((option) => <option key={option} value={option}>{option}</option>)}
                     </select>
-                    <select className={compactSelectClass} value={row.music || 'Comercial'} onChange={(event) => updateResearchRow(rowIndex, 'music', event.target.value)}>
-                      {researchMusicOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                    <select className={compactSelectClass} value={rowMusic} onChange={(event) => updateResearchRow(rowIndex, 'music', event.target.value)}>
+                      {compactOptionsWithCurrent(researchMusicOptions, row.music, 'Comercial').map((option) => <option key={option} value={option}>{option}</option>)}
                     </select>
-                    <select className={compactSelectClass} value={row.audience || 'Mixto'} onChange={(event) => updateResearchRow(rowIndex, 'audience', event.target.value)}>
-                      {researchAudienceOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                    <select className={compactSelectClass} value={rowAudience} onChange={(event) => updateResearchRow(rowIndex, 'audience', event.target.value)}>
+                      {compactOptionsWithCurrent(researchAudienceOptions, row.audience, 'Mixto').map((option) => <option key={option} value={option}>{option}</option>)}
                     </select>
                     <input className="input h-7 px-2 text-[10px]" value={row.venue} onChange={(event) => updateResearchRow(rowIndex, 'venue', event.target.value)} placeholder="Sala" />
-                    <select className={compactSelectClass} value={row.area || 'Madrid'} onChange={(event) => updateResearchRow(rowIndex, 'area', event.target.value)}>
-                      {researchAreaOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                    <select className={compactSelectClass} value={rowArea} onChange={(event) => updateResearchRow(rowIndex, 'area', event.target.value)}>
+                      {compactOptionsWithCurrent(researchAreaOptions, row.area, 'Madrid').map((option) => <option key={option} value={option}>{option}</option>)}
                     </select>
                     <input className="input h-7 px-2 text-[10px]" value={row.price_from} onChange={(event) => updateResearchRow(rowIndex, 'price_from', event.target.value)} placeholder="0" />
                     <div className="grid gap-1">
-                      <select className={compactSelectClass} value={row.status || 'nuevo'} onChange={(event) => updateResearchRow(rowIndex, 'status', event.target.value)}>
-                        {researchStatusOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                      <select className={compactSelectClass} value={rowStatus} onChange={(event) => updateResearchRow(rowIndex, 'status', event.target.value)}>
+                        {compactOptionsWithCurrent(researchStatusOptions, row.status, 'nuevo').map((option) => <option key={option} value={option}>{option}</option>)}
                       </select>
                       <input className="input h-6 px-2 text-[9px]" value={row.notes} onChange={(event) => updateResearchRow(rowIndex, 'notes', event.target.value)} placeholder="Notas" />
                     </div>
