@@ -159,6 +159,45 @@ function getPromoterEventProfileSlug(event: any) {
   return getEventSeriesSlug(event).replace(/__/g, '-').replace(/^-+|-+$/g, '') || 'evento'
 }
 
+function getResearchSeriesKey(row: Partial<ResearchRow>) {
+  const venueWords = normalizeEventSeriesText(row.venue || '')
+    .split(' ')
+    .filter(Boolean)
+  const fillerWords = new Set([
+    'entrada',
+    'entradas',
+    'lista',
+    'listas',
+    'vip',
+    'vips',
+    'ticket',
+    'tickets',
+    'compra',
+    'para',
+    'por',
+    'desde',
+    'evento',
+    'eventos',
+    'madrid',
+    'tardeo',
+    'club',
+    'rooftop',
+    'brunch',
+    'afterwork',
+    'fiesta',
+    'fiestas',
+    ...venueWords,
+  ])
+  const words = normalizeEventSeriesText(row.title || 'evento')
+    .split(' ')
+    .filter((word) => word.length > 2 && !fillerWords.has(word))
+
+  return [
+    row.type || 'Tardeo',
+    words.slice(0, 3).join(' ') || normalizeEventSeriesText(row.title || row.venue || 'evento'),
+  ].join('__').toLowerCase()
+}
+
 function CompactDropdown({
   value,
   fallback,
@@ -737,7 +776,10 @@ export default function AdminPage() {
       return
     }
 
-    const rowsToInsert = eventsToAdd.map(scoutEventToResearchPayload)
+    const uniqueEvents = Array.from(
+      new Map(eventsToAdd.map((event) => [getResearchSeriesKey(event), event])).values()
+    )
+    const rowsToInsert = uniqueEvents.map(scoutEventToResearchPayload)
     const { error } = await supabase
       .from('event_research_items')
       .upsert(rowsToInsert, { onConflict: 'source_url' })
@@ -748,7 +790,7 @@ export default function AdminPage() {
     }
 
     setSelectedScoutEventIds([])
-    setMessage(`${rowsToInsert.length} evento${rowsToInsert.length === 1 ? '' : 's'} guardado${rowsToInsert.length === 1 ? '' : 's'} en Listado de eventos`)
+    setMessage(`${rowsToInsert.length} evento${rowsToInsert.length === 1 ? '' : 's'} guardado${rowsToInsert.length === 1 ? '' : 's'} en Listado de eventos. ${eventsToAdd.length - uniqueEvents.length} duplicado${eventsToAdd.length - uniqueEvents.length === 1 ? '' : 's'} evitado${eventsToAdd.length - uniqueEvents.length === 1 ? '' : 's'}.`)
     fetchResearchRows()
     setAdminTab('research')
   }
@@ -849,7 +891,7 @@ export default function AdminPage() {
   async function fillResearchListFromEvents() {
     const sourceEvents = [...events, ...pendingEvents, ...scoutEvents]
     const uniqueEvents = Array.from(
-      new Map(sourceEvents.map((event) => [event.source_url || event.slug || event.id, event])).values()
+      new Map(sourceEvents.map((event) => [getResearchSeriesKey(event), event])).values()
     )
 
     if (uniqueEvents.length === 0) {
@@ -1337,7 +1379,7 @@ export default function AdminPage() {
   const researchStatuses = ['Todos', 'nuevo', 'revisando', 'listo', 'pasado', 'descartado']
   const researchStatusOptions = researchStatuses.filter((option) => option !== 'Todos')
   const normalizedResearchSearch = researchSearchQuery.trim().toLowerCase()
-  const visibleResearchRows = researchRows.filter((row) => {
+  const filteredResearchRows = researchRows.filter((row) => {
     const typeMatches = researchTypeFilter === 'Todos' || compactValue(row.type, 'Tardeo') === researchTypeFilter
     const statusMatches = researchStatusFilter === 'Todos' || compactValue(row.status, 'nuevo') === researchStatusFilter
     const searchMatches = !normalizedResearchSearch || [
@@ -1353,6 +1395,9 @@ export default function AdminPage() {
     ].some((value) => (value || '').toLowerCase().includes(normalizedResearchSearch))
     return typeMatches && statusMatches && searchMatches
   })
+  const visibleResearchRows = Array.from(
+    new Map(filteredResearchRows.map((row) => [getResearchSeriesKey(row), row])).values()
+  )
   const filteredScoutEvents = scoutTypeFilter === 'Todos'
     ? scoutEvents
     : scoutEvents.filter((event) => (event.type || 'Tardeo') === scoutTypeFilter)

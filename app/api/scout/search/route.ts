@@ -122,6 +122,44 @@ function cleanTitle(title: string) {
     .trim()
 }
 
+function scoutSeriesKey(title: string, type: string, venue: string) {
+  const venueWords = normalize(venue)
+    .replace(/[^a-z0-9]+/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+  const fillerWords = new Set([
+    'entrada',
+    'entradas',
+    'lista',
+    'listas',
+    'vip',
+    'vips',
+    'ticket',
+    'tickets',
+    'compra',
+    'para',
+    'por',
+    'desde',
+    'evento',
+    'eventos',
+    'madrid',
+    'tardeo',
+    'club',
+    'rooftop',
+    'brunch',
+    'afterwork',
+    'fiesta',
+    'fiestas',
+    ...venueWords,
+  ])
+  const words = normalize(title)
+    .replace(/[^a-z0-9]+/g, ' ')
+    .split(' ')
+    .filter((word) => word.length > 2 && !fillerWords.has(word))
+
+  return `${type}__${words.slice(0, 3).join(' ') || normalize(title)}`
+}
+
 function canSearch(pattern: string) {
   return !pattern.includes('hashtags:') && !pattern.includes('[web sala]') && !pattern.includes('[nombre')
 }
@@ -489,6 +527,7 @@ export async function POST(request: Request) {
     ).slice(0, maxQueries)
 
     const seen = new Set<string>()
+    const seenSeries = new Set<string>()
     const events: any[] = []
     const byPlatform: Record<string, number> = {}
     const samples: { title: string; link: string; platform: string; query: string }[] = []
@@ -535,6 +574,13 @@ export async function POST(request: Request) {
 
         const type = eventType === 'Todos' ? inferType(platform, text) : eventType
         const music = inferMusic(text)
+        const venue = details.venue || 'Pendiente de revisar'
+        const seriesKey = scoutSeriesKey(title, type, venue)
+        if (seenSeries.has(seriesKey)) {
+          skipped += 1
+          continue
+        }
+        seenSeries.add(seriesKey)
         const reviewDate = hasReliableDate ? date : startDate
         const eventHash = shortHash(`${result.link}-${reviewDate}`)
 
@@ -543,10 +589,10 @@ export async function POST(request: Request) {
         events.push({
           title,
           slug: `${slugify(title)}-${reviewDate}-${eventHash}`,
-          venue: details.venue || 'Pendiente de revisar',
+          venue,
           area: 'Madrid',
           address: 'Madrid, Madrid',
-          maps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(details.venue || 'Madrid')}`,
+          maps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue === 'Pendiente de revisar' ? 'Madrid' : venue)}`,
           date: reviewDate,
           start_time: details.startTime || '18:00',
           end_time: details.endTime || '23:00',
