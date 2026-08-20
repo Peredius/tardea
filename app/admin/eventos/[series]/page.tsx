@@ -415,6 +415,27 @@ export default function AdminEventSeriesPage() {
     loadEvents()
   }
 
+  async function deleteEventDate(event: any) {
+    const confirmed = window.confirm(`Eliminar la fecha ${formatDate(event.date)} de "${event.title}"?`)
+    if (!confirmed) return
+
+    const { error } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', event.id)
+
+    if (error) {
+      setMessage(`No se pudo eliminar la fecha: ${error.message}`)
+      return
+    }
+
+    if (editingEventId === event.id) {
+      setEditingEventId('')
+    }
+    setMessage(`Fecha eliminada: ${formatDate(event.date)}`)
+    loadEvents()
+  }
+
   async function setProfileReviewed(reviewed: boolean) {
     setReviewSaving(true)
     const eventIds = events.map((event) => event.id).filter(Boolean)
@@ -913,6 +934,9 @@ export default function AdminEventSeriesPage() {
                       Aprobar
                     </button>
                   )}
+                  <button type="button" onClick={() => deleteEventDate(event)} className="rounded-full border border-red-400/30 px-2.5 py-1 text-[11px] font-semibold text-red-200 hover:border-red-400/70 hover:text-white">
+                    Eliminar
+                  </button>
                   </div>
                 </div>
               </div>
@@ -928,7 +952,10 @@ export default function AdminEventSeriesPage() {
             {pastEvents.map((event) => (
               <div key={event.id} className="flex flex-col gap-2 rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="font-semibold">{formatDate(event.date)} · {formatTime(event.start_time)} - {formatTime(event.end_time)} · {event.title}</p>
-                <Link href={`/eventos/${event.slug}?from=admin`} className="text-sm font-semibold text-brand-500">Vista</Link>
+                <div className="flex items-center gap-3">
+                  <Link href={`/eventos/${event.slug}?from=admin`} className="text-sm font-semibold text-brand-500">Vista</Link>
+                  <button type="button" onClick={() => deleteEventDate(event)} className="text-sm font-semibold text-red-300 hover:text-white">Eliminar</button>
+                </div>
               </div>
             ))}
           </div>
