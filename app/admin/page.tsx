@@ -1229,7 +1229,7 @@ export default function AdminPage() {
 
                 return (
                   <div key={rowKey} className="grid grid-cols-[28px_72px_minmax(150px,1.2fr)_100px_105px_70px_115px_95px_75px_135px_128px] gap-1.5 border-b border-white/5 px-2 py-1.5 text-[10px] last:border-b-0">
-                    <input type="checkbox" checked={Boolean(row.selected)} onChange={(event) => updateResearchRow(rowIndex, 'selected', event.target.checked)} />
+                    <input type="checkbox" className="mt-2 h-2.5 w-2.5 justify-self-center accent-brand-500" checked={Boolean(row.selected)} onChange={(event) => updateResearchRow(rowIndex, 'selected', event.target.checked)} />
                     {row.source_url ? (
                       <a href={row.source_url} target="_blank" rel="noreferrer" className="inline-flex h-7 items-center justify-center rounded-full border border-white/10 px-2 text-[9px] font-bold text-slate-200 hover:border-brand-500/60">
                         Fuente
@@ -1244,18 +1244,18 @@ export default function AdminPage() {
                     ) : (
                       <input className="input h-7 px-2 text-[10px]" value={row.title} onChange={(event) => updateResearchRow(rowIndex, 'title', event.target.value)} placeholder="Nombre" />
                     )}
-                    <select className="select h-7 px-2 text-[10px]" value={row.type} onChange={(event) => updateResearchRow(rowIndex, 'type', event.target.value)}>
+                    <select className="select h-8 px-2 py-0 text-[10px] leading-4 text-white" value={row.type} onChange={(event) => updateResearchRow(rowIndex, 'type', event.target.value)}>
                       {EVENT_TYPE_OPTIONS.map((option) => <option key={option}>{option}</option>)}
                     </select>
                     <input className="input h-7 px-2 text-[10px]" value={row.music} onChange={(event) => updateResearchRow(rowIndex, 'music', event.target.value)} placeholder="Comercial..." />
-                    <select className="select h-7 px-2 text-[10px]" value={row.audience} onChange={(event) => updateResearchRow(rowIndex, 'audience', event.target.value)}>
+                    <select className="select h-8 px-2 py-0 text-[10px] leading-4 text-white" value={row.audience} onChange={(event) => updateResearchRow(rowIndex, 'audience', event.target.value)}>
                       {['Mixto', ...AUDIENCE_OPTIONS].map((option) => <option key={option}>{option}</option>)}
                     </select>
                     <input className="input h-7 px-2 text-[10px]" value={row.venue} onChange={(event) => updateResearchRow(rowIndex, 'venue', event.target.value)} placeholder="Sala" />
                     <input className="input h-7 px-2 text-[10px]" value={row.area} onChange={(event) => updateResearchRow(rowIndex, 'area', event.target.value)} placeholder="Zona" />
                     <input className="input h-7 px-2 text-[10px]" value={row.price_from} onChange={(event) => updateResearchRow(rowIndex, 'price_from', event.target.value)} placeholder="0" />
                     <div className="grid gap-1">
-                      <select className="select h-7 px-2 text-[10px]" value={row.status} onChange={(event) => updateResearchRow(rowIndex, 'status', event.target.value)}>
+                      <select className="select h-8 px-2 py-0 text-[10px] leading-4 text-white" value={row.status} onChange={(event) => updateResearchRow(rowIndex, 'status', event.target.value)}>
                         {researchStatuses.filter((option) => option !== 'Todos').map((option) => <option key={option}>{option}</option>)}
                       </select>
                       <input className="input h-6 px-2 text-[9px]" value={row.notes} onChange={(event) => updateResearchRow(rowIndex, 'notes', event.target.value)} placeholder="Notas" />
