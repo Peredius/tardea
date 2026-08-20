@@ -1208,17 +1208,16 @@ export default function AdminPage() {
           )}
 
           <div className="overflow-x-auto rounded-2xl border border-white/10 bg-slate-950/40">
-            <div className="min-w-[1220px]">
-              <div className="grid grid-cols-[34px_220px_170px_120px_130px_90px_150px_120px_118px_105px_160px_140px] gap-2 border-b border-white/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+            <div className="min-w-[980px]">
+              <div className="grid grid-cols-[28px_72px_minmax(150px,1.2fr)_100px_105px_70px_115px_95px_75px_135px_128px] gap-1.5 border-b border-white/10 px-2 py-1.5 text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500">
                 <span></span>
-                <span>Enlace</span>
+                <span>Fuente</span>
                 <span>Evento</span>
                 <span>Tipo</span>
                 <span>Musica</span>
                 <span>Edad</span>
                 <span>Lugar</span>
                 <span>Zona</span>
-                <span>Fecha</span>
                 <span>Precio</span>
                 <span>Estado / notas</span>
                 <span className="text-right">Acciones</span>
@@ -1229,36 +1228,44 @@ export default function AdminPage() {
                 const rowKey = row.id || rowIndex.toString()
 
                 return (
-                  <div key={rowKey} className="grid grid-cols-[34px_220px_170px_120px_130px_90px_150px_120px_118px_105px_160px_140px] gap-2 border-b border-white/5 px-3 py-2 last:border-b-0">
+                  <div key={rowKey} className="grid grid-cols-[28px_72px_minmax(150px,1.2fr)_100px_105px_70px_115px_95px_75px_135px_128px] gap-1.5 border-b border-white/5 px-2 py-1.5 text-[10px] last:border-b-0">
                     <input type="checkbox" checked={Boolean(row.selected)} onChange={(event) => updateResearchRow(rowIndex, 'selected', event.target.checked)} />
-                    <input className="input h-9 text-xs" value={row.source_url} onChange={(event) => updateResearchRow(rowIndex, 'source_url', event.target.value)} placeholder="Web / Instagram / tiquetera" />
-                    <input className="input h-9 text-xs" value={row.title} onChange={(event) => updateResearchRow(rowIndex, 'title', event.target.value)} placeholder="Nombre" />
-                    <select className="select h-9 text-xs" value={row.type} onChange={(event) => updateResearchRow(rowIndex, 'type', event.target.value)}>
+                    {row.source_url ? (
+                      <a href={row.source_url} target="_blank" rel="noreferrer" className="inline-flex h-7 items-center justify-center rounded-full border border-white/10 px-2 text-[9px] font-bold text-slate-200 hover:border-brand-500/60">
+                        Fuente
+                      </a>
+                    ) : (
+                      <input className="input h-7 px-2 text-[10px]" value={row.source_url} onChange={(event) => updateResearchRow(rowIndex, 'source_url', event.target.value)} placeholder="URL" />
+                    )}
+                    {row.title ? (
+                      <Link href={`/admin/eventos/${getEventSeriesSlug({ title: row.title, type: row.type, venue: row.venue })}`} className="truncate pt-1.5 font-bold text-white hover:text-brand-300">
+                        {row.title}
+                      </Link>
+                    ) : (
+                      <input className="input h-7 px-2 text-[10px]" value={row.title} onChange={(event) => updateResearchRow(rowIndex, 'title', event.target.value)} placeholder="Nombre" />
+                    )}
+                    <select className="select h-7 px-2 text-[10px]" value={row.type} onChange={(event) => updateResearchRow(rowIndex, 'type', event.target.value)}>
                       {EVENT_TYPE_OPTIONS.map((option) => <option key={option}>{option}</option>)}
                     </select>
-                    <input className="input h-9 text-xs" value={row.music} onChange={(event) => updateResearchRow(rowIndex, 'music', event.target.value)} placeholder="Comercial..." />
-                    <select className="select h-9 text-xs" value={row.audience} onChange={(event) => updateResearchRow(rowIndex, 'audience', event.target.value)}>
+                    <input className="input h-7 px-2 text-[10px]" value={row.music} onChange={(event) => updateResearchRow(rowIndex, 'music', event.target.value)} placeholder="Comercial..." />
+                    <select className="select h-7 px-2 text-[10px]" value={row.audience} onChange={(event) => updateResearchRow(rowIndex, 'audience', event.target.value)}>
                       {['Mixto', ...AUDIENCE_OPTIONS].map((option) => <option key={option}>{option}</option>)}
                     </select>
-                    <input className="input h-9 text-xs" value={row.venue} onChange={(event) => updateResearchRow(rowIndex, 'venue', event.target.value)} placeholder="Sala" />
-                    <input className="input h-9 text-xs" value={row.area} onChange={(event) => updateResearchRow(rowIndex, 'area', event.target.value)} placeholder="Zona" />
-                    <input type="date" className="input h-9 text-xs" value={row.date} onChange={(event) => updateResearchRow(rowIndex, 'date', event.target.value)} />
-                    <input className="input h-9 text-xs" value={row.price_from} onChange={(event) => updateResearchRow(rowIndex, 'price_from', event.target.value)} placeholder="0" />
+                    <input className="input h-7 px-2 text-[10px]" value={row.venue} onChange={(event) => updateResearchRow(rowIndex, 'venue', event.target.value)} placeholder="Sala" />
+                    <input className="input h-7 px-2 text-[10px]" value={row.area} onChange={(event) => updateResearchRow(rowIndex, 'area', event.target.value)} placeholder="Zona" />
+                    <input className="input h-7 px-2 text-[10px]" value={row.price_from} onChange={(event) => updateResearchRow(rowIndex, 'price_from', event.target.value)} placeholder="0" />
                     <div className="grid gap-1">
-                      <select className="select h-9 text-xs" value={row.status} onChange={(event) => updateResearchRow(rowIndex, 'status', event.target.value)}>
+                      <select className="select h-7 px-2 text-[10px]" value={row.status} onChange={(event) => updateResearchRow(rowIndex, 'status', event.target.value)}>
                         {researchStatuses.filter((option) => option !== 'Todos').map((option) => <option key={option}>{option}</option>)}
                       </select>
-                      <input className="input h-8 text-xs" value={row.notes} onChange={(event) => updateResearchRow(rowIndex, 'notes', event.target.value)} placeholder="Notas" />
+                      <input className="input h-6 px-2 text-[9px]" value={row.notes} onChange={(event) => updateResearchRow(rowIndex, 'notes', event.target.value)} placeholder="Notas" />
                     </div>
                     <div className="flex flex-wrap justify-end gap-1">
-                      <button type="button" onClick={() => extractResearchRow(rowIndex)} disabled={researchExtractingKey === rowKey} className="rounded-full border border-white/10 px-2 py-1 text-[10px] font-semibold text-slate-200 hover:border-brand-500/60 disabled:opacity-50">
+                      <button type="button" onClick={() => extractResearchRow(rowIndex)} disabled={researchExtractingKey === rowKey} className="rounded-full border border-white/10 px-2 py-1 text-[9px] font-semibold text-slate-200 hover:border-brand-500/60 disabled:opacity-50">
                         {researchExtractingKey === rowKey ? 'Leyendo' : 'Extraer'}
                       </button>
-                      {row.source_url && (
-                        <a href={row.source_url} target="_blank" rel="noreferrer" className="rounded-full border border-white/10 px-2 py-1 text-[10px] font-semibold text-slate-200 hover:border-brand-500/60">Abrir</a>
-                      )}
-                      <button type="button" onClick={() => saveResearchRow(row)} disabled={researchSaving} className="rounded-full bg-brand-500 px-2 py-1 text-[10px] font-bold text-white hover:bg-brand-600 disabled:opacity-50">Guardar</button>
-                      <button type="button" onClick={() => deleteResearchRow(row, rowIndex)} className="rounded-full px-2 py-1 text-[10px] font-semibold text-slate-500 hover:text-red-300">Borrar</button>
+                      <button type="button" onClick={() => saveResearchRow(row)} disabled={researchSaving} className="rounded-full bg-brand-500 px-2 py-1 text-[9px] font-bold text-white hover:bg-brand-600 disabled:opacity-50">Guardar</button>
+                      <button type="button" onClick={() => deleteResearchRow(row, rowIndex)} className="rounded-full px-2 py-1 text-[9px] font-semibold text-slate-500 hover:text-red-300">Borrar</button>
                     </div>
                   </div>
                 )
