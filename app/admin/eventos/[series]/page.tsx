@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase'
 const MUSIC_OPTIONS = ['Comercial', 'Electronica', 'Pop', 'Indie', 'Flamenquito', 'Remember']
 const AUDIENCE_OPTIONS = ['18-25', '25-35', '30+', 'Mixto']
 const EVENT_TYPE_OPTIONS = ['Tardeo', 'Rooftop', 'Brunch', 'Afterwork', 'Fitness Party']
+const AREA_OPTIONS = ['Madrid', 'Centro', 'Salamanca', 'Retiro', 'Chamberi', 'Malasana', 'La Latina', 'Chamartin', 'Tetuan', 'Alcorcon']
 
 function generateSlug(title: string, date: string) {
   const cleanTitle = title
@@ -246,7 +247,9 @@ export default function AdminEventSeriesPage() {
     setBaseForm({
       title: mainEvent.title || '',
       type: mainEvent.type || 'Tardeo',
-      music: Array.isArray(mainEvent.music) ? mainEvent.music.join(', ') : mainEvent.music || 'Comercial',
+      music: Array.isArray(mainEvent.music)
+        ? mainEvent.music
+        : (mainEvent.music || 'Comercial').split(',').map((item: string) => item.trim()).filter(Boolean),
       audience: mainEvent.audience || 'Mixto',
       venue: mainEvent.venue || '',
       area: mainEvent.area || 'Madrid',
@@ -269,6 +272,18 @@ export default function AdminEventSeriesPage() {
     setBaseForm((current: any) => ({ ...current, [field]: value }))
   }
 
+  function toggleBaseMusic(style: string) {
+    setBaseForm((current: any) => {
+      const currentMusic = Array.isArray(current.music)
+        ? current.music
+        : (current.music || '').split(',').map((item: string) => item.trim()).filter(Boolean)
+      const nextMusic = currentMusic.includes(style)
+        ? currentMusic.filter((item: string) => item !== style)
+        : [...currentMusic, style]
+      return { ...current, music: nextMusic }
+    })
+  }
+
   function handleBaseCoverChange(file: File | null) {
     setBaseCoverFile(file)
     if (file) {
@@ -287,10 +302,12 @@ export default function AdminEventSeriesPage() {
 
   async function saveBaseProfile() {
     setBaseSaving(true)
-    const musicList = (baseForm.music || '')
-      .split(',')
-      .map((item: string) => item.trim())
-      .filter(Boolean)
+    const musicList = Array.isArray(baseForm.music)
+      ? baseForm.music
+      : (baseForm.music || '')
+        .split(',')
+        .map((item: string) => item.trim())
+        .filter(Boolean)
     let coverUrl = baseForm.cover || null
 
     if (baseCoverFile) {
@@ -664,13 +681,40 @@ export default function AdminEventSeriesPage() {
               {EVENT_TYPE_OPTIONS.map((option) => <option key={option}>{option}</option>)}
             </select>
             <input className="input" value={baseForm.venue || ''} onChange={(event) => updateBaseForm('venue', event.target.value)} placeholder="Lugar" />
-            <input className="input" value={baseForm.area || ''} onChange={(event) => updateBaseForm('area', event.target.value)} placeholder="Zona" />
-            <input className="input" value={baseForm.music || ''} onChange={(event) => updateBaseForm('music', event.target.value)} placeholder={MUSIC_OPTIONS.join(', ')} />
+            <select className="select" value={baseForm.area || 'Madrid'} onChange={(event) => updateBaseForm('area', event.target.value)}>
+              {AREA_OPTIONS.map((option) => <option key={option}>{option}</option>)}
+            </select>
+            <input className="input" value={baseForm.address || ''} onChange={(event) => updateBaseForm('address', event.target.value)} placeholder="Direccion" />
+            <input className="input" value={baseForm.maps_url || ''} onChange={(event) => updateBaseForm('maps_url', event.target.value)} placeholder="Link de Google Maps" />
+            <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4 lg:col-span-2">
+              <p className="mb-3 text-sm font-bold text-white">Musica</p>
+              <div className="flex flex-wrap gap-2">
+                {MUSIC_OPTIONS.map((style) => {
+                  const selectedMusic = Array.isArray(baseForm.music)
+                    ? baseForm.music
+                    : (baseForm.music || '').split(',').map((item: string) => item.trim()).filter(Boolean)
+                  const isSelected = selectedMusic.includes(style)
+                  return (
+                    <button
+                      key={style}
+                      type="button"
+                      onClick={() => toggleBaseMusic(style)}
+                      className={`rounded-full px-3 py-2 text-xs font-bold transition ${
+                        isSelected
+                          ? 'bg-brand-500 text-white'
+                          : 'border border-white/10 bg-slate-800 text-slate-200 hover:border-brand-500/60'
+                      }`}
+                    >
+                      {style}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
             <select className="select" value={baseForm.audience || 'Mixto'} onChange={(event) => updateBaseForm('audience', event.target.value)}>
               {['Mixto', ...AUDIENCE_OPTIONS].map((option) => <option key={option}>{option}</option>)}
             </select>
             <input className="input" value={baseForm.price_from || ''} onChange={(event) => updateBaseForm('price_from', event.target.value)} placeholder="Precio desde" />
-            <input className="input" value={baseForm.maps_url || ''} onChange={(event) => updateBaseForm('maps_url', event.target.value)} placeholder="Google Maps" />
             <input className="input" value={baseForm.website_url || ''} onChange={(event) => updateBaseForm('website_url', event.target.value)} placeholder="Web oficial" />
             <input className="input" value={baseForm.source_url || ''} onChange={(event) => updateBaseForm('source_url', event.target.value)} placeholder="Tiquetera" />
             <input className="input" value={baseForm.instagram_url || ''} onChange={(event) => updateBaseForm('instagram_url', event.target.value)} placeholder="Instagram" />
