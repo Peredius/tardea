@@ -623,6 +623,57 @@ export default function AdminPage() {
     })
   }
 
+  function eventToResearchPayload(event: any) {
+    const musicList = Array.isArray(event.music)
+      ? event.music
+      : typeof event.music === 'string'
+        ? event.music.split(',').map((item: string) => item.trim()).filter(Boolean)
+        : ['Comercial']
+
+    return {
+      source_url: event.source_url || (event.slug ? `https://tardea.com/eventos/${event.slug}` : null),
+      title: event.title || null,
+      type: event.type || 'Tardeo',
+      music: musicList.length ? musicList : ['Comercial'],
+      audience: event.audience || 'Mixto',
+      venue: event.venue || null,
+      area: event.area || 'Madrid',
+      date: event.date || null,
+      start_time: event.start_time || '18:00',
+      end_time: event.end_time || '23:00',
+      price_from: event.price_from ? Number(event.price_from) : 0,
+      maps_url: event.maps_url || null,
+      status: event.status === 'approved' ? 'listo' : 'revisando',
+      notes: event.description || null,
+    }
+  }
+
+  async function fillResearchListFromEvents() {
+    const sourceEvents = [...events, ...pendingEvents, ...scoutEvents]
+    const uniqueEvents = Array.from(
+      new Map(sourceEvents.map((event) => [event.source_url || event.slug || event.id, event])).values()
+    )
+
+    if (uniqueEvents.length === 0) {
+      setMessage('No hay eventos actuales para pasar al listado')
+      return
+    }
+
+    const rowsToInsert = uniqueEvents.map(eventToResearchPayload)
+    const { error } = await supabase
+      .from('event_research_items')
+      .upsert(rowsToInsert, { onConflict: 'source_url' })
+
+    if (error) {
+      setMessage(`Error rellenando listado: ${error.message}`)
+      return
+    }
+
+    setMessage(`${rowsToInsert.length} eventos actuales guardados en Listado de eventos`)
+    fetchResearchRows()
+    setAdminTab('research')
+  }
+
   async function saveResearchRow(row: ResearchRow) {
     if (!row.source_url && !row.title) {
       setMessage('Rellena al menos enlace o nombre del evento')
@@ -1055,7 +1106,7 @@ export default function AdminPage() {
     .reverse()
   const scoutTypes = ['Todos', ...Array.from(new Set(scoutEvents.map((event) => event.type || 'Tardeo')))]
   const eventTypes = ['Todos', ...Array.from(new Set(events.map((event) => event.type || 'Tardeo')))]
-  const researchTypes = ['Todos', ...Array.from(new Set(researchRows.map((row) => row.type || 'Tardeo')))]
+  const researchTypes = ['Todos', ...Array.from(new Set([...EVENT_TYPE_OPTIONS, ...researchRows.map((row) => row.type || 'Tardeo')]))]
   const researchStatuses = ['Todos', 'nuevo', 'revisando', 'listo', 'pasado', 'descartado']
   const visibleResearchRows = researchRows.filter((row) => {
     const typeMatches = researchTypeFilter === 'Todos' || (row.type || 'Tardeo') === researchTypeFilter
@@ -1116,21 +1167,25 @@ export default function AdminPage() {
             </div>
             <div className="flex flex-wrap gap-2">
               <button type="button" onClick={() => addResearchRow()} className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-slate-200 hover:border-brand-500/60">Nueva fila</button>
+              <button type="button" onClick={fillResearchListFromEvents} className="rounded-full border border-brand-500/40 px-4 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-500/10">Rellenar con eventos actuales</button>
               <button type="button" onClick={sendSelectedResearchToBulkRows} className="rounded-full bg-brand-500 px-4 py-2 text-sm font-bold text-white hover:bg-brand-600">Pasar seleccionados a Admin</button>
             </div>
           </div>
 
-          <div className="mb-4 flex flex-wrap gap-2">
-            {researchTypes.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setResearchTypeFilter(option)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${researchTypeFilter === option ? 'bg-brand-500 text-white' : 'bg-white/10 text-slate-300 hover:bg-white/15'}`}
-              >
-                {option}
-              </button>
-            ))}
+          <div className="mb-4 flex flex-col gap-2 lg:flex-row lg:items-center">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Segmentar por tipo</p>
+            <div className="flex flex-wrap gap-2">
+              {researchTypes.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setResearchTypeFilter(option)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${researchTypeFilter === option ? 'bg-brand-500 text-white' : 'bg-white/10 text-slate-300 hover:bg-white/15'}`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="mb-4 flex flex-wrap gap-2">
