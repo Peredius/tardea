@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 const MUSIC_OPTIONS = ['Comercial', 'Electronica', 'Pop', 'Indie', 'Flamenquito', 'Remember']
@@ -72,6 +72,10 @@ function isTicketUrl(url: string) {
   return ['fourvenues', 'feverup', 'entradium', 'xceed', 'eventbrite', 'ticketmaster', 'dice.fm', 'ra.co'].some((domain) => host.includes(domain))
 }
 
+function getFirstUrl(...urls: string[]) {
+  return urls.find(Boolean) || ''
+}
+
 function InstagramIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
@@ -91,6 +95,14 @@ function TicketIcon() {
   )
 }
 
+function TikTokIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+      <path d="M16.6 4.1c.4 2.2 1.7 3.6 3.8 4v3.2a7.2 7.2 0 0 1-3.7-1.1v5.6c0 3.1-2.2 5.4-5.4 5.4-3 0-5.3-2-5.3-4.9 0-3.1 2.4-5.1 5.8-5.1.4 0 .7 0 1 .1v3.3a4 4 0 0 0-1.1-.2c-1.4 0-2.3.7-2.3 1.8 0 1.1.8 1.8 1.9 1.8 1.3 0 2-.8 2-2.3V4.1h3.3Z" />
+    </svg>
+  )
+}
+
 function WebIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
@@ -102,6 +114,7 @@ function WebIcon() {
 
 export default function AdminEventSeriesPage() {
   const params = useParams()
+  const router = useRouter()
   const series = decodeURIComponent(params.series as string)
   const [loading, setLoading] = useState(true)
   const [events, setEvents] = useState<any[]>([])
@@ -109,6 +122,8 @@ export default function AdminEventSeriesPage() {
   const [message, setMessage] = useState('')
   const [editingEventId, setEditingEventId] = useState('')
   const [duplicateDate, setDuplicateDate] = useState('')
+  const [isEditingBase, setIsEditingBase] = useState(false)
+  const [baseForm, setBaseForm] = useState<any>({})
 
   async function loadEvents() {
     const {
@@ -171,16 +186,113 @@ export default function AdminEventSeriesPage() {
     const urls = [...events, ...researchItems].flatMap((event) => [
       event.source_url,
       event.website_url,
+      event.instagram_url,
+      event.tiktok_url,
       ...getUrlsFromText(event.description || ''),
     ]).filter(Boolean) as string[]
     return Array.from(new Set(urls))
   }, [events, researchItems])
   const instagramUrl = relatedUrls.find((url) => getHost(url).includes('instagram.com')) || ''
+  const tiktokUrl = relatedUrls.find((url) => getHost(url).includes('tiktok.com')) || ''
   const ticketUrl = relatedUrls.find(isTicketUrl) || mainEvent?.source_url || ''
   const websiteUrl = relatedUrls.find((url) => {
     const host = getHost(url)
-    return host && !host.includes('instagram.com') && !isTicketUrl(url)
+    return host && !host.includes('instagram.com') && !host.includes('tiktok.com') && !isTicketUrl(url)
   }) || ''
+
+  function openBaseEditor() {
+    setBaseForm({
+      title: mainEvent.title || '',
+      type: mainEvent.type || 'Tardeo',
+      music: Array.isArray(mainEvent.music) ? mainEvent.music.join(', ') : mainEvent.music || 'Comercial',
+      audience: mainEvent.audience || 'Mixto',
+      venue: mainEvent.venue || '',
+      area: mainEvent.area || 'Madrid',
+      address: mainEvent.address || '',
+      maps_url: mainEvent.maps_url || '',
+      price_from: mainEvent.price_from?.toString() || '0',
+      website_url: getFirstUrl(mainEvent.website_url, websiteUrl),
+      source_url: getFirstUrl(mainEvent.source_url, ticketUrl),
+      instagram_url: getFirstUrl(mainEvent.instagram_url, instagramUrl),
+      tiktok_url: getFirstUrl(mainEvent.tiktok_url, tiktokUrl),
+      cover: mainEvent.cover || '',
+      description: mainEvent.description || '',
+    })
+    setIsEditingBase(true)
+  }
+
+  function updateBaseForm(field: string, value: string) {
+    setBaseForm((current: any) => ({ ...current, [field]: value }))
+  }
+
+  async function saveBaseProfile() {
+    const musicList = (baseForm.music || '')
+      .split(',')
+      .map((item: string) => item.trim())
+      .filter(Boolean)
+    const payload = {
+      title: baseForm.title || mainEvent.title,
+      venue: baseForm.venue || null,
+      area: baseForm.area || null,
+      address: baseForm.address || null,
+      maps_url: baseForm.maps_url || null,
+      type: baseForm.type || 'Tardeo',
+      music: musicList.length ? musicList : ['Comercial'],
+      audience: baseForm.audience || 'Mixto',
+      price_from: baseForm.price_from ? Number(baseForm.price_from) : 0,
+      website_url: baseForm.website_url || null,
+      source_url: baseForm.source_url || null,
+      instagram_url: baseForm.instagram_url || null,
+      tiktok_url: baseForm.tiktok_url || null,
+      cover: baseForm.cover || null,
+      description: baseForm.description || null,
+    }
+
+    if (events.length > 0) {
+      const { error } = await supabase
+        .from('events')
+        .update(payload)
+        .in('id', events.map((event) => event.id))
+
+      if (error) {
+        setMessage(`No se pudieron guardar los datos base: ${error.message}`)
+        return
+      }
+    }
+
+    const researchIds = researchItems.map((item) => item.id).filter(Boolean)
+    if (researchIds.length > 0) {
+      const { error } = await supabase
+        .from('event_research_items')
+        .update({
+          title: payload.title,
+          venue: payload.venue,
+          area: payload.area,
+          maps_url: payload.maps_url,
+          type: payload.type,
+          music: payload.music,
+          audience: payload.audience,
+          price_from: payload.price_from,
+          source_url: payload.source_url,
+          notes: payload.description,
+        })
+        .in('id', researchIds)
+
+      if (error) {
+        setMessage(`Datos guardados en eventos, pero no en listado: ${error.message}`)
+        return
+      }
+    }
+
+    const newSeries = getEventSeriesSlug({ title: payload.title, type: payload.type, venue: payload.venue })
+    setIsEditingBase(false)
+    setMessage('Datos base de la ficha guardados')
+    if (newSeries !== series) {
+      router.replace(`/admin/eventos/${newSeries}`)
+      return
+    }
+    loadEvents()
+  }
 
   async function approveEvent(eventId: string) {
     const { error } = await supabase
@@ -217,6 +329,9 @@ export default function AdminEventSeriesPage() {
         price_from: event.price_from ? Number(event.price_from) : 0,
         cover: event.cover,
         description: event.description,
+        website_url: event.website_url || null,
+        instagram_url: event.instagram_url || null,
+        tiktok_url: event.tiktok_url || null,
       })
       .eq('id', event.id)
 
@@ -323,7 +438,12 @@ export default function AdminEventSeriesPage() {
         </div>
 
         <aside className="rounded-3xl border border-white/10 bg-slate-900/70 p-5">
-          <h2 className="text-xl font-bold">Datos base</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-xl font-bold">Datos base</h2>
+            <button type="button" onClick={openBaseEditor} className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-bold text-slate-200 hover:border-brand-500/60">
+              Editar
+            </button>
+          </div>
           <div className="mt-4 space-y-2 text-sm text-slate-300">
             <p><span className="text-slate-500">Tipo:</span> {mainEvent.type || 'Tardeo'}</p>
             <p><span className="text-slate-500">Musica:</span> {Array.isArray(mainEvent.music) ? mainEvent.music.join(', ') : mainEvent.music || 'Comercial'}</p>
@@ -341,6 +461,44 @@ export default function AdminEventSeriesPage() {
         <div className="mt-6 rounded-2xl border border-brand-500/30 bg-brand-500/10 p-4 text-sm text-brand-100">
           {message}
         </div>
+      )}
+
+      {isEditingBase && (
+        <section className="mt-10 rounded-3xl border border-white/10 bg-slate-900/80 p-5">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-500">Editar ficha</p>
+              <h2 className="text-2xl font-bold">Datos base y enlaces</h2>
+              <p className="mt-1 text-sm text-slate-400">Estos cambios se aplican a todas las fechas de esta ficha.</p>
+            </div>
+            <button type="button" onClick={() => setIsEditingBase(false)} className="text-sm font-semibold text-slate-400 hover:text-white">Cerrar</button>
+          </div>
+
+          <div className="grid gap-3 lg:grid-cols-2">
+            <input className="input" value={baseForm.title || ''} onChange={(event) => updateBaseForm('title', event.target.value)} placeholder="Nombre del evento" />
+            <select className="select" value={baseForm.type || 'Tardeo'} onChange={(event) => updateBaseForm('type', event.target.value)}>
+              {EVENT_TYPE_OPTIONS.map((option) => <option key={option}>{option}</option>)}
+            </select>
+            <input className="input" value={baseForm.venue || ''} onChange={(event) => updateBaseForm('venue', event.target.value)} placeholder="Lugar" />
+            <input className="input" value={baseForm.area || ''} onChange={(event) => updateBaseForm('area', event.target.value)} placeholder="Zona" />
+            <input className="input" value={baseForm.music || ''} onChange={(event) => updateBaseForm('music', event.target.value)} placeholder={MUSIC_OPTIONS.join(', ')} />
+            <select className="select" value={baseForm.audience || 'Mixto'} onChange={(event) => updateBaseForm('audience', event.target.value)}>
+              {['Mixto', ...AUDIENCE_OPTIONS].map((option) => <option key={option}>{option}</option>)}
+            </select>
+            <input className="input" value={baseForm.price_from || ''} onChange={(event) => updateBaseForm('price_from', event.target.value)} placeholder="Precio desde" />
+            <input className="input" value={baseForm.maps_url || ''} onChange={(event) => updateBaseForm('maps_url', event.target.value)} placeholder="Google Maps" />
+            <input className="input" value={baseForm.website_url || ''} onChange={(event) => updateBaseForm('website_url', event.target.value)} placeholder="Web oficial" />
+            <input className="input" value={baseForm.source_url || ''} onChange={(event) => updateBaseForm('source_url', event.target.value)} placeholder="Tiquetera" />
+            <input className="input" value={baseForm.instagram_url || ''} onChange={(event) => updateBaseForm('instagram_url', event.target.value)} placeholder="Instagram" />
+            <input className="input" value={baseForm.tiktok_url || ''} onChange={(event) => updateBaseForm('tiktok_url', event.target.value)} placeholder="TikTok" />
+            <input className="input lg:col-span-2" value={baseForm.cover || ''} onChange={(event) => updateBaseForm('cover', event.target.value)} placeholder="Imagen / cartel principal" />
+            <textarea className="input lg:col-span-2" value={baseForm.description || ''} onChange={(event) => updateBaseForm('description', event.target.value)} placeholder="Descripcion base de la ficha" />
+          </div>
+
+          <button type="button" onClick={saveBaseProfile} className="mt-4 rounded-full bg-brand-500 px-5 py-3 text-sm font-bold text-white hover:bg-brand-600">
+            Guardar ficha
+          </button>
+        </section>
       )}
 
       <section className="mt-10">
@@ -368,6 +526,11 @@ export default function AdminEventSeriesPage() {
           {instagramUrl && (
             <a href={instagramUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:border-brand-500/60">
               <InstagramIcon /> Instagram
+            </a>
+          )}
+          {tiktokUrl && (
+            <a href={tiktokUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:border-brand-500/60">
+              <TikTokIcon /> TikTok
             </a>
           )}
           {ticketUrl && (
