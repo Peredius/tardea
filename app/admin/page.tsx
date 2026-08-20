@@ -330,6 +330,7 @@ export default function AdminPage() {
   const [activeResearchDropdown, setActiveResearchDropdown] = useState('')
   const [profileSearchQuery, setProfileSearchQuery] = useState('')
   const [profileTypeFilter, setProfileTypeFilter] = useState('Todos')
+  const [profileReviewFilter, setProfileReviewFilter] = useState<'review' | 'created' | 'all'>('review')
 
   useEffect(() => {
     setAdminTab(getAdminTabFromPath(pathname))
@@ -1477,6 +1478,7 @@ export default function AdminPage() {
       slug: getEventSeriesSlug({ title: item.title || item.venue || 'evento', type: item.type || 'Tardeo', venue: item.venue || '' }),
       sourceKinds: new Set<string>(),
       count: 0,
+      reviewedCount: 0,
     }
 
     if (!current || (current.sourceKinds.has('Listado') && item.source_kind !== 'Listado')) {
@@ -1489,6 +1491,7 @@ export default function AdminPage() {
 
     summary.sourceKinds.add(item.source_kind)
     summary.count += 1
+    if (item.profile_reviewed) summary.reviewedCount += 1
     profileMap.set(key, summary)
   })
   const profileTypes = ['Todos', ...compactOptions([...EVENT_TYPE_OPTIONS, ...Array.from(profileMap.values()).map((profile) => profile.type || 'Tardeo')])]
@@ -1496,13 +1499,18 @@ export default function AdminPage() {
   const visibleProfiles = Array.from(profileMap.values())
     .filter((profile) => {
       const typeMatches = profileTypeFilter === 'Todos' || profile.type === profileTypeFilter
+      const isReviewed = profile.reviewedCount > 0
+      const reviewMatches =
+        profileReviewFilter === 'all'
+        || (profileReviewFilter === 'created' && isReviewed)
+        || (profileReviewFilter === 'review' && !isReviewed)
       const searchMatches = !normalizedProfileSearch || [
         profile.title,
         profile.venue,
         profile.type,
         Array.from(profile.sourceKinds).join(' '),
       ].some((value) => (value || '').toLowerCase().includes(normalizedProfileSearch))
-      return typeMatches && searchMatches
+      return typeMatches && reviewMatches && searchMatches
     })
     .sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }))
   const filteredScoutEvents = scoutTypeFilter === 'Todos'
@@ -1589,6 +1597,23 @@ export default function AdminPage() {
             </label>
           </div>
 
+          <div className="mb-4 flex flex-wrap gap-2">
+            {[
+              { id: 'review', label: 'Por revisar' },
+              { id: 'created', label: 'Creadas' },
+              { id: 'all', label: 'Todas' },
+            ].map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => setProfileReviewFilter(option.id as 'review' | 'created' | 'all')}
+                className={`rounded-full px-4 py-2 text-sm font-bold transition ${profileReviewFilter === option.id ? 'bg-brand-500 text-white' : 'bg-white/10 text-slate-300 hover:bg-white/15'}`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
           <div className="mb-5 flex flex-col gap-2 lg:flex-row lg:items-center">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Segmentar por tipo</p>
             <div className="flex flex-wrap gap-2">
@@ -1619,7 +1644,7 @@ export default function AdminPage() {
               {visibleProfiles.map((profile) => (
                 <div
                   key={profile.key}
-                  className="grid gap-2 px-4 py-3 text-sm transition hover:bg-white/[0.03] md:grid-cols-[minmax(220px,1fr)_130px_minmax(160px,0.8fr)_110px_90px] md:items-center"
+                  className="grid gap-2 px-4 py-3 text-sm transition hover:bg-white/[0.03] md:grid-cols-[minmax(220px,1fr)_110px_minmax(150px,0.8fr)_90px_105px_90px] md:items-center"
                 >
                   <Link href={`/admin/eventos/${profile.slug}`} className="font-bold text-white hover:text-brand-300">
                     {profile.title}
@@ -1628,6 +1653,9 @@ export default function AdminPage() {
                   <span className="text-slate-400">{profile.venue || 'Lugar por revisar'}</span>
                   <span className="text-right text-xs font-semibold text-brand-200 md:text-left">
                     {profile.count} dato{profile.count === 1 ? '' : 's'}
+                  </span>
+                  <span className={`rounded-full px-3 py-1 text-xs font-bold md:justify-self-start ${profile.reviewedCount > 0 ? 'bg-emerald-500/15 text-emerald-200' : 'bg-yellow-500/15 text-yellow-200'}`}>
+                    {profile.reviewedCount > 0 ? 'Creada' : 'Por revisar'}
                   </span>
                   <button
                     type="button"

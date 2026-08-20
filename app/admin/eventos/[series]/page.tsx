@@ -161,6 +161,7 @@ export default function AdminEventSeriesPage() {
   const [baseCoverPreview, setBaseCoverPreview] = useState('')
   const [baseSaving, setBaseSaving] = useState(false)
   const [uploadingEventCoverId, setUploadingEventCoverId] = useState('')
+  const [reviewSaving, setReviewSaving] = useState(false)
 
   async function loadEvents() {
     const {
@@ -210,6 +211,7 @@ export default function AdminEventSeriesPage() {
   }, [series])
 
   const mainEvent = events[0] || researchItems[0]
+  const isProfileReviewed = Boolean(mainEvent?.profile_reviewed)
   const upcomingEvents = useMemo(
     () => events.filter((event) => !event.date || event.date >= new Date().toISOString().slice(0, 10)),
     [events]
@@ -396,6 +398,42 @@ export default function AdminEventSeriesPage() {
     loadEvents()
   }
 
+  async function setProfileReviewed(reviewed: boolean) {
+    setReviewSaving(true)
+    const eventIds = events.map((event) => event.id).filter(Boolean)
+    const researchIds = researchItems.map((item) => item.id).filter(Boolean)
+
+    if (eventIds.length > 0) {
+      const { error } = await supabase
+        .from('events')
+        .update({ profile_reviewed: reviewed })
+        .in('id', eventIds)
+
+      if (error) {
+        setReviewSaving(false)
+        setMessage(`No se pudo actualizar la revision de la ficha: ${error.message}`)
+        return
+      }
+    }
+
+    if (researchIds.length > 0) {
+      const { error } = await supabase
+        .from('event_research_items')
+        .update({ profile_reviewed: reviewed })
+        .in('id', researchIds)
+
+      if (error) {
+        setReviewSaving(false)
+        setMessage(`No se pudo actualizar la revision en listado: ${error.message}`)
+        return
+      }
+    }
+
+    setReviewSaving(false)
+    setMessage(reviewed ? 'Ficha marcada como creada/revisada' : 'Ficha marcada por revisar')
+    loadEvents()
+  }
+
   async function updateEvent(event: any) {
     const { error } = await supabase
       .from('events')
@@ -576,9 +614,19 @@ export default function AdminEventSeriesPage() {
         <aside className="rounded-3xl border border-white/10 bg-slate-900/70 p-5">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-xl font-bold">Datos base</h2>
-            <button type="button" onClick={openBaseEditor} className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-bold text-slate-200 hover:border-brand-500/60">
-              Editar
-            </button>
+            <div className="flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setProfileReviewed(!isProfileReviewed)}
+                disabled={reviewSaving}
+                className={`rounded-full px-3 py-1.5 text-xs font-bold disabled:opacity-60 ${isProfileReviewed ? 'bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/20' : 'bg-yellow-500/15 text-yellow-100 hover:bg-yellow-500/20'}`}
+              >
+                {reviewSaving ? 'Guardando' : isProfileReviewed ? 'Revisada' : 'Marcar revisada'}
+              </button>
+              <button type="button" onClick={openBaseEditor} className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-bold text-slate-200 hover:border-brand-500/60">
+                Editar
+              </button>
+            </div>
           </div>
           <div className="mt-4 space-y-2 text-sm text-slate-300">
             <p><span className="text-slate-500">Tipo:</span> {mainEvent.type || 'Tardeo'}</p>
