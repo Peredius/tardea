@@ -492,6 +492,31 @@ export default function AdminPage() {
     })
   }
 
+  function scoutEventToResearchPayload(event: any) {
+    const musicList = Array.isArray(event.music)
+      ? event.music
+      : typeof event.music === 'string'
+        ? event.music.split(',').map((item: string) => item.trim()).filter(Boolean)
+        : ['Comercial']
+
+    return {
+      source_url: event.source_url || null,
+      title: event.title || null,
+      type: event.type || 'Tardeo',
+      music: musicList.length ? musicList : ['Comercial'],
+      audience: event.audience || 'Mixto',
+      venue: event.venue || null,
+      area: event.area || 'Madrid',
+      date: event.date || null,
+      start_time: event.start_time || '18:00',
+      end_time: event.end_time || '23:00',
+      price_from: event.price_from ? Number(event.price_from) : 0,
+      maps_url: event.maps_url || null,
+      status: 'nuevo',
+      notes: `Importado desde Scout. ${event.description || ''}`.trim(),
+    }
+  }
+
   function toggleScoutSelection(eventId: string) {
     setSelectedScoutEventIds((current) =>
       current.includes(eventId)
@@ -520,6 +545,32 @@ export default function AdminPage() {
 
   function addSelectedScoutEventsToBulkRows() {
     addScoutEventsToBulkRows(scoutEvents.filter((event) => selectedScoutEventIds.includes(event.id)))
+  }
+
+  async function addScoutEventsToResearchList(eventsToAdd: any[]) {
+    if (eventsToAdd.length === 0) {
+      setMessage('Selecciona al menos un evento encontrado')
+      return
+    }
+
+    const rowsToInsert = eventsToAdd.map(scoutEventToResearchPayload)
+    const { error } = await supabase
+      .from('event_research_items')
+      .upsert(rowsToInsert, { onConflict: 'source_url' })
+
+    if (error) {
+      setMessage(`Error pasando eventos al listado: ${error.message}`)
+      return
+    }
+
+    setSelectedScoutEventIds([])
+    setMessage(`${rowsToInsert.length} evento${rowsToInsert.length === 1 ? '' : 's'} guardado${rowsToInsert.length === 1 ? '' : 's'} en Listado de eventos`)
+    fetchResearchRows()
+    setAdminTab('research')
+  }
+
+  function addSelectedScoutEventsToResearchList() {
+    addScoutEventsToResearchList(scoutEvents.filter((event) => selectedScoutEventIds.includes(event.id)))
   }
 
   function updateResearchRow(index: number, field: keyof ResearchRow, value: string | boolean) {
@@ -1544,13 +1595,22 @@ export default function AdminPage() {
           </div>
 
           {selectedScoutEventIds.length > 0 && (
-            <button
-              type="button"
-              onClick={addSelectedScoutEventsToBulkRows}
-              className="rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-white hover:bg-white/15"
-            >
-              Pasar {selectedScoutEventIds.length} a tabla
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={addSelectedScoutEventsToResearchList}
+                className="rounded-full bg-brand-500 px-4 py-2 text-sm font-bold text-white hover:bg-brand-600"
+              >
+                Pasar {selectedScoutEventIds.length} al listado
+              </button>
+              <button
+                type="button"
+                onClick={addSelectedScoutEventsToBulkRows}
+                className="rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-white hover:bg-white/15"
+              >
+                Pasar {selectedScoutEventIds.length} a Admin
+              </button>
+            </div>
           )}
         </div>
 
@@ -1619,7 +1679,10 @@ export default function AdminPage() {
                   Editar
                 </button>
                 <button className="rounded-full border border-brand-500/40 px-2.5 py-1 text-[11px] font-semibold text-brand-100 hover:bg-brand-500/10" onClick={() => addScoutEventsToBulkRows([event])}>
-                  A tabla
+                  A Admin
+                </button>
+                <button className="rounded-full border border-sky-500/40 px-2.5 py-1 text-[11px] font-semibold text-sky-100 hover:bg-sky-500/10" onClick={() => addScoutEventsToResearchList([event])}>
+                  Al listado
                 </button>
                 <button className="rounded-full bg-brand-500 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-brand-600" onClick={() => approveScoutEvent(event.id)}>
                   Aprobar
