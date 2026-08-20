@@ -88,6 +88,14 @@ function firstMusic(event: any) {
   return Array.isArray(event.music) ? event.music[0] || 'Comercial' : event.music || 'Comercial'
 }
 
+function getMusicList(value: any) {
+  if (Array.isArray(value)) return value.filter(Boolean)
+  if (typeof value === 'string') {
+    return value.split(',').map((item) => item.trim()).filter(Boolean)
+  }
+  return ['Comercial']
+}
+
 function getUrlsFromText(text: string) {
   return Array.from(text.matchAll(/https?:\/\/[^\s)"']+/g)).map((match) => match[0])
 }
@@ -590,14 +598,41 @@ export default function AdminEventSeriesPage() {
       return
     }
 
-    const { id: _id, created_at: _createdAt, updated_at: _updatedAt, ...baseEvent } = event
+    const title = event.title || mainEvent.title || 'Evento pendiente'
+    const type = event.type || mainEvent.type || 'Tardeo'
+    const area = event.area || mainEvent.area || 'Madrid'
+    const musicList = getMusicList(event.music || mainEvent.music)
     const rowsToInsert = duplicateDates.map((date) => ({
-      ...baseEvent,
+      title,
+      slug: generateSlug(title, date),
+      venue: event.venue || mainEvent.venue || 'Pendiente de revisar',
+      area,
+      address: event.address || mainEvent.address || event.venue || mainEvent.venue || area,
+      maps_url: event.maps_url || mainEvent.maps_url || null,
+      source_url: event.source_url || mainEvent.source_url || null,
       date,
-      slug: generateSlug(event.title, date),
+      start_time: event.start_time || mainEvent.start_time || '18:00',
+      end_time: event.end_time || mainEvent.end_time || '23:00',
+      type,
+      music: musicList.length ? musicList : ['Comercial'],
+      audience: event.audience || mainEvent.audience || 'Mixto',
+      price_from: event.price_from ? Number(event.price_from) : Number(mainEvent.price_from || 0),
+      cover: event.cover || mainEvent.cover || null,
+      reel_url: event.reel_url || mainEvent.reel_url || null,
+      featured: false,
+      description: event.description || mainEvent.description || event.notes || mainEvent.notes || 'Evento cargado desde ficha interna de TARDEA. Pendiente de revision antes de publicar.',
+      perks: [type, area, ...musicList].filter(Boolean),
       status: 'pending',
       published: false,
+      source_name: event.source_name || mainEvent.source_name || 'Ficha interna',
+      external_id: `${event.source_url || mainEvent.source_url || title}-${date}`,
+      imported_by_agent: true,
+      image_status: event.image_status || mainEvent.image_status || 'provisional',
       needs_review: true,
+      website_url: event.website_url || mainEvent.website_url || null,
+      instagram_url: event.instagram_url || mainEvent.instagram_url || null,
+      tiktok_url: event.tiktok_url || mainEvent.tiktok_url || null,
+      profile_reviewed: event.profile_reviewed || mainEvent.profile_reviewed || false,
     }))
     const { error } = await supabase.from('events').insert(rowsToInsert)
 
@@ -822,7 +857,7 @@ export default function AdminEventSeriesPage() {
             <h2 className="text-2xl font-bold">Próximas fechas</h2>
             <p className="mt-1 text-sm text-slate-400">Edita, aprueba o duplica fechas desde una sola ficha.</p>
           </div>
-          {events.length > 0 && (
+          {mainEvent && (
             <div className="w-full rounded-2xl border border-white/10 bg-slate-950/40 p-3 sm:max-w-[360px]">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <button type="button" onClick={() => setCalendarMonth((current) => moveMonth(current, -1))} className="rounded-full border border-white/10 px-3 py-1 text-sm font-bold text-slate-300 hover:border-brand-500/60">
@@ -917,7 +952,7 @@ export default function AdminEventSeriesPage() {
 
         {upcomingEvents.length === 0 && (
           <div className="rounded-2xl border border-dashed border-white/10 p-6 text-sm text-slate-400">
-            Esta ficha todavia no tiene fechas creadas en Admin. Usa el listado para pasarla a revision o crea el primer evento desde Crear evento.
+            Esta ficha todavia no tiene fechas creadas en Admin. Selecciona una o varias fechas en el calendario de arriba para crear los eventos.
           </div>
         )}
 
