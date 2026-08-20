@@ -7,6 +7,9 @@ import {
   Clock3,
   Euro,
   ChevronDown,
+  List,
+  LocateFixed,
+  Map as MapIcon,
   MapPin,
   Music4,
   SlidersHorizontal,
@@ -28,6 +31,74 @@ function matchesPrice(range: string, price: number) {
   if (range === '15-30€') return price > 15 && price <= 30
   if (range === '30€+') return price > 30
   return true
+}
+
+const madridBounds = {
+  north: 40.53,
+  south: 40.31,
+  west: -3.84,
+  east: -3.55,
+}
+
+const areaCoordinates: Record<string, { lat: number; lng: number }> = {
+  Madrid: { lat: 40.4168, lng: -3.7038 },
+  Centro: { lat: 40.4168, lng: -3.7038 },
+  Salamanca: { lat: 40.427, lng: -3.679 },
+  Retiro: { lat: 40.414, lng: -3.676 },
+  Chamberí: { lat: 40.434, lng: -3.704 },
+  Chamberi: { lat: 40.434, lng: -3.704 },
+  Malasaña: { lat: 40.426, lng: -3.704 },
+  Malasana: { lat: 40.426, lng: -3.704 },
+  'La Latina': { lat: 40.411, lng: -3.708 },
+  Chamartín: { lat: 40.462, lng: -3.676 },
+  Chamartin: { lat: 40.462, lng: -3.676 },
+  Tetuán: { lat: 40.459, lng: -3.699 },
+  Tetuan: { lat: 40.459, lng: -3.699 },
+  Alcorcón: { lat: 40.3468, lng: -3.8278 },
+  Alcorcon: { lat: 40.3468, lng: -3.8278 },
+  Carabanchel: { lat: 40.382, lng: -3.744 },
+  Moncloa: { lat: 40.435, lng: -3.719 },
+  'Fuencarral-El Pardo': { lat: 40.498, lng: -3.709 },
+}
+
+function coordinateToMapPosition(lat: number, lng: number) {
+  const x = ((lng - madridBounds.west) / (madridBounds.east - madridBounds.west)) * 100
+  const y = ((madridBounds.north - lat) / (madridBounds.north - madridBounds.south)) * 100
+
+  return {
+    left: `${Math.min(94, Math.max(6, x))}%`,
+    top: `${Math.min(92, Math.max(8, y))}%`,
+  }
+}
+
+function getEventCoordinates(event: any) {
+  if (typeof event.latitude === 'number' && typeof event.longitude === 'number') {
+    return { lat: event.latitude, lng: event.longitude }
+  }
+
+  return areaCoordinates[event.area] || areaCoordinates.Madrid
+}
+
+function googleMapsSearchUrl(event: any) {
+  if (event.mapsUrl) return event.mapsUrl
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    [event.venue, event.address, event.area, 'Madrid'].filter(Boolean).join(', ')
+  )}`
+}
+
+function googleMapsRouteUrl(event: any, userLocation: { lat: number; lng: number } | null) {
+  const destination = [event.venue, event.address, event.area, 'Madrid'].filter(Boolean).join(', ')
+  const params = new URLSearchParams({
+    api: '1',
+    destination,
+    travelmode: 'walking',
+  })
+
+  if (userLocation) {
+    params.set('origin', `${userLocation.lat},${userLocation.lng}`)
+  }
+
+  return `https://www.google.com/maps/dir/?${params.toString()}`
 }
 
 export function Filters() {
@@ -58,6 +129,9 @@ export function Filters() {
   const [dbEvents, setDbEvents] = useState(events)
   const [activeEventSlug, setActiveEventSlug] = useState('')
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [locationStatus, setLocationStatus] = useState('')
 
   useEffect(() => {
     async function fetchEvents() {
@@ -87,6 +161,9 @@ export function Filters() {
         audience: event.audience,
         priceFrom: event.price_from,
         cover: event.cover,
+        mapsUrl: event.maps_url,
+        latitude: event.latitude,
+        longitude: event.longitude,
         featured: event.featured,
         description: event.description,
         perks: event.perks || [],
@@ -190,6 +267,28 @@ export function Filters() {
     if (activeEventSlug === slug) {
       window.location.href = `/eventos/${slug}`
     }
+  }
+
+  function requestUserLocation() {
+    if (!navigator.geolocation) {
+      setLocationStatus('Tu navegador no permite ubicarte.')
+      return
+    }
+
+    setLocationStatus('Buscando tu ubicacion...')
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        })
+        setLocationStatus('Ubicacion activada')
+      },
+      () => {
+        setLocationStatus('No se pudo activar tu ubicacion')
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
   }
 
   return (
@@ -332,6 +431,163 @@ export function Filters() {
           </p>
         </div>
       ) : (
+        <>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="inline-flex w-fit rounded-full border border-white/10 bg-slate-900/80 p-1">
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition ${
+                viewMode === 'list'
+                  ? 'bg-brand-500 text-white'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <List className="h-4 w-4" />
+              Lista
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('map')}
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition ${
+                viewMode === 'map'
+                  ? 'bg-brand-500 text-white'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <MapIcon className="h-4 w-4" />
+              Mapa
+            </button>
+          </div>
+
+          {viewMode === 'map' && (
+            <button
+              type="button"
+              onClick={requestUserLocation}
+              className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-200 transition hover:border-brand-500/60 hover:text-white"
+            >
+              <LocateFixed className="h-4 w-4" />
+              Ver mi ubicacion
+            </button>
+          )}
+        </div>
+
+        {viewMode === 'map' ? (
+          <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <div className="relative min-h-[440px] overflow-hidden rounded-[28px] border border-white/10 bg-slate-900 shadow-2xl shadow-black/30">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_25%,rgba(255,46,99,0.2),transparent_20%),radial-gradient(circle_at_80%_30%,rgba(56,189,248,0.12),transparent_18%),linear-gradient(135deg,rgba(15,23,42,0.95),rgba(2,6,23,0.98))]" />
+              <div className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:42px_42px]" />
+              <div className="absolute left-[12%] right-[8%] top-[48%] h-1 rotate-[-8deg] rounded-full bg-white/10" />
+              <div className="absolute bottom-[18%] left-[24%] right-[14%] h-1 rotate-[13deg] rounded-full bg-white/10" />
+              <div className="absolute bottom-[10%] top-[8%] left-[48%] w-1 rotate-[7deg] rounded-full bg-white/10" />
+
+              <div className="absolute left-4 top-4 rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 backdrop-blur">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-400">Mapa Tardea</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  {filtered.length} evento{filtered.length === 1 ? '' : 's'} filtrado{filtered.length === 1 ? '' : 's'}
+                </p>
+              </div>
+
+              {userLocation && (
+                <div
+                  className="absolute z-20 -translate-x-1/2 -translate-y-1/2"
+                  style={coordinateToMapPosition(userLocation.lat, userLocation.lng)}
+                  title="Tu ubicacion"
+                >
+                  <span className="absolute -inset-3 rounded-full bg-sky-400/20" />
+                  <span className="relative flex h-4 w-4 rounded-full border-2 border-white bg-sky-400 shadow-lg shadow-sky-500/40" />
+                </div>
+              )}
+
+              {filtered.map((event, index) => {
+                const coordinates = getEventCoordinates(event)
+                const position = coordinateToMapPosition(coordinates.lat, coordinates.lng)
+                const isActive = activeEventSlug === event.slug
+
+                return (
+                  <button
+                    key={event.slug}
+                    type="button"
+                    onClick={() => setActiveEventSlug(event.slug)}
+                    className="absolute z-10 -translate-x-1/2 -translate-y-full"
+                    style={position}
+                    aria-label={event.title}
+                  >
+                    <span className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-black shadow-lg transition ${
+                      isActive
+                        ? 'scale-125 border-white bg-brand-500 text-white shadow-brand-500/40'
+                        : 'border-brand-300/60 bg-brand-500/85 text-white hover:scale-110'
+                    }`}>
+                      {index + 1}
+                    </span>
+                    <span className="mx-auto block h-2 w-2 rotate-45 bg-brand-500" />
+                  </button>
+                )
+              })}
+
+              {locationStatus && (
+                <p className="absolute bottom-4 left-4 rounded-full border border-white/10 bg-slate-950/80 px-4 py-2 text-xs font-semibold text-slate-300">
+                  {locationStatus}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              {filtered.map((event, index) => {
+                const isActive = activeEventSlug === event.slug
+
+                return (
+                  <article
+                    key={event.slug}
+                    className={`rounded-2xl border p-3 transition ${
+                      isActive
+                        ? 'border-brand-500/60 bg-brand-500/10'
+                        : 'border-white/10 bg-slate-900/70 hover:border-white/20'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setActiveEventSlug(event.slug)}
+                      className="flex w-full gap-3 text-left"
+                    >
+                      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-500 text-xs font-black text-white">
+                        {index + 1}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-bold text-white">{event.title}</span>
+                        <span className="mt-1 block truncate text-xs text-slate-400">
+                          {event.venue} · {event.area} · {event.startTime?.slice(0, 5)}
+                        </span>
+                      </span>
+                    </button>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link href={`/eventos/${event.slug}`} className="rounded-full bg-brand-500 px-3 py-1.5 text-xs font-bold text-white">
+                        Ver evento
+                      </Link>
+                      <a
+                        href={googleMapsRouteUrl(event, userLocation)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-bold text-slate-200 hover:border-brand-500/60"
+                      >
+                        Ruta
+                      </a>
+                      <a
+                        href={googleMapsSearchUrl(event)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-bold text-slate-400 hover:border-brand-500/60 hover:text-white"
+                      >
+                        Google Maps
+                      </a>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          </div>
+        ) : (
         <div
           ref={carouselRef}
           onScroll={updateActiveEventFromScroll}
@@ -415,6 +671,8 @@ export function Filters() {
             )
           })}
         </div>
+        )}
+        </>
       )}
     </section>
   )
