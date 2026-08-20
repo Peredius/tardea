@@ -153,6 +153,66 @@ function getEventSeriesSlug(event: any) {
   return [event.type || 'Tardeo', title || 'evento', venue].filter(Boolean).join('__').toLowerCase()
 }
 
+function CompactDropdown({
+  value,
+  fallback,
+  options,
+  openKey,
+  activeOpenKey,
+  onOpenChange,
+  onChange,
+}: {
+  value: string
+  fallback: string
+  options: string[]
+  openKey: string
+  activeOpenKey: string
+  onOpenChange: (key: string) => void
+  onChange: (value: string) => void
+}) {
+  const currentValue = compactValue(value, fallback)
+  const mergedOptions = compactOptionsWithCurrent(options, value, fallback)
+  const isOpen = activeOpenKey === openKey
+
+  return (
+    <div className="relative min-w-0">
+      <button
+        type="button"
+        onClick={() => onOpenChange(isOpen ? '' : openKey)}
+        className="flex h-8 w-full min-w-0 items-center justify-between gap-1 rounded-full border border-white/10 bg-slate-950/80 px-2 text-left text-[9px] font-semibold leading-none text-white hover:border-brand-500/50"
+        title={currentValue}
+      >
+        <span className="truncate">{currentValue}</span>
+        <span className="shrink-0 text-[10px] text-slate-300">v</span>
+      </button>
+      {isOpen && (
+        <div className="absolute left-0 top-9 z-50 max-h-48 min-w-full overflow-auto rounded-xl border border-white/10 bg-slate-950 p-1 shadow-2xl shadow-black/50">
+          {mergedOptions.map((option) => {
+            const selected = option === currentValue
+
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={() => {
+                  onChange(option)
+                  onOpenChange('')
+                }}
+                className={`block w-full rounded-lg px-2 py-1.5 text-left text-[10px] font-semibold ${
+                  selected ? 'bg-brand-500 text-white' : 'text-slate-200 hover:bg-white/10'
+                }`}
+                title={option}
+              >
+                <span className="block truncate">{option}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function AdminPage() {
   const formRef = useRef<HTMLFormElement | null>(null)
   const bulkSectionRef = useRef<HTMLElement | null>(null)
@@ -203,6 +263,7 @@ export default function AdminPage() {
   const [researchStatusFilter, setResearchStatusFilter] = useState('Todos')
   const [researchSaving, setResearchSaving] = useState(false)
   const [researchExtractingKey, setResearchExtractingKey] = useState('')
+  const [activeResearchDropdown, setActiveResearchDropdown] = useState('')
 
   useEffect(() => {
     async function checkAdmin() {
@@ -1130,7 +1191,6 @@ export default function AdminPage() {
   const researchAreaOptions = compactOptions([...AREA_OPTIONS, ...researchRows.map((row) => row.area || '')])
   const researchStatuses = ['Todos', 'nuevo', 'revisando', 'listo', 'pasado', 'descartado']
   const researchStatusOptions = researchStatuses.filter((option) => option !== 'Todos')
-  const compactSelectClass = 'select h-8 min-h-0 rounded-full bg-slate-950/80 px-2 py-1 text-[9px] leading-4 text-white [color-scheme:dark]'
   const visibleResearchRows = researchRows.filter((row) => {
     const typeMatches = researchTypeFilter === 'Todos' || compactValue(row.type, 'Tardeo') === researchTypeFilter
     const statusMatches = researchStatusFilter === 'Todos' || compactValue(row.status, 'nuevo') === researchStatusFilter
@@ -1272,24 +1332,54 @@ export default function AdminPage() {
                     ) : (
                       <input className="input h-7 px-2 text-[10px]" value={row.title} onChange={(event) => updateResearchRow(rowIndex, 'title', event.target.value)} placeholder="Nombre" />
                     )}
-                    <select className={compactSelectClass} value={rowType} onChange={(event) => updateResearchRow(rowIndex, 'type', event.target.value)}>
-                      {compactOptionsWithCurrent(researchTypeOptions, row.type, 'Tardeo').map((option) => <option key={option} value={option}>{option}</option>)}
-                    </select>
-                    <select className={compactSelectClass} value={rowMusic} onChange={(event) => updateResearchRow(rowIndex, 'music', event.target.value)}>
-                      {compactOptionsWithCurrent(researchMusicOptions, row.music, 'Comercial').map((option) => <option key={option} value={option}>{option}</option>)}
-                    </select>
-                    <select className={compactSelectClass} value={rowAudience} onChange={(event) => updateResearchRow(rowIndex, 'audience', event.target.value)}>
-                      {compactOptionsWithCurrent(researchAudienceOptions, row.audience, 'Mixto').map((option) => <option key={option} value={option}>{option}</option>)}
-                    </select>
+                    <CompactDropdown
+                      value={rowType}
+                      fallback="Tardeo"
+                      options={researchTypeOptions}
+                      openKey={`${rowKey}-type`}
+                      activeOpenKey={activeResearchDropdown}
+                      onOpenChange={setActiveResearchDropdown}
+                      onChange={(value) => updateResearchRow(rowIndex, 'type', value)}
+                    />
+                    <CompactDropdown
+                      value={rowMusic}
+                      fallback="Comercial"
+                      options={researchMusicOptions}
+                      openKey={`${rowKey}-music`}
+                      activeOpenKey={activeResearchDropdown}
+                      onOpenChange={setActiveResearchDropdown}
+                      onChange={(value) => updateResearchRow(rowIndex, 'music', value)}
+                    />
+                    <CompactDropdown
+                      value={rowAudience}
+                      fallback="Mixto"
+                      options={researchAudienceOptions}
+                      openKey={`${rowKey}-audience`}
+                      activeOpenKey={activeResearchDropdown}
+                      onOpenChange={setActiveResearchDropdown}
+                      onChange={(value) => updateResearchRow(rowIndex, 'audience', value)}
+                    />
                     <input className="input h-7 px-2 text-[10px]" value={row.venue} onChange={(event) => updateResearchRow(rowIndex, 'venue', event.target.value)} placeholder="Sala" />
-                    <select className={compactSelectClass} value={rowArea} onChange={(event) => updateResearchRow(rowIndex, 'area', event.target.value)}>
-                      {compactOptionsWithCurrent(researchAreaOptions, row.area, 'Madrid').map((option) => <option key={option} value={option}>{option}</option>)}
-                    </select>
+                    <CompactDropdown
+                      value={rowArea}
+                      fallback="Madrid"
+                      options={researchAreaOptions}
+                      openKey={`${rowKey}-area`}
+                      activeOpenKey={activeResearchDropdown}
+                      onOpenChange={setActiveResearchDropdown}
+                      onChange={(value) => updateResearchRow(rowIndex, 'area', value)}
+                    />
                     <input className="input h-7 px-2 text-[10px]" value={row.price_from} onChange={(event) => updateResearchRow(rowIndex, 'price_from', event.target.value)} placeholder="0" />
                     <div className="grid gap-1">
-                      <select className={compactSelectClass} value={rowStatus} onChange={(event) => updateResearchRow(rowIndex, 'status', event.target.value)}>
-                        {compactOptionsWithCurrent(researchStatusOptions, row.status, 'nuevo').map((option) => <option key={option} value={option}>{option}</option>)}
-                      </select>
+                      <CompactDropdown
+                        value={rowStatus}
+                        fallback="nuevo"
+                        options={researchStatusOptions}
+                        openKey={`${rowKey}-status`}
+                        activeOpenKey={activeResearchDropdown}
+                        onOpenChange={setActiveResearchDropdown}
+                        onChange={(value) => updateResearchRow(rowIndex, 'status', value)}
+                      />
                       <input className="input h-6 px-2 text-[9px]" value={row.notes} onChange={(event) => updateResearchRow(rowIndex, 'notes', event.target.value)} placeholder="Notas" />
                     </div>
                     <div className="flex flex-wrap justify-end gap-1">
