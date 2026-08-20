@@ -172,6 +172,7 @@ export default function AdminEventSeriesPage() {
   const [uploadingEventCoverId, setUploadingEventCoverId] = useState('')
   const [reviewSaving, setReviewSaving] = useState(false)
   const [applyEditToSeries, setApplyEditToSeries] = useState(false)
+  const [approvingAll, setApprovingAll] = useState(false)
 
   async function loadEvents() {
     const {
@@ -224,6 +225,10 @@ export default function AdminEventSeriesPage() {
   const isProfileReviewed = Boolean(mainEvent?.profile_reviewed)
   const upcomingEvents = useMemo(
     () => events.filter((event) => !event.date || event.date >= new Date().toISOString().slice(0, 10)),
+    [events]
+  )
+  const pendingEventsInSeries = useMemo(
+    () => events.filter((event) => event.status !== 'approved' || !event.published || event.needs_review),
     [events]
   )
   const pastEvents = useMemo(
@@ -421,6 +426,29 @@ export default function AdminEventSeriesPage() {
     }
 
     setMessage('Evento aprobado')
+    loadEvents()
+  }
+
+  async function approveAllPendingEvents() {
+    if (pendingEventsInSeries.length === 0) return
+
+    const confirmed = window.confirm(`Aprobar ${pendingEventsInSeries.length} fecha${pendingEventsInSeries.length === 1 ? '' : 's'} pendiente${pendingEventsInSeries.length === 1 ? '' : 's'} de esta ficha?`)
+    if (!confirmed) return
+
+    setApprovingAll(true)
+    const { error } = await supabase
+      .from('events')
+      .update({ status: 'approved', published: true, needs_review: false })
+      .in('id', pendingEventsInSeries.map((event) => event.id))
+
+    setApprovingAll(false)
+
+    if (error) {
+      setMessage(`No se pudieron aprobar todas: ${error.message}`)
+      return
+    }
+
+    setMessage(`${pendingEventsInSeries.length} fecha${pendingEventsInSeries.length === 1 ? '' : 's'} aprobada${pendingEventsInSeries.length === 1 ? '' : 's'}`)
     loadEvents()
   }
 
@@ -856,6 +884,18 @@ export default function AdminEventSeriesPage() {
           <div>
             <h2 className="text-2xl font-bold">Próximas fechas</h2>
             <p className="mt-1 text-sm text-slate-400">Edita, aprueba o duplica fechas desde una sola ficha.</p>
+          </div>
+          <div className="flex flex-col gap-3 sm:items-end">
+            {pendingEventsInSeries.length > 0 && (
+              <button
+                type="button"
+                onClick={approveAllPendingEvents}
+                disabled={approvingAll}
+                className="rounded-full bg-emerald-500 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {approvingAll ? 'Aprobando...' : `Aprobar todas (${pendingEventsInSeries.length})`}
+              </button>
+            )}
           </div>
           {mainEvent && (
             <div className="w-full rounded-2xl border border-white/10 bg-slate-950/40 p-3 sm:max-w-[360px]">
