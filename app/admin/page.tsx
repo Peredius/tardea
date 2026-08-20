@@ -315,6 +315,7 @@ export default function AdminPage() {
   const [scoutSearchReport, setScoutSearchReport] = useState<any | null>(null)
   const [scoutPingLoading, setScoutPingLoading] = useState(false)
   const [eventTypeFilter, setEventTypeFilter] = useState('Todos')
+  const [eventSearchQuery, setEventSearchQuery] = useState('')
   const [editingEvent, setEditingEvent] = useState<any | null>(null)
   const [bulkRows, setBulkRows] = useState<BulkEventRow[]>([createBulkRow()])
   const [bulkDuplicateRowId, setBulkDuplicateRowId] = useState('')
@@ -1524,7 +1525,46 @@ export default function AdminPage() {
   const filteredVisibleEvents = eventTypeFilter === 'Todos'
     ? (eventListTab === 'past' ? pastEvents : createdEvents)
     : (eventListTab === 'past' ? pastEvents : createdEvents).filter((event) => (event.type || 'Tardeo') === eventTypeFilter)
-  const visibleEvents = filteredVisibleEvents
+  const normalizedEventSearch = eventSearchQuery.trim().toLowerCase()
+  const searchedVisibleEvents = filteredVisibleEvents.filter((event) => {
+    if (!normalizedEventSearch) return true
+    return [
+      event.title,
+      event.venue,
+      event.address,
+      event.area,
+      event.type,
+      event.audience,
+      Array.isArray(event.music) ? event.music.join(' ') : event.music,
+    ].some((value) => (value || '').toLowerCase().includes(normalizedEventSearch))
+  })
+  const eventGroupMap = new Map<string, any>()
+  searchedVisibleEvents.forEach((event) => {
+    const key = getResearchSeriesKey(event)
+    const current = eventGroupMap.get(key)
+    const summary = current || {
+      key,
+      title: event.title || 'Evento sin nombre',
+      type: event.type || 'Tardeo',
+      venue: event.venue || '',
+      area: event.area || '',
+      slug: getEventSeriesSlug(event),
+      events: [],
+      sourceUrl: event.source_url || '',
+      mapsUrl: event.maps_url || '',
+    }
+
+    if (!summary.sourceUrl && event.source_url) summary.sourceUrl = event.source_url
+    if (!summary.mapsUrl && event.maps_url) summary.mapsUrl = event.maps_url
+    summary.events.push(event)
+    eventGroupMap.set(key, summary)
+  })
+  const visibleEventGroups = Array.from(eventGroupMap.values())
+    .map((group) => ({
+      ...group,
+      events: group.events.slice().sort((a: any, b: any) => (a.date || '').localeCompare(b.date || '')),
+    }))
+    .sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }))
 
   return (
     <main className="container-page py-16">
@@ -2140,6 +2180,134 @@ export default function AdminPage() {
       {adminTab === 'events' && (
       <>
       <div className="mt-12">
+        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Eventos</h2>
+            <p className="mt-1 text-xs text-slate-500">Agrupados por ficha para revisar muchas fechas rapido.</p>
+          </div>
+
+          <div className="flex rounded-full border border-white/10 bg-slate-900/80 p-1 text-sm">
+            <button
+              type="button"
+              onClick={() => setEventListTab('created')}
+              className={`rounded-full px-4 py-2 font-semibold transition ${eventListTab === 'created' ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white'}`}
+            >
+              Eventos creados ({createdEvents.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setEventListTab('past')}
+              className={`rounded-full px-4 py-2 font-semibold transition ${eventListTab === 'past' ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white'}`}
+            >
+              Eventos pasados ({pastEvents.length})
+            </button>
+          </div>
+        </div>
+
+        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <label className="relative block w-full lg:max-w-sm">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+            <input
+              className="input h-10 rounded-full pl-11 pr-10 text-xs"
+              placeholder="Buscar evento, sala, zona..."
+              value={eventSearchQuery}
+              onChange={(event) => setEventSearchQuery(event.target.value)}
+            />
+            {eventSearchQuery && (
+              <button
+                type="button"
+                onClick={() => setEventSearchQuery('')}
+                className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-slate-300 hover:bg-white/15 hover:text-white"
+                aria-label="Limpiar busqueda"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </label>
+
+          <div className="flex flex-wrap gap-2">
+            {eventTypes.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setEventTypeFilter(option)}
+                className={`rounded-full px-3 py-1.5 text-[11px] font-semibold transition ${eventTypeFilter === option ? 'bg-brand-500 text-white' : 'bg-white/10 text-slate-300 hover:bg-white/15'}`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {visibleEventGroups.length === 0 ? (
+          <p className="text-sm text-slate-400">
+            {eventListTab === 'past' ? 'No hay eventos pasados con este filtro' : 'No hay eventos publicados activos con este filtro'}
+          </p>
+        ) : (
+          <div className="divide-y divide-white/5 overflow-hidden rounded-2xl border border-white/10 bg-slate-900/70">
+            {visibleEventGroups.map((group) => {
+              const firstEvent = group.events[0]
+              const dates = group.events
+                .map((event: any) => event.date)
+                .filter(Boolean)
+                .slice(0, 10)
+
+              return (
+                <div
+                  key={group.key}
+                  className="grid gap-2 px-3 py-2 text-[11px] transition hover:bg-white/[0.03] xl:grid-cols-[minmax(220px,1fr)_90px_100px_minmax(260px,1fr)_auto] xl:items-center"
+                >
+                  <div className="min-w-0">
+                    <Link href={`/admin/eventos/${group.slug}`} className="block truncate text-xs font-bold text-white hover:text-brand-300">
+                      {group.title}
+                    </Link>
+                    <p className="mt-0.5 truncate text-[10px] text-slate-500">{[group.venue, group.area].filter(Boolean).join(' - ') || 'Lugar por revisar'}</p>
+                  </div>
+
+                  <span className="w-fit rounded-full bg-white/10 px-2 py-1 text-[10px] font-semibold text-slate-300">{group.type || 'Tardeo'}</span>
+                  <span className="text-[10px] font-semibold text-brand-200">{group.events.length} fecha{group.events.length === 1 ? '' : 's'}</span>
+
+                  <div className="flex min-w-0 flex-wrap gap-1">
+                    {dates.map((date: string) => (
+                      <span key={`${group.key}-${date}`} className="rounded-full bg-slate-950/80 px-2 py-1 text-[10px] font-semibold text-slate-300">
+                        {new Date(date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}
+                      </span>
+                    ))}
+                    {group.events.length > dates.length && (
+                      <span className="rounded-full bg-brand-500/15 px-2 py-1 text-[10px] font-bold text-brand-200">+{group.events.length - dates.length}</span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5 xl:justify-end">
+                    {group.sourceUrl && (
+                      <a href={group.sourceUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] font-semibold text-slate-200 hover:border-brand-500/60">
+                        Tiquetera
+                      </a>
+                    )}
+                    {group.mapsUrl && (
+                      <a href={group.mapsUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] font-semibold text-slate-200 hover:border-brand-500/60">
+                        Maps
+                      </a>
+                    )}
+                    {firstEvent?.slug && (
+                      <Link href={`/eventos/${firstEvent.slug}?from=admin`} className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] font-semibold text-slate-200 hover:border-brand-500/60">
+                        Vista
+                      </Link>
+                    )}
+                    {firstEvent && (
+                      <button className="rounded-full bg-brand-500 px-2.5 py-1 text-[10px] font-bold text-white hover:bg-brand-600" onClick={() => loadEventForEdit(firstEvent)}>
+                        Editar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-12">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-500">TARDEA Scout</p>
@@ -2436,117 +2604,6 @@ export default function AdminPage() {
                     Rechazar
                   </button>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-12">
-        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-2xl font-bold">Eventos</h2>
-
-          <div className="flex rounded-full border border-white/10 bg-slate-900/80 p-1 text-sm">
-            <button
-              type="button"
-              onClick={() => setEventListTab('created')}
-              className={`rounded-full px-4 py-2 font-semibold transition ${eventListTab === 'created' ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white'}`}
-            >
-              Eventos creados ({createdEvents.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setEventListTab('past')}
-              className={`rounded-full px-4 py-2 font-semibold transition ${eventListTab === 'past' ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white'}`}
-            >
-              Eventos pasados ({pastEvents.length})
-            </button>
-          </div>
-        </div>
-
-        <div className="mb-4 flex flex-wrap gap-2">
-          {eventTypes.map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => setEventTypeFilter(option)}
-              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${eventTypeFilter === option ? 'bg-brand-500 text-white' : 'bg-white/10 text-slate-300 hover:bg-white/15'}`}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-
-        {visibleEvents.length === 0 && (
-          <p className="text-slate-400">
-            {eventListTab === 'past' ? 'No hay eventos pasados' : 'No hay eventos publicados activos'}
-          </p>
-        )}
-
-        <div className="space-y-3">
-          {visibleEvents.map((event) => (
-            <div
-              key={event.id}
-              className="flex flex-col gap-3 rounded-xl border border-white/10 bg-slate-800/80 px-4 py-3 lg:flex-row lg:items-center lg:justify-between"
-            >
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Link href={`/admin/eventos/${getEventSeriesSlug(event)}`} className="font-semibold text-white hover:text-brand-300 lg:truncate">
-                    {event.title}
-                  </Link>
-                  <span className={`rounded-full px-3 py-1 text-xs ${eventListTab === 'past' ? 'bg-slate-500/20 text-slate-300' : 'bg-emerald-500/20 text-emerald-300'}`}>
-                    {eventListTab === 'past' ? 'Pasado' : 'Publicado'}
-                  </span>
-                  <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-slate-300">{event.type || 'Tardeo'}</span>
-                  {event.source_url && (
-                    <span className="rounded-full bg-sky-500/15 px-3 py-1 text-xs text-sky-200">Entradas</span>
-                  )}
-                  {event.promotion_package_name && (
-                    <span className="rounded-full bg-brand-500/20 px-3 py-1 text-xs font-semibold text-brand-200">
-                      Promo: {event.promotion_package_name}
-                    </span>
-                  )}
-                </div>
-
-                <p className="mt-1 text-sm text-slate-400">
-                  {[new Date(event.date).toLocaleDateString('es-ES'), event.venue, event.address].filter(Boolean).join(' - ')}
-                </p>
-
-                <p className="mt-1 text-xs text-slate-500">
-                  {[event.audience ? `Edad: ${event.audience}` : null, event.music?.length ? event.music.join(' - ') : null].filter(Boolean).join(' - ')}
-                </p>
-              </div>
-
-              <div className="flex shrink-0 flex-wrap gap-2">
-                {event.source_url && (
-                  <a
-                    href={event.source_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60"
-                  >
-                    Tiquetera
-                  </a>
-                )}
-
-                {event.maps_url && (
-                  <a
-                    href={event.maps_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60"
-                  >
-                    Maps
-                  </a>
-                )}
-
-                <Link href={`/eventos/${event.slug}?from=admin`} className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60">
-                  Vista previa
-                </Link>
-
-                <button className="rounded-full bg-brand-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-600" onClick={() => loadEventForEdit(event)}>
-                  Editar
-                </button>
               </div>
             </div>
           ))}
