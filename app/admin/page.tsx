@@ -261,7 +261,7 @@ function CompactDropdown({
 export default function AdminPage() {
   const formRef = useRef<HTMLFormElement | null>(null)
   const bulkSectionRef = useRef<HTMLElement | null>(null)
-  const [adminTab, setAdminTab] = useState<'events' | 'research' | 'create'>('events')
+  const [adminTab, setAdminTab] = useState<'events' | 'research' | 'create' | 'profiles'>('events')
   const [title, setTitle] = useState('')
   const [venue, setVenue] = useState('')
   const [area, setArea] = useState('')
@@ -310,6 +310,8 @@ export default function AdminPage() {
   const [researchSaving, setResearchSaving] = useState(false)
   const [researchExtractingKey, setResearchExtractingKey] = useState('')
   const [activeResearchDropdown, setActiveResearchDropdown] = useState('')
+  const [profileSearchQuery, setProfileSearchQuery] = useState('')
+  const [profileTypeFilter, setProfileTypeFilter] = useState('Todos')
 
   useEffect(() => {
     async function checkAdmin() {
@@ -1398,6 +1400,54 @@ export default function AdminPage() {
   const visibleResearchRows = Array.from(
     new Map(filteredResearchRows.map((row) => [getResearchSeriesKey(row), row])).values()
   )
+  const profileSources = [
+    ...events.map((event) => ({ ...event, source_kind: 'Publicado' })),
+    ...pendingEvents.map((event) => ({ ...event, source_kind: 'Pendiente' })),
+    ...scoutEvents.map((event) => ({ ...event, source_kind: 'Scout' })),
+    ...researchRows.map((row) => ({ ...row, source_kind: 'Listado' })),
+  ].filter((item) => item.title || item.venue)
+  const profileMap = new Map<string, any>()
+  profileSources.forEach((item) => {
+    const key = getResearchSeriesKey(item)
+    const current = profileMap.get(key)
+    const summary = current || {
+      key,
+      title: item.title || item.venue || 'Evento sin nombre',
+      type: item.type || 'Tardeo',
+      venue: item.venue || '',
+      area: item.area || 'Madrid',
+      slug: getEventSeriesSlug({ title: item.title || item.venue || 'evento', type: item.type || 'Tardeo', venue: item.venue || '' }),
+      sourceKinds: new Set<string>(),
+      count: 0,
+    }
+
+    if (!current || (current.sourceKinds.has('Listado') && item.source_kind !== 'Listado')) {
+      summary.title = item.title || summary.title
+      summary.type = item.type || summary.type
+      summary.venue = item.venue || summary.venue
+      summary.area = item.area || summary.area
+      summary.slug = getEventSeriesSlug({ title: summary.title, type: summary.type, venue: summary.venue })
+    }
+
+    summary.sourceKinds.add(item.source_kind)
+    summary.count += 1
+    profileMap.set(key, summary)
+  })
+  const profileTypes = ['Todos', ...compactOptions([...EVENT_TYPE_OPTIONS, ...Array.from(profileMap.values()).map((profile) => profile.type || 'Tardeo')])]
+  const normalizedProfileSearch = profileSearchQuery.trim().toLowerCase()
+  const visibleProfiles = Array.from(profileMap.values())
+    .filter((profile) => {
+      const typeMatches = profileTypeFilter === 'Todos' || profile.type === profileTypeFilter
+      const searchMatches = !normalizedProfileSearch || [
+        profile.title,
+        profile.venue,
+        profile.area,
+        profile.type,
+        Array.from(profile.sourceKinds).join(' '),
+      ].some((value) => (value || '').toLowerCase().includes(normalizedProfileSearch))
+      return typeMatches && searchMatches
+    })
+    .sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }))
   const filteredScoutEvents = scoutTypeFilter === 'Todos'
     ? scoutEvents
     : scoutEvents.filter((event) => (event.type || 'Tardeo') === scoutTypeFilter)
@@ -1447,7 +1497,91 @@ export default function AdminPage() {
         >
           Crear evento
         </button>
+        <button
+          type="button"
+          onClick={() => setAdminTab('profiles')}
+          className={`rounded-full px-4 py-2 text-sm font-bold transition ${adminTab === 'profiles' ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white'}`}
+        >
+          Fichas
+        </button>
       </div>
+
+      {adminTab === 'profiles' && (
+        <section className="rounded-3xl border border-white/10 bg-slate-900/70 p-5">
+          <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-500">Fichas por evento</p>
+              <h2 className="text-2xl font-bold">Indice de fichas</h2>
+              <p className="mt-2 text-sm text-slate-400">Una entrada por evento o marca, ordenada para entrar rapido a sus fechas y datos.</p>
+            </div>
+
+            <label className="relative block w-full lg:max-w-sm">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <input
+                className="input h-11 rounded-full pl-11 pr-10 text-sm"
+                placeholder="Buscar ficha..."
+                value={profileSearchQuery}
+                onChange={(event) => setProfileSearchQuery(event.target.value)}
+              />
+              {profileSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setProfileSearchQuery('')}
+                  className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-slate-300 hover:bg-white/15 hover:text-white"
+                  aria-label="Limpiar busqueda"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </label>
+          </div>
+
+          <div className="mb-5 flex flex-col gap-2 lg:flex-row lg:items-center">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Segmentar por tipo</p>
+            <div className="flex flex-wrap gap-2">
+              {profileTypes.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setProfileTypeFilter(option)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${profileTypeFilter === option ? 'bg-brand-500 text-white' : 'bg-white/10 text-slate-300 hover:bg-white/15'}`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-3 flex items-center justify-between text-xs font-semibold text-slate-500">
+            <span>{visibleProfiles.length} fichas</span>
+            <span>Orden alfabetico</span>
+          </div>
+
+          {visibleProfiles.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-white/10 p-6 text-sm text-slate-400">
+              No hay fichas con este filtro.
+            </div>
+          ) : (
+            <div className="divide-y divide-white/5 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/35">
+              {visibleProfiles.map((profile) => (
+                <Link
+                  key={profile.key}
+                  href={`/admin/eventos/${profile.slug}`}
+                  className="grid gap-2 px-4 py-3 text-sm transition hover:bg-white/[0.03] md:grid-cols-[minmax(220px,1fr)_130px_minmax(160px,0.8fr)_120px_110px] md:items-center"
+                >
+                  <span className="font-bold text-white">{profile.title}</span>
+                  <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-300 md:justify-self-start">{profile.type || 'Tardeo'}</span>
+                  <span className="text-slate-400">{profile.venue || 'Lugar por revisar'}</span>
+                  <span className="text-slate-500">{profile.area || 'Madrid'}</span>
+                  <span className="text-right text-xs font-semibold text-brand-200 md:text-left">
+                    {profile.count} dato{profile.count === 1 ? '' : 's'}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {adminTab === 'research' && (
         <section className="rounded-3xl border border-white/10 bg-slate-900/70 p-5">

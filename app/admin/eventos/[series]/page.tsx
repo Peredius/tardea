@@ -105,6 +105,7 @@ export default function AdminEventSeriesPage() {
   const series = decodeURIComponent(params.series as string)
   const [loading, setLoading] = useState(true)
   const [events, setEvents] = useState<any[]>([])
+  const [researchItems, setResearchItems] = useState<any[]>([])
   const [message, setMessage] = useState('')
   const [editingEventId, setEditingEventId] = useState('')
   const [duplicateDate, setDuplicateDate] = useState('')
@@ -142,6 +143,13 @@ export default function AdminEventSeriesPage() {
     }
 
     setEvents((data || []).filter((event) => getEventSeriesSlug(event) === series))
+
+    const { data: researchData } = await supabase
+      .from('event_research_items')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    setResearchItems((researchData || []).filter((item) => getEventSeriesSlug(item) === series))
     setLoading(false)
   }
 
@@ -149,7 +157,7 @@ export default function AdminEventSeriesPage() {
     loadEvents()
   }, [series])
 
-  const mainEvent = events[0]
+  const mainEvent = events[0] || researchItems[0]
   const upcomingEvents = useMemo(
     () => events.filter((event) => !event.date || event.date >= new Date().toISOString().slice(0, 10)),
     [events]
@@ -160,13 +168,13 @@ export default function AdminEventSeriesPage() {
   )
   const editingEvent = events.find((event) => event.id === editingEventId)
   const relatedUrls = useMemo(() => {
-    const urls = events.flatMap((event) => [
+    const urls = [...events, ...researchItems].flatMap((event) => [
       event.source_url,
       event.website_url,
       ...getUrlsFromText(event.description || ''),
     ]).filter(Boolean) as string[]
     return Array.from(new Set(urls))
-  }, [events])
+  }, [events, researchItems])
   const instagramUrl = relatedUrls.find((url) => getHost(url).includes('instagram.com')) || ''
   const ticketUrl = relatedUrls.find(isTicketUrl) || mainEvent?.source_url || ''
   const websiteUrl = relatedUrls.find((url) => {
@@ -341,12 +349,14 @@ export default function AdminEventSeriesPage() {
             <h2 className="text-2xl font-bold">Próximas fechas</h2>
             <p className="mt-1 text-sm text-slate-400">Edita, aprueba o duplica fechas desde una sola ficha.</p>
           </div>
-          <div className="flex gap-2">
-            <input type="date" className="input max-w-44" value={duplicateDate} onChange={(event) => setDuplicateDate(event.target.value)} />
-            <button type="button" onClick={() => duplicateEvent(mainEvent)} className="rounded-full bg-brand-500 px-4 py-2 text-sm font-bold text-white hover:bg-brand-600">
-              Duplicar fecha
-            </button>
-          </div>
+          {events.length > 0 && (
+            <div className="flex gap-2">
+              <input type="date" className="input max-w-44" value={duplicateDate} onChange={(event) => setDuplicateDate(event.target.value)} />
+              <button type="button" onClick={() => duplicateEvent(mainEvent)} className="rounded-full bg-brand-500 px-4 py-2 text-sm font-bold text-white hover:bg-brand-600">
+                Duplicar fecha
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="mb-5 flex flex-wrap gap-2">
@@ -366,6 +376,12 @@ export default function AdminEventSeriesPage() {
             </a>
           )}
         </div>
+
+        {upcomingEvents.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-white/10 p-6 text-sm text-slate-400">
+            Esta ficha todavia no tiene fechas creadas en Admin. Usa el listado para pasarla a revision o crea el primer evento desde Crear evento.
+          </div>
+        )}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {upcomingEvents.map((event) => (
