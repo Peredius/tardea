@@ -217,7 +217,7 @@ function CompactDropdown({
 export default function AdminPage() {
   const formRef = useRef<HTMLFormElement | null>(null)
   const bulkSectionRef = useRef<HTMLElement | null>(null)
-  const [adminTab, setAdminTab] = useState<'events' | 'research'>('events')
+  const [adminTab, setAdminTab] = useState<'events' | 'research' | 'create'>('events')
   const [title, setTitle] = useState('')
   const [venue, setVenue] = useState('')
   const [area, setArea] = useState('')
@@ -634,6 +634,7 @@ export default function AdminPage() {
       return emptyInitialRow ? rows : [...current, ...rows]
     })
     setSelectedScoutEventIds([])
+    setAdminTab('create')
     setMessage(`${rows.length} evento${rows.length === 1 ? '' : 's'} pasado${rows.length === 1 ? '' : 's'} a la tabla editorial para revisar y duplicar fechas.`)
     window.setTimeout(() => {
       bulkSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -873,7 +874,7 @@ export default function AdminPage() {
       return emptyInitialRow ? rows : [...current, ...rows]
     })
     setResearchRows((current) => current.map((row) => row.selected ? { ...row, selected: false, status: 'pasado' } : row))
-    setAdminTab('events')
+    setAdminTab('create')
     window.setTimeout(() => {
       bulkSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 50)
@@ -997,7 +998,10 @@ export default function AdminPage() {
     setReelUrl(event.reel_url || '')
     setDescription(event.description || '')
     setPerks(event.perks?.join(' - ') || '')
-    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setAdminTab('create')
+    window.setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 50)
   }
 
   function toggleMusicStyle(style: string) {
@@ -1240,6 +1244,13 @@ export default function AdminPage() {
         >
           Listado de eventos
         </button>
+        <button
+          type="button"
+          onClick={() => setAdminTab('create')}
+          className={`rounded-full px-4 py-2 text-sm font-bold transition ${adminTab === 'create' ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white'}`}
+        >
+          Crear evento
+        </button>
       </div>
 
       {adminTab === 'research' && (
@@ -1408,7 +1419,7 @@ export default function AdminPage() {
         </section>
       )}
 
-      {adminTab === 'events' && (
+      {adminTab === 'create' && (
       <>
       <form ref={formRef} onSubmit={handleSubmit} className="card mt-8 max-w-2xl space-y-6 p-6">
         {editingEvent && (
@@ -1914,6 +1925,11 @@ export default function AdminPage() {
           ))}
         </div>
       </div>
+      </>
+      )}
+
+      {adminTab === 'events' && (
+      <>
       <div className="mt-12">
         <h2 className="mb-4 text-2xl font-bold">Reclamaciones de eventos</h2>
 
