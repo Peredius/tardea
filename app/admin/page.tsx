@@ -192,7 +192,7 @@ function CompactDropdown({
         <span className="shrink-0 text-[10px] text-slate-300">v</span>
       </button>
       {isOpen && (
-        <div className="absolute left-0 top-9 z-50 max-h-48 min-w-full overflow-auto rounded-xl border border-white/10 bg-slate-950 p-1 shadow-2xl shadow-black/50">
+        <div className="absolute left-0 top-9 z-50 max-h-40 min-w-full overflow-auto rounded-xl border border-white/10 bg-slate-950 p-1 shadow-2xl shadow-black/50">
           {mergedOptions.map((option) => {
             const selected = option === currentValue
 
@@ -1479,7 +1479,7 @@ export default function AdminPage() {
             </div>
           )}
 
-          <div className="overflow-x-auto rounded-2xl border border-white/10 bg-slate-950/40">
+          <div className="overflow-visible rounded-2xl border border-white/10 bg-slate-950/40">
             <div className="min-w-[980px]">
               <div className="grid grid-cols-[28px_72px_minmax(150px,1.2fr)_100px_105px_70px_115px_95px_75px_135px_128px] gap-1.5 border-b border-white/10 px-2 py-1.5 text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500">
                 <span></span>
