@@ -1477,6 +1477,7 @@ export default function AdminPage() {
       area: item.area || 'Madrid',
       slug: getEventSeriesSlug({ title: item.title || item.venue || 'evento', type: item.type || 'Tardeo', venue: item.venue || '' }),
       sourceKinds: new Set<string>(),
+      sourceUrl: item.source_url || '',
       count: 0,
       reviewedCount: 0,
     }
@@ -1489,6 +1490,9 @@ export default function AdminPage() {
       summary.slug = getEventSeriesSlug({ title: summary.title, type: summary.type, venue: summary.venue })
     }
 
+    if (!summary.sourceUrl && item.source_url) {
+      summary.sourceUrl = item.source_url
+    }
     summary.sourceKinds.add(item.source_kind)
     summary.count += 1
     if (item.profile_reviewed) summary.reviewedCount += 1
@@ -1508,6 +1512,7 @@ export default function AdminPage() {
         profile.title,
         profile.venue,
         profile.type,
+        profile.sourceUrl,
         Array.from(profile.sourceKinds).join(' '),
       ].some((value) => (value || '').toLowerCase().includes(normalizedProfileSearch))
       return typeMatches && reviewMatches && searchMatches
@@ -1644,7 +1649,7 @@ export default function AdminPage() {
               {visibleProfiles.map((profile) => (
                 <div
                   key={profile.key}
-                  className="grid gap-2 px-4 py-3 text-sm transition hover:bg-white/[0.03] md:grid-cols-[minmax(220px,1fr)_110px_minmax(150px,0.8fr)_90px_105px_90px] md:items-center"
+                  className="grid gap-2 px-4 py-3 text-sm transition hover:bg-white/[0.03] md:grid-cols-[minmax(220px,1fr)_110px_minmax(150px,0.8fr)_80px_80px_105px_90px] md:items-center"
                 >
                   <Link href={`/admin/eventos/${profile.slug}`} className="font-bold text-white hover:text-brand-300">
                     {profile.title}
@@ -1654,6 +1659,18 @@ export default function AdminPage() {
                   <span className="text-right text-xs font-semibold text-brand-200 md:text-left">
                     {profile.count} dato{profile.count === 1 ? '' : 's'}
                   </span>
+                  {profile.sourceUrl ? (
+                    <a
+                      href={profile.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="justify-self-start rounded-full border border-white/10 px-3 py-1 text-xs font-bold text-slate-200 hover:border-brand-500/60"
+                    >
+                      Fuente
+                    </a>
+                  ) : (
+                    <span className="text-xs font-semibold text-slate-600">Sin fuente</span>
+                  )}
                   <span className={`rounded-full px-3 py-1 text-xs font-bold md:justify-self-start ${profile.reviewedCount > 0 ? 'bg-emerald-500/15 text-emerald-200' : 'bg-yellow-500/15 text-yellow-200'}`}>
                     {profile.reviewedCount > 0 ? 'Creada' : 'Por revisar'}
                   </span>

@@ -967,16 +967,6 @@ export default function AdminEventSeriesPage() {
                   <button type="button" onClick={() => startEditingEvent(event.id)} className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:border-brand-500/60">
                     Editar
                   </button>
-                  {event.source_url && (
-                    <a
-                      href={event.source_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:border-brand-500/60"
-                    >
-                      Fuente
-                    </a>
-                  )}
                   {event.status !== 'approved' && (
                     <button type="button" onClick={() => approveEvent(event.id)} className="rounded-full bg-brand-500 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-brand-600">
                       Aprobar
@@ -1001,9 +991,6 @@ export default function AdminEventSeriesPage() {
               <div key={event.id} className="flex flex-col gap-2 rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="font-semibold">{formatDate(event.date)} · {formatTime(event.start_time)} - {formatTime(event.end_time)} · {event.title}</p>
                 <div className="flex items-center gap-3">
-                  {event.source_url && (
-                    <a href={event.source_url} target="_blank" rel="noreferrer" className="text-sm font-semibold text-slate-300 hover:text-white">Fuente</a>
-                  )}
                   <Link href={`/eventos/${event.slug}?from=admin`} className="text-sm font-semibold text-brand-500">Vista</Link>
                   <button type="button" onClick={() => deleteEventDate(event)} className="text-sm font-semibold text-red-300 hover:text-white">Eliminar</button>
                 </div>
