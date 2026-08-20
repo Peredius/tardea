@@ -57,6 +57,17 @@ function formatTime(time: string) {
   return time.split(':').slice(0, 2).join(':')
 }
 
+function formatPosterDate(date: string) {
+  if (!date) return 'Fecha por confirmar'
+  const [year, month, day] = date.split('-').map(Number)
+  const localDate = new Date(year, month - 1, day)
+  return localDate.toLocaleDateString('es-ES', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  })
+}
+
 function formatCalendarMonth(date: Date) {
   return date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
 }
@@ -117,6 +128,25 @@ function getFirstUrl(...urls: string[]) {
   return urls.find(Boolean) || ''
 }
 
+function loadCanvasImage(url: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image()
+    image.crossOrigin = 'anonymous'
+    image.onload = () => resolve(image)
+    image.onerror = () => reject(new Error('No se pudo cargar el cartel base'))
+    image.src = url
+  })
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob)
+      else reject(new Error('No se pudo generar la imagen'))
+    }, 'image/jpeg', 0.92)
+  })
+}
+
 function InstagramIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
@@ -173,6 +203,7 @@ export default function AdminEventSeriesPage() {
   const [reviewSaving, setReviewSaving] = useState(false)
   const [applyEditToSeries, setApplyEditToSeries] = useState(false)
   const [approvingAll, setApprovingAll] = useState(false)
+  const [generatingPosters, setGeneratingPosters] = useState(false)
 
   async function loadEvents() {
     const {
@@ -606,6 +637,106 @@ export default function AdminEventSeriesPage() {
     loadEvents()
   }
 
+  async function generateDatedPosters() {
+    const baseCover = mainEvent?.cover
+    const datedEvents = events.filter((event) => event.date)
+
+    if (!baseCover) {
+      setMessage('Sube primero un cartel generico en Datos base')
+      return
+    }
+
+    if (datedEvents.length === 0) {
+      setMessage('Crea primero alguna fecha para generar carteles')
+      return
+    }
+
+    const confirmed = window.confirm(`Generar cartel con fecha para ${datedEvents.length} evento${datedEvents.length === 1 ? '' : 's'} usando el cartel base?`)
+    if (!confirmed) return
+
+    setGeneratingPosters(true)
+
+    try {
+      const baseImage = await loadCanvasImage(baseCover)
+      const generated: { id: string; cover: string }[] = []
+
+      for (const event of datedEvents) {
+        const canvas = document.createElement('canvas')
+        canvas.width = 1080
+        canvas.height = 1920
+        const context = canvas.getContext('2d')
+        if (!context) throw new Error('No se pudo preparar el cartel')
+
+        const scale = Math.max(canvas.width / baseImage.width, canvas.height / baseImage.height)
+        const width = baseImage.width * scale
+        const height = baseImage.height * scale
+        const x = (canvas.width - width) / 2
+        const y = (canvas.height - height) / 2
+        context.drawImage(baseImage, x, y, width, height)
+
+        const gradient = context.createLinearGradient(0, 1320, 0, 1920)
+        gradient.addColorStop(0, 'rgba(2, 6, 23, 0)')
+        gradient.addColorStop(0.45, 'rgba(2, 6, 23, 0.78)')
+        gradient.addColorStop(1, 'rgba(2, 6, 23, 0.96)')
+        context.fillStyle = gradient
+        context.fillRect(0, 1180, canvas.width, 740)
+
+        context.fillStyle = 'rgba(244, 63, 94, 0.92)'
+        context.roundRect(72, 1430, 936, 244, 42)
+        context.fill()
+
+        context.fillStyle = 'rgba(255, 255, 255, 0.12)'
+        context.roundRect(90, 1448, 900, 208, 34)
+        context.fill()
+
+        context.fillStyle = '#ffffff'
+        context.textAlign = 'center'
+        context.textBaseline = 'middle'
+        context.font = '900 74px Arial'
+        context.fillText(formatPosterDate(event.date).toUpperCase(), 540, 1518)
+
+        context.font = '800 50px Arial'
+        const timeText = [formatTime(event.start_time), formatTime(event.end_time)].filter(Boolean).join(' - ')
+        if (timeText) {
+          context.fillText(timeText, 540, 1598)
+        }
+
+        context.font = '900 34px Arial'
+        context.fillStyle = 'rgba(255, 255, 255, 0.9)'
+        context.fillText('TARDEA', 540, 1762)
+
+        const blob = await canvasToBlob(canvas)
+        const fileName = `series/${series}/generated/${event.id}-${Date.now()}.jpg`
+        const { error: uploadError } = await supabase.storage
+          .from('events')
+          .upload(fileName, blob, { contentType: 'image/jpeg', upsert: true })
+
+        if (uploadError) throw uploadError
+
+        const { data } = supabase.storage.from('events').getPublicUrl(fileName)
+        generated.push({ id: event.id, cover: data.publicUrl })
+      }
+
+      const updates = await Promise.all(
+        generated.map((poster) =>
+          supabase
+            .from('events')
+            .update({ cover: poster.cover, image_status: 'generated' })
+            .eq('id', poster.id)
+        )
+      )
+      const failed = updates.find((result) => result.error)
+      if (failed?.error) throw failed.error
+
+      setMessage(`${generated.length} cartel${generated.length === 1 ? '' : 'es'} con fecha generado${generated.length === 1 ? '' : 's'}`)
+      loadEvents()
+    } catch (error: any) {
+      setMessage(`No se pudieron generar los carteles: ${error.message || 'revisa que el cartel base este subido a Tardea'}`)
+    } finally {
+      setGeneratingPosters(false)
+    }
+  }
+
   function toggleDuplicateDate(date: string) {
     const exists = events.some((item) => item.date === date)
     if (exists) {
@@ -886,6 +1017,16 @@ export default function AdminEventSeriesPage() {
             <p className="mt-1 text-sm text-slate-400">Edita, aprueba o duplica fechas desde una sola ficha.</p>
           </div>
           <div className="flex flex-col gap-3 sm:items-end">
+            {events.some((event) => event.date) && (
+              <button
+                type="button"
+                onClick={generateDatedPosters}
+                disabled={generatingPosters}
+                className="rounded-full border border-brand-500/40 px-4 py-2 text-xs font-bold text-brand-100 hover:border-brand-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {generatingPosters ? 'Generando carteles...' : `Generar carteles con fecha (${events.filter((event) => event.date).length})`}
+              </button>
+            )}
             {pendingEventsInSeries.length > 0 && (
               <button
                 type="button"
