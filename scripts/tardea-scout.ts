@@ -77,7 +77,7 @@ const defaultConfig: ScoutConfig = {
     price_from: 0,
   },
   allowed_types: ['Tardeo', 'Rooftop', 'Brunch', 'Afterwork'],
-  allowed_music: ['Comercial', 'Indie', 'Electronica', 'Flamenquito', 'Pop', 'Remember'],
+  allowed_music: ['Comercial', 'Indie', 'Electronica', 'Reguetón', 'Flamenquito', 'Pop', 'Remember'],
   cover_by_type: {
     Tardeo: '/scout-covers/tardeo.svg',
     Rooftop: '/scout-covers/rooftop.svg',
@@ -100,7 +100,8 @@ const defaultConfig: ScoutConfig = {
     Indie: ['indie', 'alternativo'],
     Remember: ['remember', '90s', '2000', 'clasicos', 'clásicos'],
     Pop: ['pop'],
-    Comercial: ['comercial', 'hits', 'reggaeton', 'urbano'],
+    Reguetón: ['reggaeton', 'reguetón', 'regueton', 'urbano', 'urban'],
+    Comercial: ['comercial', 'hits'],
   },
 }
 

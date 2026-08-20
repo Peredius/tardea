@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
-const MUSIC_OPTIONS = ['Comercial', 'Electronica', 'Pop', 'Indie', 'Flamenquito', 'Remember']
+const MUSIC_OPTIONS = ['Comercial', 'Electronica', 'Reguetón', 'Pop', 'Indie', 'Flamenquito', 'Remember']
 const AUDIENCE_OPTIONS = ['18-25', '25-35', '30+', 'Mixto']
 const EVENT_TYPE_OPTIONS = ['Tardeo', 'Rooftop', 'Brunch', 'Afterwork', 'Fitness Party']
 const AREA_OPTIONS = ['Madrid', 'Centro', 'Salamanca', 'Retiro', 'Chamberi', 'Malasana', 'La Latina', 'Chamartin', 'Tetuan', 'Alcorcon']

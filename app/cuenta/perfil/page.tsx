@@ -10,6 +10,7 @@ const MUSIC_OPTIONS = [
   'Comercial',
   'Indie',
   'Electronica',
+  'Reguetón',
   'Flamenquito',
   'Pop',
   'Remember',

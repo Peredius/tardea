@@ -77,7 +77,7 @@ const PROVINCE_OPTIONS = [
   'Zaragoza',
 ]
 
-const MUSIC_OPTIONS = ['Comercial', 'Electrónica', 'Pop', 'Indie', 'Flamenquito', 'Remember']
+const MUSIC_OPTIONS = ['Comercial', 'Electrónica', 'Reguetón', 'Pop', 'Indie', 'Flamenquito', 'Remember']
 const AUDIENCE_OPTIONS = ['18-25', '25-35', '30+', 'Mixto']
 const PROMOTION_PACKAGES = [
   {

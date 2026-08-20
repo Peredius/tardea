@@ -176,6 +176,7 @@ function inferMusic(text: string) {
     ['Remember', ['remember', '90s', '2000']],
     ['Flamenquito', ['flamenquito', 'flamenco', 'rumba']],
     ['Electronica', ['electronica', 'electro', 'techno', 'house']],
+    ['Reguetón', ['reggaeton', 'reguetón', 'regueton', 'urbano', 'urban']],
     ['Indie', ['indie']],
     ['Pop', ['pop']],
     ['Comercial', ['comercial', 'hits']],

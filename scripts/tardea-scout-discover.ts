@@ -61,7 +61,8 @@ const musicKeywords: Record<string, string[]> = {
   Indie: ['indie', 'alternativo'],
   Remember: ['remember', '90s', '2000', 'clasicos', 'clásicos'],
   Pop: ['pop'],
-  Comercial: ['comercial', 'hits', 'reggaeton', 'urbano', 'tardeo'],
+  Reguetón: ['reggaeton', 'reguetón', 'regueton', 'urbano', 'urban'],
+  Comercial: ['comercial', 'hits', 'tardeo'],
 }
 
 const spanishMonths: Record<string, string> = {
