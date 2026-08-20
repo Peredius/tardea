@@ -975,6 +975,39 @@ export default function AdminPage() {
     fetchResearchRows()
   }
 
+  async function deleteEventProfile(profile: any) {
+    const confirmed = window.confirm(`Eliminar la ficha "${profile.title}" y todos sus datos asociados?`)
+    if (!confirmed) return
+
+    const eventIds = [...events, ...pendingEvents, ...scoutEvents]
+      .filter((event) => getResearchSeriesKey(event) === profile.key)
+      .map((event) => event.id)
+      .filter(Boolean)
+    const researchIds = researchRows
+      .filter((row) => row.id && getResearchSeriesKey(row) === profile.key)
+      .map((row) => row.id)
+
+    if (eventIds.length > 0) {
+      const { error } = await supabase.from('events').delete().in('id', eventIds)
+      if (error) {
+        setMessage(`No se pudo eliminar la ficha: ${error.message}`)
+        return
+      }
+    }
+
+    if (researchIds.length > 0) {
+      const { error } = await supabase.from('event_research_items').delete().in('id', researchIds)
+      if (error) {
+        setMessage(`No se pudo eliminar el listado de la ficha: ${error.message}`)
+        return
+      }
+    }
+
+    setMessage(`Ficha "${profile.title}" eliminada`)
+    fetchEvents()
+    fetchResearchRows()
+  }
+
   async function extractResearchRow(index: number) {
     const row = researchRows[index]
 
@@ -1441,7 +1474,6 @@ export default function AdminPage() {
       const searchMatches = !normalizedProfileSearch || [
         profile.title,
         profile.venue,
-        profile.area,
         profile.type,
         Array.from(profile.sourceKinds).join(' '),
       ].some((value) => (value || '').toLowerCase().includes(normalizedProfileSearch))
@@ -1564,19 +1596,26 @@ export default function AdminPage() {
           ) : (
             <div className="divide-y divide-white/5 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/35">
               {visibleProfiles.map((profile) => (
-                <Link
+                <div
                   key={profile.key}
-                  href={`/admin/eventos/${profile.slug}`}
-                  className="grid gap-2 px-4 py-3 text-sm transition hover:bg-white/[0.03] md:grid-cols-[minmax(220px,1fr)_130px_minmax(160px,0.8fr)_120px_110px] md:items-center"
+                  className="grid gap-2 px-4 py-3 text-sm transition hover:bg-white/[0.03] md:grid-cols-[minmax(220px,1fr)_130px_minmax(160px,0.8fr)_110px_90px] md:items-center"
                 >
-                  <span className="font-bold text-white">{profile.title}</span>
+                  <Link href={`/admin/eventos/${profile.slug}`} className="font-bold text-white hover:text-brand-300">
+                    {profile.title}
+                  </Link>
                   <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-300 md:justify-self-start">{profile.type || 'Tardeo'}</span>
                   <span className="text-slate-400">{profile.venue || 'Lugar por revisar'}</span>
-                  <span className="text-slate-500">{profile.area || 'Madrid'}</span>
                   <span className="text-right text-xs font-semibold text-brand-200 md:text-left">
                     {profile.count} dato{profile.count === 1 ? '' : 's'}
                   </span>
-                </Link>
+                  <button
+                    type="button"
+                    onClick={() => deleteEventProfile(profile)}
+                    className="justify-self-start rounded-full px-3 py-1 text-xs font-semibold text-slate-500 hover:bg-red-500/10 hover:text-red-300 md:justify-self-end"
+                  >
+                    Eliminar
+                  </button>
+                </div>
               ))}
             </div>
           )}
