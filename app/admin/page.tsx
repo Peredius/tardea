@@ -1316,7 +1316,7 @@ export default function AdminPage() {
                 const rowStatus = compactValue(row.status, 'nuevo')
 
                 return (
-                  <div key={rowKey} className="grid grid-cols-[28px_72px_minmax(150px,1.2fr)_100px_105px_70px_115px_95px_75px_135px_128px] gap-1.5 border-b border-white/5 px-2 py-1.5 text-[10px] last:border-b-0">
+                  <div key={rowKey} className="grid grid-cols-[28px_72px_minmax(150px,1.2fr)_100px_105px_70px_115px_95px_75px_135px_128px] gap-1.5 border-b border-white/5 px-2 py-1.5 text-[9px] last:border-b-0">
                     <input type="checkbox" className="mt-2 h-2.5 w-2.5 justify-self-center accent-brand-500" checked={Boolean(row.selected)} onChange={(event) => updateResearchRow(rowIndex, 'selected', event.target.checked)} />
                     {row.source_url ? (
                       <a href={row.source_url} target="_blank" rel="noreferrer" className="inline-flex h-7 items-center justify-center rounded-full border border-white/10 px-2 text-[9px] font-bold text-slate-200 hover:border-brand-500/60">
@@ -1330,7 +1330,7 @@ export default function AdminPage() {
                         {row.title}
                       </Link>
                     ) : (
-                      <input className="input h-7 px-2 text-[10px]" value={row.title} onChange={(event) => updateResearchRow(rowIndex, 'title', event.target.value)} placeholder="Nombre" />
+                      <input className="input h-7 px-2 text-[9px]" value={row.title} onChange={(event) => updateResearchRow(rowIndex, 'title', event.target.value)} placeholder="Nombre" />
                     )}
                     <CompactDropdown
                       value={rowType}
@@ -1359,7 +1359,7 @@ export default function AdminPage() {
                       onOpenChange={setActiveResearchDropdown}
                       onChange={(value) => updateResearchRow(rowIndex, 'audience', value)}
                     />
-                    <input className="input h-7 px-2 text-[10px]" value={row.venue} onChange={(event) => updateResearchRow(rowIndex, 'venue', event.target.value)} placeholder="Sala" />
+                    <input className="input h-7 px-2 text-[9px]" value={row.venue} onChange={(event) => updateResearchRow(rowIndex, 'venue', event.target.value)} placeholder="Sala" />
                     <CompactDropdown
                       value={rowArea}
                       fallback="Madrid"
