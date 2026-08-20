@@ -154,6 +154,10 @@ function getEventSeriesSlug(event: any) {
   return [event.type || 'Tardeo', title || 'evento', venue].filter(Boolean).join('__').toLowerCase()
 }
 
+function getPromoterEventProfileSlug(event: any) {
+  return getEventSeriesSlug(event).replace(/__/g, '-').replace(/^-+|-+$/g, '') || 'evento'
+}
+
 function CompactDropdown({
   value,
   fallback,
@@ -362,7 +366,7 @@ export default function AdminPage() {
   async function fetchEventClaims() {
     const { data, error } = await supabase
       .from('event_claims')
-      .select('*, events(title, date, venue, slug)')
+      .select('*, events(*)')
       .eq('status', 'pending')
       .order('created_at', { ascending: true })
 
@@ -391,13 +395,93 @@ export default function AdminPage() {
   }
 
   async function approveClaim(claim: any) {
+    const claimedEvent = claim.events
+
+    if (!claimedEvent) {
+      setMessage('No se pudo leer el evento reclamado')
+      return
+    }
+
+    const eventProfileSlug = getPromoterEventProfileSlug(claimedEvent)
+    const musicList = Array.isArray(claimedEvent.music)
+      ? claimedEvent.music
+      : typeof claimedEvent.music === 'string'
+        ? claimedEvent.music.split(',').map((item: string) => item.trim()).filter(Boolean)
+        : ['Comercial']
+
+    let eventProfileId = claimedEvent.event_profile_id || ''
+
+    if (!eventProfileId) {
+      const { data: existingProfile, error: existingProfileError } = await supabase
+        .from('promoter_event_profiles')
+        .select('id')
+        .eq('user_id', claim.promoter_user_id)
+        .eq('slug', eventProfileSlug)
+        .maybeSingle()
+
+      if (existingProfileError) {
+        setMessage(`No se pudo comprobar la ficha del promotor: ${existingProfileError.message}`)
+        return
+      }
+
+      eventProfileId = existingProfile?.id || ''
+    }
+
+    if (!eventProfileId) {
+      const { data: newProfile, error: profileError } = await supabase
+        .from('promoter_event_profiles')
+        .insert({
+          user_id: claim.promoter_user_id,
+          name: claimedEvent.title || claim.company || 'Evento reclamado',
+          slug: eventProfileSlug,
+          logo_url: claimedEvent.cover || null,
+          banner_url: claimedEvent.cover || null,
+          description: claimedEvent.description || claim.message || null,
+          type: claimedEvent.type || 'Tardeo',
+          venue_name: claimedEvent.venue || null,
+          area: claimedEvent.area || null,
+          address: claimedEvent.address || null,
+          maps_url: claimedEvent.maps_url || null,
+          music: musicList.length ? musicList : ['Comercial'],
+          audience: claimedEvent.audience || 'Mixto',
+          price_from: claimedEvent.price_from || 0,
+          website_url: claim.website || claimedEvent.source_url || null,
+          is_active: true,
+          updated_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single()
+
+      if (profileError) {
+        setMessage(`No se pudo crear la ficha del evento para el promotor: ${profileError.message}`)
+        return
+      }
+
+      eventProfileId = newProfile.id
+    }
+
+    const { data: allEvents, error: allEventsError } = await supabase
+      .from('events')
+      .select('id, title, type, venue')
+
+    if (allEventsError) {
+      setMessage(`No se pudieron localizar las fechas relacionadas: ${allEventsError.message}`)
+      return
+    }
+
+    const claimedSeriesSlug = getEventSeriesSlug(claimedEvent)
+    const relatedEventIds = (allEvents || [])
+      .filter((event) => getEventSeriesSlug(event) === claimedSeriesSlug)
+      .map((event) => event.id)
+
     const { error: eventError } = await supabase
       .from('events')
       .update({
         user_id: claim.promoter_user_id,
+        event_profile_id: eventProfileId,
         claimed_at: new Date().toISOString(),
       })
-      .eq('id', claim.event_id)
+      .in('id', relatedEventIds.length ? relatedEventIds : [claim.event_id])
 
     if (eventError) {
       setMessage(`Error al asignar evento: ${eventError.message}`)
@@ -417,7 +501,7 @@ export default function AdminPage() {
       return
     }
 
-    setMessage('Reclamacion aprobada y evento asignado al promotor')
+    setMessage(`Reclamacion aprobada. Ficha creada/asignada y ${relatedEventIds.length || 1} fecha${(relatedEventIds.length || 1) === 1 ? '' : 's'} vinculada${(relatedEventIds.length || 1) === 1 ? '' : 's'} al promotor`)
     fetchEvents()
   }
 
