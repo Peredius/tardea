@@ -1653,7 +1653,6 @@ export default function AdminPage() {
             </div>
             <div className="flex flex-wrap gap-2">
               <button type="button" onClick={() => addResearchRow()} className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-slate-200 hover:border-brand-500/60">Nueva fila</button>
-              <button type="button" onClick={fillResearchListFromEvents} className="rounded-full border border-brand-500/40 px-4 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-500/10">Rellenar con eventos actuales</button>
               <button type="button" onClick={createSelectedResearchEvents} className="rounded-full bg-brand-500 px-4 py-2 text-sm font-bold text-white hover:bg-brand-600">Crear seleccionados en revision</button>
             </div>
           </div>
