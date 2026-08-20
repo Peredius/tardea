@@ -699,6 +699,42 @@ export default function AdminPage() {
     })
   }
 
+  function researchRowToEventPayload(row: ResearchRow) {
+    const musicList = (row.music || 'Comercial')
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+
+    return {
+      title: row.title,
+      slug: generateSlug(row.title, row.date),
+      venue: row.venue || 'Pendiente de revisar',
+      area: row.area || 'Madrid',
+      address: row.venue || row.area || 'Madrid',
+      maps_url: row.maps_url || null,
+      date: row.date,
+      start_time: row.start_time || '18:00',
+      end_time: row.end_time || '23:00',
+      type: row.type || 'Tardeo',
+      music: musicList.length ? musicList : ['Comercial'],
+      audience: row.audience || 'Mixto',
+      price_from: row.price_from ? Number(row.price_from) : 0,
+      cover: scoutCoverFor(row.type || 'Tardeo', musicList[0] || row.music || 'Comercial'),
+      reel_url: null,
+      featured: false,
+      description: row.notes || 'Evento cargado desde el listado editorial de TARDEA. Pendiente de revision antes de publicar.',
+      perks: [row.type, row.area, ...(musicList.length ? musicList : [row.music])].filter(Boolean),
+      status: 'pending',
+      published: false,
+      source_name: 'Listado editorial',
+      source_url: row.source_url || null,
+      external_id: row.source_url || `${row.title}-${row.date}`,
+      imported_by_agent: true,
+      image_status: 'provisional',
+      needs_review: true,
+    }
+  }
+
   function eventToResearchPayload(event: any) {
     const musicList = Array.isArray(event.music)
       ? event.music
@@ -860,25 +896,42 @@ export default function AdminPage() {
     }
   }
 
-  function sendSelectedResearchToBulkRows() {
+  async function createSelectedResearchEvents() {
     const selectedRows = researchRows.filter((row) => row.selected)
 
     if (selectedRows.length === 0) {
-      setMessage('Selecciona filas del listado para pasarlas a Admin')
+      setMessage('Selecciona filas del listado para crear eventos en revision')
       return
     }
 
-    const rows = selectedRows.map(researchRowToBulkRow)
-    setBulkRows((current) => {
-      const emptyInitialRow = current.length === 1 && !current[0].title && !current[0].ticketUrl
-      return emptyInitialRow ? rows : [...current, ...rows]
-    })
+    const rowsWithoutDate = selectedRows.filter((row) => !row.date)
+    if (rowsWithoutDate.length > 0) {
+      setMessage(`${rowsWithoutDate.length} evento${rowsWithoutDate.length === 1 ? '' : 's'} seleccionado${rowsWithoutDate.length === 1 ? '' : 's'} no tiene${rowsWithoutDate.length === 1 ? '' : 'n'} fecha. Completa la fecha antes de crearlo en revision.`)
+      return
+    }
+
+    const rowsWithoutTitle = selectedRows.filter((row) => !row.title)
+    if (rowsWithoutTitle.length > 0) {
+      setMessage(`${rowsWithoutTitle.length} fila${rowsWithoutTitle.length === 1 ? '' : 's'} seleccionada${rowsWithoutTitle.length === 1 ? '' : 's'} no tiene${rowsWithoutTitle.length === 1 ? '' : 'n'} nombre de evento.`)
+      return
+    }
+
+    const rowsToInsert = selectedRows.map(researchRowToEventPayload)
+    const { error } = await supabase.from('events').upsert(rowsToInsert, { onConflict: 'slug' })
+
+    if (error) {
+      setMessage(`Error al crear eventos desde listado: ${error.message}`)
+      return
+    }
+
+    const selectedIds = selectedRows.map((row) => row.id).filter(Boolean)
+    if (selectedIds.length > 0) {
+      await supabase.from('event_research_items').update({ status: 'pasado' }).in('id', selectedIds)
+    }
+
     setResearchRows((current) => current.map((row) => row.selected ? { ...row, selected: false, status: 'pasado' } : row))
-    setAdminTab('create')
-    window.setTimeout(() => {
-      bulkSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 50)
-    setMessage(`${rows.length} evento${rows.length === 1 ? '' : 's'} pasado${rows.length === 1 ? '' : 's'} a la bandeja editorial`)
+    setMessage(`${rowsToInsert.length} evento${rowsToInsert.length === 1 ? '' : 's'} creado${rowsToInsert.length === 1 ? '' : 's'} en revision desde el listado`)
+    fetchEvents()
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -1264,7 +1317,7 @@ export default function AdminPage() {
             <div className="flex flex-wrap gap-2">
               <button type="button" onClick={() => addResearchRow()} className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-slate-200 hover:border-brand-500/60">Nueva fila</button>
               <button type="button" onClick={fillResearchListFromEvents} className="rounded-full border border-brand-500/40 px-4 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-500/10">Rellenar con eventos actuales</button>
-              <button type="button" onClick={sendSelectedResearchToBulkRows} className="rounded-full bg-brand-500 px-4 py-2 text-sm font-bold text-white hover:bg-brand-600">Pasar seleccionados a Admin</button>
+              <button type="button" onClick={createSelectedResearchEvents} className="rounded-full bg-brand-500 px-4 py-2 text-sm font-bold text-white hover:bg-brand-600">Crear seleccionados en revision</button>
             </div>
           </div>
 
@@ -1536,6 +1589,7 @@ export default function AdminPage() {
         {message && <p className="text-sm text-brand-500">{message}</p>}
       </form>
 
+      {false && (
       <section ref={bulkSectionRef} className="mt-12 rounded-3xl border border-white/10 bg-slate-900/70 p-5">
         <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -1674,6 +1728,7 @@ export default function AdminPage() {
           ))}
         </div>
       </section>
+      )}
       <div className="mt-12">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -1841,13 +1896,6 @@ export default function AdminPage() {
               >
                 Pasar {selectedScoutEventIds.length} al listado
               </button>
-              <button
-                type="button"
-                onClick={addSelectedScoutEventsToBulkRows}
-                className="rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-white hover:bg-white/15"
-              >
-                Pasar {selectedScoutEventIds.length} a Admin
-              </button>
             </div>
           )}
         </div>
@@ -1917,9 +1965,6 @@ export default function AdminPage() {
                 )}
                 <button className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:border-brand-500/60" onClick={() => loadEventForEdit(event)}>
                   Editar
-                </button>
-                <button className="rounded-full border border-brand-500/40 px-2.5 py-1 text-[11px] font-semibold text-brand-100 hover:bg-brand-500/10" onClick={() => addScoutEventsToBulkRows([event])}>
-                  A Admin
                 </button>
                 <button className="rounded-full border border-sky-500/40 px-2.5 py-1 text-[11px] font-semibold text-sky-100 hover:bg-sky-500/10" onClick={() => addScoutEventsToResearchList([event])}>
                   Al listado
