@@ -51,6 +51,11 @@ function formatDate(date: string) {
   })
 }
 
+function formatTime(time: string) {
+  if (!time) return ''
+  return time.split(':').slice(0, 2).join(':')
+}
+
 function firstMusic(event: any) {
   return Array.isArray(event.music) ? event.music[0] || 'Comercial' : event.music || 'Comercial'
 }
@@ -121,7 +126,8 @@ export default function AdminEventSeriesPage() {
   const [researchItems, setResearchItems] = useState<any[]>([])
   const [message, setMessage] = useState('')
   const [editingEventId, setEditingEventId] = useState('')
-  const [duplicateDate, setDuplicateDate] = useState('')
+  const [duplicateDateInput, setDuplicateDateInput] = useState('')
+  const [duplicateDates, setDuplicateDates] = useState<string[]>([])
   const [isEditingBase, setIsEditingBase] = useState(false)
   const [baseForm, setBaseForm] = useState<any>({})
 
@@ -345,35 +351,51 @@ export default function AdminEventSeriesPage() {
     loadEvents()
   }
 
-  async function duplicateEvent(event: any) {
-    if (!duplicateDate) {
-      setMessage('Selecciona una fecha para duplicar')
+  function addDuplicateDate() {
+    if (!duplicateDateInput) {
+      setMessage('Selecciona una fecha para anadir')
       return
     }
 
-    const exists = events.some((item) => item.date === duplicateDate)
+    const exists = events.some((item) => item.date === duplicateDateInput) || duplicateDates.includes(duplicateDateInput)
     if (exists) {
       setMessage('Esa fecha ya existe en este evento')
       return
     }
 
+    setDuplicateDates((current) => [...current, duplicateDateInput].sort())
+    setDuplicateDateInput('')
+  }
+
+  function removeDuplicateDate(date: string) {
+    setDuplicateDates((current) => current.filter((item) => item !== date))
+  }
+
+  async function duplicateEvent(event: any) {
+    if (duplicateDates.length === 0) {
+      setMessage('Selecciona una o varias fechas para duplicar')
+      return
+    }
+
     const { id: _id, created_at: _createdAt, updated_at: _updatedAt, ...baseEvent } = event
-    const { error } = await supabase.from('events').insert({
+    const rowsToInsert = duplicateDates.map((date) => ({
       ...baseEvent,
-      date: duplicateDate,
-      slug: generateSlug(event.title, duplicateDate),
+      date,
+      slug: generateSlug(event.title, date),
       status: 'pending',
       published: false,
       needs_review: true,
-    })
+    }))
+    const { error } = await supabase.from('events').insert(rowsToInsert)
 
     if (error) {
       setMessage(`No se pudo duplicar: ${error.message}`)
       return
     }
 
-    setDuplicateDate('')
-    setMessage('Nueva fecha creada como pendiente')
+    const createdCount = duplicateDates.length
+    setDuplicateDates([])
+    setMessage(`${createdCount} fecha${createdCount === 1 ? '' : 's'} creada${createdCount === 1 ? '' : 's'} como pendiente${createdCount === 1 ? '' : 's'}`)
     loadEvents()
   }
 
@@ -508,10 +530,32 @@ export default function AdminEventSeriesPage() {
             <p className="mt-1 text-sm text-slate-400">Edita, aprueba o duplica fechas desde una sola ficha.</p>
           </div>
           {events.length > 0 && (
-            <div className="flex gap-2">
-              <input type="date" className="input max-w-44" value={duplicateDate} onChange={(event) => setDuplicateDate(event.target.value)} />
-              <button type="button" onClick={() => duplicateEvent(mainEvent)} className="rounded-full bg-brand-500 px-4 py-2 text-sm font-bold text-white hover:bg-brand-600">
-                Duplicar fecha
+            <div className="grid gap-2 sm:min-w-[360px]">
+              <div className="flex gap-2">
+                <input type="date" className="input h-10 max-w-40 text-sm" value={duplicateDateInput} onChange={(event) => setDuplicateDateInput(event.target.value)} />
+                <button type="button" onClick={addDuplicateDate} className="rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:border-brand-500/60">
+                  Anadir
+                </button>
+                <button type="button" onClick={() => duplicateEvent(mainEvent)} className="rounded-full bg-brand-500 px-4 py-2 text-xs font-bold text-white hover:bg-brand-600">
+                  Duplicar
+                </button>
+              </div>
+              {duplicateDates.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {duplicateDates.map((date) => (
+                    <button
+                      key={date}
+                      type="button"
+                      onClick={() => removeDuplicateDate(date)}
+                      className="rounded-full bg-brand-500/15 px-2.5 py-1 text-[11px] font-bold text-brand-100 hover:bg-red-500/20 hover:text-red-100"
+                    >
+                      {formatDate(date)} x
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button type="button" onClick={() => setDuplicateDates([])} className={`justify-self-start text-[11px] font-semibold text-slate-500 hover:text-white ${duplicateDates.length === 0 ? 'hidden' : ''}`}>
+                Limpiar fechas
               </button>
             </div>
           )}
@@ -546,31 +590,31 @@ export default function AdminEventSeriesPage() {
           </div>
         )}
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {upcomingEvents.map((event) => (
-            <article key={event.id} className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80">
-              <Link href={`/eventos/${event.slug}?from=admin`} className="block aspect-[4/5] bg-slate-950">
+            <article key={event.id} className="overflow-hidden rounded-xl border border-white/10 bg-slate-900/80">
+              <Link href={`/eventos/${event.slug}?from=admin`} className="block aspect-[16/9] bg-slate-950">
                 {event.cover ? (
                   <img src={event.cover} alt="" className="h-full w-full object-cover transition hover:scale-[1.02]" />
                 ) : (
                   <div className="flex h-full items-center justify-center text-slate-600">{event.type || 'TARDEA'}</div>
                 )}
               </Link>
-              <div className="p-4">
+              <div className="p-3">
                 <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold text-slate-200">{formatDate(event.date)}</span>
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${event.status === 'approved' ? 'bg-emerald-500/20 text-emerald-200' : 'bg-yellow-500/20 text-yellow-200'}`}>
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-slate-200">{formatDate(event.date)}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${event.status === 'approved' ? 'bg-emerald-500/20 text-emerald-200' : 'bg-yellow-500/20 text-yellow-200'}`}>
                     {event.status === 'approved' ? 'Aprobado' : 'Pendiente'}
                   </span>
                 </div>
-                <h3 className="mt-3 text-lg font-bold">{event.title}</h3>
-                <p className="mt-1 text-sm text-slate-400">{event.start_time} - {event.end_time}</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button type="button" onClick={() => setEditingEventId(event.id)} className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60">
+                <h3 className="mt-2 truncate text-sm font-bold">{event.title}</h3>
+                <p className="mt-1 text-xs text-slate-400">{formatTime(event.start_time)} - {formatTime(event.end_time)}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button type="button" onClick={() => setEditingEventId(event.id)} className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:border-brand-500/60">
                     Editar
                   </button>
                   {event.status !== 'approved' && (
-                    <button type="button" onClick={() => approveEvent(event.id)} className="rounded-full bg-brand-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-600">
+                    <button type="button" onClick={() => approveEvent(event.id)} className="rounded-full bg-brand-500 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-brand-600">
                       Aprobar
                     </button>
                   )}
@@ -587,7 +631,7 @@ export default function AdminEventSeriesPage() {
           <div className="mt-4 space-y-2">
             {pastEvents.map((event) => (
               <div key={event.id} className="flex flex-col gap-2 rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="font-semibold">{formatDate(event.date)} · {event.title}</p>
+                <p className="font-semibold">{formatDate(event.date)} · {formatTime(event.start_time)} - {formatTime(event.end_time)} · {event.title}</p>
                 <Link href={`/eventos/${event.slug}?from=admin`} className="text-sm font-semibold text-brand-500">Vista</Link>
               </div>
             ))}
