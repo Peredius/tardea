@@ -118,6 +118,28 @@ function addDays(date: Date, days: number) {
   return nextDate
 }
 
+function normalizeEventSeriesText(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\b\d{1,2}\s*(?:de\s*)?(?:ene|enero|feb|febrero|mar|marzo|abr|abril|may|mayo|jun|junio|jul|julio|ago|agosto|sep|septiembre|oct|octubre|nov|noviembre|dic|diciembre)\b/gi, ' ')
+    .replace(/\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g, ' ')
+    .replace(/\b20\d{2}\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+function getEventSeriesSlug(event: any) {
+  const title = normalizeEventSeriesText(event.title || 'evento')
+    .replace(/\s+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  const venue = normalizeEventSeriesText(event.venue || '')
+    .replace(/\s+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return [event.type || 'Tardeo', title || 'evento', venue].filter(Boolean).join('__').toLowerCase()
+}
+
 export default function AdminPage() {
   const formRef = useRef<HTMLFormElement | null>(null)
   const bulkSectionRef = useRef<HTMLElement | null>(null)
@@ -1648,7 +1670,9 @@ export default function AdminPage() {
 
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="truncate text-sm font-semibold">{event.title}</p>
+                  <Link href={`/admin/eventos/${getEventSeriesSlug(event)}`} className="truncate text-sm font-semibold text-white hover:text-brand-300">
+                    {event.title}
+                  </Link>
                   <span className="rounded-full bg-brand-500/15 px-2 py-0.5 text-[11px] font-semibold text-brand-200">Scout</span>
                   {event.perks?.includes('Fecha por revisar') && (
                     <span className="rounded-full bg-yellow-500/15 px-2 py-0.5 text-[11px] font-semibold text-yellow-200">Fecha por revisar</span>
@@ -1796,7 +1820,9 @@ export default function AdminPage() {
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-semibold lg:truncate">{event.title}</p>
+                  <Link href={`/admin/eventos/${getEventSeriesSlug(event)}`} className="font-semibold text-white hover:text-brand-300 lg:truncate">
+                    {event.title}
+                  </Link>
                   <span className={`rounded-full px-3 py-1 text-xs ${eventListTab === 'past' ? 'bg-slate-500/20 text-slate-300' : 'bg-emerald-500/20 text-emerald-300'}`}>
                     {eventListTab === 'past' ? 'Pasado' : 'Publicado'}
                   </span>
@@ -1871,7 +1897,9 @@ export default function AdminPage() {
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-semibold lg:truncate">{event.title}</p>
+                  <Link href={`/admin/eventos/${getEventSeriesSlug(event)}`} className="font-semibold text-white hover:text-brand-300 lg:truncate">
+                    {event.title}
+                  </Link>
                   <span className="rounded-full bg-yellow-500/20 px-3 py-1 text-xs text-yellow-300">
                     Pendiente
                   </span>
