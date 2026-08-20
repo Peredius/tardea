@@ -56,6 +56,33 @@ function formatTime(time: string) {
   return time.split(':').slice(0, 2).join(':')
 }
 
+function formatCalendarMonth(date: Date) {
+  return date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+}
+
+function formatCalendarDate(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function getCalendarDays(monthDate: Date) {
+  const year = monthDate.getFullYear()
+  const month = monthDate.getMonth()
+  const firstDay = new Date(year, month, 1)
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const leadingBlanks = (firstDay.getDay() + 6) % 7
+  return [
+    ...Array.from({ length: leadingBlanks }, () => null),
+    ...Array.from({ length: daysInMonth }, (_, index) => new Date(year, month, index + 1)),
+  ]
+}
+
+function moveMonth(date: Date, amount: number) {
+  return new Date(date.getFullYear(), date.getMonth() + amount, 1)
+}
+
 function firstMusic(event: any) {
   return Array.isArray(event.music) ? event.music[0] || 'Comercial' : event.music || 'Comercial'
 }
@@ -126,8 +153,8 @@ export default function AdminEventSeriesPage() {
   const [researchItems, setResearchItems] = useState<any[]>([])
   const [message, setMessage] = useState('')
   const [editingEventId, setEditingEventId] = useState('')
-  const [duplicateDateInput, setDuplicateDateInput] = useState('')
   const [duplicateDates, setDuplicateDates] = useState<string[]>([])
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date())
   const [isEditingBase, setIsEditingBase] = useState(false)
   const [baseForm, setBaseForm] = useState<any>({})
 
@@ -188,6 +215,8 @@ export default function AdminEventSeriesPage() {
     [events]
   )
   const editingEvent = events.find((event) => event.id === editingEventId)
+  const existingDates = useMemo(() => new Set(events.map((event) => event.date).filter(Boolean)), [events])
+  const calendarDays = useMemo(() => getCalendarDays(calendarMonth), [calendarMonth])
   const relatedUrls = useMemo(() => {
     const urls = [...events, ...researchItems].flatMap((event) => [
       event.source_url,
@@ -351,24 +380,18 @@ export default function AdminEventSeriesPage() {
     loadEvents()
   }
 
-  function addDuplicateDate() {
-    if (!duplicateDateInput) {
-      setMessage('Selecciona una fecha para anadir')
-      return
-    }
-
-    const exists = events.some((item) => item.date === duplicateDateInput) || duplicateDates.includes(duplicateDateInput)
+  function toggleDuplicateDate(date: string) {
+    const exists = events.some((item) => item.date === date)
     if (exists) {
-      setMessage('Esa fecha ya existe en este evento')
+      setMessage(`La fecha ${formatDate(date)} ya esta creada`)
       return
     }
 
-    setDuplicateDates((current) => [...current, duplicateDateInput].sort())
-    setDuplicateDateInput('')
-  }
-
-  function removeDuplicateDate(date: string) {
-    setDuplicateDates((current) => current.filter((item) => item !== date))
+    setDuplicateDates((current) =>
+      current.includes(date)
+        ? current.filter((item) => item !== date)
+        : [...current, date].sort()
+    )
   }
 
   async function duplicateEvent(event: any) {
@@ -530,23 +553,55 @@ export default function AdminEventSeriesPage() {
             <p className="mt-1 text-sm text-slate-400">Edita, aprueba o duplica fechas desde una sola ficha.</p>
           </div>
           {events.length > 0 && (
-            <div className="grid gap-2 sm:min-w-[360px]">
-              <div className="flex gap-2">
-                <input type="date" className="input h-10 max-w-40 text-sm" value={duplicateDateInput} onChange={(event) => setDuplicateDateInput(event.target.value)} />
-                <button type="button" onClick={addDuplicateDate} className="rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:border-brand-500/60">
-                  Anadir
+            <div className="w-full rounded-2xl border border-white/10 bg-slate-950/40 p-3 sm:max-w-[360px]">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <button type="button" onClick={() => setCalendarMonth((current) => moveMonth(current, -1))} className="rounded-full border border-white/10 px-3 py-1 text-sm font-bold text-slate-300 hover:border-brand-500/60">
+                  ←
                 </button>
-                <button type="button" onClick={() => duplicateEvent(mainEvent)} className="rounded-full bg-brand-500 px-4 py-2 text-xs font-bold text-white hover:bg-brand-600">
-                  Duplicar
+                <p className="text-sm font-black capitalize text-white">{formatCalendarMonth(calendarMonth)}</p>
+                <button type="button" onClick={() => setCalendarMonth((current) => moveMonth(current, 1))} className="rounded-full border border-white/10 px-3 py-1 text-sm font-bold text-slate-300 hover:border-brand-500/60">
+                  →
                 </button>
               </div>
+
+              <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
+                {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day) => <span key={day}>{day}</span>)}
+              </div>
+
+              <div className="mt-2 grid grid-cols-7 gap-1">
+                {calendarDays.map((date, index) => {
+                  if (!date) return <span key={`blank-${index}`} className="h-8" />
+                  const dateKey = formatCalendarDate(date)
+                  const isExisting = existingDates.has(dateKey)
+                  const isSelected = duplicateDates.includes(dateKey)
+
+                  return (
+                    <button
+                      key={dateKey}
+                      type="button"
+                      disabled={isExisting}
+                      onClick={() => toggleDuplicateDate(dateKey)}
+                      className={`h-8 rounded-full text-xs font-bold transition ${
+                        isExisting
+                          ? 'cursor-not-allowed bg-white/5 text-slate-600 line-through'
+                          : isSelected
+                            ? 'bg-brand-500 text-white shadow-[0_0_0_2px_rgba(244,63,94,0.25)]'
+                            : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      {date.getDate()}
+                    </button>
+                  )
+                })}
+              </div>
+
               {duplicateDates.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
+                <div className="mt-3 flex flex-wrap gap-1.5">
                   {duplicateDates.map((date) => (
                     <button
                       key={date}
                       type="button"
-                      onClick={() => removeDuplicateDate(date)}
+                      onClick={() => toggleDuplicateDate(date)}
                       className="rounded-full bg-brand-500/15 px-2.5 py-1 text-[11px] font-bold text-brand-100 hover:bg-red-500/20 hover:text-red-100"
                     >
                       {formatDate(date)} x
@@ -554,9 +609,15 @@ export default function AdminEventSeriesPage() {
                   ))}
                 </div>
               )}
-              <button type="button" onClick={() => setDuplicateDates([])} className={`justify-self-start text-[11px] font-semibold text-slate-500 hover:text-white ${duplicateDates.length === 0 ? 'hidden' : ''}`}>
-                Limpiar fechas
-              </button>
+
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <button type="button" onClick={() => setDuplicateDates([])} className={`text-[11px] font-semibold text-slate-500 hover:text-white ${duplicateDates.length === 0 ? 'invisible' : ''}`}>
+                  Limpiar
+                </button>
+                <button type="button" onClick={() => duplicateEvent(mainEvent)} className="rounded-full bg-brand-500 px-4 py-2 text-xs font-bold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50" disabled={duplicateDates.length === 0}>
+                  Crear fecha{duplicateDates.length === 1 ? '' : 's'}
+                </button>
+              </div>
             </div>
           )}
         </div>
