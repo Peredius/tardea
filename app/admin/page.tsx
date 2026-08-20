@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { Search, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 function generateSlug(title: string, date: string) {
@@ -264,6 +265,7 @@ export default function AdminPage() {
   const [bulkDuplicateDates, setBulkDuplicateDates] = useState<string[]>([])
   const [bulkExtractingRowId, setBulkExtractingRowId] = useState('')
   const [researchRows, setResearchRows] = useState<ResearchRow[]>([])
+  const [researchSearchQuery, setResearchSearchQuery] = useState('')
   const [researchTypeFilter, setResearchTypeFilter] = useState('Todos')
   const [researchStatusFilter, setResearchStatusFilter] = useState('Todos')
   const [researchSaving, setResearchSaving] = useState(false)
@@ -1334,10 +1336,22 @@ export default function AdminPage() {
   const researchPriceOptions = compactOptions([...PRICE_OPTIONS, ...researchRows.map((row) => row.price_from || '')])
   const researchStatuses = ['Todos', 'nuevo', 'revisando', 'listo', 'pasado', 'descartado']
   const researchStatusOptions = researchStatuses.filter((option) => option !== 'Todos')
+  const normalizedResearchSearch = researchSearchQuery.trim().toLowerCase()
   const visibleResearchRows = researchRows.filter((row) => {
     const typeMatches = researchTypeFilter === 'Todos' || compactValue(row.type, 'Tardeo') === researchTypeFilter
     const statusMatches = researchStatusFilter === 'Todos' || compactValue(row.status, 'nuevo') === researchStatusFilter
-    return typeMatches && statusMatches
+    const searchMatches = !normalizedResearchSearch || [
+      row.title,
+      row.venue,
+      row.area,
+      row.music,
+      row.audience,
+      row.source_url,
+      row.notes,
+      row.status,
+      row.type,
+    ].some((value) => (value || '').toLowerCase().includes(normalizedResearchSearch))
+    return typeMatches && statusMatches && searchMatches
   })
   const filteredScoutEvents = scoutTypeFilter === 'Todos'
     ? scoutEvents
@@ -1403,6 +1417,31 @@ export default function AdminPage() {
               <button type="button" onClick={fillResearchListFromEvents} className="rounded-full border border-brand-500/40 px-4 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-500/10">Rellenar con eventos actuales</button>
               <button type="button" onClick={createSelectedResearchEvents} className="rounded-full bg-brand-500 px-4 py-2 text-sm font-bold text-white hover:bg-brand-600">Crear seleccionados en revision</button>
             </div>
+          </div>
+
+          <div className="mb-4 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+            <label className="relative block w-full lg:max-w-md">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <input
+                className="input h-11 rounded-full pl-11 pr-10 text-sm"
+                placeholder="Buscar evento, sala, zona, musica..."
+                value={researchSearchQuery}
+                onChange={(event) => setResearchSearchQuery(event.target.value)}
+              />
+              {researchSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setResearchSearchQuery('')}
+                  className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-slate-300 hover:bg-white/15 hover:text-white"
+                  aria-label="Limpiar busqueda"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </label>
+            <p className="text-xs font-semibold text-slate-500">
+              {visibleResearchRows.length} de {researchRows.length} filas
+            </p>
           </div>
 
           <div className="mb-4 flex flex-col gap-2 lg:flex-row lg:items-center">
