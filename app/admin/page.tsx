@@ -37,6 +37,25 @@ type BulkEventRow = {
   description: string
 }
 
+type ResearchRow = {
+  id?: string
+  selected?: boolean
+  source_url: string
+  title: string
+  type: string
+  music: string
+  audience: string
+  venue: string
+  area: string
+  date: string
+  start_time: string
+  end_time: string
+  price_from: string
+  maps_url: string
+  status: string
+  notes: string
+}
+
 function createBulkRow(values: Partial<BulkEventRow> = {}): BulkEventRow {
   const { id: _id, ...rowValues } = values
 
@@ -57,6 +76,27 @@ function createBulkRow(values: Partial<BulkEventRow> = {}): BulkEventRow {
     mapsUrl: '',
     description: '',
     ...rowValues,
+  }
+}
+
+function createResearchRow(values: Partial<ResearchRow> = {}): ResearchRow {
+  return {
+    selected: false,
+    source_url: '',
+    title: '',
+    type: 'Tardeo',
+    music: 'Comercial',
+    audience: 'Mixto',
+    venue: '',
+    area: 'Madrid',
+    date: '',
+    start_time: '18:00',
+    end_time: '23:00',
+    price_from: '0',
+    maps_url: '',
+    status: 'nuevo',
+    notes: '',
+    ...values,
   }
 }
 
@@ -81,6 +121,7 @@ function addDays(date: Date, days: number) {
 export default function AdminPage() {
   const formRef = useRef<HTMLFormElement | null>(null)
   const bulkSectionRef = useRef<HTMLElement | null>(null)
+  const [adminTab, setAdminTab] = useState<'events' | 'research'>('events')
   const [title, setTitle] = useState('')
   const [venue, setVenue] = useState('')
   const [area, setArea] = useState('')
@@ -122,6 +163,11 @@ export default function AdminPage() {
   const [bulkDuplicateDate, setBulkDuplicateDate] = useState('')
   const [bulkDuplicateDates, setBulkDuplicateDates] = useState<string[]>([])
   const [bulkExtractingRowId, setBulkExtractingRowId] = useState('')
+  const [researchRows, setResearchRows] = useState<ResearchRow[]>([])
+  const [researchTypeFilter, setResearchTypeFilter] = useState('Todos')
+  const [researchStatusFilter, setResearchStatusFilter] = useState('Todos')
+  const [researchSaving, setResearchSaving] = useState(false)
+  const [researchExtractingKey, setResearchExtractingKey] = useState('')
 
   useEffect(() => {
     async function checkAdmin() {
@@ -146,10 +192,43 @@ export default function AdminPage() {
       }
 
       fetchEvents()
+      fetchResearchRows()
     }
 
     checkAdmin()
   }, [])
+
+  async function fetchResearchRows() {
+    const { data, error } = await supabase
+      .from('event_research_items')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    setResearchRows(
+      (data || []).map((row: any) => createResearchRow({
+        id: row.id,
+        source_url: row.source_url || '',
+        title: row.title || '',
+        type: row.type || 'Tardeo',
+        music: Array.isArray(row.music) ? row.music.join(', ') : row.music || 'Comercial',
+        audience: row.audience || 'Mixto',
+        venue: row.venue || '',
+        area: row.area || 'Madrid',
+        date: row.date || '',
+        start_time: row.start_time || '18:00',
+        end_time: row.end_time || '23:00',
+        price_from: row.price_from?.toString() || '0',
+        maps_url: row.maps_url || '',
+        status: row.status || 'nuevo',
+        notes: row.notes || '',
+      }))
+    )
+  }
 
   async function fetchEvents() {
     const { data, error } = await supabase
@@ -442,6 +521,166 @@ export default function AdminPage() {
   function addSelectedScoutEventsToBulkRows() {
     addScoutEventsToBulkRows(scoutEvents.filter((event) => selectedScoutEventIds.includes(event.id)))
   }
+
+  function updateResearchRow(index: number, field: keyof ResearchRow, value: string | boolean) {
+    setResearchRows((rows) =>
+      rows.map((row, rowIndex) => rowIndex === index ? { ...row, [field]: value } : row)
+    )
+  }
+
+  function addResearchRow(values: Partial<ResearchRow> = {}) {
+    setResearchRows((rows) => [createResearchRow(values), ...rows])
+  }
+
+  function researchRowToBulkRow(row: ResearchRow) {
+    return createBulkRow({
+      title: row.title,
+      type: row.type || 'Tardeo',
+      music: row.music || 'Comercial',
+      audience: row.audience || 'Mixto',
+      venue: row.venue,
+      area: row.area || 'Madrid',
+      date: row.date,
+      startTime: row.start_time || '18:00',
+      endTime: row.end_time || '23:00',
+      priceFrom: row.price_from || '0',
+      ticketUrl: row.source_url,
+      mapsUrl: row.maps_url,
+      description: row.notes,
+    })
+  }
+
+  async function saveResearchRow(row: ResearchRow) {
+    if (!row.source_url && !row.title) {
+      setMessage('Rellena al menos enlace o nombre del evento')
+      return
+    }
+
+    setResearchSaving(true)
+    const musicList = row.music
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+    const payload = {
+      source_url: row.source_url || null,
+      title: row.title || null,
+      type: row.type || 'Tardeo',
+      music: musicList,
+      audience: row.audience || 'Mixto',
+      venue: row.venue || null,
+      area: row.area || 'Madrid',
+      date: row.date || null,
+      start_time: row.start_time || null,
+      end_time: row.end_time || null,
+      price_from: row.price_from ? Number(row.price_from) : 0,
+      maps_url: row.maps_url || null,
+      status: row.status || 'nuevo',
+      notes: row.notes || null,
+    }
+    const query = row.id
+      ? supabase.from('event_research_items').update(payload).eq('id', row.id)
+      : supabase.from('event_research_items').insert(payload)
+    const { error } = await query
+
+    setResearchSaving(false)
+
+    if (error) {
+      setMessage(`Error guardando listado: ${error.message}`)
+      return
+    }
+
+    setMessage('Fila guardada en listado de eventos')
+    fetchResearchRows()
+  }
+
+  async function deleteResearchRow(row: ResearchRow, index: number) {
+    if (!row.id) {
+      setResearchRows((rows) => rows.filter((_, rowIndex) => rowIndex !== index))
+      return
+    }
+
+    const { error } = await supabase.from('event_research_items').delete().eq('id', row.id)
+    if (error) {
+      setMessage(`Error eliminando fila: ${error.message}`)
+      return
+    }
+
+    setMessage('Fila eliminada del listado')
+    fetchResearchRows()
+  }
+
+  async function extractResearchRow(index: number) {
+    const row = researchRows[index]
+
+    if (!row?.source_url) {
+      setMessage('Pega primero un enlace')
+      return
+    }
+
+    setResearchExtractingKey(row.id || index.toString())
+
+    try {
+      const response = await fetch('/api/scout/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: row.source_url }),
+      })
+      const data = await response.json()
+
+      if (!response.ok) {
+        setMessage(data.error || 'No se pudo leer el enlace')
+        return
+      }
+
+      setResearchRows((rows) =>
+        rows.map((item, rowIndex) =>
+          rowIndex === index
+            ? {
+                ...item,
+                title: data.title || item.title,
+                type: data.type || item.type,
+                music: data.music || item.music,
+                venue: data.venue || item.venue,
+                area: data.area || item.area,
+                date: data.date || item.date,
+                start_time: data.startTime || item.start_time,
+                end_time: data.endTime || item.end_time,
+                price_from: data.priceFrom || item.price_from,
+                maps_url: data.mapsUrl || item.maps_url,
+                notes: data.description || item.notes,
+              }
+            : item
+        )
+      )
+      setMessage(`Informacion leida de ${data.sourceName || 'la fuente'}. Revisa antes de guardar.`)
+    } catch {
+      setMessage('No se pudo leer el enlace')
+    } finally {
+      setResearchExtractingKey('')
+    }
+  }
+
+  function sendSelectedResearchToBulkRows() {
+    const selectedRows = researchRows.filter((row) => row.selected)
+
+    if (selectedRows.length === 0) {
+      setMessage('Selecciona filas del listado para pasarlas a Admin')
+      return
+    }
+
+    const rows = selectedRows.map(researchRowToBulkRow)
+    setBulkRows((current) => {
+      const emptyInitialRow = current.length === 1 && !current[0].title && !current[0].ticketUrl
+      return emptyInitialRow ? rows : [...current, ...rows]
+    })
+    setResearchRows((current) => current.map((row) => row.selected ? { ...row, selected: false, status: 'pasado' } : row))
+    setAdminTab('events')
+    window.setTimeout(() => {
+      bulkSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 50)
+    setMessage(`${rows.length} evento${rows.length === 1 ? '' : 's'} pasado${rows.length === 1 ? '' : 's'} a la bandeja editorial`)
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
@@ -743,6 +982,13 @@ export default function AdminPage() {
     .reverse()
   const scoutTypes = ['Todos', ...Array.from(new Set(scoutEvents.map((event) => event.type || 'Tardeo')))]
   const eventTypes = ['Todos', ...Array.from(new Set(events.map((event) => event.type || 'Tardeo')))]
+  const researchTypes = ['Todos', ...Array.from(new Set(researchRows.map((row) => row.type || 'Tardeo')))]
+  const researchStatuses = ['Todos', 'nuevo', 'revisando', 'listo', 'pasado', 'descartado']
+  const visibleResearchRows = researchRows.filter((row) => {
+    const typeMatches = researchTypeFilter === 'Todos' || (row.type || 'Tardeo') === researchTypeFilter
+    const statusMatches = researchStatusFilter === 'Todos' || (row.status || 'nuevo') === researchStatusFilter
+    return typeMatches && statusMatches
+  })
   const filteredScoutEvents = scoutTypeFilter === 'Todos'
     ? scoutEvents
     : scoutEvents.filter((event) => (event.type || 'Tardeo') === scoutTypeFilter)
@@ -770,6 +1016,132 @@ export default function AdminPage() {
         </button>
       </section>
 
+      <div className="mb-8 flex flex-wrap gap-2 rounded-full border border-white/10 bg-slate-900/80 p-1">
+        <button
+          type="button"
+          onClick={() => setAdminTab('events')}
+          className={`rounded-full px-4 py-2 text-sm font-bold transition ${adminTab === 'events' ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white'}`}
+        >
+          Admin eventos
+        </button>
+        <button
+          type="button"
+          onClick={() => setAdminTab('research')}
+          className={`rounded-full px-4 py-2 text-sm font-bold transition ${adminTab === 'research' ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white'}`}
+        >
+          Listado de eventos
+        </button>
+      </div>
+
+      {adminTab === 'research' && (
+        <section className="rounded-3xl border border-white/10 bg-slate-900/70 p-5">
+          <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-500">Recopilacion</p>
+              <h2 className="text-2xl font-bold">Listado de eventos</h2>
+              <p className="mt-2 text-sm text-slate-400">Mesa tipo Excel para enlaces de tiqueteras, webs e Instagram antes de pasarlos al Admin.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => addResearchRow()} className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-slate-200 hover:border-brand-500/60">Nueva fila</button>
+              <button type="button" onClick={sendSelectedResearchToBulkRows} className="rounded-full bg-brand-500 px-4 py-2 text-sm font-bold text-white hover:bg-brand-600">Pasar seleccionados a Admin</button>
+            </div>
+          </div>
+
+          <div className="mb-4 flex flex-wrap gap-2">
+            {researchTypes.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setResearchTypeFilter(option)}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${researchTypeFilter === option ? 'bg-brand-500 text-white' : 'bg-white/10 text-slate-300 hover:bg-white/15'}`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+
+          <div className="mb-4 flex flex-wrap gap-2">
+            {researchStatuses.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setResearchStatusFilter(option)}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${researchStatusFilter === option ? 'bg-slate-200 text-slate-950' : 'bg-white/10 text-slate-300 hover:bg-white/15'}`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+
+          {visibleResearchRows.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-white/10 p-6 text-sm text-slate-400">
+              No hay filas en este filtro. Pulsa Nueva fila y pega un enlace.
+            </div>
+          )}
+
+          <div className="overflow-x-auto rounded-2xl border border-white/10 bg-slate-950/40">
+            <div className="min-w-[1220px]">
+              <div className="grid grid-cols-[34px_220px_170px_120px_130px_90px_150px_120px_118px_105px_160px_140px] gap-2 border-b border-white/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                <span></span>
+                <span>Enlace</span>
+                <span>Evento</span>
+                <span>Tipo</span>
+                <span>Musica</span>
+                <span>Edad</span>
+                <span>Lugar</span>
+                <span>Zona</span>
+                <span>Fecha</span>
+                <span>Precio</span>
+                <span>Estado / notas</span>
+                <span className="text-right">Acciones</span>
+              </div>
+
+              {visibleResearchRows.map((row) => {
+                const rowIndex = researchRows.indexOf(row)
+                const rowKey = row.id || rowIndex.toString()
+
+                return (
+                  <div key={rowKey} className="grid grid-cols-[34px_220px_170px_120px_130px_90px_150px_120px_118px_105px_160px_140px] gap-2 border-b border-white/5 px-3 py-2 last:border-b-0">
+                    <input type="checkbox" checked={Boolean(row.selected)} onChange={(event) => updateResearchRow(rowIndex, 'selected', event.target.checked)} />
+                    <input className="input h-9 text-xs" value={row.source_url} onChange={(event) => updateResearchRow(rowIndex, 'source_url', event.target.value)} placeholder="Web / Instagram / tiquetera" />
+                    <input className="input h-9 text-xs" value={row.title} onChange={(event) => updateResearchRow(rowIndex, 'title', event.target.value)} placeholder="Nombre" />
+                    <select className="select h-9 text-xs" value={row.type} onChange={(event) => updateResearchRow(rowIndex, 'type', event.target.value)}>
+                      {EVENT_TYPE_OPTIONS.map((option) => <option key={option}>{option}</option>)}
+                    </select>
+                    <input className="input h-9 text-xs" value={row.music} onChange={(event) => updateResearchRow(rowIndex, 'music', event.target.value)} placeholder="Comercial..." />
+                    <select className="select h-9 text-xs" value={row.audience} onChange={(event) => updateResearchRow(rowIndex, 'audience', event.target.value)}>
+                      {['Mixto', ...AUDIENCE_OPTIONS].map((option) => <option key={option}>{option}</option>)}
+                    </select>
+                    <input className="input h-9 text-xs" value={row.venue} onChange={(event) => updateResearchRow(rowIndex, 'venue', event.target.value)} placeholder="Sala" />
+                    <input className="input h-9 text-xs" value={row.area} onChange={(event) => updateResearchRow(rowIndex, 'area', event.target.value)} placeholder="Zona" />
+                    <input type="date" className="input h-9 text-xs" value={row.date} onChange={(event) => updateResearchRow(rowIndex, 'date', event.target.value)} />
+                    <input className="input h-9 text-xs" value={row.price_from} onChange={(event) => updateResearchRow(rowIndex, 'price_from', event.target.value)} placeholder="0" />
+                    <div className="grid gap-1">
+                      <select className="select h-9 text-xs" value={row.status} onChange={(event) => updateResearchRow(rowIndex, 'status', event.target.value)}>
+                        {researchStatuses.filter((option) => option !== 'Todos').map((option) => <option key={option}>{option}</option>)}
+                      </select>
+                      <input className="input h-8 text-xs" value={row.notes} onChange={(event) => updateResearchRow(rowIndex, 'notes', event.target.value)} placeholder="Notas" />
+                    </div>
+                    <div className="flex flex-wrap justify-end gap-1">
+                      <button type="button" onClick={() => extractResearchRow(rowIndex)} disabled={researchExtractingKey === rowKey} className="rounded-full border border-white/10 px-2 py-1 text-[10px] font-semibold text-slate-200 hover:border-brand-500/60 disabled:opacity-50">
+                        {researchExtractingKey === rowKey ? 'Leyendo' : 'Extraer'}
+                      </button>
+                      {row.source_url && (
+                        <a href={row.source_url} target="_blank" rel="noreferrer" className="rounded-full border border-white/10 px-2 py-1 text-[10px] font-semibold text-slate-200 hover:border-brand-500/60">Abrir</a>
+                      )}
+                      <button type="button" onClick={() => saveResearchRow(row)} disabled={researchSaving} className="rounded-full bg-brand-500 px-2 py-1 text-[10px] font-bold text-white hover:bg-brand-600 disabled:opacity-50">Guardar</button>
+                      <button type="button" onClick={() => deleteResearchRow(row, rowIndex)} className="rounded-full px-2 py-1 text-[10px] font-semibold text-slate-500 hover:text-red-300">Borrar</button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {adminTab === 'events' && (
+      <>
       <form ref={formRef} onSubmit={handleSubmit} className="card mt-8 max-w-2xl space-y-6 p-6">
         {editingEvent && (
           <div className="rounded-2xl border border-brand-500/30 bg-brand-500/10 p-4 text-sm text-brand-100">
@@ -1480,6 +1852,8 @@ export default function AdminPage() {
           ))}
         </div>
       </div>
+      </>
+      )}
     </main>
   )
 }
