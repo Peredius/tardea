@@ -55,6 +55,51 @@ function firstMusic(event: any) {
   return Array.isArray(event.music) ? event.music[0] || 'Comercial' : event.music || 'Comercial'
 }
 
+function getUrlsFromText(text: string) {
+  return Array.from(text.matchAll(/https?:\/\/[^\s)"']+/g)).map((match) => match[0])
+}
+
+function getHost(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return ''
+  }
+}
+
+function isTicketUrl(url: string) {
+  const host = getHost(url)
+  return ['fourvenues', 'feverup', 'entradium', 'xceed', 'eventbrite', 'ticketmaster', 'dice.fm', 'ra.co'].some((domain) => host.includes(domain))
+}
+
+function InstagramIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+function TicketIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V8Z" />
+      <path d="M9 8v8" />
+    </svg>
+  )
+}
+
+function WebIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3Z" />
+    </svg>
+  )
+}
+
 export default function AdminEventSeriesPage() {
   const params = useParams()
   const series = decodeURIComponent(params.series as string)
@@ -114,6 +159,20 @@ export default function AdminEventSeriesPage() {
     [events]
   )
   const editingEvent = events.find((event) => event.id === editingEventId)
+  const relatedUrls = useMemo(() => {
+    const urls = events.flatMap((event) => [
+      event.source_url,
+      event.website_url,
+      ...getUrlsFromText(event.description || ''),
+    ]).filter(Boolean) as string[]
+    return Array.from(new Set(urls))
+  }, [events])
+  const instagramUrl = relatedUrls.find((url) => getHost(url).includes('instagram.com')) || ''
+  const ticketUrl = relatedUrls.find(isTicketUrl) || mainEvent?.source_url || ''
+  const websiteUrl = relatedUrls.find((url) => {
+    const host = getHost(url)
+    return host && !host.includes('instagram.com') && !isTicketUrl(url)
+  }) || ''
 
   async function approveEvent(eventId: string) {
     const { error } = await supabase
@@ -290,16 +349,34 @@ export default function AdminEventSeriesPage() {
           </div>
         </div>
 
+        <div className="mb-5 flex flex-wrap gap-2">
+          {websiteUrl && (
+            <a href={websiteUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:border-brand-500/60">
+              <WebIcon /> Web
+            </a>
+          )}
+          {instagramUrl && (
+            <a href={instagramUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:border-brand-500/60">
+              <InstagramIcon /> Instagram
+            </a>
+          )}
+          {ticketUrl && (
+            <a href={ticketUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:border-brand-500/60">
+              <TicketIcon /> Tiquetera
+            </a>
+          )}
+        </div>
+
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {upcomingEvents.map((event) => (
             <article key={event.id} className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80">
-              <div className="aspect-[4/5] bg-slate-950">
+              <Link href={`/eventos/${event.slug}?from=admin`} className="block aspect-[4/5] bg-slate-950">
                 {event.cover ? (
-                  <img src={event.cover} alt="" className="h-full w-full object-cover" />
+                  <img src={event.cover} alt="" className="h-full w-full object-cover transition hover:scale-[1.02]" />
                 ) : (
                   <div className="flex h-full items-center justify-center text-slate-600">{event.type || 'TARDEA'}</div>
                 )}
-              </div>
+              </Link>
               <div className="p-4">
                 <div className="flex flex-wrap gap-2">
                   <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold text-slate-200">{formatDate(event.date)}</span>
@@ -310,9 +387,6 @@ export default function AdminEventSeriesPage() {
                 <h3 className="mt-3 text-lg font-bold">{event.title}</h3>
                 <p className="mt-1 text-sm text-slate-400">{event.start_time} - {event.end_time}</p>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Link href={`/eventos/${event.slug}?from=admin`} className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60">
-                    Vista
-                  </Link>
                   <button type="button" onClick={() => setEditingEventId(event.id)} className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-brand-500/60">
                     Editar
                   </button>
