@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Search, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
@@ -198,6 +199,22 @@ function getResearchSeriesKey(row: Partial<ResearchRow>) {
   ].join('__').toLowerCase()
 }
 
+type AdminTab = 'events' | 'research' | 'create' | 'profiles'
+
+function getAdminTabFromPath(pathname: string): AdminTab {
+  if (pathname.endsWith('/admin/listado')) return 'research'
+  if (pathname.endsWith('/admin/crear-evento')) return 'create'
+  if (pathname.endsWith('/admin/fichas')) return 'profiles'
+  return 'events'
+}
+
+function getAdminTabHref(tab: AdminTab) {
+  if (tab === 'research') return '/admin/listado'
+  if (tab === 'create') return '/admin/crear-evento'
+  if (tab === 'profiles') return '/admin/fichas'
+  return '/admin/eventos'
+}
+
 function CompactDropdown({
   value,
   fallback,
@@ -259,9 +276,10 @@ function CompactDropdown({
 }
 
 export default function AdminPage() {
+  const pathname = usePathname()
   const formRef = useRef<HTMLFormElement | null>(null)
   const bulkSectionRef = useRef<HTMLElement | null>(null)
-  const [adminTab, setAdminTab] = useState<'events' | 'research' | 'create' | 'profiles'>('events')
+  const [adminTab, setAdminTab] = useState<AdminTab>(getAdminTabFromPath(pathname))
   const [title, setTitle] = useState('')
   const [venue, setVenue] = useState('')
   const [area, setArea] = useState('')
@@ -312,6 +330,10 @@ export default function AdminPage() {
   const [activeResearchDropdown, setActiveResearchDropdown] = useState('')
   const [profileSearchQuery, setProfileSearchQuery] = useState('')
   const [profileTypeFilter, setProfileTypeFilter] = useState('Todos')
+
+  useEffect(() => {
+    setAdminTab(getAdminTabFromPath(pathname))
+  }, [pathname])
 
   useEffect(() => {
     async function checkAdmin() {
@@ -762,6 +784,7 @@ export default function AdminPage() {
     })
     setSelectedScoutEventIds([])
     setAdminTab('create')
+    window.history.pushState(null, '', getAdminTabHref('create'))
     setMessage(`${rows.length} evento${rows.length === 1 ? '' : 's'} pasado${rows.length === 1 ? '' : 's'} a la tabla editorial para revisar y duplicar fechas.`)
     window.setTimeout(() => {
       bulkSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -795,6 +818,7 @@ export default function AdminPage() {
     setMessage(`${rowsToInsert.length} evento${rowsToInsert.length === 1 ? '' : 's'} guardado${rowsToInsert.length === 1 ? '' : 's'} en Listado de eventos. ${eventsToAdd.length - uniqueEvents.length} duplicado${eventsToAdd.length - uniqueEvents.length === 1 ? '' : 's'} evitado${eventsToAdd.length - uniqueEvents.length === 1 ? '' : 's'}.`)
     fetchResearchRows()
     setAdminTab('research')
+    window.history.pushState(null, '', getAdminTabHref('research'))
   }
 
   function addSelectedScoutEventsToResearchList() {
@@ -1215,6 +1239,7 @@ export default function AdminPage() {
     setDescription(event.description || '')
     setPerks(event.perks?.join(' - ') || '')
     setAdminTab('create')
+    window.history.pushState(null, '', getAdminTabHref('create'))
     window.setTimeout(() => {
       formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 50)
@@ -1508,34 +1533,30 @@ export default function AdminPage() {
       </section>
 
       <div className="mb-8 flex flex-wrap gap-2 rounded-full border border-white/10 bg-slate-900/80 p-1">
-        <button
-          type="button"
-          onClick={() => setAdminTab('events')}
+        <Link
+          href={getAdminTabHref('events')}
           className={`rounded-full px-4 py-2 text-sm font-bold transition ${adminTab === 'events' ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white'}`}
         >
           Admin eventos
-        </button>
-        <button
-          type="button"
-          onClick={() => setAdminTab('research')}
+        </Link>
+        <Link
+          href={getAdminTabHref('research')}
           className={`rounded-full px-4 py-2 text-sm font-bold transition ${adminTab === 'research' ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white'}`}
         >
           Listado de eventos
-        </button>
-        <button
-          type="button"
-          onClick={() => setAdminTab('create')}
+        </Link>
+        <Link
+          href={getAdminTabHref('create')}
           className={`rounded-full px-4 py-2 text-sm font-bold transition ${adminTab === 'create' ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white'}`}
         >
           Crear evento
-        </button>
-        <button
-          type="button"
-          onClick={() => setAdminTab('profiles')}
+        </Link>
+        <Link
+          href={getAdminTabHref('profiles')}
           className={`rounded-full px-4 py-2 text-sm font-bold transition ${adminTab === 'profiles' ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white'}`}
         >
           Fichas
-        </button>
+        </Link>
       </div>
 
       {adminTab === 'profiles' && (
