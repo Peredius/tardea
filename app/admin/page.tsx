@@ -1421,107 +1421,117 @@ export default function AdminPage() {
 
       {adminTab === 'create' && (
       <>
-      <form ref={formRef} onSubmit={handleSubmit} className="card mt-8 max-w-2xl space-y-6 p-6">
+      <form ref={formRef} onSubmit={handleSubmit} className="mt-8 rounded-3xl border border-white/10 bg-slate-900/70 p-5">
+        <div className="mb-5">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-500">Crear evento</p>
+          <h2 className="text-2xl font-bold">{editingEvent ? 'Editar evento' : 'Nuevo evento'}</h2>
+          <p className="mt-2 text-sm text-slate-400">Rellena los datos principales a izquierda y derecha antes de publicar o revisar.</p>
+        </div>
+
         {editingEvent && (
-          <div className="rounded-2xl border border-brand-500/30 bg-brand-500/10 p-4 text-sm text-brand-100">
+          <div className="mb-5 rounded-2xl border border-brand-500/30 bg-brand-500/10 p-4 text-sm text-brand-100">
             Editando: {editingEvent.title}. Si era pendiente, seguira pendiente hasta que pulses Aprobar.
           </div>
         )}
 
-        <input className="input" placeholder="Nombre del evento" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <input className="input lg:col-span-2" placeholder="Nombre del evento" value={title} onChange={(e) => setTitle(e.target.value)} />
 
-        <select className="select" value={type} onChange={(e) => setType(e.target.value)}>
-          <option value="">Tipo de evento</option>
-          <option>Tardeo</option>
-          <option>Rooftop</option>
-          <option>Brunch</option>
-          <option>Fitness Party</option>
-          <option>Afterwork</option>
-        </select>
+          <select className="select" value={type} onChange={(e) => setType(e.target.value)}>
+            <option value="">Tipo de evento</option>
+            <option>Tardeo</option>
+            <option>Rooftop</option>
+            <option>Brunch</option>
+            <option>Fitness Party</option>
+            <option>Afterwork</option>
+          </select>
 
-        <select className="select" value={audience} onChange={(e) => setAudience(e.target.value)}>
-          <option value="">Edad recomendada</option>
-          {AUDIENCE_OPTIONS.map((option) => (
-            <option key={option} value={option}>{option}</option>
-          ))}
-        </select>
-
-        <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4">
-          <p className="mb-3 text-sm font-semibold text-slate-300">Estilos musicales</p>
-          <div className="flex flex-wrap gap-2">
-            {MUSIC_OPTIONS.map((style) => (
-              <button
-                key={style}
-                type="button"
-                onClick={() => toggleMusicStyle(style)}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  music.includes(style)
-                    ? 'bg-brand-500 text-white'
-                    : 'bg-white/10 text-slate-300 hover:bg-white/15'
-                }`}
-              >
-                {style}
-              </button>
+          <select className="select" value={audience} onChange={(e) => setAudience(e.target.value)}>
+            <option value="">Edad recomendada</option>
+            {AUDIENCE_OPTIONS.map((option) => (
+              <option key={option} value={option}>{option}</option>
             ))}
+          </select>
+
+          <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4 lg:col-span-2">
+            <p className="mb-3 text-sm font-semibold text-slate-300">Estilos musicales</p>
+            <div className="flex flex-wrap gap-2">
+              {MUSIC_OPTIONS.map((style) => (
+                <button
+                  key={style}
+                  type="button"
+                  onClick={() => toggleMusicStyle(style)}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    music.includes(style)
+                      ? 'bg-brand-500 text-white'
+                      : 'bg-white/10 text-slate-300 hover:bg-white/15'
+                  }`}
+                >
+                  {style}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <select className="select" value={area} onChange={(e) => setArea(e.target.value)}>
-          <option value="">Zona</option>
-          <option>Centro</option>
-          <option>Salamanca</option>
-          <option>Retiro</option>
-          <option value="Otra">Otra</option>
-        </select>
+          <select className="select" value={area} onChange={(e) => setArea(e.target.value)}>
+            <option value="">Zona</option>
+            <option>Centro</option>
+            <option>Salamanca</option>
+            <option>Retiro</option>
+            <option value="Otra">Otra</option>
+          </select>
 
-        {area === 'Otra' && (
-          <input className="input" placeholder="Zona personalizada" value={customArea} onChange={(e) => setCustomArea(e.target.value)} />
-        )}
+          {area === 'Otra' && (
+            <input className="input" placeholder="Zona personalizada" value={customArea} onChange={(e) => setCustomArea(e.target.value)} />
+          )}
 
-        <input type="date" className="input" value={date} onChange={(e) => setDate(e.target.value)} />
-        <input type="time" className="input" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-        <input type="time" className="input" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+          <input type="date" className="input" value={date} onChange={(e) => setDate(e.target.value)} />
+          <div className="grid grid-cols-2 gap-4">
+            <input type="time" className="input" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+            <input type="time" className="input" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+          </div>
 
-        <input className="input" placeholder="Precio (EUR)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
-        <input className="input" placeholder="Lugar" value={venue} onChange={(e) => setVenue(e.target.value)} />
-        <input className="input" placeholder="Direccion" value={address} onChange={(e) => setAddress(e.target.value)} />
-        <input className="input" placeholder="Link de Google Maps" value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} />
-        <input className="input" placeholder="Link de compra / tiquetera" value={ticketUrl} onChange={(e) => setTicketUrl(e.target.value)} />
+          <input className="input" placeholder="Precio (EUR)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
+          <input className="input" placeholder="Lugar" value={venue} onChange={(e) => setVenue(e.target.value)} />
+          <input className="input" placeholder="Direccion" value={address} onChange={(e) => setAddress(e.target.value)} />
+          <input className="input" placeholder="Link de Google Maps" value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} />
+          <input className="input lg:col-span-2" placeholder="Link de compra / tiquetera" value={ticketUrl} onChange={(e) => setTicketUrl(e.target.value)} />
 
-        <textarea className="input" placeholder="Descripcion" value={description} onChange={(e) => setDescription(e.target.value)} />
-        <input className="input" placeholder="Extras" value={perks} onChange={(e) => setPerks(e.target.value)} />
+          <textarea className="input min-h-28 lg:col-span-2" placeholder="Descripcion" value={description} onChange={(e) => setDescription(e.target.value)} />
+          <input className="input lg:col-span-2" placeholder="Extras" value={perks} onChange={(e) => setPerks(e.target.value)} />
 
-        <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4">
-          <p className="text-sm font-semibold text-slate-300">Cartel del evento</p>
-          <p className="mt-1 text-xs text-slate-500">
-            Imagen principal del evento. Recomendado 4:5 o cuadrado.
-          </p>
+          <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4 lg:col-span-2">
+            <p className="text-sm font-semibold text-slate-300">Cartel del evento</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Imagen principal del evento. Recomendado 4:5 o cuadrado.
+            </p>
+            <input
+              type="file"
+              accept="image/*"
+              className="input mt-4"
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null
+                setCover(file)
+                setPreviewUrl(file ? URL.createObjectURL(file) : '')
+              }}
+            />
+          </div>
+
+          {previewUrl && (
+            <img src={previewUrl} alt="Preview del cartel" className="max-h-[520px] w-full rounded-xl object-contain lg:col-span-2" />
+          )}
+
           <input
-            type="file"
-            accept="image/*"
-            className="input mt-4"
-            onChange={(e) => {
-              const file = e.target.files?.[0] || null
-              setCover(file)
-              setPreviewUrl(file ? URL.createObjectURL(file) : '')
-            }}
+            className="input lg:col-span-2"
+            placeholder="Link del reel o video"
+            value={reelUrl}
+            onChange={(e) => setReelUrl(e.target.value)}
           />
+
+          <button className="btn-primary w-full lg:col-span-2" type="submit">
+            {editingEvent ? 'Guardar cambios' : 'Crear evento'}
+          </button>
         </div>
-
-        {previewUrl && (
-          <img src={previewUrl} alt="Preview del cartel" className="max-h-[520px] w-full rounded-xl object-contain" />
-        )}
-
-        <input
-          className="input"
-          placeholder="Link del reel o video"
-          value={reelUrl}
-          onChange={(e) => setReelUrl(e.target.value)}
-        />
-
-        <button className="btn-primary w-full" type="submit">
-          {editingEvent ? 'Guardar cambios' : 'Crear evento'}
-        </button>
 
         {message && <p className="text-sm text-brand-500">{message}</p>}
       </form>
