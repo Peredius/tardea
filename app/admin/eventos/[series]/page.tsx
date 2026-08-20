@@ -160,6 +160,7 @@ export default function AdminEventSeriesPage() {
   const [baseCoverFile, setBaseCoverFile] = useState<File | null>(null)
   const [baseCoverPreview, setBaseCoverPreview] = useState('')
   const [baseSaving, setBaseSaving] = useState(false)
+  const [uploadingEventCoverId, setUploadingEventCoverId] = useState('')
 
   async function loadEvents() {
     const {
@@ -429,6 +430,45 @@ export default function AdminEventSeriesPage() {
 
     setEditingEventId('')
     setMessage('Fecha actualizada')
+    loadEvents()
+  }
+
+  async function uploadEventCover(event: any, file: File | null) {
+    if (!file) return
+
+    setUploadingEventCoverId(event.id)
+    const safeName = file.name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9.]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+    const fileName = `series/${series}/dates/${event.id}-${Date.now()}-${safeName}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('events')
+      .upload(fileName, file, { upsert: true })
+
+    if (uploadError) {
+      setUploadingEventCoverId('')
+      setMessage(`No se pudo subir el cartel: ${uploadError.message}`)
+      return
+    }
+
+    const { data } = supabase.storage.from('events').getPublicUrl(fileName)
+    const { error } = await supabase
+      .from('events')
+      .update({ cover: data.publicUrl })
+      .eq('id', event.id)
+
+    setUploadingEventCoverId('')
+
+    if (error) {
+      setMessage(`Cartel subido, pero no se pudo guardar: ${error.message}`)
+      return
+    }
+
+    setMessage(`Cartel actualizado para ${formatDate(event.date)}`)
     loadEvents()
   }
 
@@ -731,26 +771,49 @@ export default function AdminEventSeriesPage() {
           </div>
         )}
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {upcomingEvents.map((event) => (
-            <article key={event.id} className="overflow-hidden rounded-xl border border-white/10 bg-slate-900/80">
-              <Link href={`/eventos/${event.slug}?from=admin`} className="block aspect-[16/9] bg-slate-950">
-                {event.cover ? (
-                  <img src={event.cover} alt="" className="h-full w-full object-cover transition hover:scale-[1.02]" />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-slate-600">{event.type || 'TARDEA'}</div>
-                )}
-              </Link>
-              <div className="p-3">
-                <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-slate-200">{formatDate(event.date)}</span>
-                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${event.status === 'approved' ? 'bg-emerald-500/20 text-emerald-200' : 'bg-yellow-500/20 text-yellow-200'}`}>
+            <article key={event.id} className="group relative aspect-[9/16] overflow-hidden rounded-3xl border border-white/10 bg-slate-900">
+              <Link
+                href={`/eventos/${event.slug}?from=admin`}
+                className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
+                style={{
+                  backgroundImage: `url(${event.cover || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'})`,
+                }}
+                aria-label={`Ver ${event.title}`}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-slate-950/5" />
+
+              <div className="relative z-10 flex h-full flex-col justify-between p-3">
+                <div className="flex flex-wrap gap-1.5">
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${event.status === 'approved' ? 'bg-emerald-500/25 text-emerald-100' : 'bg-yellow-500/25 text-yellow-100'}`}>
                     {event.status === 'approved' ? 'Aprobado' : 'Pendiente'}
                   </span>
+                  <span className="rounded-full bg-black/35 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur">
+                    {event.type || 'Tardeo'}
+                  </span>
                 </div>
-                <h3 className="mt-2 truncate text-sm font-bold">{event.title}</h3>
-                <p className="mt-1 text-xs text-slate-400">{formatTime(event.start_time)} - {formatTime(event.end_time)}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
+
+                <div>
+                  <div className="mb-2 flex flex-wrap gap-1.5">
+                    <span className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur">{formatDate(event.date)}</span>
+                    <span className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur">
+                      {formatTime(event.start_time)} - {formatTime(event.end_time)}
+                    </span>
+                  </div>
+                  <h3 className="line-clamp-2 text-base font-black leading-tight text-white">{event.title}</h3>
+                  <p className="mt-1 line-clamp-1 text-xs font-semibold text-slate-200">{event.venue || mainEvent.venue}</p>
+
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                  <label className={`cursor-pointer rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:border-brand-500/60 ${uploadingEventCoverId === event.id ? 'pointer-events-none opacity-60' : ''}`}>
+                    {uploadingEventCoverId === event.id ? 'Subiendo' : 'Subir cartel'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(inputEvent) => uploadEventCover(event, inputEvent.target.files?.[0] || null)}
+                    />
+                  </label>
                   <button type="button" onClick={() => setEditingEventId(event.id)} className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:border-brand-500/60">
                     Editar
                   </button>
@@ -759,6 +822,7 @@ export default function AdminEventSeriesPage() {
                       Aprobar
                     </button>
                   )}
+                  </div>
                 </div>
               </div>
             </article>
