@@ -1359,7 +1359,7 @@ export default function AdminPage() {
                       onOpenChange={setActiveResearchDropdown}
                       onChange={(value) => updateResearchRow(rowIndex, 'audience', value)}
                     />
-                    <input className="input h-7 px-2 text-[9px]" value={row.venue} onChange={(event) => updateResearchRow(rowIndex, 'venue', event.target.value)} placeholder="Sala" />
+                    <input className="input h-7 px-2 !text-[9px] leading-none" value={row.venue} onChange={(event) => updateResearchRow(rowIndex, 'venue', event.target.value)} placeholder="Sala" />
                     <CompactDropdown
                       value={rowArea}
                       fallback="Madrid"
@@ -1380,7 +1380,7 @@ export default function AdminPage() {
                         onOpenChange={setActiveResearchDropdown}
                         onChange={(value) => updateResearchRow(rowIndex, 'status', value)}
                       />
-                      <input className="input h-6 px-2 text-[9px]" value={row.notes} onChange={(event) => updateResearchRow(rowIndex, 'notes', event.target.value)} placeholder="Notas" />
+                      <input className="input h-6 px-2 !text-[8px] leading-none" value={row.notes} onChange={(event) => updateResearchRow(rowIndex, 'notes', event.target.value)} placeholder="Notas" />
                     </div>
                     <div className="flex flex-wrap justify-end gap-1">
                       <button type="button" onClick={() => extractResearchRow(rowIndex)} disabled={researchExtractingKey === rowKey} className="rounded-full border border-white/10 px-2 py-1 text-[9px] font-semibold text-slate-200 hover:border-brand-500/60 disabled:opacity-50">
