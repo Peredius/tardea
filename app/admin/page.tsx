@@ -19,6 +19,7 @@ const MUSIC_OPTIONS = ['Comercial', 'Electronica', 'Pop', 'Indie', 'Flamenquito'
 const AUDIENCE_OPTIONS = ['18-25', '25-35', '30+', 'Mixto']
 const EVENT_TYPE_OPTIONS = ['Tardeo', 'Rooftop', 'Brunch', 'Afterwork', 'Fitness Party', 'Fiesta']
 const AREA_OPTIONS = ['Madrid', 'Centro', 'Salamanca', 'Retiro', 'Chamberi', 'Malasana', 'La Latina', 'Chamartin', 'Tetuan', 'Alcorcon']
+const PRICE_OPTIONS = Array.from({ length: 31 }, (_, index) => index.toString())
 
 type BulkEventRow = {
   id: string
@@ -1189,6 +1190,7 @@ export default function AdminPage() {
   ])
   const researchAudienceOptions = compactOptions(['Mixto', ...AUDIENCE_OPTIONS, ...researchRows.map((row) => row.audience || '')])
   const researchAreaOptions = compactOptions([...AREA_OPTIONS, ...researchRows.map((row) => row.area || '')])
+  const researchPriceOptions = compactOptions([...PRICE_OPTIONS, ...researchRows.map((row) => row.price_from || '')])
   const researchStatuses = ['Todos', 'nuevo', 'revisando', 'listo', 'pasado', 'descartado']
   const researchStatusOptions = researchStatuses.filter((option) => option !== 'Todos')
   const visibleResearchRows = researchRows.filter((row) => {
@@ -1313,6 +1315,7 @@ export default function AdminPage() {
                 const rowMusic = compactValue(row.music, 'Comercial')
                 const rowAudience = compactValue(row.audience, 'Mixto')
                 const rowArea = compactValue(row.area, 'Madrid')
+                const rowPrice = compactValue(row.price_from, '0')
                 const rowStatus = compactValue(row.status, 'nuevo')
 
                 return (
@@ -1369,7 +1372,15 @@ export default function AdminPage() {
                       onOpenChange={setActiveResearchDropdown}
                       onChange={(value) => updateResearchRow(rowIndex, 'area', value)}
                     />
-                    <input className="input h-7 px-2 text-[10px]" value={row.price_from} onChange={(event) => updateResearchRow(rowIndex, 'price_from', event.target.value)} placeholder="0" />
+                    <CompactDropdown
+                      value={rowPrice}
+                      fallback="0"
+                      options={researchPriceOptions}
+                      openKey={`${rowKey}-price`}
+                      activeOpenKey={activeResearchDropdown}
+                      onOpenChange={setActiveResearchDropdown}
+                      onChange={(value) => updateResearchRow(rowIndex, 'price_from', value)}
+                    />
                     <div className="grid gap-1">
                       <CompactDropdown
                         value={rowStatus}
