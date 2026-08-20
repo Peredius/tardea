@@ -1588,6 +1588,8 @@ export default function AdminPage() {
 
         {message && <p className="text-sm text-brand-500">{message}</p>}
       </form>
+      </>
+      )}
 
       {false && (
       <section ref={bulkSectionRef} className="mt-12 rounded-3xl border border-white/10 bg-slate-900/70 p-5">
@@ -1729,6 +1731,8 @@ export default function AdminPage() {
         </div>
       </section>
       )}
+      {adminTab === 'events' && (
+      <>
       <div className="mt-12">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -1980,11 +1984,6 @@ export default function AdminPage() {
           ))}
         </div>
       </div>
-      </>
-      )}
-
-      {adminTab === 'events' && (
-      <>
       <div className="mt-12">
         <h2 className="mb-4 text-2xl font-bold">Reclamaciones de eventos</h2>
 
