@@ -157,6 +157,9 @@ export default function AdminEventSeriesPage() {
   const [calendarMonth, setCalendarMonth] = useState(() => new Date())
   const [isEditingBase, setIsEditingBase] = useState(false)
   const [baseForm, setBaseForm] = useState<any>({})
+  const [baseCoverFile, setBaseCoverFile] = useState<File | null>(null)
+  const [baseCoverPreview, setBaseCoverPreview] = useState('')
+  const [baseSaving, setBaseSaving] = useState(false)
 
   async function loadEvents() {
     const {
@@ -236,6 +239,7 @@ export default function AdminEventSeriesPage() {
   }) || ''
 
   function openBaseEditor() {
+    const currentCover = mainEvent.cover || ''
     setBaseForm({
       title: mainEvent.title || '',
       type: mainEvent.type || 'Tardeo',
@@ -250,9 +254,11 @@ export default function AdminEventSeriesPage() {
       source_url: getFirstUrl(mainEvent.source_url, ticketUrl),
       instagram_url: getFirstUrl(mainEvent.instagram_url, instagramUrl),
       tiktok_url: getFirstUrl(mainEvent.tiktok_url, tiktokUrl),
-      cover: mainEvent.cover || '',
+      cover: currentCover,
       description: mainEvent.description || '',
     })
+    setBaseCoverFile(null)
+    setBaseCoverPreview(currentCover)
     setIsEditingBase(true)
   }
 
@@ -260,11 +266,52 @@ export default function AdminEventSeriesPage() {
     setBaseForm((current: any) => ({ ...current, [field]: value }))
   }
 
+  function handleBaseCoverChange(file: File | null) {
+    setBaseCoverFile(file)
+    if (file) {
+      const preview = URL.createObjectURL(file)
+      setBaseCoverPreview(preview)
+      return
+    }
+    setBaseCoverPreview(baseForm.cover || '')
+  }
+
+  function closeBaseEditor() {
+    setIsEditingBase(false)
+    setBaseCoverFile(null)
+    setBaseCoverPreview('')
+  }
+
   async function saveBaseProfile() {
+    setBaseSaving(true)
     const musicList = (baseForm.music || '')
       .split(',')
       .map((item: string) => item.trim())
       .filter(Boolean)
+    let coverUrl = baseForm.cover || null
+
+    if (baseCoverFile) {
+      const safeName = baseCoverFile.name
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9.]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+      const fileName = `series/${series}/${Date.now()}-${safeName}`
+      const { error: uploadError } = await supabase.storage
+        .from('events')
+        .upload(fileName, baseCoverFile, { upsert: true })
+
+      if (uploadError) {
+        setBaseSaving(false)
+        setMessage(`No se pudo subir el cartel: ${uploadError.message}`)
+        return
+      }
+
+      const { data } = supabase.storage.from('events').getPublicUrl(fileName)
+      coverUrl = data.publicUrl
+    }
+
     const payload = {
       title: baseForm.title || mainEvent.title,
       venue: baseForm.venue || null,
@@ -279,7 +326,7 @@ export default function AdminEventSeriesPage() {
       source_url: baseForm.source_url || null,
       instagram_url: baseForm.instagram_url || null,
       tiktok_url: baseForm.tiktok_url || null,
-      cover: baseForm.cover || null,
+      cover: coverUrl,
       description: baseForm.description || null,
     }
 
@@ -290,6 +337,7 @@ export default function AdminEventSeriesPage() {
         .in('id', events.map((event) => event.id))
 
       if (error) {
+        setBaseSaving(false)
         setMessage(`No se pudieron guardar los datos base: ${error.message}`)
         return
       }
@@ -314,6 +362,7 @@ export default function AdminEventSeriesPage() {
         .in('id', researchIds)
 
       if (error) {
+        setBaseSaving(false)
         setMessage(`Datos guardados en eventos, pero no en listado: ${error.message}`)
         return
       }
@@ -321,6 +370,9 @@ export default function AdminEventSeriesPage() {
 
     const newSeries = getEventSeriesSlug({ title: payload.title, type: payload.type, venue: payload.venue })
     setIsEditingBase(false)
+    setBaseCoverFile(null)
+    setBaseCoverPreview('')
+    setBaseSaving(false)
     setMessage('Datos base de la ficha guardados')
     if (newSeries !== series) {
       router.replace(`/admin/eventos/${newSeries}`)
@@ -516,7 +568,7 @@ export default function AdminEventSeriesPage() {
               <h2 className="text-2xl font-bold">Datos base y enlaces</h2>
               <p className="mt-1 text-sm text-slate-400">Estos cambios se aplican a todas las fechas de esta ficha.</p>
             </div>
-            <button type="button" onClick={() => setIsEditingBase(false)} className="text-sm font-semibold text-slate-400 hover:text-white">Cerrar</button>
+            <button type="button" onClick={closeBaseEditor} className="text-sm font-semibold text-slate-400 hover:text-white">Cerrar</button>
           </div>
 
           <div className="grid gap-3 lg:grid-cols-2">
@@ -536,12 +588,40 @@ export default function AdminEventSeriesPage() {
             <input className="input" value={baseForm.source_url || ''} onChange={(event) => updateBaseForm('source_url', event.target.value)} placeholder="Tiquetera" />
             <input className="input" value={baseForm.instagram_url || ''} onChange={(event) => updateBaseForm('instagram_url', event.target.value)} placeholder="Instagram" />
             <input className="input" value={baseForm.tiktok_url || ''} onChange={(event) => updateBaseForm('tiktok_url', event.target.value)} placeholder="TikTok" />
-            <input className="input lg:col-span-2" value={baseForm.cover || ''} onChange={(event) => updateBaseForm('cover', event.target.value)} placeholder="Imagen / cartel principal" />
+            <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4 lg:col-span-2">
+              <div className="grid gap-4 md:grid-cols-[140px_1fr] md:items-center">
+                <div className="aspect-square overflow-hidden rounded-2xl bg-slate-950">
+                  {baseCoverPreview ? (
+                    <img src={baseCoverPreview} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full items-center justify-center px-3 text-center text-xs font-semibold text-slate-600">
+                      Sin cartel
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-white">Cartel principal</p>
+                  <p className="mt-1 text-xs text-slate-500">Sube el cartel desde tu ordenador. Se guardara como imagen base de todas las fechas de esta ficha.</p>
+                  <label className="mt-3 inline-flex cursor-pointer rounded-full border border-white/10 px-4 py-2 text-xs font-bold text-slate-200 hover:border-brand-500/60">
+                    Subir cartel
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(event) => handleBaseCoverChange(event.target.files?.[0] || null)}
+                    />
+                  </label>
+                  {baseCoverFile && (
+                    <p className="mt-2 truncate text-xs text-brand-200">{baseCoverFile.name}</p>
+                  )}
+                </div>
+              </div>
+            </div>
             <textarea className="input lg:col-span-2" value={baseForm.description || ''} onChange={(event) => updateBaseForm('description', event.target.value)} placeholder="Descripcion base de la ficha" />
           </div>
 
-          <button type="button" onClick={saveBaseProfile} className="mt-4 rounded-full bg-brand-500 px-5 py-3 text-sm font-bold text-white hover:bg-brand-600">
-            Guardar ficha
+          <button type="button" onClick={saveBaseProfile} disabled={baseSaving} className="mt-4 rounded-full bg-brand-500 px-5 py-3 text-sm font-bold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60">
+            {baseSaving ? 'Guardando...' : 'Guardar ficha'}
           </button>
         </section>
       )}
