@@ -357,7 +357,6 @@ export default function AdminEventSeriesPage() {
           music: payload.music,
           audience: payload.audience,
           price_from: payload.price_from,
-          source_url: payload.source_url,
           notes: payload.description,
         })
         .in('id', researchIds)
@@ -533,7 +532,7 @@ export default function AdminEventSeriesPage() {
   if (!mainEvent) {
     return (
       <main className="container-page py-16">
-        <Link href="/admin" className="text-sm font-bold uppercase tracking-[0.18em] text-brand-500">← Volver al admin</Link>
+        <Link href="/admin/fichas" className="text-sm font-bold uppercase tracking-[0.18em] text-brand-500">← Volver a fichas</Link>
         <h1 className="mt-6 text-3xl font-bold">Evento no encontrado</h1>
       </main>
     )
@@ -541,7 +540,7 @@ export default function AdminEventSeriesPage() {
 
   return (
     <main className="container-page py-10">
-      <Link href="/admin" className="text-sm font-bold uppercase tracking-[0.18em] text-brand-500">← Volver al admin</Link>
+      <Link href="/admin/fichas" className="text-sm font-bold uppercase tracking-[0.18em] text-brand-500">← Volver a fichas</Link>
 
       <section className="mt-8 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
         <div>
