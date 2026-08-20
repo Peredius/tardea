@@ -163,6 +163,7 @@ export default function AdminEventSeriesPage() {
   const [baseSaving, setBaseSaving] = useState(false)
   const [uploadingEventCoverId, setUploadingEventCoverId] = useState('')
   const [reviewSaving, setReviewSaving] = useState(false)
+  const [applyEditToSeries, setApplyEditToSeries] = useState(false)
 
   async function loadEvents() {
     const {
@@ -473,17 +474,17 @@ export default function AdminEventSeriesPage() {
   }
 
   async function updateEvent(event: any) {
-    const { error } = await supabase
-      .from('events')
-      .update({
+    const buildPayload = (targetEvent: any, useTargetDate: boolean) => {
+      const targetDate = useTargetDate ? targetEvent.date : event.date
+      return {
         title: event.title,
-        slug: generateSlug(event.title, event.date),
+        slug: generateSlug(event.title, targetDate),
         venue: event.venue,
         area: event.area,
         address: event.address,
         maps_url: event.maps_url || null,
         source_url: event.source_url || null,
-        date: event.date,
+        date: targetDate,
         start_time: event.start_time,
         end_time: event.end_time,
         type: event.type,
@@ -495,16 +496,38 @@ export default function AdminEventSeriesPage() {
         website_url: event.website_url || null,
         instagram_url: event.instagram_url || null,
         tiktok_url: event.tiktok_url || null,
-      })
-      .eq('id', event.id)
+      }
+    }
 
-    if (error) {
-      setMessage(`No se pudo guardar: ${error.message}`)
-      return
+    if (applyEditToSeries) {
+      const updates = await Promise.all(
+        events.map((targetEvent) =>
+          supabase
+            .from('events')
+            .update(buildPayload(targetEvent, true))
+            .eq('id', targetEvent.id)
+        )
+      )
+      const failed = updates.find((result) => result.error)
+      if (failed?.error) {
+        setMessage(`No se pudieron guardar todas las fechas: ${failed.error.message}`)
+        return
+      }
+    } else {
+      const { error } = await supabase
+        .from('events')
+        .update(buildPayload(event, false))
+        .eq('id', event.id)
+
+      if (error) {
+        setMessage(`No se pudo guardar: ${error.message}`)
+        return
+      }
     }
 
     setEditingEventId('')
-    setMessage('Fecha actualizada')
+    setApplyEditToSeries(false)
+    setMessage(applyEditToSeries ? 'Cambios aplicados a todas las fechas' : 'Fecha actualizada')
     loadEvents()
   }
 
@@ -595,6 +618,11 @@ export default function AdminEventSeriesPage() {
         event.id === editingEventId ? { ...event, [field]: value } : event
       )
     )
+  }
+
+  function startEditingEvent(eventId: string) {
+    setApplyEditToSeries(false)
+    setEditingEventId(eventId)
   }
 
   if (loading) {
@@ -936,7 +964,7 @@ export default function AdminEventSeriesPage() {
                       onChange={(inputEvent) => uploadEventCover(event, inputEvent.target.files?.[0] || null)}
                     />
                   </label>
-                  <button type="button" onClick={() => setEditingEventId(event.id)} className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:border-brand-500/60">
+                  <button type="button" onClick={() => startEditingEvent(event.id)} className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:border-brand-500/60">
                     Editar
                   </button>
                   {event.source_url && (
@@ -989,7 +1017,10 @@ export default function AdminEventSeriesPage() {
         <section className="mt-10 rounded-3xl border border-white/10 bg-slate-900/80 p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-2xl font-bold">Editar fecha</h2>
-            <button type="button" onClick={() => setEditingEventId('')} className="text-sm font-semibold text-slate-400 hover:text-white">Cerrar</button>
+            <button type="button" onClick={() => {
+              setApplyEditToSeries(false)
+              setEditingEventId('')
+            }} className="text-sm font-semibold text-slate-400 hover:text-white">Cerrar</button>
           </div>
 
           <div className="grid gap-3 lg:grid-cols-2">
@@ -1005,7 +1036,13 @@ export default function AdminEventSeriesPage() {
             <input className="input" value={editingEvent.price_from || ''} onChange={(event) => updateEditingEvent('price_from', event.target.value)} placeholder="Precio desde" />
             <input className="input" value={editingEvent.venue || ''} onChange={(event) => updateEditingEvent('venue', event.target.value)} placeholder="Lugar" />
             <input className="input" value={editingEvent.area || ''} onChange={(event) => updateEditingEvent('area', event.target.value)} placeholder="Zona" />
-            <input type="date" className="input" value={editingEvent.date || ''} onChange={(event) => updateEditingEvent('date', event.target.value)} />
+            <input
+              type="date"
+              className="input disabled:cursor-not-allowed disabled:opacity-50"
+              value={editingEvent.date || ''}
+              onChange={(event) => updateEditingEvent('date', event.target.value)}
+              disabled={applyEditToSeries}
+            />
             <div className="grid grid-cols-2 gap-3">
               <input type="time" className="input" value={editingEvent.start_time || '18:00'} onChange={(event) => updateEditingEvent('start_time', event.target.value)} />
               <input type="time" className="input" value={editingEvent.end_time || '23:00'} onChange={(event) => updateEditingEvent('end_time', event.target.value)} />
@@ -1015,8 +1052,21 @@ export default function AdminEventSeriesPage() {
             <textarea className="input lg:col-span-2" value={editingEvent.description || ''} onChange={(event) => updateEditingEvent('description', event.target.value)} placeholder="Descripcion" />
           </div>
 
+          <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-white/10 bg-slate-950/35 p-4 text-sm text-slate-300">
+            <input
+              type="checkbox"
+              checked={applyEditToSeries}
+              onChange={(event) => setApplyEditToSeries(event.target.checked)}
+              className="mt-1 h-4 w-4 accent-brand-500"
+            />
+            <span>
+              <span className="block font-bold text-white">Aplicar estos cambios a todas las fechas de esta ficha</span>
+              <span className="mt-1 block text-xs leading-5 text-slate-500">La fecha no se copia al resto. Se actualizan datos como hora, precio, lugar, enlaces, cartel y descripcion.</span>
+            </span>
+          </label>
+
           <button type="button" onClick={() => updateEvent(editingEvent)} className="mt-4 rounded-full bg-brand-500 px-5 py-3 text-sm font-bold text-white hover:bg-brand-600">
-            Guardar cambios
+            {applyEditToSeries ? 'Guardar en todas las fechas' : 'Guardar cambios'}
           </button>
         </section>
       )}
