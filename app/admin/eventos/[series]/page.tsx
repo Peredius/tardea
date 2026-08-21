@@ -834,12 +834,7 @@ export default function AdminEventSeriesPage() {
       const extractedEvents = Array.isArray(data.events) && data.events.length > 0 ? data.events : [data]
       const datedEvents = extractedEvents.filter((event: any) => event.date)
       const newEvents = datedEvents.filter((event: any) => !existingDates.has(event.date))
-
-      if (newEvents.length === 0) {
-        const repeatedDates = datedEvents.map((event: any) => formatDate(event.date)).join(', ')
-        setMessage(repeatedDates ? `Esas fechas ya estan creadas: ${repeatedDates}` : 'No se detectaron fechas claras en ese enlace')
-        return
-      }
+      const existingEventsToUpdate = datedEvents.filter((event: any) => existingDates.has(event.date) && (event.sourceUrl || event.source_url))
 
       const baseTitle = mainEvent.title || data.title || 'Evento pendiente'
       const baseType = mainEvent.type || data.type || 'Tardeo'
@@ -868,7 +863,7 @@ export default function AdminEventSeriesPage() {
         perks: [baseType, baseArea, ...baseMusic].filter(Boolean),
         status: 'pending',
         published: false,
-        source_name: data.sourceName || data.source_name || 'Fuente externa',
+        source_name: event.sourceName || event.source_name || data.sourceName || data.source_name || 'Fuente externa',
         external_id: `${event.sourceUrl || event.source_url || url}-${event.date}`,
         imported_by_agent: true,
         image_status: mainEvent.image_status || 'provisional',
@@ -879,15 +874,51 @@ export default function AdminEventSeriesPage() {
         profile_reviewed: mainEvent.profile_reviewed || false,
       }))
 
-      const { error } = await supabase.from('events').insert(rowsToInsert)
+      if (rowsToInsert.length > 0) {
+        const { error } = await supabase.from('events').insert(rowsToInsert)
 
-      if (error) {
-        setMessage(`No se pudieron crear las fechas: ${error.message}`)
+        if (error) {
+          setMessage(`No se pudieron crear las fechas: ${error.message}`)
+          return
+        }
+      }
+
+      if (existingEventsToUpdate.length > 0) {
+        const updates = await Promise.all(
+          existingEventsToUpdate.flatMap((extractedEvent: any) =>
+            events
+              .filter((currentEvent) => currentEvent.date === extractedEvent.date)
+              .map((currentEvent) =>
+                supabase
+                  .from('events')
+                  .update({
+                    source_url: extractedEvent.sourceUrl || extractedEvent.source_url || currentEvent.source_url || url,
+                    source_name: extractedEvent.sourceName || extractedEvent.source_name || data.sourceName || data.source_name || currentEvent.source_name || 'Fuente externa',
+                    external_id: `${extractedEvent.sourceUrl || extractedEvent.source_url || url}-${extractedEvent.date}`,
+                    start_time: extractedEvent.startTime || extractedEvent.start_time || currentEvent.start_time,
+                    end_time: extractedEvent.endTime || extractedEvent.end_time || currentEvent.end_time,
+                  })
+                  .eq('id', currentEvent.id)
+              )
+          )
+        )
+        const failed = updates.find((result) => result.error)
+        if (failed?.error) {
+          setMessage(`Fechas creadas, pero no se pudieron corregir algunos enlaces: ${failed.error.message}`)
+          return
+        }
+      }
+
+      if (rowsToInsert.length === 0 && existingEventsToUpdate.length === 0) {
+        setMessage('No se detectaron fechas claras en ese enlace')
         return
       }
 
       setExtractUrl('')
-      setMessage(`${rowsToInsert.length} fecha${rowsToInsert.length === 1 ? '' : 's'} importada${rowsToInsert.length === 1 ? '' : 's'} directamente en esta ficha`)
+      setMessage([
+        rowsToInsert.length > 0 ? `${rowsToInsert.length} fecha${rowsToInsert.length === 1 ? '' : 's'} creada${rowsToInsert.length === 1 ? '' : 's'}` : '',
+        existingEventsToUpdate.length > 0 ? `${existingEventsToUpdate.length} enlace${existingEventsToUpdate.length === 1 ? '' : 's'} de tiquetera corregido${existingEventsToUpdate.length === 1 ? '' : 's'}` : '',
+      ].filter(Boolean).join(' y '))
       loadEvents()
     } catch (error: any) {
       setMessage(`No se pudo extraer desde el enlace: ${error.message || 'revisa que el enlace sea publico'}`)
