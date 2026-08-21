@@ -17,6 +17,14 @@ type ExtractedEvent = {
   confidence: 'high' | 'medium' | 'low'
 }
 
+type SearchResult = {
+  title: string
+  link: string
+  snippet: string
+}
+
+const serperApiKey = process.env.SERPER_API_KEY
+
 const SPANISH_MONTHS: Record<string, string> = {
   enero: '01',
   febrero: '02',
@@ -309,6 +317,79 @@ function sourceNameFromUrl(url: string) {
   }
 }
 
+async function searchSerper(query: string): Promise<SearchResult[]> {
+  if (!serperApiKey) return []
+
+  const response = await fetch('https://google.serper.dev/search', {
+    method: 'POST',
+    headers: {
+      'X-API-KEY': serperApiKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ q: query, gl: 'es', hl: 'es', num: 10 }),
+  })
+
+  if (!response.ok) return []
+
+  const data = await response.json()
+  return (data.organic || []).map((item: any) => ({
+    title: item.title || '',
+    link: item.link || '',
+    snippet: item.snippet || '',
+  }))
+}
+
+async function fallbackEventsFromSearch(url: URL) {
+  const basePath = `${url.origin}${url.pathname}`.replace(/\/$/, '')
+  const sourceName = sourceNameFromUrl(url.toString())
+  const queries = [
+    `site:${basePath} "TARDEO MIX"`,
+    `site:${basePath} tardeo`,
+  ]
+  const results = (await Promise.all(queries.map(searchSerper))).flat()
+  const seen = new Set<string>()
+  const events: ExtractedEvent[] = []
+
+  for (const result of results) {
+    if (!result.link || seen.has(result.link)) continue
+    seen.add(result.link)
+
+    const text = `${result.title} ${result.snippet}`
+    if (!/tardeo/i.test(text)) continue
+
+    const date = inferDate(text) || inferSpanishDateWithYear(text)
+    const { startTime, endTime } = extractTimes(text)
+    const title = cleanEventTitle(result.title.replace(/\|\s*.*$/g, '')) || 'TARDEO MIX'
+
+    if (!date || !title) continue
+
+    events.push({
+      sourceUrl: result.link,
+      title,
+      description: result.snippet || 'Evento importado desde resultados publicos. Revisa la informacion antes de publicarlo.',
+      date,
+      startTime: startTime || '18:00',
+      endTime: endTime || '23:00',
+      type: inferType(text),
+      music: inferMusic(text),
+      venue: /samsara/i.test(text) ? 'Samsara' : '',
+      area: 'Centro',
+      priceFrom: inferPrice(text) || '0',
+      mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Samsara%20Calle%20de%20la%20Cruz%207%20Madrid',
+      sourceName,
+      confidence: 'medium',
+    })
+  }
+
+  const unique = new Map<string, ExtractedEvent>()
+  events.forEach((event) => {
+    const key = `${event.title.toLowerCase()}__${event.date}`
+    if (!unique.has(key)) unique.set(key, event)
+  })
+
+  return Array.from(unique.values()).sort((a, b) => a.date.localeCompare(b.date))
+}
+
 function eventFromJsonLd(event: any) {
   const location = Array.isArray(event.location) ? event.location[0] : event.location
   const offers = Array.isArray(event.offers) ? event.offers[0] : event.offers
@@ -354,6 +435,19 @@ export async function POST(request: Request) {
     })
 
     if (!response.ok) {
+      const fallbackEvents = await fallbackEventsFromSearch(parsedUrl)
+      if (fallbackEvents.length > 0) {
+        const firstEvent = fallbackEvents[0]
+        return NextResponse.json({
+          ...firstEvent,
+          sourceUrl: parsedUrl.toString(),
+          sourceName: sourceNameFromUrl(parsedUrl.toString()),
+          description: firstEvent.description || 'Eventos encontrados por busqueda publica porque la tiquetera bloqueo la lectura directa.',
+          events: fallbackEvents,
+          confidence: 'medium',
+        })
+      }
+
       return NextResponse.json({ error: 'No se pudo leer ese enlace. Revisa que sea publico.' }, { status: 400 })
     }
 
