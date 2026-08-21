@@ -199,6 +199,18 @@ function getResearchSeriesKey(row: Partial<ResearchRow>) {
   ].join('__').toLowerCase()
 }
 
+function getProfileIndexKey(item: any) {
+  if (item.source_kind === 'Listado') {
+    return `research:${getResearchSeriesKey(item)}`
+  }
+
+  return `event:${getEventSeriesSlug({
+    title: item.title || item.venue || 'evento',
+    type: item.type || 'Tardeo',
+    venue: item.venue || '',
+  })}`
+}
+
 type AdminTab = 'events' | 'research' | 'create' | 'profiles'
 
 function getAdminTabFromPath(pathname: string): AdminTab {
@@ -1058,11 +1070,11 @@ export default function AdminPage() {
     if (!confirmed) return
 
     const eventIds = [...events, ...pendingEvents, ...scoutEvents]
-      .filter((event) => getResearchSeriesKey(event) === profile.key)
+      .filter((event) => getProfileIndexKey({ ...event, source_kind: event.imported_by_agent && event.needs_review ? 'Scout' : 'Publicado' }) === profile.key)
       .map((event) => event.id)
       .filter(Boolean)
     const researchIds = researchRows
-      .filter((row) => row.id && getResearchSeriesKey(row) === profile.key)
+      .filter((row) => row.id && getProfileIndexKey({ ...row, source_kind: 'Listado' }) === profile.key)
       .map((row) => row.id)
 
     if (eventIds.length > 0) {
@@ -1567,7 +1579,7 @@ export default function AdminPage() {
     })
   const profileMap = new Map<string, any>()
   profileSources.forEach((item) => {
-    const key = getResearchSeriesKey(item)
+    const key = getProfileIndexKey(item)
     const current = profileMap.get(key)
     const summary = current || {
       key,
