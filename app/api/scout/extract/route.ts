@@ -224,7 +224,7 @@ function extractTimes(text: string) {
 
 function cleanEventTitle(value: string) {
   return value
-    .replace(/\b(?:lun|mar|mie|mié|jue|vie|sab|sáb|dom)[,.\s]*/gi, ' ')
+    .replace(/\b(?:lunes|martes|miercoles|miércoles|jueves|viernes|sabado|sábado|domingo|lun|mar|mie|mié|jue|vie|sab|sáb|dom)[,.\s]*/gi, ' ')
     .replace(/\b\d{1,2}\s*(?:de\s*)?(?:ene|enero|feb|febrero|mar|marzo|abr|abril|may|mayo|jun|junio|jul|julio|ago|agosto|sep|sept|septiembre|setiembre|oct|octubre|nov|noviembre|dic|diciembre)(?:\s*(?:de\s*)?20\d{2})?\b/gi, ' ')
     .replace(/\b([01]?\d|2[0-3])[:.]\d{2}\b/g, ' ')
     .replace(/\s+/g, ' ')
@@ -238,6 +238,61 @@ function absoluteUrl(href: string, baseUrl: string) {
   } catch {
     return baseUrl
   }
+}
+
+function normalizeEventKey(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\b(?:opening|closing|entradas|listas|vips|vip|tickets?|sabado|sab|saturday|sat)\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function extractLinktreeEvents(html: string, baseUrl: string, fallback: ExtractedEvent) {
+  if (!/linktr\.ee/i.test(baseUrl)) return []
+
+  const linkMatches = [
+    ...html.matchAll(/<a\b(?=[^>]*data-testid=["']LinkClickTriggerLink["'])[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi),
+    ...html.matchAll(/<a\b[^>]*href=["']([^"']*fourvenues\.com[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi),
+  ]
+
+  const candidates = linkMatches
+    .map((match) => {
+      const href = absoluteUrl(decodeHtml(match[1]), baseUrl)
+      const label = decodeHtml(match[2])
+      const date = inferDate(label) || inferSpanishDateWithYear(label)
+      const { startTime, endTime } = extractTimes(label)
+      const title = cleanEventTitle(label).replace(/\s+\|\s*.*$/g, '').trim() || fallback.title
+
+      if (!date || !title || title.length < 4) return null
+
+      return {
+        ...fallback,
+        sourceUrl: href,
+        title,
+        description: fallback.description || 'Evento encontrado desde Linktree. Revisa fecha, cartel y enlace antes de publicarlo.',
+        date,
+        startTime: startTime || fallback.startTime || '18:00',
+        endTime: endTime || fallback.endTime || '23:00',
+        type: inferType(`${title} ${label}`),
+        music: inferMusic(`${title} ${label}`),
+        venue: /samsara/i.test(href) ? 'Samsara' : fallback.venue,
+        sourceName: 'Linktree',
+        confidence: 'medium' as const,
+      }
+    })
+    .filter(Boolean) as ExtractedEvent[]
+
+  const unique = new Map<string, ExtractedEvent>()
+  candidates.forEach((event) => {
+    const key = `${normalizeEventKey(event.title)}__${event.date}__${event.sourceUrl || ''}`
+    if (!unique.has(key)) unique.set(key, event)
+  })
+
+  return Array.from(unique.values()).sort((a, b) => a.date.localeCompare(b.date))
 }
 
 function extractLinkedEvents(html: string, baseUrl: string, fallback: ExtractedEvent) {
@@ -265,7 +320,7 @@ function extractLinkedEvents(html: string, baseUrl: string, fallback: ExtractedE
 
   const unique = new Map<string, ExtractedEvent>()
   candidates.forEach((event) => {
-    const key = `${event.title.toLowerCase()}__${event.date}`
+    const key = `${normalizeEventKey(event.title)}__${event.date}__${event.sourceUrl || ''}`
     if (!unique.has(key)) unique.set(key, event)
   })
 
@@ -487,13 +542,16 @@ export async function POST(request: Request) {
 
     const usefulFields = countUsefulFields(data)
     data.confidence = usefulFields >= 4 ? 'high' : usefulFields >= 2 ? 'medium' : 'low'
+    const linktreeEvents = extractLinktreeEvents(html, parsedUrl.toString(), data)
     const linkedEvents = extractLinkedEvents(html, parsedUrl.toString(), data)
+    const events = linktreeEvents.length > 0 ? linktreeEvents : linkedEvents
 
     return NextResponse.json({
       ...data,
-      events: linkedEvents.length > 1 ? linkedEvents : [],
+      events: events.length > 1 ? events : [],
     })
-  } catch {
+  } catch (error) {
+    console.error('Scout extract error', error)
     return NextResponse.json({ error: 'No se pudo extraer informacion del enlace' }, { status: 400 })
   }
 }
