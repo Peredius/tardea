@@ -204,6 +204,8 @@ export default function AdminEventSeriesPage() {
   const [applyEditToSeries, setApplyEditToSeries] = useState(false)
   const [approvingAll, setApprovingAll] = useState(false)
   const [generatingPosters, setGeneratingPosters] = useState(false)
+  const [extractUrl, setExtractUrl] = useState('')
+  const [extractingDates, setExtractingDates] = useState(false)
 
   async function loadEvents() {
     const {
@@ -806,6 +808,94 @@ export default function AdminEventSeriesPage() {
     loadEvents()
   }
 
+  async function extractDatesIntoSeries() {
+    const url = extractUrl.trim()
+    if (!url) {
+      setMessage('Pega primero un enlace de Linktree, Fourvenues o tiquetera')
+      return
+    }
+
+    setExtractingDates(true)
+    setMessage('')
+
+    try {
+      const response = await fetch('/api/scout/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      })
+      const data = await response.json()
+
+      if (!response.ok) {
+        setMessage(data.error || 'No se pudo leer ese enlace')
+        return
+      }
+
+      const extractedEvents = Array.isArray(data.events) && data.events.length > 0 ? data.events : [data]
+      const datedEvents = extractedEvents.filter((event: any) => event.date)
+      const newEvents = datedEvents.filter((event: any) => !existingDates.has(event.date))
+
+      if (newEvents.length === 0) {
+        const repeatedDates = datedEvents.map((event: any) => formatDate(event.date)).join(', ')
+        setMessage(repeatedDates ? `Esas fechas ya estan creadas: ${repeatedDates}` : 'No se detectaron fechas claras en ese enlace')
+        return
+      }
+
+      const baseTitle = mainEvent.title || data.title || 'Evento pendiente'
+      const baseType = mainEvent.type || data.type || 'Tardeo'
+      const baseArea = mainEvent.area || data.area || 'Madrid'
+      const baseMusic = getMusicList(mainEvent.music || data.music)
+
+      const rowsToInsert = newEvents.map((event: any) => ({
+        title: baseTitle,
+        slug: generateSlug(baseTitle, event.date),
+        venue: mainEvent.venue || data.venue || event.venue || 'Pendiente de revisar',
+        area: baseArea,
+        address: mainEvent.address || data.address || mainEvent.venue || data.venue || baseArea,
+        maps_url: mainEvent.maps_url || data.mapsUrl || data.maps_url || null,
+        source_url: event.sourceUrl || event.source_url || url,
+        date: event.date,
+        start_time: event.startTime || event.start_time || mainEvent.start_time || data.startTime || '18:00',
+        end_time: event.endTime || event.end_time || mainEvent.end_time || data.endTime || '23:00',
+        type: baseType,
+        music: baseMusic.length ? baseMusic : ['Comercial'],
+        audience: mainEvent.audience || data.audience || 'Mixto',
+        price_from: mainEvent.price_from ? Number(mainEvent.price_from) : Number(data.priceFrom || data.price_from || 0),
+        cover: mainEvent.cover || data.cover || null,
+        reel_url: mainEvent.reel_url || null,
+        featured: false,
+        description: mainEvent.description || data.description || 'Evento importado desde enlace. Pendiente de revision antes de publicar.',
+        perks: [baseType, baseArea, ...baseMusic].filter(Boolean),
+        status: 'pending',
+        published: false,
+        source_name: data.sourceName || data.source_name || 'Fuente externa',
+        external_id: `${event.sourceUrl || event.source_url || url}-${event.date}`,
+        imported_by_agent: true,
+        image_status: mainEvent.image_status || 'provisional',
+        needs_review: true,
+        website_url: mainEvent.website_url || data.website_url || null,
+        instagram_url: mainEvent.instagram_url || data.instagram_url || null,
+        tiktok_url: mainEvent.tiktok_url || data.tiktok_url || null,
+        profile_reviewed: mainEvent.profile_reviewed || false,
+      }))
+
+      const { error } = await supabase.from('events').insert(rowsToInsert)
+
+      if (error) {
+        setMessage(`No se pudieron crear las fechas: ${error.message}`)
+        return
+      }
+
+      setExtractUrl('')
+      setMessage(`${rowsToInsert.length} fecha${rowsToInsert.length === 1 ? '' : 's'} importada${rowsToInsert.length === 1 ? '' : 's'} directamente en esta ficha`)
+      loadEvents()
+    } catch (error: any) {
+      setMessage(`No se pudo extraer desde el enlace: ${error.message || 'revisa que el enlace sea publico'}`)
+    } finally {
+      setExtractingDates(false)
+    }
+  }
+
   function updateEditingEvent(field: string, value: any) {
     setEvents((current) =>
       current.map((event) =>
@@ -1039,7 +1129,27 @@ export default function AdminEventSeriesPage() {
             )}
           </div>
           {mainEvent && (
-            <div className="w-full rounded-2xl border border-white/10 bg-slate-950/40 p-3 sm:max-w-[360px]">
+            <div className="w-full rounded-2xl border border-white/10 bg-slate-950/40 p-3 sm:max-w-[440px]">
+              <div className="mb-4 rounded-2xl border border-brand-500/20 bg-brand-500/5 p-3">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-200">Extraer fechas</p>
+                <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    className="input min-h-0 flex-1 px-3 py-2 text-xs"
+                    value={extractUrl}
+                    onChange={(event) => setExtractUrl(event.target.value)}
+                    placeholder="Pega Linktree o tiquetera"
+                  />
+                  <button
+                    type="button"
+                    onClick={extractDatesIntoSeries}
+                    disabled={extractingDates}
+                    className="rounded-full bg-brand-500 px-4 py-2 text-xs font-bold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {extractingDates ? 'Leyendo...' : 'Importar'}
+                  </button>
+                </div>
+                <p className="mt-2 text-[11px] leading-4 text-slate-500">Crea solo fechas nuevas en esta ficha. Las repetidas se saltan.</p>
+              </div>
               <div className="mb-3 flex items-center justify-between gap-3">
                 <button type="button" onClick={() => setCalendarMonth((current) => moveMonth(current, -1))} className="rounded-full border border-white/10 px-3 py-1 text-sm font-bold text-slate-300 hover:border-brand-500/60">
                   ←
