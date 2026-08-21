@@ -44,6 +44,9 @@ const areaCoordinates: Record<string, { lat: number; lng: number }> = {
   Madrid: { lat: 40.4168, lng: -3.7038 },
   Centro: { lat: 40.4168, lng: -3.7038 },
   Salamanca: { lat: 40.427, lng: -3.679 },
+  'Gran Via': { lat: 40.42, lng: -3.705 },
+  'Gran Vía': { lat: 40.42, lng: -3.705 },
+  Ponzano: { lat: 40.441, lng: -3.699 },
   Retiro: { lat: 40.414, lng: -3.676 },
   Chamberí: { lat: 40.434, lng: -3.704 },
   Chamberi: { lat: 40.434, lng: -3.704 },
@@ -56,9 +59,52 @@ const areaCoordinates: Record<string, { lat: number; lng: number }> = {
   Tetuan: { lat: 40.459, lng: -3.699 },
   Alcorcón: { lat: 40.3468, lng: -3.8278 },
   Alcorcon: { lat: 40.3468, lng: -3.8278 },
+  Móstoles: { lat: 40.3223, lng: -3.8649 },
+  Mostoles: { lat: 40.3223, lng: -3.8649 },
   Carabanchel: { lat: 40.382, lng: -3.744 },
   Moncloa: { lat: 40.435, lng: -3.719 },
   'Fuencarral-El Pardo': { lat: 40.498, lng: -3.709 },
+}
+
+const priorityAreas = [
+  'Madrid',
+  'Centro',
+  'Salamanca',
+  'Malasaña',
+  'Malasana',
+  'Retiro',
+  'Chamberí',
+  'Chamberi',
+  'Gran Vía',
+  'Gran Via',
+  'Ponzano',
+  'La Latina',
+  'Carabanchel',
+  'Chamartín',
+  'Chamartin',
+]
+
+function normalizeAreaKey(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+const priorityAreaKeys = priorityAreas.map(normalizeAreaKey)
+
+function sortAreas(values: string[]) {
+  return values.slice().sort((first, second) => {
+    const firstIndex = priorityAreaKeys.indexOf(normalizeAreaKey(first))
+    const secondIndex = priorityAreaKeys.indexOf(normalizeAreaKey(second))
+    const firstRank = firstIndex === -1 ? priorityAreaKeys.length : firstIndex
+    const secondRank = secondIndex === -1 ? priorityAreaKeys.length : secondIndex
+
+    if (firstRank !== secondRank) return firstRank - secondRank
+    return first.localeCompare(second, 'es')
+  })
 }
 
 function coordinateToMapPosition(lat: number, lng: number) {
@@ -204,7 +250,7 @@ export function Filters() {
   }, [])
 
   const areas = useMemo(
-    () => ['Todas', ...new Set(dbEvents.map((event) => event.area))],
+    () => ['Todas', ...sortAreas(Array.from(new Set(dbEvents.map((event) => event.area).filter(Boolean))))],
     [dbEvents]
   )
 
