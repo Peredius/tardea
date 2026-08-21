@@ -552,7 +552,7 @@ export default function AdminEventSeriesPage() {
         area: event.area,
         address: event.address,
         maps_url: event.maps_url || null,
-        source_url: event.source_url || null,
+        source_url: useTargetDate ? targetEvent.source_url || null : event.source_url || null,
         date: targetDate,
         start_time: event.start_time,
         end_time: event.end_time,
@@ -1396,7 +1396,7 @@ export default function AdminEventSeriesPage() {
             />
             <span>
               <span className="block font-bold text-white">Aplicar estos cambios a todas las fechas de esta ficha</span>
-              <span className="mt-1 block text-xs leading-5 text-slate-500">La fecha no se copia al resto. Se actualizan datos como hora, precio, lugar, enlaces, cartel y descripcion.</span>
+              <span className="mt-1 block text-xs leading-5 text-slate-500">La fecha y el enlace de tiquetera de cada dia se mantienen. Se actualizan datos como hora, precio, lugar, cartel y descripcion.</span>
             </span>
           </label>
 
