@@ -904,6 +904,21 @@ export default function AdminEventSeriesPage() {
     )
   }
 
+  function toggleEditingMusic(style: string) {
+    if (!editingEventId) return
+
+    setEvents((current) =>
+      current.map((event) => {
+        if (event.id !== editingEventId) return event
+        const currentMusic = getMusicList(event.music)
+        const nextMusic = currentMusic.includes(style)
+          ? currentMusic.filter((item) => item !== style)
+          : [...currentMusic, style]
+        return { ...event, music: nextMusic.length ? nextMusic : ['Comercial'] }
+      })
+    )
+  }
+
   function startEditingEvent(eventId: string) {
     setApplyEditToSeries(false)
     setEditingEventId(eventId)
@@ -1328,10 +1343,34 @@ export default function AdminEventSeriesPage() {
             <select className="select" value={editingEvent.audience || 'Mixto'} onChange={(event) => updateEditingEvent('audience', event.target.value)}>
               {['Mixto', ...AUDIENCE_OPTIONS].map((option) => <option key={option}>{option}</option>)}
             </select>
-            <input className="input" value={Array.isArray(editingEvent.music) ? editingEvent.music.join(', ') : editingEvent.music || ''} onChange={(event) => updateEditingEvent('music', event.target.value.split(',').map((item) => item.trim()).filter(Boolean))} placeholder={MUSIC_OPTIONS.join(', ')} />
             <input className="input" value={editingEvent.price_from || ''} onChange={(event) => updateEditingEvent('price_from', event.target.value)} placeholder="Precio desde" />
             <input className="input" value={editingEvent.venue || ''} onChange={(event) => updateEditingEvent('venue', event.target.value)} placeholder="Lugar" />
-            <input className="input" value={editingEvent.area || ''} onChange={(event) => updateEditingEvent('area', event.target.value)} placeholder="Zona" />
+            <select className="select" value={editingEvent.area || 'Madrid'} onChange={(event) => updateEditingEvent('area', event.target.value)}>
+              {AREA_OPTIONS.map((option) => <option key={option}>{option}</option>)}
+            </select>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4 lg:col-span-2">
+              <p className="mb-3 text-sm font-bold text-white">Musica</p>
+              <div className="flex flex-wrap gap-2">
+                {MUSIC_OPTIONS.map((style) => {
+                  const selectedMusic = getMusicList(editingEvent.music)
+                  const isSelected = selectedMusic.includes(style)
+                  return (
+                    <button
+                      key={style}
+                      type="button"
+                      onClick={() => toggleEditingMusic(style)}
+                      className={`rounded-full px-3 py-2 text-xs font-bold transition ${
+                        isSelected
+                          ? 'bg-brand-500 text-white'
+                          : 'border border-white/10 bg-slate-800 text-slate-200 hover:border-brand-500/60'
+                      }`}
+                    >
+                      {style}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
             <input
               type="date"
               className="input disabled:cursor-not-allowed disabled:opacity-50"
