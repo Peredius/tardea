@@ -239,6 +239,7 @@ export default function AdminEventSeriesPage() {
   const [researchItems, setResearchItems] = useState<any[]>([])
   const [message, setMessage] = useState('')
   const [editingEventId, setEditingEventId] = useState('')
+  const [editingExtrasDraft, setEditingExtrasDraft] = useState('')
   const [duplicateDates, setDuplicateDates] = useState<string[]>([])
   const [calendarMonth, setCalendarMonth] = useState(() => new Date())
   const [isEditingBase, setIsEditingBase] = useState(false)
@@ -551,6 +552,7 @@ export default function AdminEventSeriesPage() {
 
     if (editingEventId === event.id) {
       setEditingEventId('')
+      setEditingExtrasDraft('')
     }
     setMessage(`Fecha eliminada: ${formatDate(event.date)}`)
     loadEvents()
@@ -646,6 +648,7 @@ export default function AdminEventSeriesPage() {
     }
 
     setEditingEventId('')
+    setEditingExtrasDraft('')
     setApplyEditToSeries(false)
     setMessage(applyEditToSeries ? 'Cambios aplicados a todas las fechas' : 'Fecha actualizada')
     loadEvents()
@@ -1003,6 +1006,7 @@ export default function AdminEventSeriesPage() {
   }
 
   function updateEditingExtras(value: string) {
+    setEditingExtrasDraft(value)
     setEvents((current) =>
       current.map((event) =>
         event.id === editingEventId
@@ -1013,7 +1017,9 @@ export default function AdminEventSeriesPage() {
   }
 
   function startEditingEvent(eventId: string) {
+    const eventToEdit = events.find((event) => event.id === eventId)
     setApplyEditToSeries(false)
+    setEditingExtrasDraft(eventToEdit ? getEventExtras(eventToEdit).join(', ') : '')
     setEditingEventId(eventId)
   }
 
@@ -1471,6 +1477,7 @@ export default function AdminEventSeriesPage() {
             <button type="button" onClick={() => {
               setApplyEditToSeries(false)
               setEditingEventId('')
+              setEditingExtrasDraft('')
             }} className="text-sm font-semibold text-slate-400 hover:text-white">Cerrar</button>
           </div>
 
@@ -1534,7 +1541,7 @@ export default function AdminEventSeriesPage() {
             <input className="input lg:col-span-2" value={editingEvent.cover || ''} onChange={(event) => updateEditingEvent('cover', event.target.value)} placeholder="URL cartel" />
             <input
               className="input lg:col-span-2"
-              value={getEventExtras(editingEvent).join(', ')}
+              value={editingExtrasDraft}
               onChange={(event) => updateEditingExtras(event.target.value)}
               placeholder="Extras / artistas: DJ invitado, banda, directo, saxofonista..."
             />
