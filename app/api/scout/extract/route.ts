@@ -363,6 +363,35 @@ function inferPrice(text: string) {
   return price?.[1] || ''
 }
 
+function inferVenue(text: string, url = '') {
+  const lower = `${text} ${url}`.toLowerCase()
+  const venues = [
+    ['Autocine Madrid', ['autocine madrid', 'autocine']],
+    ['Shoko Madrid', ['shoko madrid', 'shoko']],
+    ['Florida Park', ['florida park', 'florida parque']],
+    ['Samsara', ['samsara']],
+    ['Fitz', ['fitz']],
+    ['La Palm Tropic', ['la palm tropic', 'palm tropic']],
+  ]
+
+  const match = venues.find(([, keywords]) => (keywords as string[]).some((keyword) => lower.includes(keyword)))
+  return match ? String(match[0]) : ''
+}
+
+function inferAreaFromVenue(venue: string, text: string) {
+  const lower = `${venue} ${text}`.toLowerCase()
+  if (lower.includes('shoko')) return 'Centro'
+  if (lower.includes('autocine')) return 'Chamartin'
+  if (lower.includes('florida park') || lower.includes('retiro')) return 'Retiro'
+  if (lower.includes('fitz') || lower.includes('moncloa')) return 'Madrid'
+  return 'Madrid'
+}
+
+function mapsUrlForVenue(venue: string) {
+  if (!venue) return ''
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${venue} Madrid`)}`
+}
+
 function sourceNameFromUrl(url: string) {
   try {
     const hostname = new URL(url).hostname.replace(/^www\./, '')
@@ -396,10 +425,12 @@ async function searchSerper(query: string): Promise<SearchResult[]> {
 
 async function fallbackEventsFromSearch(url: URL) {
   const basePath = `${url.origin}${url.pathname}`.replace(/\/$/, '')
+  const sourceTitle = titleFromUrl(url.toString()) || url.pathname.split('/').filter(Boolean).pop() || 'evento'
   const sourceName = sourceNameFromUrl(url.toString())
   const queries = [
-    `site:${basePath} "TARDEO MIX"`,
-    `site:${basePath} tardeo`,
+    `site:${basePath}`,
+    `"${sourceTitle}" entradas`,
+    `"${sourceTitle}" fourvenues`,
   ]
   const results = (await Promise.all(queries.map(searchSerper))).flat()
   const seen = new Set<string>()
@@ -410,11 +441,12 @@ async function fallbackEventsFromSearch(url: URL) {
     seen.add(result.link)
 
     const text = `${result.title} ${result.snippet}`
-    if (!/tardeo/i.test(text)) continue
 
     const date = inferDate(text) || inferSpanishDateWithYear(text)
     const { startTime, endTime } = extractTimes(text)
-    const title = cleanEventTitle(result.title.replace(/\|\s*.*$/g, '')) || 'TARDEO MIX'
+    const title = cleanEventTitle(result.title.replace(/\|\s*.*$/g, '')) || sourceTitle
+    const venue = inferVenue(text, result.link)
+    const area = inferAreaFromVenue(venue, text)
 
     if (!date || !title) continue
 
@@ -427,10 +459,10 @@ async function fallbackEventsFromSearch(url: URL) {
       endTime: endTime || '23:00',
       type: inferType(text),
       music: inferMusic(text),
-      venue: /samsara/i.test(text) ? 'Samsara' : '',
-      area: 'Centro',
+      venue,
+      area,
       priceFrom: inferPrice(text) || '0',
-      mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Samsara%20Calle%20de%20la%20Cruz%207%20Madrid',
+      mapsUrl: mapsUrlForVenue(venue),
       sourceName,
       confidence: 'medium',
     })
@@ -438,7 +470,7 @@ async function fallbackEventsFromSearch(url: URL) {
 
   const unique = new Map<string, ExtractedEvent>()
   events.forEach((event) => {
-    const key = `${event.title.toLowerCase()}__${event.date}`
+    const key = `${normalizeEventKey(event.title)}__${normalizeEventKey(event.venue)}__${event.date}__${event.sourceUrl || ''}`
     if (!unique.has(key)) unique.set(key, event)
   })
 

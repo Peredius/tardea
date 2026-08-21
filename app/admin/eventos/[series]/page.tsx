@@ -841,10 +841,10 @@ export default function AdminEventSeriesPage() {
       const rowsToInsert = newEvents.map((event: any) => ({
         title: baseTitle,
         slug: generateSlug(baseTitle, event.date),
-        venue: mainEvent.venue || data.venue || event.venue || 'Pendiente de revisar',
-        area: baseArea,
-        address: mainEvent.address || data.address || mainEvent.venue || data.venue || baseArea,
-        maps_url: mainEvent.maps_url || data.mapsUrl || data.maps_url || null,
+        venue: event.venue || data.venue || mainEvent.venue || 'Pendiente de revisar',
+        area: event.area || data.area || baseArea,
+        address: event.address || data.address || event.venue || data.venue || mainEvent.address || mainEvent.venue || baseArea,
+        maps_url: event.mapsUrl || event.maps_url || data.mapsUrl || data.maps_url || mainEvent.maps_url || null,
         source_url: event.sourceUrl || event.source_url || url,
         date: event.date,
         start_time: event.startTime || event.start_time || mainEvent.start_time || data.startTime || '18:00',
@@ -884,7 +884,12 @@ export default function AdminEventSeriesPage() {
         const updates = await Promise.all(
           existingEventsToUpdate.flatMap((extractedEvent: any) =>
             events
-              .filter((currentEvent) => currentEvent.date === extractedEvent.date)
+              .filter((currentEvent) => {
+                const sameDate = currentEvent.date === extractedEvent.date
+                const extractedVenue = (extractedEvent.venue || '').trim().toLowerCase()
+                const sameVenue = !extractedVenue || (currentEvent.venue || '').trim().toLowerCase() === extractedVenue
+                return sameDate && sameVenue
+              })
               .map((currentEvent) =>
                 supabase
                   .from('events')
