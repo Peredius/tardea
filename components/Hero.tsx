@@ -93,7 +93,9 @@ export function Hero() {
 
     localStorage.setItem('selectedDates', JSON.stringify(selectedDates))
     localStorage.setItem('selectedDate', selectedDates[0])
-    window.dispatchEvent(new Event('selectedDateChanged'))
+    window.dispatchEvent(
+      new CustomEvent('selectedDateChanged', { detail: { selectedDates } })
+    )
 
     const eventos = document.getElementById('eventos')
 

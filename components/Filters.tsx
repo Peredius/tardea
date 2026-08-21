@@ -240,6 +240,11 @@ function googleMapsRouteUrl(event: any, userLocation: { lat: number; lng: number
   return `https://www.google.com/maps/dir/?${params.toString()}`
 }
 
+function formatSelectedDateLabel(date: string) {
+  const [, month, day] = date.split('-')
+  return `${day}/${month}`
+}
+
 export function Filters() {
   const carouselRef = useRef<HTMLDivElement | null>(null)
   const [selectedDates, setSelectedDates] = useState<string[]>(() => {
@@ -275,6 +280,22 @@ export function Filters() {
   const googleMapRef = useRef<HTMLDivElement | null>(null)
   const googleMapInstanceRef = useRef<any>(null)
   const googleMarkersRef = useRef<any[]>([])
+
+  const activeFilters = [
+    type !== 'Todos' ? type : null,
+    music !== 'Todas' ? music : null,
+    audience !== 'Todas' ? audience : null,
+    price !== 'Todos' ? price : null,
+    area !== 'Todas' ? area : null,
+  ].filter(Boolean) as string[]
+
+  function clearFilters() {
+    setType('Todos')
+    setMusic('Todas')
+    setAudience('Todas')
+    setPrice('Todos')
+    setArea('Todas')
+  }
 
   useEffect(() => {
     async function fetchEvents() {
@@ -319,7 +340,13 @@ export function Filters() {
   }, [])
 
   useEffect(() => {
-    function handleSelectedDateChanged() {
+    function handleSelectedDateChanged(event: Event) {
+      const eventDates = (event as CustomEvent<{ selectedDates?: string[] }>).detail?.selectedDates
+      if (Array.isArray(eventDates)) {
+        setSelectedDates(eventDates)
+        return
+      }
+
       const storedDates = localStorage.getItem('selectedDates')
 
       if (storedDates) {
@@ -550,8 +577,13 @@ export function Filters() {
 
           <span className="inline-flex items-center gap-3">
             {selectedDates.length > 0 && (
-              <span className="text-sm font-semibold text-white">
-                {filtered.length} encontrados
+              <span className="text-right">
+                <span className="block text-sm font-semibold text-white">
+                  {filtered.length} encontrados
+                </span>
+                <span className="block text-[10px] font-semibold text-slate-500">
+                  {selectedDates.map(formatSelectedDateLabel).join(' + ')}
+                </span>
               </span>
             )}
             <ChevronDown
@@ -561,6 +593,21 @@ export function Filters() {
             />
           </span>
         </button>
+
+        {activeFilters.length > 0 && (
+          <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-brand-500/20 bg-brand-500/10 px-3 py-2 md:hidden">
+            <p className="truncate text-[11px] font-semibold text-brand-100">
+              Filtros activos: {activeFilters.join(', ')}
+            </p>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="shrink-0 text-[11px] font-bold text-white underline decoration-brand-500/60 underline-offset-4"
+            >
+              Limpiar
+            </button>
+          </div>
+        )}
 
         <div
           className={`mt-5 grid gap-4 md:mt-0 md:grid md:grid-cols-2 xl:grid-cols-5 ${
@@ -655,9 +702,14 @@ export function Filters() {
           </h2>
 
           {selectedDates.length > 0 && (
-            <p className="text-sm font-semibold text-white">
-              {filtered.length} eventos encontrados
-            </p>
+            <div className="text-right">
+              <p className="text-sm font-semibold text-white">
+                {filtered.length} eventos encontrados
+              </p>
+              <p className="text-[11px] font-semibold text-slate-500">
+                {selectedDates.map(formatSelectedDateLabel).join(' + ')}
+              </p>
+            </div>
           )}
         </div>
       </div>
