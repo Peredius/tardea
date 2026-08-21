@@ -141,7 +141,47 @@ function loadGoogleMapsScript(apiKey: string) {
   return googleMapsLoader
 }
 
+function parseCoordinatesFromMapsUrl(mapsUrl?: string | null) {
+  if (!mapsUrl) return null
+
+  const decodedUrl = decodeURIComponent(mapsUrl)
+  const coordinatePatterns = [
+    /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/,
+    /@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),/,
+    /(?:query|q)=(-?\d+(?:\.\d+)?)%2C(-?\d+(?:\.\d+)?)/,
+    /(?:query|q)=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
+  ]
+
+  for (const pattern of coordinatePatterns) {
+    const match = decodedUrl.match(pattern)
+    if (!match) continue
+
+    const lat = Number(match[1])
+    const lng = Number(match[2])
+    if (Number.isFinite(lat) && Number.isFinite(lng)) return { lat, lng }
+  }
+
+  return null
+}
+
+function mapsUrlSearchText(mapsUrl?: string | null) {
+  if (!mapsUrl) return ''
+
+  try {
+    const parsedUrl = new URL(mapsUrl)
+    const query = parsedUrl.searchParams.get('query') || parsedUrl.searchParams.get('q')
+    if (query) return query
+  } catch {
+    return ''
+  }
+
+  return ''
+}
+
 function eventMapSearchText(event: any) {
+  const mapsSearch = mapsUrlSearchText(event.mapsUrl)
+  if (mapsSearch) return mapsSearch
+
   return [event.venue, event.address, event.area, 'Madrid'].filter(Boolean).join(', ')
 }
 
@@ -163,6 +203,11 @@ async function resolveMapPosition(google: any, geocoder: any, event: any) {
     return new google.maps.LatLng(event.latitude, event.longitude)
   }
 
+  const mapsCoordinates = parseCoordinatesFromMapsUrl(event.mapsUrl)
+  if (mapsCoordinates) {
+    return new google.maps.LatLng(mapsCoordinates.lat, mapsCoordinates.lng)
+  }
+
   const geocodedPosition = await geocodeAddress(geocoder, eventMapSearchText(event))
   if (geocodedPosition) return geocodedPosition
 
@@ -178,7 +223,10 @@ function googleMapsSearchUrl(event: any) {
 }
 
 function googleMapsRouteUrl(event: any, userLocation: { lat: number; lng: number } | null) {
-  const destination = [event.venue, event.address, event.area, 'Madrid'].filter(Boolean).join(', ')
+  const mapsCoordinates = parseCoordinatesFromMapsUrl(event.mapsUrl)
+  const destination = mapsCoordinates
+    ? `${mapsCoordinates.lat},${mapsCoordinates.lng}`
+    : eventMapSearchText(event)
   const params = new URLSearchParams({
     api: '1',
     destination,
