@@ -1375,6 +1375,16 @@ export default function AdminEventSeriesPage() {
                   <button type="button" onClick={() => deleteEventDate(event)} className="rounded-full border border-red-400/30 px-2.5 py-1 text-[11px] font-semibold text-red-200 hover:border-red-400/70 hover:text-white">
                     Eliminar
                   </button>
+                  {event.source_url && (
+                    <a
+                      href={event.source_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:border-brand-500/60 hover:text-white"
+                    >
+                      Revisar tiquetera
+                    </a>
+                  )}
                   </div>
                 </div>
               </div>
