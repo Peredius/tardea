@@ -395,6 +395,7 @@ export default function AdminEventSeriesPage() {
       tiktok_url: baseForm.tiktok_url || null,
       cover: coverUrl,
       description: baseForm.description || null,
+      profile_reviewed: true,
     }
 
     if (events.length > 0) {
@@ -424,6 +425,7 @@ export default function AdminEventSeriesPage() {
           audience: payload.audience,
           price_from: payload.price_from,
           notes: payload.description,
+          profile_reviewed: true,
         })
         .in('id', researchIds)
 

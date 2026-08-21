@@ -1544,12 +1544,28 @@ export default function AdminPage() {
   const visibleResearchRows = Array.from(
     new Map(filteredResearchRows.map((row) => [getResearchSeriesKey(row), row])).values()
   )
+  const profileSourceRank: Record<string, number> = {
+    Publicado: 0,
+    Pendiente: 1,
+    Listado: 2,
+    Scout: 3,
+  }
   const profileSources = [
     ...events.map((event) => ({ ...event, source_kind: 'Publicado' })),
     ...pendingEvents.map((event) => ({ ...event, source_kind: 'Pendiente' })),
     ...scoutEvents.map((event) => ({ ...event, source_kind: 'Scout' })),
     ...researchRows.map((row) => ({ ...row, source_kind: 'Listado' })),
-  ].filter((item) => item.title || item.venue)
+  ]
+    .filter((item) => item.title || item.venue)
+    .sort((a, b) => {
+      const aFuture = !a.date || a.date >= todayDate
+      const bFuture = !b.date || b.date >= todayDate
+      if (aFuture !== bFuture) return aFuture ? -1 : 1
+      if (Boolean(a.profile_reviewed) !== Boolean(b.profile_reviewed)) return a.profile_reviewed ? -1 : 1
+      const sourceDiff = (profileSourceRank[a.source_kind] ?? 9) - (profileSourceRank[b.source_kind] ?? 9)
+      if (sourceDiff !== 0) return sourceDiff
+      return (a.date || '').localeCompare(b.date || '')
+    })
   const profileMap = new Map<string, any>()
   profileSources.forEach((item) => {
     const key = getResearchSeriesKey(item)
