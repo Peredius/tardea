@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 type ExtractedEvent = {
+  sourceUrl?: string
   title: string
   description: string
   date: string
@@ -30,6 +31,19 @@ const SPANISH_MONTHS: Record<string, string> = {
   octubre: '10',
   noviembre: '11',
   diciembre: '12',
+  ene: '01',
+  feb: '02',
+  mar: '03',
+  abr: '04',
+  may: '05',
+  jun: '06',
+  jul: '07',
+  ago: '08',
+  sep: '09',
+  sept: '09',
+  oct: '10',
+  nov: '11',
+  dic: '12',
 }
 
 function stripHtml(value: string) {
@@ -49,6 +63,15 @@ function stripHtml(value: string) {
     .replace(/&ntilde;/g, 'n')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+function decodeHtml(value: string) {
+  return stripHtml(value)
+    .replace(/&deg;/g, 'º')
+    .replace(/&rsquo;/g, "'")
+    .replace(/&lsquo;/g, "'")
+    .replace(/&ldquo;/g, '"')
+    .replace(/&rdquo;/g, '"')
 }
 
 function metaContent(html: string, property: string) {
@@ -159,6 +182,86 @@ function inferDate(text: string) {
   if (spanish) return `${spanish[3]}-${SPANISH_MONTHS[spanish[2]]}-${spanish[1].padStart(2, '0')}`
 
   return ''
+}
+
+function inferSpanishDateWithYear(text: string) {
+  const match = text.toLowerCase().match(/\b(0?\d|[12]\d|3[01])\s*(?:de\s*)?(ene|enero|feb|febrero|mar|marzo|abr|abril|may|mayo|jun|junio|jul|julio|ago|agosto|sep|sept|septiembre|setiembre|oct|octubre|nov|noviembre|dic|diciembre)(?:\s*(?:de\s*)?(20\d{2}))?\b/)
+  if (!match) return ''
+
+  const today = new Date()
+  const month = SPANISH_MONTHS[match[2]]
+  const explicitYear = match[3]
+  let year = explicitYear ? Number(explicitYear) : today.getFullYear()
+  const date = `${year}-${month}-${match[1].padStart(2, '0')}`
+  const parsed = new Date(`${date}T12:00:00`)
+
+  if (!explicitYear) {
+    const thirtyDaysAgo = new Date(today)
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    if (parsed < thirtyDaysAgo) year += 1
+  }
+
+  return `${year}-${month}-${match[1].padStart(2, '0')}`
+}
+
+function extractTimes(text: string) {
+  const times = [...text.matchAll(/\b([01]?\d|2[0-3])[:.](\d{2})\b/g)]
+    .map((match) => `${match[1].padStart(2, '0')}:${match[2]}`)
+
+  return {
+    startTime: times[0] || '',
+    endTime: times[1] || '',
+  }
+}
+
+function cleanEventTitle(value: string) {
+  return value
+    .replace(/\b(?:lun|mar|mie|mié|jue|vie|sab|sáb|dom)[,.\s]*/gi, ' ')
+    .replace(/\b\d{1,2}\s*(?:de\s*)?(?:ene|enero|feb|febrero|mar|marzo|abr|abril|may|mayo|jun|junio|jul|julio|ago|agosto|sep|sept|septiembre|setiembre|oct|octubre|nov|noviembre|dic|diciembre)(?:\s*(?:de\s*)?20\d{2})?\b/gi, ' ')
+    .replace(/\b([01]?\d|2[0-3])[:.]\d{2}\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/^[·:|–—-]+|[·:|–—-]+$/g, '')
+    .trim()
+}
+
+function absoluteUrl(href: string, baseUrl: string) {
+  try {
+    return new URL(href, baseUrl).toString()
+  } catch {
+    return baseUrl
+  }
+}
+
+function extractLinkedEvents(html: string, baseUrl: string, fallback: ExtractedEvent) {
+  const anchorMatches = [...html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)]
+  const candidates = anchorMatches
+    .map((match) => {
+      const href = absoluteUrl(match[1], baseUrl)
+      const label = decodeHtml(match[2])
+      const date = inferDate(label) || inferSpanishDateWithYear(label)
+      const { startTime, endTime } = extractTimes(label)
+      const title = cleanEventTitle(label) || fallback.title
+
+      if (!date || !title || title.length < 4) return null
+
+      return {
+        ...fallback,
+        sourceUrl: href,
+        title,
+        date,
+        startTime: startTime || fallback.startTime,
+        endTime: endTime || fallback.endTime,
+      }
+    })
+    .filter(Boolean) as ExtractedEvent[]
+
+  const unique = new Map<string, ExtractedEvent>()
+  candidates.forEach((event) => {
+    const key = `${event.title.toLowerCase()}__${event.date}`
+    if (!unique.has(key)) unique.set(key, event)
+  })
+
+  return Array.from(unique.values())
 }
 
 function inferType(text: string) {
@@ -272,6 +375,7 @@ export async function POST(request: Request) {
       || jsonValue(html, ['description', 'summary'])
 
     const data: ExtractedEvent = {
+      sourceUrl: parsedUrl.toString(),
       title,
       description: description || 'Evento importado desde enlace. Revisa y completa la informacion antes de publicarlo.',
       date: fromJsonLd?.date || normalizeDate(jsonValue(html, ['startDate', 'eventDate', 'date'])) || inferDate(`${title} ${description} ${text}`),
@@ -289,8 +393,12 @@ export async function POST(request: Request) {
 
     const usefulFields = countUsefulFields(data)
     data.confidence = usefulFields >= 4 ? 'high' : usefulFields >= 2 ? 'medium' : 'low'
+    const linkedEvents = extractLinkedEvents(html, parsedUrl.toString(), data)
 
-    return NextResponse.json(data)
+    return NextResponse.json({
+      ...data,
+      events: linkedEvents.length > 1 ? linkedEvents : [],
+    })
   } catch {
     return NextResponse.json({ error: 'No se pudo extraer informacion del enlace' }, { status: 400 })
   }

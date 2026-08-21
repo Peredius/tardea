@@ -1057,27 +1057,59 @@ export default function AdminPage() {
         return
       }
 
-      setResearchRows((rows) =>
-        rows.map((item, rowIndex) =>
-          rowIndex === index
-            ? {
-                ...item,
-                title: data.title || item.title,
-                type: data.type || item.type,
-                music: data.music || item.music,
-                venue: data.venue || item.venue,
-                area: data.area || item.area,
-                date: data.date || item.date,
-                start_time: data.startTime || item.start_time,
-                end_time: data.endTime || item.end_time,
-                price_from: data.priceFrom || item.price_from,
-                maps_url: data.mapsUrl || item.maps_url,
-                notes: data.description || item.notes,
-              }
-            : item
+      const extractedEvents = Array.isArray(data.events) && data.events.length > 0
+        ? data.events
+        : [data]
+
+      setResearchRows((rows) => {
+        const nextRows = [...rows]
+        const currentRow = nextRows[index]
+        const existingKeys = new Set(
+          nextRows.map((item, rowIndex) => {
+            if (rowIndex === index) return ''
+            return item.source_url || `${item.title}__${item.date}`.toLowerCase()
+          })
         )
+        const rowsFromSource = extractedEvents
+          .map((event: any, eventIndex: number) => {
+            const nextRow = createResearchRow({
+              ...currentRow,
+              selected: true,
+              source_url: event.sourceUrl || event.source_url || (event.date ? `${currentRow.source_url}#${event.date}` : currentRow.source_url),
+              title: event.title || currentRow.title,
+              type: event.type || currentRow.type,
+              music: event.music || currentRow.music,
+              venue: event.venue || currentRow.venue,
+              area: event.area || currentRow.area,
+              date: event.date || currentRow.date,
+              start_time: event.startTime || currentRow.start_time,
+              end_time: event.endTime || currentRow.end_time,
+              price_from: event.priceFrom || currentRow.price_from,
+              maps_url: event.mapsUrl || currentRow.maps_url,
+              status: currentRow.status === 'nuevo' ? 'revisando' : currentRow.status,
+              notes: event.description || currentRow.notes,
+            })
+
+            if (eventIndex === 0 && currentRow.id) nextRow.id = currentRow.id
+            return nextRow
+          })
+          .filter((item: ResearchRow, eventIndex: number) => {
+            if (eventIndex === 0) return true
+            const key = item.source_url || `${item.title}__${item.date}`.toLowerCase()
+            if (existingKeys.has(key)) return false
+            existingKeys.add(key)
+            return true
+          })
+
+        nextRows.splice(index, 1, ...rowsFromSource)
+        return nextRows
+      })
+
+      setMessage(
+        extractedEvents.length > 1
+          ? `${extractedEvents.length} fechas leidas de ${data.sourceName || 'la fuente'}. Revisa y guarda o crea seleccionados en revision.`
+          : `Informacion leida de ${data.sourceName || 'la fuente'}. Revisa antes de guardar.`
       )
-      setMessage(`Informacion leida de ${data.sourceName || 'la fuente'}. Revisa antes de guardar.`)
     } catch {
       setMessage('No se pudo leer el enlace')
     } finally {
