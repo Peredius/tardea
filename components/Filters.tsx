@@ -24,6 +24,9 @@ import {
 } from '@/lib/data'
 import { supabase } from '@/lib/supabase'
 
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''
+let googleMapsLoader: Promise<void> | null = null
+
 function matchesPrice(range: string, price: number) {
   if (range === 'Todos') return true
   if (range === 'Gratis') return price === 0
@@ -31,13 +34,6 @@ function matchesPrice(range: string, price: number) {
   if (range === '15-30€') return price > 15 && price <= 30
   if (range === '30€+') return price > 30
   return true
-}
-
-const madridBounds = {
-  north: 40.53,
-  south: 40.31,
-  west: -3.84,
-  east: -3.55,
 }
 
 const areaCoordinates: Record<string, { lat: number; lng: number }> = {
@@ -111,22 +107,67 @@ function sortAreas(values: string[]) {
   })
 }
 
-function coordinateToMapPosition(lat: number, lng: number) {
-  const x = ((lng - madridBounds.west) / (madridBounds.east - madridBounds.west)) * 100
-  const y = ((madridBounds.north - lat) / (madridBounds.north - madridBounds.south)) * 100
-
-  return {
-    left: `${Math.min(94, Math.max(6, x))}%`,
-    top: `${Math.min(92, Math.max(8, y))}%`,
-  }
-}
-
 function getEventCoordinates(event: any) {
   if (typeof event.latitude === 'number' && typeof event.longitude === 'number') {
     return { lat: event.latitude, lng: event.longitude }
   }
 
   return areaCoordinates[event.area] || areaCoordinates.Madrid
+}
+
+function loadGoogleMapsScript(apiKey: string) {
+  if (typeof window === 'undefined') return Promise.reject(new Error('Google Maps solo carga en navegador'))
+  if ((window as any).google?.maps) return Promise.resolve()
+  if (googleMapsLoader) return googleMapsLoader
+
+  googleMapsLoader = new Promise((resolve, reject) => {
+    const existingScript = document.getElementById('google-maps-js')
+    if (existingScript) {
+      existingScript.addEventListener('load', () => resolve())
+      existingScript.addEventListener('error', () => reject(new Error('No se pudo cargar Google Maps')))
+      return
+    }
+
+    const script = document.createElement('script')
+    script.id = 'google-maps-js'
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}`
+    script.async = true
+    script.defer = true
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('No se pudo cargar Google Maps'))
+    document.head.appendChild(script)
+  })
+
+  return googleMapsLoader
+}
+
+function eventMapSearchText(event: any) {
+  return [event.venue, event.address, event.area, 'Madrid'].filter(Boolean).join(', ')
+}
+
+function geocodeAddress(geocoder: any, address: string) {
+  return new Promise<any | null>((resolve) => {
+    geocoder.geocode({ address, region: 'ES' }, (results: any[], status: string) => {
+      if (status === 'OK' && results?.[0]?.geometry?.location) {
+        resolve(results[0].geometry.location)
+        return
+      }
+
+      resolve(null)
+    })
+  })
+}
+
+async function resolveMapPosition(google: any, geocoder: any, event: any) {
+  if (typeof event.latitude === 'number' && typeof event.longitude === 'number') {
+    return new google.maps.LatLng(event.latitude, event.longitude)
+  }
+
+  const geocodedPosition = await geocodeAddress(geocoder, eventMapSearchText(event))
+  if (geocodedPosition) return geocodedPosition
+
+  const fallback = getEventCoordinates(event)
+  return new google.maps.LatLng(fallback.lat, fallback.lng)
 }
 
 function googleMapsSearchUrl(event: any) {
@@ -182,6 +223,10 @@ export function Filters() {
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [locationStatus, setLocationStatus] = useState('')
+  const [mapStatus, setMapStatus] = useState('')
+  const googleMapRef = useRef<HTMLDivElement | null>(null)
+  const googleMapInstanceRef = useRef<any>(null)
+  const googleMarkersRef = useRef<any[]>([])
 
   useEffect(() => {
     async function fetchEvents() {
@@ -274,6 +319,106 @@ export function Filters() {
       return true
     })
   }, [area, audience, selectedDates, music, price, type, dbEvents])
+
+  useEffect(() => {
+    if (viewMode !== 'map') return
+
+    if (!GOOGLE_MAPS_API_KEY) {
+      setMapStatus('Falta NEXT_PUBLIC_GOOGLE_MAPS_API_KEY para mostrar Google Maps.')
+      return
+    }
+
+    if (!googleMapRef.current) return
+
+    let cancelled = false
+
+    async function renderGoogleMap() {
+      setMapStatus('Cargando Google Maps...')
+
+      try {
+        await loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
+        if (cancelled || !googleMapRef.current) return
+
+        const google = (window as any).google
+        const map =
+          googleMapInstanceRef.current ||
+          new google.maps.Map(googleMapRef.current, {
+            center: { lat: 40.4168, lng: -3.7038 },
+            zoom: 12,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: true,
+          })
+
+        googleMapInstanceRef.current = map
+        googleMarkersRef.current.forEach((marker) => marker.setMap(null))
+        googleMarkersRef.current = []
+
+        const bounds = new google.maps.LatLngBounds()
+        const geocoder = new google.maps.Geocoder()
+        const eventsToShow = filtered.slice(0, 40)
+
+        if (userLocation) {
+          const userMarker = new google.maps.Marker({
+            position: userLocation,
+            map,
+            title: 'Tu ubicacion',
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 7,
+              fillColor: '#38bdf8',
+              fillOpacity: 1,
+              strokeColor: '#ffffff',
+              strokeWeight: 2,
+            },
+          })
+          googleMarkersRef.current.push(userMarker)
+          bounds.extend(userLocation)
+        }
+
+        for (const [index, event] of eventsToShow.entries()) {
+          if (cancelled) return
+          const position = await resolveMapPosition(google, geocoder, event)
+          const marker = new google.maps.Marker({
+            position,
+            map,
+            label: {
+              text: String(index + 1),
+              color: '#ffffff',
+              fontWeight: '800',
+            },
+            title: event.title,
+          })
+
+          marker.addListener('click', () => setActiveEventSlug(event.slug))
+          googleMarkersRef.current.push(marker)
+          bounds.extend(position)
+        }
+
+        if (eventsToShow.length > 0 || userLocation) {
+          map.fitBounds(bounds, 64)
+        } else {
+          map.setCenter({ lat: 40.4168, lng: -3.7038 })
+          map.setZoom(12)
+        }
+
+        setMapStatus(
+          filtered.length > 40
+            ? `Mostrando 40 de ${filtered.length} eventos para no saturar el mapa.`
+            : ''
+        )
+      } catch (error) {
+        console.error(error)
+        setMapStatus('No se pudo cargar Google Maps. Revisa la clave API.')
+      }
+    }
+
+    renderGoogleMap()
+
+    return () => {
+      cancelled = true
+    }
+  }, [filtered, userLocation, viewMode])
 
   useEffect(() => {
     setActiveEventSlug(filtered[0]?.slug || '')
@@ -524,60 +669,31 @@ export function Filters() {
 
         {viewMode === 'map' ? (
           <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="relative min-h-[440px] overflow-hidden rounded-[28px] border border-white/10 bg-slate-900 shadow-2xl shadow-black/30">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_25%,rgba(255,46,99,0.2),transparent_20%),radial-gradient(circle_at_80%_30%,rgba(56,189,248,0.12),transparent_18%),linear-gradient(135deg,rgba(15,23,42,0.95),rgba(2,6,23,0.98))]" />
-              <div className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:42px_42px]" />
-              <div className="absolute left-[12%] right-[8%] top-[48%] h-1 rotate-[-8deg] rounded-full bg-white/10" />
-              <div className="absolute bottom-[18%] left-[24%] right-[14%] h-1 rotate-[13deg] rounded-full bg-white/10" />
-              <div className="absolute bottom-[10%] top-[8%] left-[48%] w-1 rotate-[7deg] rounded-full bg-white/10" />
+            <div className="relative min-h-[440px] overflow-hidden rounded-[28px] border border-white/10 bg-slate-950 shadow-2xl shadow-black/30">
+              <div ref={googleMapRef} className="absolute inset-0" />
 
-              <div className="absolute left-4 top-4 rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 backdrop-blur">
+              {!GOOGLE_MAPS_API_KEY && (
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-950 p-6 text-center">
+                  <div className="max-w-md rounded-3xl border border-white/10 bg-slate-900/90 p-6">
+                    <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand-400">Google Maps</p>
+                    <h3 className="mt-3 text-2xl font-black text-white">Falta conectar el mapa real</h3>
+                    <p className="mt-3 text-sm leading-6 text-slate-400">
+                      Añade la variable NEXT_PUBLIC_GOOGLE_MAPS_API_KEY en Vercel para mostrar los tardeos ubicados en Google Maps.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="absolute left-4 top-4 rounded-2xl border border-white/10 bg-slate-950/85 px-4 py-3 shadow-xl shadow-black/20 backdrop-blur">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-400">Mapa Tardea</p>
                 <p className="mt-1 text-xs text-slate-400">
                   {filtered.length} evento{filtered.length === 1 ? '' : 's'} filtrado{filtered.length === 1 ? '' : 's'}
                 </p>
               </div>
 
-              {userLocation && (
-                <div
-                  className="absolute z-20 -translate-x-1/2 -translate-y-1/2"
-                  style={coordinateToMapPosition(userLocation.lat, userLocation.lng)}
-                  title="Tu ubicacion"
-                >
-                  <span className="absolute -inset-3 rounded-full bg-sky-400/20" />
-                  <span className="relative flex h-4 w-4 rounded-full border-2 border-white bg-sky-400 shadow-lg shadow-sky-500/40" />
-                </div>
-              )}
-
-              {filtered.map((event, index) => {
-                const coordinates = getEventCoordinates(event)
-                const position = coordinateToMapPosition(coordinates.lat, coordinates.lng)
-                const isActive = activeEventSlug === event.slug
-
-                return (
-                  <button
-                    key={event.slug}
-                    type="button"
-                    onClick={() => setActiveEventSlug(event.slug)}
-                    className="absolute z-10 -translate-x-1/2 -translate-y-full"
-                    style={position}
-                    aria-label={event.title}
-                  >
-                    <span className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-black shadow-lg transition ${
-                      isActive
-                        ? 'scale-125 border-white bg-brand-500 text-white shadow-brand-500/40'
-                        : 'border-brand-300/60 bg-brand-500/85 text-white hover:scale-110'
-                    }`}>
-                      {index + 1}
-                    </span>
-                    <span className="mx-auto block h-2 w-2 rotate-45 bg-brand-500" />
-                  </button>
-                )
-              })}
-
-              {locationStatus && (
+              {(locationStatus || mapStatus) && (
                 <p className="absolute bottom-4 left-4 rounded-full border border-white/10 bg-slate-950/80 px-4 py-2 text-xs font-semibold text-slate-300">
-                  {locationStatus}
+                  {locationStatus || mapStatus}
                 </p>
               )}
             </div>
