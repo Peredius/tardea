@@ -678,36 +678,31 @@ export default function AdminEventSeriesPage() {
         const y = (canvas.height - height) / 2
         context.drawImage(baseImage, x, y, width, height)
 
-        const gradient = context.createLinearGradient(0, 0, 0, 300)
-        gradient.addColorStop(0, 'rgba(2, 6, 23, 0.82)')
-        gradient.addColorStop(0.68, 'rgba(2, 6, 23, 0.42)')
+        const gradient = context.createLinearGradient(0, 0, 0, 420)
+        gradient.addColorStop(0, 'rgba(2, 6, 23, 0.34)')
+        gradient.addColorStop(0.72, 'rgba(2, 6, 23, 0.16)')
         gradient.addColorStop(1, 'rgba(2, 6, 23, 0)')
         context.fillStyle = gradient
-        context.fillRect(0, 0, canvas.width, 320)
+        context.fillRect(0, 0, canvas.width, 420)
 
-        context.fillStyle = 'rgba(244, 63, 94, 0.92)'
-        context.roundRect(198, 70, 684, 126, 30)
+        context.fillStyle = 'rgba(244, 63, 94, 0.78)'
+        context.roundRect(270, 255, 540, 88, 26)
         context.fill()
 
-        context.fillStyle = 'rgba(255, 255, 255, 0.12)'
-        context.roundRect(212, 82, 656, 102, 24)
+        context.fillStyle = 'rgba(2, 6, 23, 0.18)'
+        context.roundRect(284, 267, 512, 64, 20)
         context.fill()
 
         context.fillStyle = '#ffffff'
         context.textAlign = 'center'
         context.textBaseline = 'middle'
-        context.font = '900 38px Arial'
-        context.fillText(formatPosterDate(event.date).toUpperCase(), 540, 116)
+        context.font = '900 25px Arial'
+        context.fillText(formatPosterDate(event.date).toUpperCase(), 540, 290)
 
-        context.font = '800 27px Arial'
+        context.font = '800 18px Arial'
         const timeText = [formatTime(event.start_time), formatTime(event.end_time)].filter(Boolean).join(' - ')
-        if (timeText) {
-          context.fillText(timeText, 540, 156)
-        }
-
-        context.font = '900 22px Arial'
-        context.fillStyle = 'rgba(255, 255, 255, 0.9)'
-        context.fillText(String(event.type || mainEvent.type || 'Evento').toUpperCase(), 540, 242)
+        const typeText = String(event.type || mainEvent.type || 'Evento').toUpperCase()
+        context.fillText([typeText, timeText].filter(Boolean).join(' · '), 540, 318)
 
         const blob = await canvasToBlob(canvas)
         const fileName = `series/${series}/generated/${event.id}-${Date.now()}.jpg`
