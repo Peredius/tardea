@@ -5,10 +5,12 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
-const MUSIC_OPTIONS = ['Comercial', 'Electronica', 'Reguetón', 'Pop', 'Indie', 'Flamenquito', 'Remember']
+const MUSIC_OPTIONS = ['Comercial', 'Show en directo', 'Electronica', 'Reguetón', 'Pop', 'Indie', 'Flamenquito', 'Remember']
 const AUDIENCE_OPTIONS = ['18-25', '25-35', '30+', 'Mixto']
 const EVENT_TYPE_OPTIONS = ['Tardeo', 'Rooftop', 'Brunch', 'Afterwork', 'Fitness Party']
-const AREA_OPTIONS = ['Madrid', 'Centro', 'Salamanca', 'Retiro', 'Chamberi', 'Malasana', 'La Latina', 'Chamartin', 'Tetuan', 'Alcorcon']
+const CUSTOM_AREA_OPTION = 'Otro'
+const AREA_OPTIONS = ['Madrid', 'Centro', 'Salamanca', 'Retiro', 'Chamberi', 'Malasana', 'La Latina', 'Chamartin', 'Tetuan', 'Alcorcon', CUSTOM_AREA_OPTION]
+const FIXED_AREA_OPTIONS = AREA_OPTIONS.filter((option) => option !== CUSTOM_AREA_OPTION)
 
 function generateSlug(title: string, date: string) {
   const cleanTitle = title
@@ -105,6 +107,51 @@ function getMusicList(value: any) {
     return value.split(',').map((item) => item.trim()).filter(Boolean)
   }
   return ['Comercial']
+}
+
+function getAreaSelectValue(area: string) {
+  if (!area) return 'Madrid'
+  return FIXED_AREA_OPTIONS.includes(area) ? area : CUSTOM_AREA_OPTION
+}
+
+function getAreaFromSelect(selectedArea: string, currentArea: string) {
+  if (selectedArea !== CUSTOM_AREA_OPTION) return selectedArea
+  return currentArea && !FIXED_AREA_OPTIONS.includes(currentArea) ? currentArea : CUSTOM_AREA_OPTION
+}
+
+function getEventExtras(event: any) {
+  const music = getMusicList(event.music)
+  const automaticLabels = new Set([
+    event.type,
+    event.area,
+    event.venue,
+    event.audience,
+    ...music,
+    ...MUSIC_OPTIONS,
+    ...EVENT_TYPE_OPTIONS,
+    ...AREA_OPTIONS,
+    ...AUDIENCE_OPTIONS,
+  ].filter(Boolean))
+
+  return Array.isArray(event.perks)
+    ? event.perks.filter((item: string) => item && !automaticLabels.has(item))
+    : []
+}
+
+function buildPerks(event: any) {
+  const music = getMusicList(event.music)
+  const extras = getEventExtras(event)
+  return [event.type, event.area, ...music, ...extras].filter(Boolean)
+}
+
+function buildPerksWithExtras(event: any, extrasValue: string) {
+  const music = getMusicList(event.music)
+  const extras = extrasValue
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+
+  return [event.type, event.area, ...music, ...extras].filter(Boolean)
 }
 
 function getUrlsFromText(text: string) {
@@ -565,6 +612,7 @@ export default function AdminEventSeriesPage() {
         price_from: event.price_from ? Number(event.price_from) : 0,
         cover: event.cover,
         description: event.description,
+        perks: buildPerks(event),
         website_url: event.website_url || null,
         instagram_url: event.instagram_url || null,
         tiktok_url: event.tiktok_url || null,
@@ -954,6 +1002,16 @@ export default function AdminEventSeriesPage() {
     )
   }
 
+  function updateEditingExtras(value: string) {
+    setEvents((current) =>
+      current.map((event) =>
+        event.id === editingEventId
+          ? { ...event, perks: buildPerksWithExtras(event, value) }
+          : event
+      )
+    )
+  }
+
   function startEditingEvent(eventId: string) {
     setApplyEditToSeries(false)
     setEditingEventId(eventId)
@@ -1074,9 +1132,17 @@ export default function AdminEventSeriesPage() {
               {EVENT_TYPE_OPTIONS.map((option) => <option key={option}>{option}</option>)}
             </select>
             <input className="input" value={baseForm.venue || ''} onChange={(event) => updateBaseForm('venue', event.target.value)} placeholder="Lugar" />
-            <select className="select" value={baseForm.area || 'Madrid'} onChange={(event) => updateBaseForm('area', event.target.value)}>
+            <select className="select" value={getAreaSelectValue(baseForm.area || '')} onChange={(event) => updateBaseForm('area', getAreaFromSelect(event.target.value, baseForm.area || ''))}>
               {AREA_OPTIONS.map((option) => <option key={option}>{option}</option>)}
             </select>
+            {getAreaSelectValue(baseForm.area || '') === CUSTOM_AREA_OPTION && (
+              <input
+                className="input"
+                value={baseForm.area === CUSTOM_AREA_OPTION ? '' : baseForm.area || ''}
+                onChange={(event) => updateBaseForm('area', event.target.value)}
+                placeholder="Municipio o zona: Mostoles, Leganes, Pozuelo..."
+              />
+            )}
             <input className="input" value={baseForm.address || ''} onChange={(event) => updateBaseForm('address', event.target.value)} placeholder="Direccion" />
             <input className="input" value={baseForm.maps_url || ''} onChange={(event) => updateBaseForm('maps_url', event.target.value)} placeholder="Link de Google Maps" />
             <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4 lg:col-span-2">
@@ -1352,6 +1418,11 @@ export default function AdminEventSeriesPage() {
                   </div>
                   <h3 className="line-clamp-2 text-base font-black leading-tight text-white">{event.title}</h3>
                   <p className="mt-1 line-clamp-1 text-xs font-semibold text-slate-200">{event.venue || mainEvent.venue}</p>
+                  {getEventExtras(event).length > 0 && (
+                    <p className="mt-1 line-clamp-2 text-[11px] font-semibold leading-4 text-brand-100">
+                      {getEventExtras(event).join(' · ')}
+                    </p>
+                  )}
 
                   <div className="mt-3 flex flex-wrap gap-1.5" onClick={(clickEvent) => clickEvent.stopPropagation()}>
                   <label className={`cursor-pointer rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:border-brand-500/60 ${uploadingEventCoverId === event.id ? 'pointer-events-none opacity-60' : ''}`}>
@@ -1414,9 +1485,17 @@ export default function AdminEventSeriesPage() {
             </select>
             <input className="input" value={editingEvent.price_from || ''} onChange={(event) => updateEditingEvent('price_from', event.target.value)} placeholder="Precio desde" />
             <input className="input" value={editingEvent.venue || ''} onChange={(event) => updateEditingEvent('venue', event.target.value)} placeholder="Lugar" />
-            <select className="select" value={editingEvent.area || 'Madrid'} onChange={(event) => updateEditingEvent('area', event.target.value)}>
+            <select className="select" value={getAreaSelectValue(editingEvent.area || '')} onChange={(event) => updateEditingEvent('area', getAreaFromSelect(event.target.value, editingEvent.area || ''))}>
               {AREA_OPTIONS.map((option) => <option key={option}>{option}</option>)}
             </select>
+            {getAreaSelectValue(editingEvent.area || '') === CUSTOM_AREA_OPTION && (
+              <input
+                className="input"
+                value={editingEvent.area === CUSTOM_AREA_OPTION ? '' : editingEvent.area || ''}
+                onChange={(event) => updateEditingEvent('area', event.target.value)}
+                placeholder="Municipio o zona: Mostoles, Leganes, Pozuelo..."
+              />
+            )}
             <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4 lg:col-span-2">
               <p className="mb-3 text-sm font-bold text-white">Musica</p>
               <div className="flex flex-wrap gap-2">
@@ -1453,6 +1532,12 @@ export default function AdminEventSeriesPage() {
             </div>
             <input className="input lg:col-span-2" value={editingEvent.maps_url || ''} onChange={(event) => updateEditingEvent('maps_url', event.target.value)} placeholder="Google Maps" />
             <input className="input lg:col-span-2" value={editingEvent.cover || ''} onChange={(event) => updateEditingEvent('cover', event.target.value)} placeholder="URL cartel" />
+            <input
+              className="input lg:col-span-2"
+              value={getEventExtras(editingEvent).join(', ')}
+              onChange={(event) => updateEditingExtras(event.target.value)}
+              placeholder="Extras / artistas: DJ invitado, banda, directo, saxofonista..."
+            />
             <textarea className="input lg:col-span-2" value={editingEvent.description || ''} onChange={(event) => updateEditingEvent('description', event.target.value)} placeholder="Descripcion" />
           </div>
 
@@ -1465,7 +1550,7 @@ export default function AdminEventSeriesPage() {
             />
             <span>
               <span className="block font-bold text-white">Aplicar estos cambios a todas las fechas de esta ficha</span>
-              <span className="mt-1 block text-xs leading-5 text-slate-500">La fecha y el enlace de tiquetera de cada dia se mantienen. Se actualizan datos como hora, precio, lugar, cartel y descripcion.</span>
+              <span className="mt-1 block text-xs leading-5 text-slate-500">La fecha y el enlace de tiquetera de cada dia se mantienen. Se actualizan datos como hora, precio, lugar, cartel, extras y descripcion.</span>
             </span>
           </label>
 

@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase'
 
 const MUSIC_OPTIONS = [
   'Comercial',
+  'Show en directo',
   'Indie',
   'Electronica',
   'Reguetón',

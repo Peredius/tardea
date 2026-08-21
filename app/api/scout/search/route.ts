@@ -50,6 +50,7 @@ const musicKeywords: Record<string, string[]> = {
   Flamenquito: ['flamenquito', 'flamenco', 'rumba', 'sevillanas'],
   Indie: ['indie', 'alternativo'],
   Remember: ['remember', '90s', '2000', 'clasicos', 'clásicos'],
+  'Show en directo': ['directo', 'live', 'concierto', 'musica en vivo', 'música en vivo', 'banda', 'actuacion', 'actuación'],
   Pop: ['pop'],
   Reguetón: ['reggaeton', 'reguetón', 'regueton', 'urbano', 'urban'],
   Comercial: ['comercial', 'hits', 'tardeo'],

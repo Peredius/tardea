@@ -8,6 +8,7 @@ import { BrandLogo } from '@/components/BrandLogo'
 
 const MUSIC_OPTIONS = [
   'Comercial',
+  'Show en directo',
   'Indie',
   'Electronica',
   'Reguetón',
