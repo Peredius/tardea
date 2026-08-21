@@ -433,7 +433,7 @@ function inferVenue(text: string, url = '') {
 function inferAreaFromVenue(venue: string, text: string) {
   const lower = `${venue} ${text}`.toLowerCase()
   if (lower.includes('shoko')) return 'Centro'
-  if (lower.includes('autocine')) return 'Chamartin'
+  if (lower.includes('autocine')) return 'Chamartín'
   if (lower.includes('florida park') || lower.includes('retiro')) return 'Retiro'
   if (lower.includes('fitz') || lower.includes('moncloa')) return 'Madrid'
   return 'Madrid'

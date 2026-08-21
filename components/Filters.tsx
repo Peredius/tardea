@@ -54,7 +54,6 @@ const areaCoordinates: Record<string, { lat: number; lng: number }> = {
   Malasana: { lat: 40.426, lng: -3.704 },
   'La Latina': { lat: 40.411, lng: -3.708 },
   Chamartín: { lat: 40.462, lng: -3.676 },
-  Chamartin: { lat: 40.462, lng: -3.676 },
   Tetuán: { lat: 40.459, lng: -3.699 },
   Tetuan: { lat: 40.459, lng: -3.699 },
   Alcorcón: { lat: 40.3468, lng: -3.8278 },
@@ -81,7 +80,6 @@ const priorityAreas = [
   'La Latina',
   'Carabanchel',
   'Chamartín',
-  'Chamartin',
 ]
 
 function normalizeAreaKey(value: string) {
@@ -94,6 +92,12 @@ function normalizeAreaKey(value: string) {
 }
 
 const priorityAreaKeys = priorityAreas.map(normalizeAreaKey)
+
+function displayAreaName(value: string) {
+  const normalized = normalizeAreaKey(value)
+  if (normalized === 'chamartin') return 'Chamartín'
+  return value
+}
 
 function sortAreas(values: string[]) {
   return values.slice().sort((first, second) => {
@@ -250,7 +254,7 @@ export function Filters() {
   }, [])
 
   const areas = useMemo(
-    () => ['Todas', ...sortAreas(Array.from(new Set(dbEvents.map((event) => event.area).filter(Boolean))))],
+    () => ['Todas', ...sortAreas(Array.from(new Set(dbEvents.map((event) => displayAreaName(event.area)).filter(Boolean))))],
     [dbEvents]
   )
 
@@ -265,7 +269,7 @@ export function Filters() {
       }
       if (audience !== 'Todas' && event.audience !== audience) return false
       if (!matchesPrice(price, event.priceFrom)) return false
-      if (area !== 'Todas' && event.area !== area) return false
+      if (area !== 'Todas' && displayAreaName(event.area) !== area) return false
 
       return true
     })

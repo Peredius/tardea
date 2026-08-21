@@ -31,7 +31,7 @@ const AREA_OPTIONS = [
   'Ponzano',
   'La Latina',
   'Carabanchel',
-  'Chamartin',
+  'Chamartín',
   'Tetuan',
   'Fuencarral-El Pardo',
   'Fuencarral',
@@ -144,6 +144,12 @@ function normalizeOptionKey(value: string) {
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()
+}
+
+function displayAreaName(value: string) {
+  const normalized = normalizeOptionKey(value)
+  if (normalized === 'chamartin') return 'Chamartín'
+  return value
 }
 
 const AREA_PRIORITY = AREA_OPTIONS.map(normalizeOptionKey)
@@ -1572,7 +1578,7 @@ export default function AdminPage() {
     ...researchRows.map((row) => row.music || ''),
   ])
   const researchAudienceOptions = compactOptions(['Mixto', ...AUDIENCE_OPTIONS, ...researchRows.map((row) => row.audience || '')])
-  const researchAreaOptions = sortAreaOptions(compactOptions([...AREA_OPTIONS, ...researchRows.map((row) => row.area || '')]))
+  const researchAreaOptions = sortAreaOptions(compactOptions([...AREA_OPTIONS, ...researchRows.map((row) => displayAreaName(row.area || ''))]))
   const researchPriceOptions = compactOptions([...PRICE_OPTIONS, ...researchRows.map((row) => row.price_from || '')])
   const researchStatuses = ['Todos', 'nuevo', 'revisando', 'listo', 'archivado', 'pasado', 'descartado']
   const researchStatusOptions = researchStatuses.filter((option) => option !== 'Todos')
@@ -1975,7 +1981,7 @@ export default function AdminPage() {
                 const rowType = compactValue(row.type, 'Tardeo')
                 const rowMusic = compactValue(row.music, 'Comercial')
                 const rowAudience = compactValue(row.audience, 'Mixto')
-                const rowArea = compactValue(row.area, 'Madrid')
+                const rowArea = displayAreaName(compactValue(row.area, 'Madrid'))
                 const rowPrice = compactValue(row.price_from, '0')
                 const rowStatus = compactValue(row.status, 'nuevo')
 

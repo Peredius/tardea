@@ -20,7 +20,7 @@ const AREA_OPTIONS = [
   'Ponzano',
   'La Latina',
   'Carabanchel',
-  'Chamartin',
+  'Chamartín',
   'Tetuan',
   'Fuencarral-El Pardo',
   'Fuencarral',
