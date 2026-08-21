@@ -288,6 +288,7 @@ export default function AdminEventSeriesPage() {
     const host = getHost(url)
     return host && !host.includes('instagram.com') && !host.includes('tiktok.com') && !isTicketUrl(url)
   }) || ''
+  const monitorUrl = getFirstUrl(mainEvent?.website_url, websiteUrl, ticketUrl, mainEvent?.source_url)
 
   function openBaseEditor() {
     const currentCover = mainEvent.cover || ''
@@ -805,10 +806,10 @@ export default function AdminEventSeriesPage() {
     loadEvents()
   }
 
-  async function extractDatesIntoSeries() {
-    const url = extractUrl.trim()
+  async function extractDatesIntoSeries(sourceUrl?: string) {
+    const url = (sourceUrl || extractUrl).trim()
     if (!url) {
-      setMessage('Pega primero un enlace de Linktree, Fourvenues o tiquetera')
+      setMessage('Guarda primero una web o tiquetera en Datos base, o pega un enlace manualmente')
       return
     }
 
@@ -853,7 +854,7 @@ export default function AdminEventSeriesPage() {
         music: baseMusic.length ? baseMusic : ['Comercial'],
         audience: mainEvent.audience || data.audience || 'Mixto',
         price_from: mainEvent.price_from ? Number(mainEvent.price_from) : Number(data.priceFrom || data.price_from || 0),
-        cover: mainEvent.cover || data.cover || null,
+        cover: event.cover || event.image || event.imageUrl || mainEvent.cover || data.cover || null,
         reel_url: mainEvent.reel_url || null,
         featured: false,
         description: mainEvent.description || data.description || 'Evento importado desde enlace. Pendiente de revision antes de publicar.',
@@ -899,6 +900,7 @@ export default function AdminEventSeriesPage() {
                     external_id: `${extractedEvent.sourceUrl || extractedEvent.source_url || url}-${extractedEvent.date}`,
                     start_time: extractedEvent.startTime || extractedEvent.start_time || currentEvent.start_time,
                     end_time: extractedEvent.endTime || extractedEvent.end_time || currentEvent.end_time,
+                    cover: extractedEvent.cover || currentEvent.cover,
                   })
                   .eq('id', currentEvent.id)
               )
@@ -916,7 +918,7 @@ export default function AdminEventSeriesPage() {
         return
       }
 
-      setExtractUrl('')
+      if (!sourceUrl) setExtractUrl('')
       setMessage([
         rowsToInsert.length > 0 ? `${rowsToInsert.length} fecha${rowsToInsert.length === 1 ? '' : 's'} creada${rowsToInsert.length === 1 ? '' : 's'}` : '',
         existingEventsToUpdate.length > 0 ? `${existingEventsToUpdate.length} enlace${existingEventsToUpdate.length === 1 ? '' : 's'} de tiquetera corregido${existingEventsToUpdate.length === 1 ? '' : 's'}` : '',
@@ -1179,24 +1181,37 @@ export default function AdminEventSeriesPage() {
           {mainEvent && (
             <div className="w-full rounded-2xl border border-white/10 bg-slate-950/40 p-3 sm:max-w-[440px]">
               <div className="mb-4 rounded-2xl border border-brand-500/20 bg-brand-500/5 p-3">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-200">Extraer fechas</p>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-200">Extraer fechas</p>
+                    <p className="mt-1 text-[11px] leading-4 text-slate-500">Busca novedades en la fuente guardada de esta ficha.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => extractDatesIntoSeries(monitorUrl)}
+                    disabled={extractingDates || !monitorUrl}
+                    className="rounded-full border border-brand-500/40 px-4 py-2 text-xs font-bold text-brand-100 hover:border-brand-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {extractingDates ? 'Buscando...' : 'Buscar nuevas fechas'}
+                  </button>
+                </div>
                 <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                   <input
                     className="input min-h-0 flex-1 px-3 py-2 text-xs"
                     value={extractUrl}
                     onChange={(event) => setExtractUrl(event.target.value)}
-                    placeholder="Pega Linktree o tiquetera"
+                    placeholder={monitorUrl ? 'Pega otra fuente si quieres revisar una distinta' : 'Pega Linktree, web o tiquetera'}
                   />
                   <button
                     type="button"
-                    onClick={extractDatesIntoSeries}
+                    onClick={() => extractDatesIntoSeries()}
                     disabled={extractingDates}
                     className="rounded-full bg-brand-500 px-4 py-2 text-xs font-bold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {extractingDates ? 'Leyendo...' : 'Importar'}
                   </button>
                 </div>
-                <p className="mt-2 text-[11px] leading-4 text-slate-500">Crea solo fechas nuevas en esta ficha. Las repetidas se saltan.</p>
+                <p className="mt-2 text-[11px] leading-4 text-slate-500">Crea solo fechas nuevas en esta ficha. Las repetidas se saltan o corrigen enlace/cartel.</p>
               </div>
               <div className="mb-3 flex items-center justify-between gap-3">
                 <button type="button" onClick={() => setCalendarMonth((current) => moveMonth(current, -1))} className="rounded-full border border-white/10 px-3 py-1 text-sm font-bold text-slate-300 hover:border-brand-500/60">

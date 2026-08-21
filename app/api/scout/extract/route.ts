@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 type ExtractedEvent = {
   sourceUrl?: string
+  cover?: string
   title: string
   description: string
   date: string
@@ -327,6 +328,56 @@ function extractLinkedEvents(html: string, baseUrl: string, fallback: ExtractedE
   return Array.from(unique.values())
 }
 
+function extractRitaReservationEvents(html: string, baseUrl: string, fallback: ExtractedEvent) {
+  if (!/ritalabailaora\.com/i.test(baseUrl)) return []
+
+  const eventParts = html.split('https://ritalabailaora.com/evento/').slice(1)
+  const candidates = eventParts
+    .map((part) => {
+      const slug = part.split('/')[0] || ''
+      if (!slug) return null
+
+      const sourceUrl = `https://ritalabailaora.com/evento/${slug}/`
+      const textSlug = slug
+        .replace(/(\d{1,2})de/g, '$1 de ')
+        .replace(/([a-záéíóúñ])(\d{1,2})/gi, '$1 $2')
+        .replace(/[-_]+/g, ' ')
+      const date = inferSpanishDateWithYear(textSlug)
+      if (!date) return null
+
+      const srcIndex = part.indexOf('src="')
+      const cover = srcIndex >= 0 ? part.slice(srcIndex + 5).split('"')[0] : ''
+
+      return {
+        ...fallback,
+        sourceUrl,
+        cover,
+        title: fallback.title || 'Experiencia Rita la Bailaora',
+        description: fallback.description || 'Fecha encontrada en la pagina oficial de reservas de Rita la Bailaora.',
+        date,
+        startTime: fallback.startTime || '18:00',
+        endTime: fallback.endTime || '23:00',
+        type: 'Tardeo',
+        music: fallback.music || 'Comercial, Pop, Flamenquito, Reguetón',
+        venue: fallback.venue || 'Rita la Bailaora',
+        area: fallback.area || 'Fuencarral-El Pardo',
+        priceFrom: fallback.priceFrom || '12',
+        mapsUrl: fallback.mapsUrl || 'https://www.google.com/maps/search/?api=1&query=Pista%20del%20Cristo%20de%20El%20Pardo%203%20Madrid',
+        sourceName: 'Rita la Bailaora',
+        confidence: 'high' as const,
+      }
+    })
+    .filter(Boolean) as ExtractedEvent[]
+
+  const unique = new Map<string, ExtractedEvent>()
+  candidates.forEach((event) => {
+    const key = `${event.date}__${event.sourceUrl || ''}`
+    if (!unique.has(key)) unique.set(key, event)
+  })
+
+  return Array.from(unique.values()).sort((a, b) => a.date.localeCompare(b.date))
+}
+
 function inferType(text: string) {
   const lower = text.toLowerCase()
   if (lower.includes('brunch')) return 'Brunch'
@@ -557,6 +608,7 @@ export async function POST(request: Request) {
 
     const data: ExtractedEvent = {
       sourceUrl: parsedUrl.toString(),
+      cover: metaContent(html, 'og:image') || metaContent(html, 'twitter:image'),
       title,
       description: description || 'Evento importado desde enlace. Revisa y completa la informacion antes de publicarlo.',
       date: fromJsonLd?.date || normalizeDate(jsonValue(html, ['startDate', 'eventDate', 'date'])) || inferDate(`${title} ${description} ${text}`),
@@ -575,8 +627,9 @@ export async function POST(request: Request) {
     const usefulFields = countUsefulFields(data)
     data.confidence = usefulFields >= 4 ? 'high' : usefulFields >= 2 ? 'medium' : 'low'
     const linktreeEvents = extractLinktreeEvents(html, parsedUrl.toString(), data)
+    const ritaEvents = extractRitaReservationEvents(html, parsedUrl.toString(), data)
     const linkedEvents = extractLinkedEvents(html, parsedUrl.toString(), data)
-    const events = linktreeEvents.length > 0 ? linktreeEvents : linkedEvents
+    const events = linktreeEvents.length > 0 ? linktreeEvents : ritaEvents.length > 0 ? ritaEvents : linkedEvents
 
     return NextResponse.json({
       ...data,
