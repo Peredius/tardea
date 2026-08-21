@@ -9,7 +9,25 @@ const MUSIC_OPTIONS = ['Comercial', 'Show en directo', 'Electronica', 'Reguetón
 const AUDIENCE_OPTIONS = ['18-25', '25-35', '30+', 'Mixto']
 const EVENT_TYPE_OPTIONS = ['Tardeo', 'Rooftop', 'Brunch', 'Afterwork', 'Fitness Party']
 const CUSTOM_AREA_OPTION = 'Otra zona'
-const AREA_OPTIONS = ['Madrid', 'Centro', 'Salamanca', 'Retiro', 'Chamberi', 'Malasana', 'La Latina', 'Chamartin', 'Tetuan', 'Alcorcon', CUSTOM_AREA_OPTION]
+const AREA_OPTIONS = [
+  'Madrid',
+  'Centro',
+  'Salamanca',
+  'Malasana',
+  'Retiro',
+  'Chamberi',
+  'Gran Via',
+  'Ponzano',
+  'La Latina',
+  'Carabanchel',
+  'Chamartin',
+  'Tetuan',
+  'Fuencarral-El Pardo',
+  'Fuencarral',
+  'Alcorcon',
+  'Mostoles',
+  CUSTOM_AREA_OPTION,
+]
 const FIXED_AREA_OPTIONS = AREA_OPTIONS.filter((option) => option !== CUSTOM_AREA_OPTION)
 
 function generateSlug(title: string, date: string) {

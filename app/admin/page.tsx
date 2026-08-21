@@ -20,7 +20,24 @@ function generateSlug(title: string, date: string) {
 const MUSIC_OPTIONS = ['Comercial', 'Show en directo', 'Electronica', 'Reguetón', 'Pop', 'Indie', 'Flamenquito', 'Remember']
 const AUDIENCE_OPTIONS = ['18-25', '25-35', '30+', 'Mixto']
 const EVENT_TYPE_OPTIONS = ['Tardeo', 'Rooftop', 'Brunch', 'Afterwork', 'Fitness Party', 'Fiesta']
-const AREA_OPTIONS = ['Madrid', 'Centro', 'Salamanca', 'Retiro', 'Chamberi', 'Malasana', 'La Latina', 'Chamartin', 'Tetuan', 'Alcorcon']
+const AREA_OPTIONS = [
+  'Madrid',
+  'Centro',
+  'Salamanca',
+  'Malasana',
+  'Retiro',
+  'Chamberi',
+  'Gran Via',
+  'Ponzano',
+  'La Latina',
+  'Carabanchel',
+  'Chamartin',
+  'Tetuan',
+  'Fuencarral-El Pardo',
+  'Fuencarral',
+  'Alcorcon',
+  'Mostoles',
+]
 const PRICE_OPTIONS = Array.from({ length: 31 }, (_, index) => index.toString())
 
 type BulkEventRow = {
@@ -118,6 +135,29 @@ function formatInputDate(date: Date) {
 
 function compactOptions(values: string[]) {
   return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)))
+}
+
+function normalizeOptionKey(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+const AREA_PRIORITY = AREA_OPTIONS.map(normalizeOptionKey)
+
+function sortAreaOptions(values: string[]) {
+  return values.slice().sort((first, second) => {
+    const firstIndex = AREA_PRIORITY.indexOf(normalizeOptionKey(first))
+    const secondIndex = AREA_PRIORITY.indexOf(normalizeOptionKey(second))
+    const firstRank = firstIndex === -1 ? AREA_PRIORITY.length : firstIndex
+    const secondRank = secondIndex === -1 ? AREA_PRIORITY.length : secondIndex
+
+    if (firstRank !== secondRank) return firstRank - secondRank
+    return first.localeCompare(second, 'es')
+  })
 }
 
 function compactValue(value: string, fallback: string) {
@@ -1532,7 +1572,7 @@ export default function AdminPage() {
     ...researchRows.map((row) => row.music || ''),
   ])
   const researchAudienceOptions = compactOptions(['Mixto', ...AUDIENCE_OPTIONS, ...researchRows.map((row) => row.audience || '')])
-  const researchAreaOptions = compactOptions([...AREA_OPTIONS, ...researchRows.map((row) => row.area || '')])
+  const researchAreaOptions = sortAreaOptions(compactOptions([...AREA_OPTIONS, ...researchRows.map((row) => row.area || '')]))
   const researchPriceOptions = compactOptions([...PRICE_OPTIONS, ...researchRows.map((row) => row.price_from || '')])
   const researchStatuses = ['Todos', 'nuevo', 'revisando', 'listo', 'archivado', 'pasado', 'descartado']
   const researchStatusOptions = researchStatuses.filter((option) => option !== 'Todos')
