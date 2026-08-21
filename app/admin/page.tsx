@@ -1561,7 +1561,6 @@ export default function AdminPage() {
       const aFuture = !a.date || a.date >= todayDate
       const bFuture = !b.date || b.date >= todayDate
       if (aFuture !== bFuture) return aFuture ? -1 : 1
-      if (Boolean(a.profile_reviewed) !== Boolean(b.profile_reviewed)) return a.profile_reviewed ? -1 : 1
       const sourceDiff = (profileSourceRank[a.source_kind] ?? 9) - (profileSourceRank[b.source_kind] ?? 9)
       if (sourceDiff !== 0) return sourceDiff
       return (a.date || '').localeCompare(b.date || '')
@@ -1580,7 +1579,7 @@ export default function AdminPage() {
       sourceKinds: new Set<string>(),
       sourceUrl: item.source_url || '',
       count: 0,
-      reviewedCount: 0,
+      profileReviewed: Boolean(item.profile_reviewed),
     }
 
     if (!current || (current.sourceKinds.has('Listado') && item.source_kind !== 'Listado')) {
@@ -1589,6 +1588,7 @@ export default function AdminPage() {
       summary.venue = item.venue || summary.venue
       summary.area = item.area || summary.area
       summary.slug = getEventSeriesSlug({ title: summary.title, type: summary.type, venue: summary.venue })
+      summary.profileReviewed = Boolean(item.profile_reviewed)
     }
 
     if (!summary.sourceUrl && item.source_url) {
@@ -1596,7 +1596,6 @@ export default function AdminPage() {
     }
     summary.sourceKinds.add(item.source_kind)
     summary.count += 1
-    if (item.profile_reviewed) summary.reviewedCount += 1
     profileMap.set(key, summary)
   })
   const profileTypes = ['Todos', ...compactOptions([...EVENT_TYPE_OPTIONS, ...Array.from(profileMap.values()).map((profile) => profile.type || 'Tardeo')])]
@@ -1604,7 +1603,7 @@ export default function AdminPage() {
   const visibleProfiles = Array.from(profileMap.values())
     .filter((profile) => {
       const typeMatches = profileTypeFilter === 'Todos' || profile.type === profileTypeFilter
-      const isReviewed = profile.reviewedCount > 0
+      const isReviewed = Boolean(profile.profileReviewed)
       const reviewMatches =
         profileReviewFilter === 'all'
         || (profileReviewFilter === 'created' && isReviewed)
@@ -1811,8 +1810,8 @@ export default function AdminPage() {
                   ) : (
                     <span className="text-xs font-semibold text-slate-600">Sin fuente</span>
                   )}
-                  <span className={`rounded-full px-3 py-1 text-xs font-bold md:justify-self-start ${profile.reviewedCount > 0 ? 'bg-emerald-500/15 text-emerald-200' : 'bg-yellow-500/15 text-yellow-200'}`}>
-                    {profile.reviewedCount > 0 ? 'Creada' : 'Por revisar'}
+                  <span className={`rounded-full px-3 py-1 text-xs font-bold md:justify-self-start ${profile.profileReviewed ? 'bg-emerald-500/15 text-emerald-200' : 'bg-yellow-500/15 text-yellow-200'}`}>
+                    {profile.profileReviewed ? 'Creada' : 'Por revisar'}
                   </span>
                   <button
                     type="button"
