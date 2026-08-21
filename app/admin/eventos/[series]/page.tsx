@@ -1309,23 +1309,6 @@ export default function AdminEventSeriesPage() {
         </div>
       </section>
 
-      {pastEvents.length > 0 && (
-        <section className="mt-10">
-          <h2 className="text-2xl font-bold">Fechas pasadas</h2>
-          <div className="mt-4 space-y-2">
-            {pastEvents.map((event) => (
-              <div key={event.id} className="flex flex-col gap-2 rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="font-semibold">{formatDate(event.date)} · {formatTime(event.start_time)} - {formatTime(event.end_time)} · {event.title}</p>
-                <div className="flex items-center gap-3">
-                  <Link href={`/eventos/${event.slug}?from=admin`} className="text-sm font-semibold text-brand-500">Vista</Link>
-                  <button type="button" onClick={() => deleteEventDate(event)} className="text-sm font-semibold text-red-300 hover:text-white">Eliminar</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
       {editingEvent && (
         <section className="mt-10 rounded-3xl border border-white/10 bg-slate-900/80 p-5">
           <div className="mb-4 flex items-center justify-between">
@@ -1381,6 +1364,27 @@ export default function AdminEventSeriesPage() {
           <button type="button" onClick={() => updateEvent(editingEvent)} className="mt-4 rounded-full bg-brand-500 px-5 py-3 text-sm font-bold text-white hover:bg-brand-600">
             {applyEditToSeries ? 'Guardar en todas las fechas' : 'Guardar cambios'}
           </button>
+        </section>
+      )}
+
+      {pastEvents.length > 0 && (
+        <section className="mt-12">
+          <details className="rounded-2xl border border-white/10 bg-slate-950/35">
+            <summary className="cursor-pointer list-none px-4 py-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-500 hover:text-slate-300">
+              Fechas pasadas ({pastEvents.length})
+            </summary>
+            <div className="border-t border-white/10">
+              {pastEvents.map((event) => (
+                <div key={event.id} className="flex flex-col gap-2 border-b border-white/5 px-4 py-2 text-xs last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="font-semibold text-slate-300">{formatDate(event.date)} · {formatTime(event.start_time)} - {formatTime(event.end_time)} · {event.title}</p>
+                  <div className="flex items-center gap-3">
+                    <Link href={`/eventos/${event.slug}?from=admin`} className="font-semibold text-brand-500">Vista</Link>
+                    <button type="button" onClick={() => deleteEventDate(event)} className="font-semibold text-red-300 hover:text-white">Eliminar</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </details>
         </section>
       )}
     </main>
