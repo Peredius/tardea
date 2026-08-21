@@ -985,6 +985,58 @@ export default function AdminPage() {
     fetchResearchRows()
   }
 
+  async function archiveResearchRow(row: ResearchRow, index: number) {
+    if (!row.source_url && !row.title) {
+      setMessage('Rellena al menos enlace o nombre del evento para archivarlo')
+      return
+    }
+
+    const musicList = row.music
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+    const payload = {
+      source_url: row.source_url || null,
+      title: row.title || null,
+      type: row.type || 'Tardeo',
+      music: musicList,
+      audience: row.audience || 'Mixto',
+      venue: row.venue || null,
+      area: row.area || 'Madrid',
+      date: row.date || null,
+      start_time: row.start_time || null,
+      end_time: row.end_time || null,
+      price_from: row.price_from ? Number(row.price_from) : 0,
+      maps_url: row.maps_url || null,
+      status: 'archivado',
+      notes: row.notes || 'Archivado: evento real pendiente de nuevas fechas publicadas',
+    }
+
+    const query = row.id
+      ? supabase.from('event_research_items').update(payload).eq('id', row.id)
+      : supabase.from('event_research_items').insert(payload)
+    const { error } = await query
+
+    if (error) {
+      setMessage(`No se pudo archivar: ${error.message}`)
+      return
+    }
+
+    setResearchRows((rows) =>
+      rows.map((item, rowIndex) =>
+        rowIndex === index
+          ? {
+              ...item,
+              status: 'archivado',
+              notes: item.notes || 'Archivado: evento real pendiente de nuevas fechas publicadas',
+            }
+          : item
+      )
+    )
+    setMessage('Evento archivado para revisarlo mas adelante')
+    fetchResearchRows()
+  }
+
   async function deleteResearchRow(row: ResearchRow, index: number) {
     if (!row.id) {
       setResearchRows((rows) => rows.filter((_, rowIndex) => rowIndex !== index))
@@ -1470,7 +1522,7 @@ export default function AdminPage() {
   const researchAudienceOptions = compactOptions(['Mixto', ...AUDIENCE_OPTIONS, ...researchRows.map((row) => row.audience || '')])
   const researchAreaOptions = compactOptions([...AREA_OPTIONS, ...researchRows.map((row) => row.area || '')])
   const researchPriceOptions = compactOptions([...PRICE_OPTIONS, ...researchRows.map((row) => row.price_from || '')])
-  const researchStatuses = ['Todos', 'nuevo', 'revisando', 'listo', 'pasado', 'descartado']
+  const researchStatuses = ['Todos', 'nuevo', 'revisando', 'listo', 'archivado', 'pasado', 'descartado']
   const researchStatusOptions = researchStatuses.filter((option) => option !== 'Todos')
   const normalizedResearchSearch = researchSearchQuery.trim().toLowerCase()
   const filteredResearchRows = researchRows.filter((row) => {
@@ -1935,9 +1987,12 @@ export default function AdminPage() {
                       />
                       <input className="input h-6 px-2 !text-[8px] leading-none" value={row.notes} onChange={(event) => updateResearchRow(rowIndex, 'notes', event.target.value)} placeholder="Notas" />
                     </div>
-                    <div className="flex flex-wrap justify-end gap-1">
+                    <div className="grid justify-end gap-1">
                       <button type="button" onClick={() => extractResearchRow(rowIndex)} disabled={researchExtractingKey === rowKey} className="rounded-full border border-white/10 px-2 py-1 text-[9px] font-semibold text-slate-200 hover:border-brand-500/60 disabled:opacity-50">
                         {researchExtractingKey === rowKey ? 'Leyendo' : 'Extraer'}
+                      </button>
+                      <button type="button" onClick={() => archiveResearchRow(row, rowIndex)} className="rounded-full border border-white/10 px-2 py-1 text-[9px] font-semibold text-slate-400 hover:border-brand-500/60 hover:text-white">
+                        Archivar
                       </button>
                       <button type="button" onClick={() => saveResearchRow(row)} disabled={researchSaving} className="rounded-full bg-brand-500 px-2 py-1 text-[9px] font-bold text-white hover:bg-brand-600 disabled:opacity-50">Guardar</button>
                       <button type="button" onClick={() => deleteResearchRow(row, rowIndex)} className="rounded-full px-2 py-1 text-[9px] font-semibold text-slate-500 hover:text-red-300">Borrar</button>
