@@ -917,9 +917,21 @@ export default function AdminEventSeriesPage() {
     setMessage('')
 
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        setMessage('Tu sesión de admin ha caducado. Vuelve a iniciar sesión para extraer fechas.')
+        return
+      }
+
       const response = await fetch('/api/scout/extract', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ url }),
       })
       const data = await response.json()
