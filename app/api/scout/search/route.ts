@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { checkRateLimit, requireAdmin } from '@/lib/server-security'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -356,6 +357,16 @@ function buildSearchQueries(platforms: ScoutPlatform[], startDate: string, endDa
 }
 
 export async function GET(request: Request) {
+  const rateLimit = checkRateLimit(request, 'scout-search-debug', 20, 60_000)
+  if (!rateLimit.ok) {
+    return NextResponse.json({ ok: false, error: 'Demasiados intentos.' }, { status: 429 })
+  }
+
+  const admin = await requireAdmin(request)
+  if (!admin.ok) {
+    return NextResponse.json({ ok: false, error: admin.error }, { status: 401 })
+  }
+
   const url = new URL(request.url)
   const startDate = url.searchParams.get('startDate') || new Date().toISOString().slice(0, 10)
   const endDate = url.searchParams.get('endDate') || startDate
@@ -466,6 +477,14 @@ async function assertAdmin(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit(request, 'scout-search', 10, 60_000)
+  if (!rateLimit.ok) {
+    return NextResponse.json(
+      { error: 'Demasiadas busquedas seguidas. Prueba de nuevo en un minuto.', version: SCOUT_SEARCH_VERSION, searchesRun: 0, resultsReceived: 0 },
+      { status: 429 }
+    )
+  }
+
   const admin = await assertAdmin(request)
   if ('error' in admin) {
     return NextResponse.json(

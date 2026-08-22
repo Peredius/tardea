@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server'
 
 const ACCESS_COOKIE = 'tardea_access'
 
+async function sha256(value: string) {
+  const data = new TextEncoder().encode(value)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('')
+}
+
 export async function POST(request: Request) {
   const sitePassword = process.env.SITE_PASSWORD
 
@@ -19,7 +27,7 @@ export async function POST(request: Request) {
 
   response.cookies.set({
     name: ACCESS_COOKIE,
-    value: sitePassword,
+    value: await sha256(sitePassword),
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',

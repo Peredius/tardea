@@ -736,7 +736,10 @@ export default function AdminPage() {
         data: { session },
       } = await supabase.auth.getSession()
       const debugUrl = `/api/scout/search?eventType=${encodeURIComponent(scoutSearchType)}&startDate=${encodeURIComponent(scoutSearchStartDate)}&endDate=${encodeURIComponent(scoutSearchEndDate)}`
-      const debugResponse = await fetch(debugUrl, { cache: 'no-store' })
+      const debugResponse = await fetch(debugUrl, {
+        cache: 'no-store',
+        headers: { Authorization: `Bearer ${session?.access_token || ''}` },
+      })
       const debugData = await debugResponse.json()
 
       const response = await fetch('/api/scout/search', {
@@ -789,7 +792,12 @@ export default function AdminPage() {
     setMessage('Probando conexion con Serper...')
 
     try {
-      const response = await fetch('/api/scout/ping')
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      const response = await fetch('/api/scout/ping', {
+        headers: { Authorization: `Bearer ${session?.access_token || ''}` },
+      })
       const data = await response.json()
       setScoutSearchReport({
         ...data,
@@ -1222,9 +1230,15 @@ export default function AdminPage() {
     setResearchExtractingKey(row.id || index.toString())
 
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
       const response = await fetch('/api/scout/extract', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token || ''}`,
+        },
         body: JSON.stringify({ url: row.source_url }),
       })
       const data = await response.json()
@@ -1528,9 +1542,15 @@ export default function AdminPage() {
     setBulkExtractingRowId(rowId)
 
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
       const response = await fetch('/api/scout/extract', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token || ''}`,
+        },
         body: JSON.stringify({ url: row.ticketUrl }),
       })
       const data = await response.json()

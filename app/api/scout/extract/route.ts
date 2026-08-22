@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { checkRateLimit, requireAdmin } from '@/lib/server-security'
 
 type ExtractedEvent = {
   sourceUrl?: string
@@ -557,6 +558,16 @@ function countUsefulFields(data: ExtractedEvent) {
 }
 
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit(request, 'scout-extract', 20, 60_000)
+  if (!rateLimit.ok) {
+    return NextResponse.json({ error: 'Demasiados intentos. Prueba de nuevo en un minuto.' }, { status: 429 })
+  }
+
+  const admin = await requireAdmin(request)
+  if (!admin.ok) {
+    return NextResponse.json({ error: admin.error }, { status: 401 })
+  }
+
   try {
     const { url } = await request.json()
 
@@ -565,6 +576,15 @@ export async function POST(request: Request) {
     }
 
     const parsedUrl = new URL(url)
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      return NextResponse.json({ error: 'El enlace debe ser http o https' }, { status: 400 })
+    }
+
+    const blockedHosts = ['localhost', '127.0.0.1', '0.0.0.0']
+    if (blockedHosts.includes(parsedUrl.hostname)) {
+      return NextResponse.json({ error: 'Ese enlace no esta permitido' }, { status: 400 })
+    }
+
     const response = await fetch(parsedUrl.toString(), {
       headers: {
         'accept-language': 'es-ES,es;q=0.9,en;q=0.7',

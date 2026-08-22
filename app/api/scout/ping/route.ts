@@ -1,8 +1,19 @@
 import { NextResponse } from 'next/server'
+import { checkRateLimit, requireAdmin } from '@/lib/server-security'
 
 export const runtime = 'nodejs'
 
-export async function GET() {
+export async function GET(request: Request) {
+  const rateLimit = checkRateLimit(request, 'scout-ping', 12, 60_000)
+  if (!rateLimit.ok) {
+    return NextResponse.json({ ok: false, error: 'Demasiados intentos. Prueba de nuevo en un minuto.' }, { status: 429 })
+  }
+
+  const admin = await requireAdmin(request)
+  if (!admin.ok) {
+    return NextResponse.json({ ok: false, error: admin.error }, { status: 401 })
+  }
+
   const apiKey = process.env.SERPER_API_KEY
 
   if (!apiKey) {
