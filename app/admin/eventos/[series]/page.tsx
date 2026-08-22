@@ -68,6 +68,13 @@ function getEventSeriesSlug(event: any) {
   const title = normalizeEventSeriesText(event.title || 'evento')
     .replace(/\s+/g, '-')
     .replace(/^-+|-+$/g, '')
+  return [event.type || 'Tardeo', title || 'evento'].filter(Boolean).join('__').toLowerCase()
+}
+
+function getLegacyEventSeriesSlug(event: any) {
+  const title = normalizeEventSeriesText(event.title || 'evento')
+    .replace(/\s+/g, '-')
+    .replace(/^-+|-+$/g, '')
   const venue = normalizeEventSeriesText(event.venue || '')
     .replace(/\s+/g, '-')
     .replace(/^-+|-+$/g, '')
@@ -374,14 +381,14 @@ export default function AdminEventSeriesPage() {
       return
     }
 
-    setEvents((data || []).filter((event) => getEventSeriesSlug(event) === series))
+    setEvents((data || []).filter((event) => getEventSeriesSlug(event) === series || getLegacyEventSeriesSlug(event) === series))
 
     const { data: researchData } = await supabase
       .from('event_research_items')
       .select('*')
       .order('created_at', { ascending: false })
 
-    setResearchItems((researchData || []).filter((item) => getEventSeriesSlug(item) === series))
+    setResearchItems((researchData || []).filter((item) => getEventSeriesSlug(item) === series || getLegacyEventSeriesSlug(item) === series))
     setLoading(false)
   }
 

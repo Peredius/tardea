@@ -22,11 +22,8 @@ function getEventSeriesSlug(event: any) {
   const title = normalizeEventSeriesText(event.title || 'evento')
     .replace(/\s+/g, '-')
     .replace(/^-+|-+$/g, '')
-  const venue = normalizeEventSeriesText(event.venue || '')
-    .replace(/\s+/g, '-')
-    .replace(/^-+|-+$/g, '')
 
-  return [event.type || 'Tardeo', title || 'evento', venue].filter(Boolean).join('__').toLowerCase()
+  return [event.type || 'Tardeo', title || 'evento'].filter(Boolean).join('__').toLowerCase()
 }
 
 function getFeaturedGroupKey(event: any) {
