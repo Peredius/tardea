@@ -389,7 +389,7 @@ export default function AdminPage() {
   const [activeResearchDropdown, setActiveResearchDropdown] = useState('')
   const [profileSearchQuery, setProfileSearchQuery] = useState('')
   const [profileTypeFilter, setProfileTypeFilter] = useState('Todos')
-  const [profileReviewFilter, setProfileReviewFilter] = useState<'review' | 'created' | 'all'>('review')
+  const [profileReviewFilter, setProfileReviewFilter] = useState<'review' | 'created' | 'all'>('created')
   const [profileFeaturedSavingKey, setProfileFeaturedSavingKey] = useState('')
 
   useEffect(() => {
@@ -1834,8 +1834,8 @@ export default function AdminPage() {
 
           <div className="mb-4 flex flex-wrap gap-2">
             {[
-              { id: 'review', label: 'Por revisar' },
               { id: 'created', label: 'Creadas' },
+              { id: 'review', label: 'Por revisar' },
               { id: 'all', label: 'Todas' },
             ].map((option) => (
               <button
