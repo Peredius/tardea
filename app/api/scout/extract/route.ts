@@ -274,6 +274,73 @@ function normalizeEventKey(value: string) {
     .trim()
 }
 
+function fourvenuesDateFromUrl(url: string) {
+  const match = url.match(/\b(0?\d|[12]\d|3[01])-(0?\d|1[0-2])-(20\d{2})\b/)
+  if (!match) return ''
+  return `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}`
+}
+
+function titleFromFourvenuesEventUrl(url: string) {
+  try {
+    const parsed = new URL(url)
+    const eventSegment = parsed.pathname.split('/').filter(Boolean).pop() || ''
+    return cleanEventTitle(
+      decodeURIComponent(eventSegment)
+        .replace(/\b(0?\d|[12]\d|3[01])-(0?\d|1[0-2])-(20\d{2})\b/g, ' ')
+        .replace(/-[A-Z0-9]{3,}$/i, ' ')
+        .replace(/[-_]+/g, ' ')
+    )
+  } catch {
+    return ''
+  }
+}
+
+function extractFourvenuesEvents(html: string, baseUrl: string, fallback: ExtractedEvent) {
+  if (!/fourvenues\.com/i.test(baseUrl)) return []
+
+  const anchorMatches = [...html.matchAll(/<a\b[^>]*href=["']([^"']*\/events\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)]
+  const candidates = anchorMatches
+    .map((match) => {
+      const href = absoluteUrl(decodeHtml(match[1]), baseUrl)
+      if (!/fourvenues\.com/i.test(href)) return null
+
+      const label = decodeHtml(match[2])
+      const date = fourvenuesDateFromUrl(href) || inferDate(label) || inferSpanishDateWithYear(label)
+      if (!date || !isUpcomingDate(date)) return null
+
+      const { startTime, endTime } = extractTimes(label)
+      const title = titleFromFourvenuesEventUrl(href) || cleanEventTitle(label) || fallback.title
+      const venue = inferVenue(`${label} ${href}`, href) || fallback.venue
+
+      if (!title || title.length < 4) return null
+
+      return {
+        ...fallback,
+        sourceUrl: href,
+        title,
+        description: fallback.description || 'Evento encontrado en Fourvenues. Revisa fecha, cartel y enlace antes de publicarlo.',
+        date,
+        startTime: startTime || fallback.startTime || '18:00',
+        endTime: endTime || fallback.endTime || '23:00',
+        type: inferType(`${title} ${label}`),
+        music: inferMusic(`${title} ${label}`),
+        venue,
+        area: inferAreaFromVenue(venue, label) || fallback.area || 'Madrid',
+        sourceName: 'Fourvenues',
+        confidence: 'high' as const,
+      }
+    })
+    .filter(Boolean) as ExtractedEvent[]
+
+  const unique = new Map<string, ExtractedEvent>()
+  candidates.forEach((event) => {
+    const key = `${normalizeEventKey(event.title)}__${normalizeEventKey(event.venue)}__${event.date}`
+    if (!unique.has(key)) unique.set(key, event)
+  })
+
+  return onlyUpcomingEvents(Array.from(unique.values())).sort((a, b) => a.date.localeCompare(b.date))
+}
+
 function extractLinktreeEvents(html: string, baseUrl: string, fallback: ExtractedEvent) {
   if (!/linktr\.ee/i.test(baseUrl)) return []
 
@@ -505,7 +572,9 @@ async function fallbackEventsFromSearch(url: URL) {
     `site:${basePath}`,
     `"${sourceTitle}" entradas`,
     `"${sourceTitle}" fourvenues`,
-  ]
+    /fourvenues\.com/i.test(url.hostname) ? `site:site.fourvenues.com/es/*/events "${sourceTitle}" "2026"` : '',
+    /fourvenues\.com/i.test(url.hostname) ? `site:site.fourvenues.com/es/*/events "${sourceTitle}" entradas` : '',
+  ].filter(Boolean)
   const results = (await Promise.all(queries.map(searchSerper))).flat()
   const seen = new Set<string>()
   const events: ExtractedEvent[] = []
@@ -516,9 +585,9 @@ async function fallbackEventsFromSearch(url: URL) {
 
     const text = `${result.title} ${result.snippet}`
 
-    const date = inferDate(text) || inferSpanishDateWithYear(text)
+    const date = fourvenuesDateFromUrl(result.link) || inferDate(text) || inferSpanishDateWithYear(text)
     const { startTime, endTime } = extractTimes(text)
-    const title = cleanEventTitle(result.title.replace(/\|\s*.*$/g, '')) || sourceTitle
+    const title = titleFromFourvenuesEventUrl(result.link) || cleanEventTitle(result.title.replace(/\|\s*.*$/g, '')) || sourceTitle
     const venue = inferVenue(text, result.link)
     const area = inferAreaFromVenue(venue, text)
 
@@ -670,8 +739,9 @@ export async function POST(request: Request) {
     data.confidence = usefulFields >= 4 ? 'high' : usefulFields >= 2 ? 'medium' : 'low'
     const linktreeEvents = extractLinktreeEvents(html, parsedUrl.toString(), data)
     const ritaEvents = extractRitaReservationEvents(html, parsedUrl.toString(), data)
+    const fourvenuesEvents = extractFourvenuesEvents(html, parsedUrl.toString(), data)
     const linkedEvents = extractLinkedEvents(html, parsedUrl.toString(), data)
-    const events = linktreeEvents.length > 0 ? linktreeEvents : ritaEvents.length > 0 ? ritaEvents : linkedEvents
+    const events = linktreeEvents.length > 0 ? linktreeEvents : ritaEvents.length > 0 ? ritaEvents : fourvenuesEvents.length > 0 ? fourvenuesEvents : linkedEvents
     const safeData = isUpcomingDate(data.date) ? data : { ...data, date: '' }
 
     return NextResponse.json({
