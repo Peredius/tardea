@@ -12,8 +12,8 @@ export default function HomePage() {
     <main>
       <Navbar />
       <Hero /> 
-      <Filters />
       <FeaturedEvents />
+      <Filters />
       <AreasSection />
       <CreatorsSection />
       <Newsletter />

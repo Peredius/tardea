@@ -247,23 +247,7 @@ function formatSelectedDateLabel(date: string) {
 
 export function Filters() {
   const carouselRef = useRef<HTMLDivElement | null>(null)
-  const [selectedDates, setSelectedDates] = useState<string[]>(() => {
-    if (typeof window !== 'undefined') {
-      const storedDates = localStorage.getItem('selectedDates')
-      if (storedDates) {
-        try {
-          return JSON.parse(storedDates)
-        } catch {
-          return []
-        }
-      }
-
-      const storedDate = localStorage.getItem('selectedDate')
-      return storedDate ? [storedDate] : []
-    }
-
-    return []
-  })
+  const [selectedDates, setSelectedDates] = useState<string[]>([])
 
   const [type, setType] = useState('Todos')
   const [music, setMusic] = useState('Todas')
@@ -344,23 +328,7 @@ export function Filters() {
       const eventDates = (event as CustomEvent<{ selectedDates?: string[] }>).detail?.selectedDates
       if (Array.isArray(eventDates)) {
         setSelectedDates(eventDates)
-        return
       }
-
-      const storedDates = localStorage.getItem('selectedDates')
-
-      if (storedDates) {
-        try {
-          setSelectedDates(JSON.parse(storedDates))
-          return
-        } catch {
-          setSelectedDates([])
-          return
-        }
-      }
-
-      const storedDate = localStorage.getItem('selectedDate')
-      setSelectedDates(storedDate ? [storedDate] : [])
     }
 
     window.addEventListener('selectedDateChanged', handleSelectedDateChanged)
