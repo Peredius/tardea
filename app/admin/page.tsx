@@ -392,6 +392,7 @@ export default function AdminPage() {
   const [profileSearchQuery, setProfileSearchQuery] = useState('')
   const [profileTypeFilter, setProfileTypeFilter] = useState('Todos')
   const [profileReviewFilter, setProfileReviewFilter] = useState<'review' | 'created' | 'all'>('created')
+  const [profileSortMode, setProfileSortMode] = useState<'alphabetical' | 'modified'>('alphabetical')
   const [profileFeaturedSavingKey, setProfileFeaturedSavingKey] = useState('')
 
   useEffect(() => {
@@ -1724,6 +1725,7 @@ export default function AdminPage() {
       sourceKinds: new Set<string>(),
       sourceUrl: item.source_url || '',
       count: 0,
+      updatedAt: item.updated_at || item.created_at || item.date || '',
       profileReviewed: Boolean(item.profile_reviewed),
       featured: Boolean(item.featured),
     }
@@ -1740,6 +1742,10 @@ export default function AdminPage() {
     summary.featured = Boolean(summary.featured || item.featured)
     if (!summary.sourceUrl && item.source_url) {
       summary.sourceUrl = item.source_url
+    }
+    const itemUpdatedAt = item.updated_at || item.created_at || item.date || ''
+    if (itemUpdatedAt && (!summary.updatedAt || itemUpdatedAt > summary.updatedAt)) {
+      summary.updatedAt = itemUpdatedAt
     }
     summary.sourceKinds.add(item.source_kind)
     summary.count += 1
@@ -1764,7 +1770,14 @@ export default function AdminPage() {
       ].some((value) => (value || '').toLowerCase().includes(normalizedProfileSearch))
       return typeMatches && reviewMatches && searchMatches
     })
-    .sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }))
+    .sort((a, b) => {
+      if (profileSortMode === 'modified') {
+        const modifiedDiff = (b.updatedAt || '').localeCompare(a.updatedAt || '')
+        if (modifiedDiff !== 0) return modifiedDiff
+      }
+
+      return a.title.localeCompare(b.title, 'es', { sensitivity: 'base' })
+    })
   const filteredScoutEvents = scoutTypeFilter === 'Todos'
     ? scoutEvents
     : scoutEvents.filter((event) => (event.type || 'Tardeo') === scoutTypeFilter)
@@ -1923,9 +1936,27 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="mb-3 flex items-center justify-between text-xs font-semibold text-slate-500">
+          <div className="mb-3 flex flex-col gap-2 text-xs font-semibold text-slate-500 sm:flex-row sm:items-center sm:justify-between">
             <span>{visibleProfiles.length} fichas</span>
-            <span>Orden alfabetico</span>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: 'alphabetical', label: 'Orden alfabético' },
+                { id: 'modified', label: 'Últimos modificados' },
+              ].map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setProfileSortMode(option.id as 'alphabetical' | 'modified')}
+                  className={`rounded-full px-3 py-1 text-xs font-bold transition ${
+                    profileSortMode === option.id
+                      ? 'bg-slate-200 text-slate-950'
+                      : 'bg-white/10 text-slate-300 hover:bg-white/15 hover:text-white'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {visibleProfiles.length === 0 ? (
