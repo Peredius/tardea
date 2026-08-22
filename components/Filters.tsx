@@ -524,6 +524,10 @@ export function Filters() {
     )
   }
 
+  if (selectedDates.length === 0) {
+    return <section id="eventos" className="container-page scroll-mt-24 md:scroll-mt-20" />
+  }
+
   return (
     <section id="eventos" className="container-page scroll-mt-24 py-6 md:scroll-mt-20">
       <div className="card p-5">
@@ -667,8 +671,7 @@ export function Filters() {
         </div>
       </div>
 
-      {selectedDates.length > 0 && (
-        <>
+      <>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="inline-flex w-fit rounded-full border border-white/10 bg-slate-900/80 p-1">
             <button
@@ -880,8 +883,7 @@ export function Filters() {
           })}
         </div>
         )}
-        </>
-      )}
+      </>
     </section>
   )
 }

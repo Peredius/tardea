@@ -140,40 +140,40 @@ export function FeaturedEvents() {
                 : 'min-w-[50vw] scale-[0.94] opacity-80'
             }`}
           >
-            <div className="relative flex aspect-[9/16] overflow-hidden sm:block sm:aspect-auto">
+            <div className="relative flex aspect-[9/16] overflow-hidden">
               <Link
                 href={`/eventos/${event.slug}`}
                 aria-label={`Ver ${event.title}`}
-                className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105 sm:relative sm:h-44 sm:w-full"
+                className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
                 style={{
                   backgroundImage: `url(${event.cover || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80'})`,
                 }}
               />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/75 to-transparent sm:hidden" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent" />
 
-              <div className="relative z-10 mt-auto flex min-w-0 flex-1 flex-col justify-end self-end p-4 sm:mt-0 sm:justify-start sm:self-auto">
-                <div className="mb-2 flex flex-wrap gap-1.5 sm:mb-3 sm:gap-2">
+              <div className="relative z-10 mt-auto flex min-w-0 flex-1 flex-col justify-end self-end p-4">
+                <div className="mb-2 flex flex-wrap gap-1.5 sm:gap-2">
                   <span className="badge">Destacado</span>
-                  {event.type && <span className="badge hidden sm:inline-flex">{event.type}</span>}
+                  {event.type && <span className="badge">{event.type}</span>}
                 </div>
 
-                <h3 className="line-clamp-2 text-base font-semibold leading-tight text-white sm:text-lg">
+                <h3 className="line-clamp-2 text-base font-semibold leading-tight text-white">
                   {event.title}
                 </h3>
 
-                <p className="mt-2 flex items-center gap-2 text-xs text-slate-200 sm:text-sm sm:text-slate-400">
+                <p className="mt-2 flex items-center gap-2 text-xs text-slate-200">
                   <MapPin className="h-4 w-4 text-brand-500" />
                   {event.venue}
                 </p>
 
-                <p className="mt-2 flex items-center gap-2 text-xs text-slate-200 sm:text-sm sm:text-slate-400">
+                <p className="mt-2 flex items-center gap-2 text-xs text-slate-200">
                   <CalendarDays className="h-4 w-4 text-brand-500" />
                   {new Date(event.date).toLocaleDateString('es-ES')}
                   {event.start_time ? ` · ${event.start_time.slice(0, 5)}` : ''}
                 </p>
 
-                <Link href={`/eventos/${event.slug}`} className="mt-3 text-sm font-semibold text-brand-500 hover:underline sm:mt-4">
+                <Link href={`/eventos/${event.slug}`} className="mt-3 text-sm font-semibold text-brand-500 hover:underline">
                   Ver evento →
                 </Link>
               </div>
