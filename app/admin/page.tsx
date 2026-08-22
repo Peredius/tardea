@@ -390,6 +390,7 @@ export default function AdminPage() {
   const [profileSearchQuery, setProfileSearchQuery] = useState('')
   const [profileTypeFilter, setProfileTypeFilter] = useState('Todos')
   const [profileReviewFilter, setProfileReviewFilter] = useState<'review' | 'created' | 'all'>('review')
+  const [profileFeaturedSavingKey, setProfileFeaturedSavingKey] = useState('')
 
   useEffect(() => {
     setAdminTab(getAdminTabFromPath(pathname))
@@ -1144,6 +1145,36 @@ export default function AdminPage() {
     fetchResearchRows()
   }
 
+  async function toggleProfileFeatured(profile: any) {
+    const eventIds = [...events, ...pendingEvents, ...scoutEvents]
+      .filter((event) => getProfileIndexKey({ ...event, source_kind: event.imported_by_agent && event.needs_review ? 'Scout' : 'Publicado' }) === profile.key)
+      .map((event) => event.id)
+      .filter(Boolean)
+
+    if (eventIds.length === 0) {
+      setMessage('Esta ficha aun no tiene fechas creadas para destacar')
+      return
+    }
+
+    const nextFeatured = !profile.featured
+    setProfileFeaturedSavingKey(profile.key)
+
+    const { error } = await supabase
+      .from('events')
+      .update({ featured: nextFeatured })
+      .in('id', eventIds)
+
+    setProfileFeaturedSavingKey('')
+
+    if (error) {
+      setMessage(`No se pudo actualizar destacados: ${error.message}`)
+      return
+    }
+
+    setMessage(nextFeatured ? `Ficha "${profile.title}" activada en destacados` : `Ficha "${profile.title}" quitada de destacados`)
+    fetchEvents()
+  }
+
   async function extractResearchRow(index: number) {
     const row = researchRows[index]
 
@@ -1638,6 +1669,7 @@ export default function AdminPage() {
       sourceUrl: item.source_url || '',
       count: 0,
       profileReviewed: Boolean(item.profile_reviewed),
+      featured: Boolean(item.featured),
     }
 
     if (!current || (current.sourceKinds.has('Listado') && item.source_kind !== 'Listado')) {
@@ -1649,6 +1681,7 @@ export default function AdminPage() {
       summary.profileReviewed = Boolean(item.profile_reviewed)
     }
 
+    summary.featured = Boolean(summary.featured || item.featured)
     if (!summary.sourceUrl && item.source_url) {
       summary.sourceUrl = item.source_url
     }
@@ -1846,7 +1879,7 @@ export default function AdminPage() {
               {visibleProfiles.map((profile) => (
                 <div
                   key={profile.key}
-                  className="grid gap-2 px-4 py-3 text-sm transition hover:bg-white/[0.03] md:grid-cols-[minmax(220px,1fr)_110px_minmax(150px,0.8fr)_80px_80px_105px_90px] md:items-center"
+                  className="grid gap-2 px-4 py-3 text-sm transition hover:bg-white/[0.03] md:grid-cols-[minmax(220px,1fr)_110px_minmax(150px,0.8fr)_80px_80px_105px_105px_90px] md:items-center"
                 >
                   <Link href={`/admin/eventos/${profile.slug}`} className="font-bold text-white hover:text-brand-300">
                     {profile.title}
@@ -1871,6 +1904,18 @@ export default function AdminPage() {
                   <span className={`rounded-full px-3 py-1 text-xs font-bold md:justify-self-start ${profile.profileReviewed ? 'bg-emerald-500/15 text-emerald-200' : 'bg-yellow-500/15 text-yellow-200'}`}>
                     {profile.profileReviewed ? 'Creada' : 'Por revisar'}
                   </span>
+                  {profileReviewFilter === 'created' ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleProfileFeatured(profile)}
+                      disabled={profileFeaturedSavingKey === profile.key}
+                      className={`justify-self-start rounded-full px-3 py-1 text-xs font-bold transition disabled:opacity-60 ${profile.featured ? 'bg-brand-500 text-white hover:bg-brand-600' : 'border border-brand-500/40 text-brand-100 hover:border-brand-500 hover:text-white'}`}
+                    >
+                      {profileFeaturedSavingKey === profile.key ? 'Guardando' : profile.featured ? 'Destacada' : 'Destacar'}
+                    </button>
+                  ) : (
+                    <span className="hidden text-xs text-slate-600 md:block">-</span>
+                  )}
                   <button
                     type="button"
                     onClick={() => deleteEventProfile(profile)}
