@@ -62,6 +62,7 @@ type ResearchRow = {
   id?: string
   selected?: boolean
   source_url: string
+  promoter_group: string
   title: string
   type: string
   music: string
@@ -104,6 +105,7 @@ function createResearchRow(values: Partial<ResearchRow> = {}): ResearchRow {
   return {
     selected: false,
     source_url: '',
+    promoter_group: '',
     title: '',
     type: 'Tardeo',
     music: 'Comercial',
@@ -528,16 +530,17 @@ export default function AdminPage() {
       return
     }
 
-    const eventProfileSlug = getPromoterEventProfileSlug(claimedEvent)
-    const musicList = Array.isArray(claimedEvent.music)
-      ? claimedEvent.music
-      : typeof claimedEvent.music === 'string'
-        ? claimedEvent.music.split(',').map((item: string) => item.trim()).filter(Boolean)
-        : ['Comercial']
+    async function ensurePromoterEventProfile(event: any) {
+      const eventProfileSlug = getPromoterEventProfileSlug(event)
+      const musicList = Array.isArray(event.music)
+        ? event.music
+        : typeof event.music === 'string'
+          ? event.music.split(',').map((item: string) => item.trim()).filter(Boolean)
+          : ['Comercial']
+      let eventProfileId = event.event_profile_id || ''
 
-    let eventProfileId = claimedEvent.event_profile_id || ''
+      if (eventProfileId) return eventProfileId
 
-    if (!eventProfileId) {
       const { data: existingProfile, error: existingProfileError } = await supabase
         .from('promoter_event_profiles')
         .select('id')
@@ -547,31 +550,31 @@ export default function AdminPage() {
 
       if (existingProfileError) {
         setMessage(`No se pudo comprobar la ficha del promotor: ${existingProfileError.message}`)
-        return
+        return ''
       }
 
       eventProfileId = existingProfile?.id || ''
-    }
+      if (eventProfileId) return eventProfileId
 
-    if (!eventProfileId) {
       const { data: newProfile, error: profileError } = await supabase
         .from('promoter_event_profiles')
         .insert({
           user_id: claim.promoter_user_id,
-          name: claimedEvent.title || claim.company || 'Evento reclamado',
+          name: event.title || claim.company || 'Evento reclamado',
           slug: eventProfileSlug,
-          logo_url: claimedEvent.cover || null,
-          banner_url: claimedEvent.cover || null,
-          description: claimedEvent.description || claim.message || null,
-          type: claimedEvent.type || 'Tardeo',
-          venue_name: claimedEvent.venue || null,
-          area: claimedEvent.area || null,
-          address: claimedEvent.address || null,
-          maps_url: claimedEvent.maps_url || null,
+          logo_url: event.cover || null,
+          banner_url: event.cover || null,
+          description: event.description || claim.message || null,
+          type: event.type || 'Tardeo',
+          venue_name: event.venue || null,
+          area: event.area || null,
+          address: event.address || null,
+          maps_url: event.maps_url || null,
           music: musicList.length ? musicList : ['Comercial'],
-          audience: claimedEvent.audience || 'Mixto',
-          price_from: claimedEvent.price_from || 0,
-          website_url: claim.website || claimedEvent.source_url || null,
+          audience: event.audience || 'Mixto',
+          price_from: event.price_from || 0,
+          website_url: claim.website || event.source_url || null,
+          promoter_group: event.promoter_group || claimedEvent.promoter_group || claim.company || null,
           is_active: true,
           updated_at: new Date().toISOString(),
         })
@@ -580,15 +583,15 @@ export default function AdminPage() {
 
       if (profileError) {
         setMessage(`No se pudo crear la ficha del evento para el promotor: ${profileError.message}`)
-        return
+        return ''
       }
 
-      eventProfileId = newProfile.id
+      return newProfile.id
     }
 
     const { data: allEvents, error: allEventsError } = await supabase
       .from('events')
-      .select('id, title, type, venue')
+      .select('*')
 
     if (allEventsError) {
       setMessage(`No se pudieron localizar las fechas relacionadas: ${allEventsError.message}`)
@@ -596,22 +599,39 @@ export default function AdminPage() {
     }
 
     const claimedSeriesSlug = getEventSeriesSlug(claimedEvent)
-    const relatedEventIds = (allEvents || [])
-      .filter((event) => getEventSeriesSlug(event) === claimedSeriesSlug)
-      .map((event) => event.id)
+    const claimedPromoterGroup = (claimedEvent.promoter_group || '').trim().toLowerCase()
+    const claimScopeEvents = claimedPromoterGroup
+      ? (allEvents || []).filter((event) => (event.promoter_group || '').trim().toLowerCase() === claimedPromoterGroup)
+      : (allEvents || []).filter((event) => getEventSeriesSlug(event) === claimedSeriesSlug)
+    const eventsBySeries = new Map<string, any[]>()
 
-    const { error: eventError } = await supabase
-      .from('events')
-      .update({
-        user_id: claim.promoter_user_id,
-        event_profile_id: eventProfileId,
-        claimed_at: new Date().toISOString(),
-      })
-      .in('id', relatedEventIds.length ? relatedEventIds : [claim.event_id])
+    ;(claimScopeEvents.length ? claimScopeEvents : [claimedEvent]).forEach((event) => {
+      const key = getEventSeriesSlug(event)
+      eventsBySeries.set(key, [...(eventsBySeries.get(key) || []), event])
+    })
 
-    if (eventError) {
-      setMessage(`Error al asignar evento: ${eventError.message}`)
-      return
+    let linkedCount = 0
+
+    for (const [, seriesEvents] of eventsBySeries) {
+      const representativeEvent = seriesEvents[0]
+      const profileId = await ensurePromoterEventProfile(representativeEvent)
+      if (!profileId) return
+
+      const { error: eventError } = await supabase
+        .from('events')
+        .update({
+          user_id: claim.promoter_user_id,
+          event_profile_id: profileId,
+          claimed_at: new Date().toISOString(),
+        })
+        .in('id', seriesEvents.map((event) => event.id).filter(Boolean))
+
+      if (eventError) {
+        setMessage(`Error al asignar evento: ${eventError.message}`)
+        return
+      }
+
+      linkedCount += seriesEvents.length
     }
 
     const { error: claimError } = await supabase
@@ -627,7 +647,7 @@ export default function AdminPage() {
       return
     }
 
-    setMessage(`Reclamacion aprobada. Ficha creada/asignada y ${relatedEventIds.length || 1} fecha${(relatedEventIds.length || 1) === 1 ? '' : 's'} vinculada${(relatedEventIds.length || 1) === 1 ? '' : 's'} al promotor`)
+    setMessage(`Reclamacion aprobada. ${eventsBySeries.size} ficha${eventsBySeries.size === 1 ? '' : 's'} y ${linkedCount || 1} fecha${(linkedCount || 1) === 1 ? '' : 's'} vinculada${(linkedCount || 1) === 1 ? '' : 's'} al promotor`)
     fetchEvents()
   }
 
@@ -922,6 +942,7 @@ export default function AdminPage() {
 
     return {
       title: row.title,
+      promoter_group: row.promoter_group || null,
       slug: generateSlug(row.title, row.date),
       venue: row.venue || 'Pendiente de revisar',
       area: row.area || 'Madrid',

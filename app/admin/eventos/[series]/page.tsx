@@ -362,6 +362,7 @@ export default function AdminEventSeriesPage() {
     const currentCover = mainEvent.cover || ''
     setBaseForm({
       title: mainEvent.title || '',
+      promoter_group: mainEvent.promoter_group || '',
       type: mainEvent.type || 'Tardeo',
       music: Array.isArray(mainEvent.music)
         ? mainEvent.music
@@ -450,6 +451,7 @@ export default function AdminEventSeriesPage() {
 
     const payload = {
       title: baseForm.title || mainEvent.title,
+      promoter_group: baseForm.promoter_group || null,
       venue: baseForm.venue || null,
       area: baseForm.area || null,
       address: baseForm.address || null,
@@ -486,6 +488,7 @@ export default function AdminEventSeriesPage() {
         .from('event_research_items')
         .update({
           title: payload.title,
+          promoter_group: payload.promoter_group,
           venue: payload.venue,
           area: payload.area,
           maps_url: payload.maps_url,
@@ -859,6 +862,7 @@ export default function AdminEventSeriesPage() {
     const musicList = getMusicList(event.music || mainEvent.music)
     const rowsToInsert = duplicateDates.map((date) => ({
       title,
+      promoter_group: event.promoter_group || mainEvent.promoter_group || null,
       slug: generateSlug(title, date),
       venue: event.venue || mainEvent.venue || 'Pendiente de revisar',
       area,
@@ -937,6 +941,7 @@ export default function AdminEventSeriesPage() {
 
       const rowsToInsert = newEvents.map((event: any) => ({
         title: baseTitle,
+        promoter_group: mainEvent.promoter_group || data.promoter_group || null,
         slug: generateSlug(baseTitle, event.date),
         venue: event.venue || data.venue || mainEvent.venue || 'Pendiente de revisar',
         area: event.area || data.area || baseArea,
@@ -1146,6 +1151,7 @@ export default function AdminEventSeriesPage() {
             </div>
           </div>
           <div className="mt-4 space-y-2 text-sm text-slate-300">
+            <p><span className="text-slate-500">Promotor:</span> {mainEvent.promoter_group || 'Sin grupo'}</p>
             <p><span className="text-slate-500">Tipo:</span> {mainEvent.type || 'Tardeo'}</p>
             <p><span className="text-slate-500">Musica:</span> {Array.isArray(mainEvent.music) ? mainEvent.music.join(', ') : mainEvent.music || 'Comercial'}</p>
             <p><span className="text-slate-500">Edad:</span> {mainEvent.audience || 'Mixto'}</p>
@@ -1187,6 +1193,7 @@ export default function AdminEventSeriesPage() {
 
           <div className="grid gap-3 lg:grid-cols-2">
             <input className="input" value={baseForm.title || ''} onChange={(event) => updateBaseForm('title', event.target.value)} placeholder="Nombre del evento" />
+            <input className="input" value={baseForm.promoter_group || ''} onChange={(event) => updateBaseForm('promoter_group', event.target.value)} placeholder="Grupo promotor: Rita's, Madrid no descansa..." />
             <select className="select" value={baseForm.type || 'Tardeo'} onChange={(event) => updateBaseForm('type', event.target.value)}>
               {EVENT_TYPE_OPTIONS.map((option) => <option key={option}>{option}</option>)}
             </select>
