@@ -480,14 +480,28 @@ export default function AdminPage() {
       .eq('needs_review', true)
       .order('date', { ascending: true })
 
-    if (error || pendingError || scoutError) {
-      console.error(error || pendingError || scoutError)
-      return
+    if (error) {
+      console.error(error)
+      setMessage(`No se pudieron cargar los eventos aprobados: ${error.message}`)
+      setEvents([])
+    } else {
+      setEvents(data || [])
     }
 
-    setEvents(data || [])
-    setPendingEvents(pendingData || [])
-    setScoutEvents(scoutData || [])
+    if (pendingError) {
+      console.error(pendingError)
+      setPendingEvents([])
+    } else {
+      setPendingEvents(pendingData || [])
+    }
+
+    if (scoutError) {
+      console.error(scoutError)
+      setScoutEvents([])
+    } else {
+      setScoutEvents(scoutData || [])
+    }
+
     fetchEventClaims()
   }
 
@@ -500,6 +514,7 @@ export default function AdminPage() {
 
     if (error) {
       console.error(error)
+      setEventClaims([])
       return
     }
 
