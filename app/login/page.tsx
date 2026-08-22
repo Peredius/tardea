@@ -84,6 +84,7 @@ function LoginContent() {
   const [showPassword, setShowPassword] = useState(false)
   const [venueName, setVenueName] = useState('')
   const [message, setMessage] = useState('')
+  const [loginFailed, setLoginFailed] = useState(false)
   const [sendingRecovery, setSendingRecovery] = useState(false)
   const [legalAccepted, setLegalAccepted] = useState(false)
   const [marketingConsent, setMarketingConsent] = useState(false)
@@ -137,6 +138,7 @@ function LoginContent() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setMessage('')
+    setLoginFailed(false)
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -144,7 +146,8 @@ function LoginContent() {
     })
 
     if (error) {
-      setMessage('Error al iniciar sesion')
+      setMessage('Email o contrasena incorrectos.')
+      setLoginFailed(true)
       return
     }
 
@@ -191,6 +194,7 @@ function LoginContent() {
 
     if (!email) {
       setMessage('Escribe primero tu email para enviarte el enlace.')
+      setLoginFailed(true)
       return
     }
 
@@ -202,10 +206,12 @@ function LoginContent() {
 
     if (error) {
       setMessage(`No se pudo enviar el email: ${error.message}`)
+      setLoginFailed(true)
       return
     }
 
     setMessage('Te hemos enviado un enlace para cambiar la contrasena.')
+    setLoginFailed(false)
   }
 
   async function handleRegister(e: React.FormEvent) {
@@ -430,9 +436,9 @@ function LoginContent() {
                 type="button"
                 onClick={sendPasswordRecovery}
                 disabled={sendingRecovery}
-                className="w-full text-left text-sm font-semibold text-brand-500 transition hover:text-brand-400 disabled:opacity-60"
+                className="w-full text-center text-sm font-semibold text-brand-500 transition hover:text-brand-400 disabled:opacity-60"
               >
-                {sendingRecovery ? 'Enviando enlace...' : 'Olvidaste la contrasena?'}
+                {sendingRecovery ? 'Enviando enlace...' : 'Has olvidado la contrasena?'}
               </button>
             )}
 
@@ -479,6 +485,22 @@ function LoginContent() {
 
             {message && (
               <p className="text-center text-sm text-brand-500">{message}</p>
+            )}
+
+            {!isRegister && loginFailed && (
+              <div className="rounded-2xl border border-brand-500/30 bg-brand-500/10 p-4 text-center">
+                <p className="text-sm text-slate-200">
+                  Si ese correo esta registrado, puedes recibir un enlace para crear una nueva contrasena.
+                </p>
+                <button
+                  type="button"
+                  onClick={sendPasswordRecovery}
+                  disabled={sendingRecovery}
+                  className="mt-3 rounded-full bg-brand-500 px-5 py-2 text-sm font-bold text-white transition hover:bg-brand-600 disabled:opacity-60"
+                >
+                  {sendingRecovery ? 'Enviando...' : 'Recuperar contrasena'}
+                </button>
+              </div>
             )}
           </form>
 
