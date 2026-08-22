@@ -267,6 +267,7 @@ export default function AdminEventSeriesPage() {
   const [baseSaving, setBaseSaving] = useState(false)
   const [uploadingEventCoverId, setUploadingEventCoverId] = useState('')
   const [reviewSaving, setReviewSaving] = useState(false)
+  const [featuredSaving, setFeaturedSaving] = useState(false)
   const [applyEditToSeries, setApplyEditToSeries] = useState(false)
   const [approvingAll, setApprovingAll] = useState(false)
   const [generatingPosters, setGeneratingPosters] = useState(false)
@@ -322,6 +323,7 @@ export default function AdminEventSeriesPage() {
 
   const mainEvent = events[0] || researchItems[0]
   const isProfileReviewed = Boolean(mainEvent?.profile_reviewed)
+  const isSeriesFeatured = events.some((event) => event.featured)
   const upcomingEvents = useMemo(
     () => events.filter((event) => !event.date || event.date >= new Date().toISOString().slice(0, 10)),
     [events]
@@ -612,6 +614,31 @@ export default function AdminEventSeriesPage() {
     loadEvents()
   }
 
+  async function setSeriesFeatured(featured: boolean) {
+    const eventIds = events.map((event) => event.id).filter(Boolean)
+
+    if (eventIds.length === 0) {
+      setMessage('Crea primero al menos una fecha para poder destacar esta ficha')
+      return
+    }
+
+    setFeaturedSaving(true)
+    const { error } = await supabase
+      .from('events')
+      .update({ featured })
+      .in('id', eventIds)
+
+    setFeaturedSaving(false)
+
+    if (error) {
+      setMessage(`No se pudo actualizar destacados: ${error.message}`)
+      return
+    }
+
+    setMessage(featured ? 'Ficha activada en destacados' : 'Ficha quitada de destacados')
+    loadEvents()
+  }
+
   async function updateEvent(event: any) {
     const buildPayload = (targetEvent: any, useTargetDate: boolean) => {
       const targetDate = useTargetDate ? targetEvent.date : event.date
@@ -847,7 +874,7 @@ export default function AdminEventSeriesPage() {
       price_from: event.price_from ? Number(event.price_from) : Number(mainEvent.price_from || 0),
       cover: event.cover || mainEvent.cover || null,
       reel_url: event.reel_url || mainEvent.reel_url || null,
-      featured: false,
+      featured: isSeriesFeatured,
       description: event.description || mainEvent.description || event.notes || mainEvent.notes || 'Evento cargado desde ficha interna de TARDEA. Pendiente de revision antes de publicar.',
       perks: [type, area, ...musicList].filter(Boolean),
       status: 'pending',
@@ -925,7 +952,7 @@ export default function AdminEventSeriesPage() {
         price_from: mainEvent.price_from ? Number(mainEvent.price_from) : Number(data.priceFrom || data.price_from || 0),
         cover: event.cover || event.image || event.imageUrl || mainEvent.cover || data.cover || null,
         reel_url: mainEvent.reel_url || null,
-        featured: false,
+        featured: isSeriesFeatured,
         description: mainEvent.description || data.description || 'Evento importado desde enlace. Pendiente de revision antes de publicar.',
         perks: [baseType, baseArea, ...baseMusic].filter(Boolean),
         status: 'pending',
@@ -1097,6 +1124,14 @@ export default function AdminEventSeriesPage() {
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-xl font-bold">Datos base</h2>
             <div className="flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setSeriesFeatured(!isSeriesFeatured)}
+                disabled={featuredSaving}
+                className={`rounded-full px-3 py-1.5 text-xs font-bold disabled:opacity-60 ${isSeriesFeatured ? 'bg-brand-500 text-white hover:bg-brand-600' : 'border border-brand-500/40 text-brand-100 hover:border-brand-500 hover:text-white'}`}
+              >
+                {featuredSaving ? 'Guardando' : isSeriesFeatured ? 'Destacado activo' : 'Destacar'}
+              </button>
               <button
                 type="button"
                 onClick={() => setProfileReviewed(!isProfileReviewed)}

@@ -6,6 +6,29 @@ import Link from 'next/link'
 import { CalendarDays, MapPin } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
+function normalizeEventSeriesText(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\b\d{1,2}\s*(?:de\s*)?(?:ene|enero|feb|febrero|mar|marzo|abr|abril|may|mayo|jun|junio|jul|julio|ago|agosto|sep|septiembre|oct|octubre|nov|noviembre|dic|diciembre)\b/gi, ' ')
+    .replace(/\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g, ' ')
+    .replace(/\b20\d{2}\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+function getEventSeriesSlug(event: any) {
+  const title = normalizeEventSeriesText(event.title || 'evento')
+    .replace(/\s+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  const venue = normalizeEventSeriesText(event.venue || '')
+    .replace(/\s+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  return [event.type || 'Tardeo', title || 'evento', venue].filter(Boolean).join('__').toLowerCase()
+}
+
 export function FeaturedEvents() {
   const carouselRef = useRef<HTMLDivElement | null>(null)
   const [featured, setFeatured] = useState<any[]>([])
@@ -23,15 +46,19 @@ export function FeaturedEvents() {
         .eq('featured', true)
         .gte('date', today)
         .order('date', { ascending: true })
-        .limit(4)
+        .limit(80)
 
       if (error) {
         console.error(error)
         return
       }
 
-      setFeatured(data || [])
-      setActiveEventSlug(data?.[0]?.slug || '')
+      const uniqueFeatured = Array.from(
+        new Map((data || []).map((event) => [getEventSeriesSlug(event), event])).values()
+      ).slice(0, 8)
+
+      setFeatured(uniqueFeatured)
+      setActiveEventSlug(uniqueFeatured[0]?.slug || '')
     }
 
     fetchFeaturedEvents()
