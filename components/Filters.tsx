@@ -240,11 +240,6 @@ function googleMapsRouteUrl(event: any, userLocation: { lat: number; lng: number
   return `https://www.google.com/maps/dir/?${params.toString()}`
 }
 
-function formatSelectedDateLabel(date: string) {
-  const [, month, day] = date.split('-')
-  return `${day}/${month}`
-}
-
 export function Filters() {
   const carouselRef = useRef<HTMLDivElement | null>(null)
   const [selectedDates, setSelectedDates] = useState<string[]>([])
@@ -545,13 +540,8 @@ export function Filters() {
 
           <span className="inline-flex items-center gap-3">
             {selectedDates.length > 0 && (
-              <span className="text-right">
-                <span className="block text-sm font-semibold text-white">
-                  {filtered.length} encontrados
-                </span>
-                <span className="block text-[10px] font-semibold text-slate-500">
-                  {selectedDates.map(formatSelectedDateLabel).join(' + ')}
-                </span>
+              <span className="text-sm font-semibold text-white">
+                {filtered.length} encontrados
               </span>
             )}
             <ChevronDown
@@ -670,14 +660,9 @@ export function Filters() {
           </h2>
 
           {selectedDates.length > 0 && (
-            <div className="text-right">
-              <p className="text-sm font-semibold text-white">
-                {filtered.length} eventos encontrados
-              </p>
-              <p className="text-[11px] font-semibold text-slate-500">
-                {selectedDates.map(formatSelectedDateLabel).join(' + ')}
-              </p>
-            </div>
+            <p className="text-sm font-semibold text-white">
+              {filtered.length} eventos encontrados
+            </p>
           )}
         </div>
       </div>
