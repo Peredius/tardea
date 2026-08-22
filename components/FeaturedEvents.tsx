@@ -29,6 +29,10 @@ function getEventSeriesSlug(event: any) {
   return [event.type || 'Tardeo', title || 'evento', venue].filter(Boolean).join('__').toLowerCase()
 }
 
+function getFeaturedGroupKey(event: any) {
+  return event.event_profile_id || getEventSeriesSlug(event)
+}
+
 export function FeaturedEvents() {
   const carouselRef = useRef<HTMLDivElement | null>(null)
   const [featured, setFeatured] = useState<any[]>([])
@@ -43,19 +47,36 @@ export function FeaturedEvents() {
         .select('*')
         .eq('published', true)
         .eq('status', 'approved')
-        .eq('featured', true)
         .gte('date', today)
         .order('date', { ascending: true })
-        .limit(80)
+        .limit(400)
 
       if (error) {
         console.error(error)
         return
       }
 
-      const uniqueFeatured = Array.from(
-        new Map((data || []).map((event) => [getEventSeriesSlug(event), event])).values()
-      ).slice(0, 8)
+      const featuredGroups = new Map<string, { nextEvent: any; featured: boolean }>()
+
+      ;(data || []).forEach((event) => {
+        const key = getFeaturedGroupKey(event)
+        const current = featuredGroups.get(key)
+
+        if (!current) {
+          featuredGroups.set(key, {
+            nextEvent: event,
+            featured: Boolean(event.featured),
+          })
+          return
+        }
+
+        current.featured = Boolean(current.featured || event.featured)
+      })
+
+      const uniqueFeatured = Array.from(featuredGroups.values())
+        .filter((group) => group.featured)
+        .map((group) => group.nextEvent)
+        .slice(0, 8)
 
       setFeatured(uniqueFeatured)
       setActiveEventSlug(uniqueFeatured[0]?.slug || '')
