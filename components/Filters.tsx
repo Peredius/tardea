@@ -667,18 +667,7 @@ export function Filters() {
         </div>
       </div>
 
-      {selectedDates.length === 0 ? (
-        <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-10 text-center">
-          <h3 className="text-2xl font-semibold text-white">
-            Elige una fecha
-          </h3>
-
-          <p className="mt-3 text-slate-400">
-            Descubre los mejores tardeos, brunchs, rooftop y afterworks de
-            Madrid.
-          </p>
-        </div>
-      ) : (
+      {selectedDates.length > 0 && (
         <>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="inline-flex w-fit rounded-full border border-white/10 bg-slate-900/80 p-1">
