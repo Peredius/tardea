@@ -84,6 +84,7 @@ function LoginContent() {
   const [showPassword, setShowPassword] = useState(false)
   const [venueName, setVenueName] = useState('')
   const [message, setMessage] = useState('')
+  const [sendingRecovery, setSendingRecovery] = useState(false)
   const [legalAccepted, setLegalAccepted] = useState(false)
   const [marketingConsent, setMarketingConsent] = useState(false)
 
@@ -183,6 +184,28 @@ function LoginContent() {
     } else {
       window.location.href = '/cuenta'
     }
+  }
+
+  async function sendPasswordRecovery() {
+    setMessage('')
+
+    if (!email) {
+      setMessage('Escribe primero tu email para enviarte el enlace.')
+      return
+    }
+
+    setSendingRecovery(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+    })
+    setSendingRecovery(false)
+
+    if (error) {
+      setMessage(`No se pudo enviar el email: ${error.message}`)
+      return
+    }
+
+    setMessage('Te hemos enviado un enlace para cambiar la contrasena.')
   }
 
   async function handleRegister(e: React.FormEvent) {
@@ -401,6 +424,17 @@ function LoginContent() {
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
+
+            {!isRegister && (
+              <button
+                type="button"
+                onClick={sendPasswordRecovery}
+                disabled={sendingRecovery}
+                className="w-full text-left text-sm font-semibold text-brand-500 transition hover:text-brand-400 disabled:opacity-60"
+              >
+                {sendingRecovery ? 'Enviando enlace...' : 'Olvidaste la contrasena?'}
+              </button>
+            )}
 
             {isRegister && (
               <div className="space-y-3 text-sm text-slate-400">

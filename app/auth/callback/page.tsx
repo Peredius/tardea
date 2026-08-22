@@ -6,11 +6,17 @@ import { supabase } from '@/lib/supabase'
 
 function AuthCallbackContent() {
   const searchParams = useSearchParams()
-  const type = searchParams.get('type') === 'venue' ? 'venue' : 'user'
+  const authType = searchParams.get('type')
+  const type = authType === 'venue' ? 'venue' : 'user'
   const [message, setMessage] = useState('Completando inicio de sesion...')
 
   useEffect(() => {
     async function completeLogin() {
+      if (authType === 'recovery' || window.location.hash.includes('type=recovery')) {
+        window.location.href = '/reset-password'
+        return
+      }
+
       const {
         data: { user },
         error,
@@ -97,7 +103,7 @@ function AuthCallbackContent() {
     }
 
     completeLogin()
-  }, [type])
+  }, [authType, type])
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
