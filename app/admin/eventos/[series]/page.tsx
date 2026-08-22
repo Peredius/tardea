@@ -30,15 +30,26 @@ const AREA_OPTIONS = [
 ]
 const FIXED_AREA_OPTIONS = AREA_OPTIONS.filter((option) => option !== CUSTOM_AREA_OPTION)
 
-function generateSlug(title: string, date: string) {
-  const cleanTitle = title
+function slugify(value: string) {
+  return value
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
+}
 
+function generateSlug(title: string, date: string) {
+  const cleanTitle = slugify(title || 'evento')
   return date ? `${cleanTitle}-${date}` : cleanTitle
+}
+
+function shortSlugHash(value: string) {
+  let hash = 0
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) >>> 0
+  }
+  return hash.toString(36).slice(0, 6)
 }
 
 function normalizeEventSeriesText(value: string) {
@@ -273,6 +284,46 @@ export default function AdminEventSeriesPage() {
   const [generatingPosters, setGeneratingPosters] = useState(false)
   const [extractUrl, setExtractUrl] = useState('')
   const [extractingDates, setExtractingDates] = useState(false)
+
+  async function resolveUniqueEventSlug(candidates: string[], reservedSlugs = new Set<string>()) {
+    const cleanCandidates = Array.from(new Set(candidates.map((candidate) => slugify(candidate)).filter(Boolean)))
+
+    for (const candidate of cleanCandidates) {
+      if (reservedSlugs.has(candidate)) continue
+
+      const { data } = await supabase
+        .from('events')
+        .select('id')
+        .eq('slug', candidate)
+        .maybeSingle()
+
+      if (!data && !reservedSlugs.has(candidate)) {
+        reservedSlugs.add(candidate)
+        return candidate
+      }
+    }
+
+    const fallbackBase = cleanCandidates[0] || `evento-${Date.now().toString(36)}`
+    for (let attempt = 2; attempt <= 25; attempt += 1) {
+      const candidate = `${fallbackBase}-${attempt}`
+      if (reservedSlugs.has(candidate)) continue
+
+      const { data } = await supabase
+        .from('events')
+        .select('id')
+        .eq('slug', candidate)
+        .maybeSingle()
+
+      if (!data && !reservedSlugs.has(candidate)) {
+        reservedSlugs.add(candidate)
+        return candidate
+      }
+    }
+
+    const fallbackSlug = `${fallbackBase}-${Date.now().toString(36)}`
+    reservedSlugs.add(fallbackSlug)
+    return fallbackSlug
+  }
 
   async function loadEvents() {
     const {
@@ -860,39 +911,55 @@ export default function AdminEventSeriesPage() {
     const type = event.type || mainEvent.type || 'Tardeo'
     const area = event.area || mainEvent.area || 'Madrid'
     const musicList = getMusicList(event.music || mainEvent.music)
-    const rowsToInsert = duplicateDates.map((date) => ({
-      title,
-      promoter_group: event.promoter_group || mainEvent.promoter_group || null,
-      slug: generateSlug(title, date),
-      venue: event.venue || mainEvent.venue || 'Pendiente de revisar',
-      area,
-      address: event.address || mainEvent.address || event.venue || mainEvent.venue || area,
-      maps_url: event.maps_url || mainEvent.maps_url || null,
-      source_url: event.source_url || mainEvent.source_url || null,
-      date,
-      start_time: event.start_time || mainEvent.start_time || '18:00',
-      end_time: event.end_time || mainEvent.end_time || '23:00',
-      type,
-      music: musicList.length ? musicList : ['Comercial'],
-      audience: event.audience || mainEvent.audience || 'Mixto',
-      price_from: event.price_from ? Number(event.price_from) : Number(mainEvent.price_from || 0),
-      cover: event.cover || mainEvent.cover || null,
-      reel_url: event.reel_url || mainEvent.reel_url || null,
-      featured: isSeriesFeatured,
-      description: event.description || mainEvent.description || event.notes || mainEvent.notes || 'Evento cargado desde ficha interna de TARDEA. Pendiente de revision antes de publicar.',
-      perks: [type, area, ...musicList].filter(Boolean),
-      status: 'pending',
-      published: false,
-      source_name: event.source_name || mainEvent.source_name || 'Ficha interna',
-      external_id: `${event.source_url || mainEvent.source_url || title}-${date}`,
-      imported_by_agent: true,
-      image_status: event.image_status || mainEvent.image_status || 'provisional',
-      needs_review: true,
-      website_url: event.website_url || mainEvent.website_url || null,
-      instagram_url: event.instagram_url || mainEvent.instagram_url || null,
-      tiktok_url: event.tiktok_url || mainEvent.tiktok_url || null,
-      profile_reviewed: event.profile_reviewed || mainEvent.profile_reviewed || false,
-    }))
+    const reservedSlugs = new Set<string>()
+    const rowsToInsert = await Promise.all(
+      duplicateDates.map(async (date) => {
+        const venue = event.venue || mainEvent.venue || 'Pendiente de revisar'
+        const sourceUrl = event.source_url || mainEvent.source_url || ''
+        const slug = await resolveUniqueEventSlug(
+          [
+            generateSlug(title, date),
+            generateSlug(`${title} ${venue}`, date),
+            generateSlug(`${title} ${venue || getHost(sourceUrl)} ${shortSlugHash(`${sourceUrl}-${date}`)}`, date),
+          ],
+          reservedSlugs
+        )
+
+        return {
+          title,
+          promoter_group: event.promoter_group || mainEvent.promoter_group || null,
+          slug,
+          venue,
+          area,
+          address: event.address || mainEvent.address || event.venue || mainEvent.venue || area,
+          maps_url: event.maps_url || mainEvent.maps_url || null,
+          source_url: sourceUrl || null,
+          date,
+          start_time: event.start_time || mainEvent.start_time || '18:00',
+          end_time: event.end_time || mainEvent.end_time || '23:00',
+          type,
+          music: musicList.length ? musicList : ['Comercial'],
+          audience: event.audience || mainEvent.audience || 'Mixto',
+          price_from: event.price_from ? Number(event.price_from) : Number(mainEvent.price_from || 0),
+          cover: event.cover || mainEvent.cover || null,
+          reel_url: event.reel_url || mainEvent.reel_url || null,
+          featured: isSeriesFeatured,
+          description: event.description || mainEvent.description || event.notes || mainEvent.notes || 'Evento cargado desde ficha interna de TARDEA. Pendiente de revision antes de publicar.',
+          perks: [type, area, ...musicList].filter(Boolean),
+          status: 'pending',
+          published: false,
+          source_name: event.source_name || mainEvent.source_name || 'Ficha interna',
+          external_id: `${sourceUrl || title}-${date}`,
+          imported_by_agent: true,
+          image_status: event.image_status || mainEvent.image_status || 'provisional',
+          needs_review: true,
+          website_url: event.website_url || mainEvent.website_url || null,
+          instagram_url: event.instagram_url || mainEvent.instagram_url || null,
+          tiktok_url: event.tiktok_url || mainEvent.tiktok_url || null,
+          profile_reviewed: event.profile_reviewed || mainEvent.profile_reviewed || false,
+        }
+      })
+    )
     const { error } = await supabase.from('events').insert(rowsToInsert)
 
     if (error) {
@@ -951,39 +1018,55 @@ export default function AdminEventSeriesPage() {
       const baseArea = mainEvent.area || data.area || 'Madrid'
       const baseMusic = getMusicList(mainEvent.music || data.music)
 
-      const rowsToInsert = newEvents.map((event: any) => ({
-        title: baseTitle,
-        promoter_group: mainEvent.promoter_group || data.promoter_group || null,
-        slug: generateSlug(baseTitle, event.date),
-        venue: event.venue || data.venue || mainEvent.venue || 'Pendiente de revisar',
-        area: event.area || data.area || baseArea,
-        address: event.address || data.address || event.venue || data.venue || mainEvent.address || mainEvent.venue || baseArea,
-        maps_url: event.mapsUrl || event.maps_url || data.mapsUrl || data.maps_url || mainEvent.maps_url || null,
-        source_url: event.sourceUrl || event.source_url || url,
-        date: event.date,
-        start_time: event.startTime || event.start_time || mainEvent.start_time || data.startTime || '18:00',
-        end_time: event.endTime || event.end_time || mainEvent.end_time || data.endTime || '23:00',
-        type: baseType,
-        music: baseMusic.length ? baseMusic : ['Comercial'],
-        audience: mainEvent.audience || data.audience || 'Mixto',
-        price_from: mainEvent.price_from ? Number(mainEvent.price_from) : Number(data.priceFrom || data.price_from || 0),
-        cover: event.cover || event.image || event.imageUrl || mainEvent.cover || data.cover || null,
-        reel_url: mainEvent.reel_url || null,
-        featured: isSeriesFeatured,
-        description: mainEvent.description || data.description || 'Evento importado desde enlace. Pendiente de revision antes de publicar.',
-        perks: [baseType, baseArea, ...baseMusic].filter(Boolean),
-        status: 'pending',
-        published: false,
-        source_name: event.sourceName || event.source_name || data.sourceName || data.source_name || 'Fuente externa',
-        external_id: `${event.sourceUrl || event.source_url || url}-${event.date}`,
-        imported_by_agent: true,
-        image_status: mainEvent.image_status || 'provisional',
-        needs_review: true,
-        website_url: mainEvent.website_url || data.website_url || null,
-        instagram_url: mainEvent.instagram_url || data.instagram_url || null,
-        tiktok_url: mainEvent.tiktok_url || data.tiktok_url || null,
-        profile_reviewed: mainEvent.profile_reviewed || false,
-      }))
+      const reservedSlugs = new Set<string>()
+      const rowsToInsert = await Promise.all(
+        newEvents.map(async (event: any) => {
+          const venue = event.venue || data.venue || mainEvent.venue || 'Pendiente de revisar'
+          const sourceUrl = event.sourceUrl || event.source_url || url
+          const slug = await resolveUniqueEventSlug(
+            [
+              generateSlug(baseTitle, event.date),
+              generateSlug(`${baseTitle} ${venue}`, event.date),
+              generateSlug(`${baseTitle} ${venue || getHost(sourceUrl)} ${shortSlugHash(`${sourceUrl}-${event.date}`)}`, event.date),
+            ],
+            reservedSlugs
+          )
+
+          return {
+            title: baseTitle,
+            promoter_group: mainEvent.promoter_group || data.promoter_group || null,
+            slug,
+            venue,
+            area: event.area || data.area || baseArea,
+            address: event.address || data.address || event.venue || data.venue || mainEvent.address || mainEvent.venue || baseArea,
+            maps_url: event.mapsUrl || event.maps_url || data.mapsUrl || data.maps_url || mainEvent.maps_url || null,
+            source_url: sourceUrl,
+            date: event.date,
+            start_time: event.startTime || event.start_time || mainEvent.start_time || data.startTime || '18:00',
+            end_time: event.endTime || event.end_time || mainEvent.end_time || data.endTime || '23:00',
+            type: baseType,
+            music: baseMusic.length ? baseMusic : ['Comercial'],
+            audience: mainEvent.audience || data.audience || 'Mixto',
+            price_from: mainEvent.price_from ? Number(mainEvent.price_from) : Number(data.priceFrom || data.price_from || 0),
+            cover: event.cover || event.image || event.imageUrl || mainEvent.cover || data.cover || null,
+            reel_url: mainEvent.reel_url || null,
+            featured: isSeriesFeatured,
+            description: mainEvent.description || data.description || 'Evento importado desde enlace. Pendiente de revision antes de publicar.',
+            perks: [baseType, baseArea, ...baseMusic].filter(Boolean),
+            status: 'pending',
+            published: false,
+            source_name: event.sourceName || event.source_name || data.sourceName || data.source_name || 'Fuente externa',
+            external_id: `${sourceUrl}-${event.date}`,
+            imported_by_agent: true,
+            image_status: mainEvent.image_status || 'provisional',
+            needs_review: true,
+            website_url: mainEvent.website_url || data.website_url || null,
+            instagram_url: mainEvent.instagram_url || data.instagram_url || null,
+            tiktok_url: mainEvent.tiktok_url || data.tiktok_url || null,
+            profile_reviewed: mainEvent.profile_reviewed || false,
+          }
+        })
+      )
 
       if (rowsToInsert.length > 0) {
         const { error } = await supabase.from('events').insert(rowsToInsert)
