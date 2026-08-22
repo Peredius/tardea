@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { BrandLogo } from '@/components/BrandLogo'
 
@@ -11,6 +12,7 @@ function RegisterContent() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [venueName, setVenueName] = useState('')
   const [message, setMessage] = useState('')
   const [legalAccepted, setLegalAccepted] = useState(false)
@@ -104,15 +106,25 @@ function RegisterContent() {
               required
             />
 
-            <input
-              className="input"
-              type="password"
-              autoComplete="new-password"
-              placeholder="Contraseña"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div className="relative">
+              <input
+                className="input pr-12"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                placeholder="Contraseña"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((current) => !current)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
+                aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
 
             <div className="space-y-3 text-sm text-slate-400">
               <label className="flex items-start gap-3">

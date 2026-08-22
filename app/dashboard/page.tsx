@@ -5,6 +5,8 @@ import {
   BadgeEuro,
   ChevronDown,
   CheckCircle2,
+  Eye,
+  EyeOff,
   Hourglass,
   ImagePlus,
   LayoutDashboard,
@@ -176,6 +178,8 @@ export default function DashboardPage() {
   const [billingEmail, setBillingEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const [title, setTitle] = useState('')
   const [venue, setVenue] = useState('')
@@ -1652,22 +1656,42 @@ export default function DashboardPage() {
               </p>
 
               <div className="mt-4 grid gap-4 md:grid-cols-2">
-                <input
-                  className="input"
-                  type="password"
-                  placeholder="Nueva contrasena"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  autoComplete="new-password"
-                />
-                <input
-                  className="input"
-                  type="password"
-                  placeholder="Repetir contrasena"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  autoComplete="new-password"
-                />
+                <div className="relative">
+                  <input
+                    className="input pr-12"
+                    type={showNewPassword ? 'text' : 'password'}
+                    placeholder="Nueva contrasena"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword((current) => !current)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
+                    aria-label={showNewPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                  >
+                    {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    className="input pr-12"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Repetir contrasena"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((current) => !current)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
+                    aria-label={showConfirmPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
               </div>
 
               <button

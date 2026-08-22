@@ -2,11 +2,13 @@
 
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { Eye, EyeOff } from 'lucide-react'
 import { BrandLogo } from '@/components/BrandLogo'
 
 function PrivateAccessForm() {
   const searchParams = useSearchParams()
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
@@ -46,15 +48,25 @@ function PrivateAccessForm() {
           </p>
 
           <div className="mt-6 space-y-4">
-            <input
-              className="input"
-              type="password"
-              placeholder="Contrasena"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoFocus
-              required
-            />
+            <div className="relative">
+              <input
+                className="input pr-12"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Contrasena"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoFocus
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((current) => !current)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
+                aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
 
             <button className="btn-primary w-full" type="submit">
               Entrar

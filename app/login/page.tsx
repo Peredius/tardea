@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Mail } from 'lucide-react'
+import { Eye, EyeOff, Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { BrandLogo } from '@/components/BrandLogo'
 
@@ -81,6 +81,7 @@ function LoginContent() {
   const [isRegister, setIsRegister] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [venueName, setVenueName] = useState('')
   const [message, setMessage] = useState('')
   const [legalAccepted, setLegalAccepted] = useState(false)
@@ -381,15 +382,25 @@ function LoginContent() {
               required
             />
 
-            <input
-              className="input"
-              type="password"
-              placeholder="Contrasena"
-              autoComplete={isRegister ? 'new-password' : 'current-password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div className="relative">
+              <input
+                className="input pr-12"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Contrasena"
+                autoComplete={isRegister ? 'new-password' : 'current-password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((current) => !current)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
+                aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
 
             {isRegister && (
               <div className="space-y-3 text-sm text-slate-400">

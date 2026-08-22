@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Search, X } from 'lucide-react'
+import { Eye, EyeOff, Search, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 function generateSlug(title: string, date: string) {
@@ -393,6 +393,9 @@ export default function AdminPage() {
   const [profileTypeFilter, setProfileTypeFilter] = useState('Todos')
   const [profileReviewFilter, setProfileReviewFilter] = useState<'review' | 'created' | 'all'>('created')
   const [profileFeaturedSavingKey, setProfileFeaturedSavingKey] = useState('')
+  const [adminPassword, setAdminPassword] = useState('')
+  const [showAdminPassword, setShowAdminPassword] = useState(false)
+  const [savingAdminPassword, setSavingAdminPassword] = useState(false)
 
   useEffect(() => {
     setAdminTab(getAdminTabFromPath(pathname))
@@ -822,6 +825,28 @@ export default function AdminPage() {
     } finally {
       setScoutPingLoading(false)
     }
+  }
+
+  async function updateAdminPassword() {
+    setMessage('')
+
+    if (adminPassword.length < 8) {
+      setMessage('La contrasena del admin debe tener al menos 8 caracteres.')
+      return
+    }
+
+    setSavingAdminPassword(true)
+    const { error } = await supabase.auth.updateUser({ password: adminPassword })
+    setSavingAdminPassword(false)
+
+    if (error) {
+      setMessage(`No se pudo cambiar la contrasena del admin: ${error.message}`)
+      return
+    }
+
+    setAdminPassword('')
+    setShowAdminPassword(false)
+    setMessage('Contrasena del admin actualizada correctamente.')
   }
 
   function scoutEventToBulkRow(event: any) {
@@ -1831,6 +1856,43 @@ export default function AdminPage() {
         </button>
       </section>
 
+      <details className="mb-6 rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+        <summary className="cursor-pointer text-sm font-bold text-slate-200">
+          Seguridad admin
+        </summary>
+        <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
+          <div className="relative">
+            <input
+              className="input pr-12"
+              type={showAdminPassword ? 'text' : 'password'}
+              placeholder="Nueva contrasena del admin"
+              value={adminPassword}
+              onChange={(event) => setAdminPassword(event.target.value)}
+              autoComplete="new-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowAdminPassword((current) => !current)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
+              aria-label={showAdminPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+            >
+              {showAdminPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={updateAdminPassword}
+            disabled={savingAdminPassword}
+            className="rounded-full bg-brand-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {savingAdminPassword ? 'Guardando...' : 'Cambiar contrasena'}
+          </button>
+        </div>
+        <p className="mt-3 text-xs text-slate-500">
+          Esto cambia la contrasena del usuario con el que entras al panel admin. La contrasena global de la web se cambia en Vercel.
+        </p>
+      </details>
+
       <div className="mb-8 flex flex-wrap gap-2 rounded-full border border-white/10 bg-slate-900/80 p-1">
         <Link
           href={getAdminTabHref('events')}
@@ -1857,6 +1919,8 @@ export default function AdminPage() {
           Fichas
         </Link>
       </div>
+
+      {message && <p className="mb-5 text-sm text-brand-500">{message}</p>}
 
       {adminTab === 'profiles' && (
         <section className="rounded-3xl border border-white/10 bg-slate-900/70 p-5">
