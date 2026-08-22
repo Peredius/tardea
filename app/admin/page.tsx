@@ -704,7 +704,7 @@ export default function AdminPage() {
   }
 
   async function discardScoutEvent(eventId: string) {
-    const confirmed = window.confirm('Quieres descartar este evento encontrado por Scout?')
+    const confirmed = window.confirm('¿Quieres descartar este evento encontrado por Scout?')
     if (!confirmed) return
 
     const { error } = await supabase
@@ -1157,7 +1157,7 @@ export default function AdminPage() {
   }
 
   async function deleteEventProfile(profile: any) {
-    const confirmed = window.confirm(`Eliminar la ficha "${profile.title}" y todos sus datos asociados?`)
+    const confirmed = window.confirm(`¿Eliminar la ficha "${profile.title}" y todos sus datos asociados?`)
     if (!confirmed) return
 
     const eventIds = [...events, ...pendingEvents, ...scoutEvents]

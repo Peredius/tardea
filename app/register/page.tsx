@@ -120,7 +120,7 @@ function RegisterContent() {
                 type="button"
                 onClick={() => setShowPassword((current) => !current)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
-                aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>

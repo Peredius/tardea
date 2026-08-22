@@ -709,12 +709,12 @@ export default function DashboardPage() {
     setPasswordMessage('')
 
     if (newPassword.length < 6) {
-      setPasswordMessage('La contrasena debe tener al menos 6 caracteres.')
+      setPasswordMessage('La contraseña debe tener al menos 6 caracteres.')
       return
     }
 
     if (newPassword !== confirmPassword) {
-      setPasswordMessage('Las contrasenas no coinciden.')
+      setPasswordMessage('Las contraseñas no coinciden.')
       return
     }
 
@@ -723,13 +723,13 @@ export default function DashboardPage() {
     setSavingPassword(false)
 
     if (error) {
-      setPasswordMessage(`No se pudo cambiar la contrasena: ${error.message}`)
+      setPasswordMessage(`No se pudo cambiar la contraseña: ${error.message}`)
       return
     }
 
     setNewPassword('')
     setConfirmPassword('')
-    setPasswordMessage('Contrasena actualizada correctamente.')
+    setPasswordMessage('Contraseña actualizada correctamente.')
   }
 
   async function savePublicProfile(e: React.FormEvent) {
@@ -1650,9 +1650,9 @@ export default function DashboardPage() {
             {profileMessage && <p className="text-sm text-brand-500">{profileMessage}</p>}
 
             <div className="border-t border-white/10 pt-6">
-              <h3 className="text-xl font-bold">Cambiar contrasena</h3>
+              <h3 className="text-xl font-bold">Cambiar contraseña</h3>
               <p className="mt-2 text-sm text-slate-400">
-                Usa una contrasena nueva para acceder con este correo.
+                Usa una contraseña nueva para acceder con este correo.
               </p>
 
               <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -1660,7 +1660,7 @@ export default function DashboardPage() {
                   <input
                     className="input pr-12"
                     type={showNewPassword ? 'text' : 'password'}
-                    placeholder="Nueva contrasena"
+                    placeholder="Nueva contraseña"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     autoComplete="new-password"
@@ -1669,7 +1669,7 @@ export default function DashboardPage() {
                     type="button"
                     onClick={() => setShowNewPassword((current) => !current)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
-                    aria-label={showNewPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                    aria-label={showNewPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   >
                     {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
@@ -1678,7 +1678,7 @@ export default function DashboardPage() {
                   <input
                     className="input pr-12"
                     type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="Repetir contrasena"
+                    placeholder="Repetir contraseña"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     autoComplete="new-password"
@@ -1687,7 +1687,7 @@ export default function DashboardPage() {
                     type="button"
                     onClick={() => setShowConfirmPassword((current) => !current)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
-                    aria-label={showConfirmPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                    aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   >
                     {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
@@ -1700,7 +1700,7 @@ export default function DashboardPage() {
                 disabled={savingPassword}
                 className="btn-secondary mt-4 w-full md:w-auto"
               >
-                {savingPassword ? 'Actualizando...' : 'Cambiar contrasena'}
+                {savingPassword ? 'Actualizando...' : 'Cambiar contraseña'}
               </button>
 
               {passwordMessage && <p className="mt-3 text-sm text-brand-500">{passwordMessage}</p>}

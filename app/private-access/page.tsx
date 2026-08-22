@@ -24,7 +24,7 @@ function PrivateAccessForm() {
     })
 
     if (!response.ok) {
-      setMessage('Contrasena incorrecta')
+      setMessage('Contraseña incorrecta')
       return
     }
 
@@ -44,7 +44,7 @@ function PrivateAccessForm() {
           </h1>
 
           <p className="mt-3 text-center text-sm text-slate-400">
-            Esta version esta en edicion. Introduce la contrasena para entrar.
+            Esta version esta en edicion. Introduce la contraseña para entrar.
           </p>
 
           <div className="mt-6 space-y-4">
@@ -52,7 +52,7 @@ function PrivateAccessForm() {
               <input
                 className="input pr-12"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Contrasena"
+                placeholder="Contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoFocus
@@ -62,7 +62,7 @@ function PrivateAccessForm() {
                 type="button"
                 onClick={() => setShowPassword((current) => !current)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
-                aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>

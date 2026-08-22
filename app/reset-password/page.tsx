@@ -11,7 +11,7 @@ export default function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState('Introduce tu nueva contrasena.')
+  const [message, setMessage] = useState('Introduce tu nueva contraseña.')
   const [hasSession, setHasSession] = useState(false)
 
   useEffect(() => {
@@ -34,12 +34,12 @@ export default function ResetPasswordPage() {
     setMessage('')
 
     if (password.length < 8) {
-      setMessage('La contrasena debe tener al menos 8 caracteres.')
+      setMessage('La contraseña debe tener al menos 8 caracteres.')
       return
     }
 
     if (password !== confirmPassword) {
-      setMessage('Las contrasenas no coinciden.')
+      setMessage('Las contraseñas no coinciden.')
       return
     }
 
@@ -48,13 +48,13 @@ export default function ResetPasswordPage() {
     setSaving(false)
 
     if (error) {
-      setMessage(`No se pudo cambiar la contrasena: ${error.message}`)
+      setMessage(`No se pudo cambiar la contraseña: ${error.message}`)
       return
     }
 
     setPassword('')
     setConfirmPassword('')
-    setMessage('Contrasena actualizada. Ya puedes entrar con la nueva.')
+    setMessage('Contraseña actualizada. Ya puedes entrar con la nueva.')
   }
 
   return (
@@ -65,7 +65,7 @@ export default function ResetPasswordPage() {
             <BrandLogo className="justify-center" iconClassName="h-11 w-11" />
           </a>
 
-          <h1 className="text-center text-3xl font-bold">Nueva contrasena</h1>
+          <h1 className="text-center text-3xl font-bold">Nueva contraseña</h1>
           <p className="mt-3 text-center text-sm text-slate-400">{message}</p>
 
           <div className="mt-6 space-y-4">
@@ -73,7 +73,7 @@ export default function ResetPasswordPage() {
               <input
                 className="input pr-12"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Nueva contrasena"
+                placeholder="Nueva contraseña"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 autoComplete="new-password"
@@ -84,7 +84,7 @@ export default function ResetPasswordPage() {
                 type="button"
                 onClick={() => setShowPassword((current) => !current)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
-                aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
@@ -94,7 +94,7 @@ export default function ResetPasswordPage() {
               <input
                 className="input pr-12"
                 type={showConfirmPassword ? 'text' : 'password'}
-                placeholder="Repetir contrasena"
+                placeholder="Repetir contraseña"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
                 autoComplete="new-password"
@@ -105,14 +105,14 @@ export default function ResetPasswordPage() {
                 type="button"
                 onClick={() => setShowConfirmPassword((current) => !current)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
-                aria-label={showConfirmPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
               >
                 {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
 
             <button className="btn-primary w-full" type="submit" disabled={saving || !hasSession}>
-              {saving ? 'Guardando...' : 'Guardar contrasena'}
+              {saving ? 'Guardando...' : 'Guardar contraseña'}
             </button>
 
             <a href="/login" className="block text-center text-sm font-semibold text-brand-500 hover:text-brand-400">

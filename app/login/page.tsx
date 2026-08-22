@@ -146,7 +146,7 @@ function LoginContent() {
     })
 
     if (error) {
-      setMessage('Email o contrasena incorrectos.')
+      setMessage('Email o contraseña incorrectos.')
       setLoginFailed(true)
       return
     }
@@ -210,7 +210,7 @@ function LoginContent() {
       return
     }
 
-    setMessage('Te hemos enviado un enlace para cambiar la contrasena.')
+    setMessage('Te hemos enviado un enlace para cambiar la contraseña.')
     setLoginFailed(false)
   }
 
@@ -415,7 +415,7 @@ function LoginContent() {
               <input
                 className="input pr-12"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Contrasena"
+                placeholder="Contraseña"
                 autoComplete={isRegister ? 'new-password' : 'current-password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -425,7 +425,7 @@ function LoginContent() {
                 type="button"
                 onClick={() => setShowPassword((current) => !current)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
-                aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
@@ -438,7 +438,7 @@ function LoginContent() {
                 disabled={sendingRecovery}
                 className="w-full text-center text-sm font-semibold text-brand-500 transition hover:text-brand-400 disabled:opacity-60"
               >
-                {sendingRecovery ? 'Enviando enlace...' : 'Has olvidado la contrasena?'}
+                {sendingRecovery ? 'Enviando enlace...' : '¿Has olvidado la contraseña?'}
               </button>
             )}
 
@@ -490,7 +490,7 @@ function LoginContent() {
             {!isRegister && loginFailed && (
               <div className="rounded-2xl border border-brand-500/30 bg-brand-500/10 p-4 text-center">
                 <p className="text-sm text-slate-200">
-                  Si ese correo esta registrado, puedes recibir un enlace para crear una nueva contrasena.
+                  Si ese correo esta registrado, puedes recibir un enlace para crear una nueva contraseña.
                 </p>
                 <button
                   type="button"
@@ -498,7 +498,7 @@ function LoginContent() {
                   disabled={sendingRecovery}
                   className="mt-3 rounded-full bg-brand-500 px-5 py-2 text-sm font-bold text-white transition hover:bg-brand-600 disabled:opacity-60"
                 >
-                  {sendingRecovery ? 'Enviando...' : 'Recuperar contrasena'}
+                  {sendingRecovery ? 'Enviando...' : 'Recuperar contraseña'}
                 </button>
               </div>
             )}
@@ -535,7 +535,7 @@ function LoginContent() {
           )}
 
           <p className="mt-6 text-center text-sm text-slate-400">
-            {isRegister ? 'Ya tienes cuenta?' : 'No tienes cuenta?'}{' '}
+            {isRegister ? '¿Ya tienes cuenta?' : '¿No tienes cuenta?'}{' '}
             <button
               onClick={() => {
                 setIsRegister(!isRegister)
