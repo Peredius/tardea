@@ -18,7 +18,7 @@ const discoveryPoints = [
   },
 ]
 
-const upcomingAreas = ['Salamanca', 'Chamberi', 'Malasana', 'La Latina', 'Centro', 'Chamartin']
+const upcomingAreas = ['Salamanca', 'Chamberi', 'Malasaña', 'La Latina', 'Centro', 'Chamartin']
 
 export function AreasSection() {
   return (

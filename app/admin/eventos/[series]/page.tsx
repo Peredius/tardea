@@ -13,7 +13,7 @@ const AREA_OPTIONS = [
   'Madrid',
   'Centro',
   'Salamanca',
-  'Malasana',
+  'Malasaña',
   'Retiro',
   'Chamberi',
   'Gran Via',
