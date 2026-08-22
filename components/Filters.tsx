@@ -238,6 +238,47 @@ function googleMapsRouteUrl(event: any, userLocation: { lat: number; lng: number
   return `https://www.google.com/maps/dir/?${params.toString()}`
 }
 
+function escapeMapHtml(value: string) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+function formatMapDate(date: string) {
+  if (!date) return ''
+  return new Date(date).toLocaleDateString('es-ES', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  })
+}
+
+function mapInfoWindowHtml(event: any, userLocation: { lat: number; lng: number } | null) {
+  const eventUrl = `/eventos/${encodeURIComponent(event.slug)}`
+  const routeUrl = googleMapsRouteUrl(event, userLocation)
+  const mapsUrl = googleMapsSearchUrl(event)
+  const meta = [
+    event.venue,
+    displayAreaName(event.area),
+    [formatMapDate(event.date), event.startTime?.slice(0, 5)].filter(Boolean).join(' · '),
+  ].filter(Boolean)
+
+  return `
+    <div style="width:230px;max-width:230px;padding:2px 0 0;font-family:Inter,Arial,sans-serif;color:#0f172a;">
+      <div style="font-size:14px;font-weight:900;line-height:1.2;margin-bottom:6px;">${escapeMapHtml(event.title)}</div>
+      <div style="font-size:12px;line-height:1.45;color:#475569;margin-bottom:10px;">${escapeMapHtml(meta.join(' · '))}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a href="${eventUrl}" style="display:inline-flex;border-radius:999px;background:#f43f5e;color:white;padding:7px 10px;font-size:12px;font-weight:800;text-decoration:none;">Ver evento</a>
+        <a href="${routeUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;border-radius:999px;background:#111827;color:white;padding:7px 10px;font-size:12px;font-weight:800;text-decoration:none;">Ruta</a>
+        <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;border-radius:999px;border:1px solid #cbd5e1;color:#334155;padding:7px 10px;font-size:12px;font-weight:800;text-decoration:none;">Google Maps</a>
+      </div>
+    </div>
+  `
+}
+
 export function Filters() {
   const carouselRef = useRef<HTMLDivElement | null>(null)
   const [selectedDates, setSelectedDates] = useState<string[]>([])
@@ -257,6 +298,7 @@ export function Filters() {
   const googleMapRef = useRef<HTMLDivElement | null>(null)
   const googleMapInstanceRef = useRef<any>(null)
   const googleMarkersRef = useRef<any[]>([])
+  const googleInfoWindowRef = useRef<any>(null)
 
   const activeFilters = [
     type !== 'Todos' ? type : null,
@@ -389,6 +431,8 @@ export function Filters() {
         googleMapInstanceRef.current = map
         googleMarkersRef.current.forEach((marker) => marker.setMap(null))
         googleMarkersRef.current = []
+        const infoWindow = googleInfoWindowRef.current || new google.maps.InfoWindow()
+        googleInfoWindowRef.current = infoWindow
 
         const bounds = new google.maps.LatLngBounds()
         const geocoder = new google.maps.Geocoder()
@@ -426,7 +470,11 @@ export function Filters() {
             title: event.title,
           })
 
-          marker.addListener('click', () => setActiveEventSlug(event.slug))
+          marker.addListener('click', () => {
+            setActiveEventSlug(event.slug)
+            infoWindow.setContent(mapInfoWindowHtml(event, userLocation))
+            infoWindow.open({ anchor: marker, map })
+          })
           googleMarkersRef.current.push(marker)
           bounds.extend(position)
         }
