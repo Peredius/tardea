@@ -170,6 +170,27 @@ function normalizeDate(value: string) {
   return date.toISOString().slice(0, 10)
 }
 
+function todayMadridIso() {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Madrid',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date())
+  const year = parts.find((part) => part.type === 'year')?.value || ''
+  const month = parts.find((part) => part.type === 'month')?.value || ''
+  const day = parts.find((part) => part.type === 'day')?.value || ''
+  return `${year}-${month}-${day}`
+}
+
+function isUpcomingDate(date: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) && date >= todayMadridIso()
+}
+
+function onlyUpcomingEvents(events: ExtractedEvent[]) {
+  return events.filter((event) => isUpcomingDate(event.date))
+}
+
 function normalizeTime(value: string) {
   if (!value) return ''
   const isoTime = value.match(/T(\d{2}:\d{2})/)
@@ -294,7 +315,7 @@ function extractLinktreeEvents(html: string, baseUrl: string, fallback: Extracte
     if (!unique.has(key)) unique.set(key, event)
   })
 
-  return Array.from(unique.values()).sort((a, b) => a.date.localeCompare(b.date))
+  return onlyUpcomingEvents(Array.from(unique.values())).sort((a, b) => a.date.localeCompare(b.date))
 }
 
 function extractLinkedEvents(html: string, baseUrl: string, fallback: ExtractedEvent) {
@@ -326,7 +347,7 @@ function extractLinkedEvents(html: string, baseUrl: string, fallback: ExtractedE
     if (!unique.has(key)) unique.set(key, event)
   })
 
-  return Array.from(unique.values())
+  return onlyUpcomingEvents(Array.from(unique.values()))
 }
 
 function extractRitaReservationEvents(html: string, baseUrl: string, fallback: ExtractedEvent) {
@@ -376,7 +397,7 @@ function extractRitaReservationEvents(html: string, baseUrl: string, fallback: E
     if (!unique.has(key)) unique.set(key, event)
   })
 
-  return Array.from(unique.values()).sort((a, b) => a.date.localeCompare(b.date))
+  return onlyUpcomingEvents(Array.from(unique.values())).sort((a, b) => a.date.localeCompare(b.date))
 }
 
 function inferType(text: string) {
@@ -527,7 +548,7 @@ async function fallbackEventsFromSearch(url: URL) {
     if (!unique.has(key)) unique.set(key, event)
   })
 
-  return Array.from(unique.values()).sort((a, b) => a.date.localeCompare(b.date))
+  return onlyUpcomingEvents(Array.from(unique.values())).sort((a, b) => a.date.localeCompare(b.date))
 }
 
 function eventFromJsonLd(event: any) {
@@ -651,9 +672,10 @@ export async function POST(request: Request) {
     const ritaEvents = extractRitaReservationEvents(html, parsedUrl.toString(), data)
     const linkedEvents = extractLinkedEvents(html, parsedUrl.toString(), data)
     const events = linktreeEvents.length > 0 ? linktreeEvents : ritaEvents.length > 0 ? ritaEvents : linkedEvents
+    const safeData = isUpcomingDate(data.date) ? data : { ...data, date: '' }
 
     return NextResponse.json({
-      ...data,
+      ...safeData,
       events: events.length > 1 ? events : [],
     })
   } catch (error) {

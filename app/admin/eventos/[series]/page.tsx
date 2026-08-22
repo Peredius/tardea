@@ -110,6 +110,23 @@ function formatCalendarDate(date: Date) {
   return `${year}-${month}-${day}`
 }
 
+function todayMadridIso() {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Madrid',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date())
+  const year = parts.find((part) => part.type === 'year')?.value || ''
+  const month = parts.find((part) => part.type === 'month')?.value || ''
+  const day = parts.find((part) => part.type === 'day')?.value || ''
+  return `${year}-${month}-${day}`
+}
+
+function isUpcomingDate(date: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) && date >= todayMadridIso()
+}
+
 function getCalendarDays(monthDate: Date) {
   const year = monthDate.getFullYear()
   const month = monthDate.getMonth()
@@ -888,6 +905,11 @@ export default function AdminEventSeriesPage() {
   }
 
   function toggleDuplicateDate(date: string) {
+    if (!isUpcomingDate(date)) {
+      setMessage(`La fecha ${formatDate(date)} ya ha pasado. Selecciona una fecha futura.`)
+      return
+    }
+
     const exists = events.some((item) => item.date === date)
     if (exists) {
       setMessage(`La fecha ${formatDate(date)} ya esta creada`)
@@ -1009,7 +1031,9 @@ export default function AdminEventSeriesPage() {
       }
 
       const extractedEvents = Array.isArray(data.events) && data.events.length > 0 ? data.events : [data]
-      const datedEvents = extractedEvents.filter((event: any) => event.date)
+      const eventsWithDate = extractedEvents.filter((event: any) => event.date)
+      const pastEvents = eventsWithDate.filter((event: any) => !isUpcomingDate(event.date))
+      const datedEvents = eventsWithDate.filter((event: any) => isUpcomingDate(event.date))
       const newEvents = datedEvents.filter((event: any) => !existingDates.has(event.date))
       const existingEventsToUpdate = datedEvents.filter((event: any) => existingDates.has(event.date) && (event.sourceUrl || event.source_url))
 
@@ -1110,7 +1134,11 @@ export default function AdminEventSeriesPage() {
       }
 
       if (rowsToInsert.length === 0 && existingEventsToUpdate.length === 0) {
-        setMessage('No se detectaron fechas claras en ese enlace')
+        setMessage(
+          pastEvents.length > 0
+            ? `No se han creado fechas: ${pastEvents.length} fecha${pastEvents.length === 1 ? '' : 's'} detectada${pastEvents.length === 1 ? '' : 's'} ya había${pastEvents.length === 1 ? '' : 'n'} pasado.`
+            : 'No se detectaron fechas futuras claras en ese enlace'
+        )
         return
       }
 
@@ -1118,6 +1146,7 @@ export default function AdminEventSeriesPage() {
       setMessage([
         rowsToInsert.length > 0 ? `${rowsToInsert.length} fecha${rowsToInsert.length === 1 ? '' : 's'} creada${rowsToInsert.length === 1 ? '' : 's'}` : '',
         existingEventsToUpdate.length > 0 ? `${existingEventsToUpdate.length} enlace${existingEventsToUpdate.length === 1 ? '' : 's'} de tiquetera corregido${existingEventsToUpdate.length === 1 ? '' : 's'}` : '',
+        pastEvents.length > 0 ? `${pastEvents.length} fecha${pastEvents.length === 1 ? '' : 's'} pasada${pastEvents.length === 1 ? '' : 's'} ignorada${pastEvents.length === 1 ? '' : 's'}` : '',
       ].filter(Boolean).join(' y '))
       loadEvents()
     } catch (error: any) {
