@@ -73,13 +73,19 @@ export function FeaturedEvents() {
         current.featured = Boolean(current.featured || event.featured)
       })
 
-      const uniqueFeatured = Array.from(featuredGroups.values())
+      const groupedEvents = Array.from(featuredGroups.values())
+      const uniqueFeatured = groupedEvents
         .filter((group) => group.featured)
         .map((group) => group.nextEvent)
         .slice(0, 8)
+      const fallbackEvents = groupedEvents
+        .map((group) => group.nextEvent)
+        .slice(0, 8)
 
-      setFeatured(uniqueFeatured)
-      setActiveEventSlug(uniqueFeatured[0]?.slug || '')
+      const eventsToShow = uniqueFeatured.length > 0 ? uniqueFeatured : fallbackEvents
+
+      setFeatured(eventsToShow)
+      setActiveEventSlug(eventsToShow[0]?.slug || '')
     }
 
     fetchFeaturedEvents()
