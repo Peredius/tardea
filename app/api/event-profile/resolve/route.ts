@@ -33,6 +33,37 @@ function getProfileSlug(event: any) {
   return getEventSeriesSlug(event).replace(/__/g, '-').replace(/^-+|-+$/g, '') || 'evento'
 }
 
+function buildProfilePayload(event: any, fallbackEvent: any, slug?: string) {
+  const baseEvent = event || fallbackEvent
+
+  return {
+    user_id: baseEvent.user_id || null,
+    name: baseEvent.title || fallbackEvent.title || 'Plan TARDEA',
+    slug: slug || getProfileSlug(baseEvent),
+    logo_url: baseEvent.cover || fallbackEvent.cover || null,
+    banner_url: baseEvent.cover || fallbackEvent.cover || null,
+    description: baseEvent.description || fallbackEvent.description || null,
+    type: baseEvent.type || fallbackEvent.type || 'Tardeo',
+    venue_name: baseEvent.venue || fallbackEvent.venue || null,
+    area: baseEvent.area || fallbackEvent.area || null,
+    address: baseEvent.address || fallbackEvent.address || null,
+    maps_url: baseEvent.maps_url || fallbackEvent.maps_url || null,
+    music: Array.isArray(baseEvent.music) ? baseEvent.music : [],
+    audience: baseEvent.audience || fallbackEvent.audience || 'Mixto',
+    price_from: baseEvent.price_from ?? fallbackEvent.price_from ?? 0,
+    website_url:
+      baseEvent.website_url ||
+      fallbackEvent.website_url ||
+      baseEvent.source_url ||
+      fallbackEvent.source_url ||
+      null,
+    instagram_url: baseEvent.instagram_url || fallbackEvent.instagram_url || null,
+    tiktok_url: baseEvent.tiktok_url || fallbackEvent.tiktok_url || null,
+    is_active: true,
+    updated_at: new Date().toISOString(),
+  }
+}
+
 function getMatchScore(event: any, profile: any) {
   const eventTitle = normalizeText(event.title || '')
   const eventVenue = normalizeText(event.venue || '')
@@ -170,36 +201,42 @@ export async function POST(request: Request) {
     )
     const baseEvent = relatedEvents[0] || event
 
-    const { data: newProfile } = await supabaseAdmin
+    const profileSlug = getProfileSlug(baseEvent)
+    const profilePayload = buildProfilePayload(baseEvent, event, profileSlug)
+
+    let { data: newProfile, error: profileInsertError } = await supabaseAdmin
       .from('promoter_event_profiles')
-      .insert({
-        user_id: baseEvent.user_id || null,
-        name: baseEvent.title || event.title || 'Plan TARDEA',
-        slug: getProfileSlug(baseEvent),
-        logo_url: baseEvent.cover || event.cover || null,
-        banner_url: baseEvent.cover || event.cover || null,
-        description: baseEvent.description || event.description || null,
-        type: baseEvent.type || event.type || 'Tardeo',
-        venue_name: baseEvent.venue || event.venue || null,
-        area: baseEvent.area || event.area || null,
-        address: baseEvent.address || event.address || null,
-        maps_url: baseEvent.maps_url || event.maps_url || null,
-        music: Array.isArray(baseEvent.music) ? baseEvent.music : [],
-        audience: baseEvent.audience || event.audience || 'Mixto',
-        price_from: baseEvent.price_from ?? event.price_from ?? 0,
-        website_url: baseEvent.website_url || event.website_url || baseEvent.source_url || event.source_url || null,
-        instagram_url: baseEvent.instagram_url || event.instagram_url || null,
-        tiktok_url: baseEvent.tiktok_url || event.tiktok_url || null,
-        is_active: true,
-        updated_at: new Date().toISOString(),
-      })
+      .insert(profilePayload)
       .select('id')
       .maybeSingle()
+
+    if (!newProfile && profileInsertError) {
+      const { data: existingProfile } = await supabaseAdmin
+        .from('promoter_event_profiles')
+        .select('id')
+        .eq('slug', profileSlug)
+        .maybeSingle()
+
+      newProfile = existingProfile || null
+    }
+
+    if (!newProfile && profileInsertError) {
+      const uniqueSlug = `${profileSlug}-${event.id.slice(0, 8)}`
+      const { data: fallbackProfile } = await supabaseAdmin
+        .from('promoter_event_profiles')
+        .insert(buildProfilePayload(baseEvent, event, uniqueSlug))
+        .select('id')
+        .maybeSingle()
+
+      newProfile = fallbackProfile || null
+    }
 
     eventProfileId = newProfile?.id || ''
 
     if (eventProfileId) {
-      const relatedIds = relatedEvents.map((relatedEvent) => relatedEvent.id).filter(Boolean)
+      const relatedIds = Array.from(
+        new Set([event.id, ...relatedEvents.map((relatedEvent) => relatedEvent.id)].filter(Boolean))
+      )
       if (relatedIds.length > 0) {
         await supabaseAdmin
           .from('events')

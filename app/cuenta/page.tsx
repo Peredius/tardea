@@ -193,20 +193,35 @@ export default function AccountPage() {
           ])
         })
 
-        setFavoriteProfiles(
-          (profiles || [])
-            .map((favoriteProfile) => {
-              const profileEventsList = eventsByProfile.get(favoriteProfile.id) || []
-
-              return {
-                ...favoriteProfile,
-                music: canonicalizeMusicList(favoriteProfile.music),
-                nextEvent: profileEventsList[0] || null,
-                eventCount: profileEventsList.length,
-              }
-            })
-            .sort((a, b) => a.name.localeCompare(b.name))
+        const profilesById = new Map(
+          (profiles || []).map((favoriteProfile) => [favoriteProfile.id, favoriteProfile])
         )
+
+        const favoriteProfileCards: FavoriteProfile[] = favoriteProfileIds
+          .map((profileId): FavoriteProfile | null => {
+            const favoriteProfile = profilesById.get(profileId)
+            const profileEventsList = eventsByProfile.get(profileId) || []
+            const nextEvent = profileEventsList[0] || null
+
+            if (!favoriteProfile && !nextEvent) return null
+
+            return {
+              id: profileId,
+              name: favoriteProfile?.name || nextEvent?.title || 'Plan TARDEA',
+              venue_name: favoriteProfile?.venue_name || nextEvent?.venue || null,
+              area: favoriteProfile?.area || nextEvent?.area || null,
+              type: favoriteProfile?.type || nextEvent?.type || null,
+              music: canonicalizeMusicList(favoriteProfile?.music || nextEvent?.music || []),
+              logo_url: favoriteProfile?.logo_url || nextEvent?.cover || null,
+              banner_url: favoriteProfile?.banner_url || nextEvent?.cover || null,
+              nextEvent,
+              eventCount: profileEventsList.length,
+            }
+          })
+          .filter((favoriteProfile): favoriteProfile is FavoriteProfile => Boolean(favoriteProfile))
+          .sort((a, b) => a.name.localeCompare(b.name))
+
+        setFavoriteProfiles(favoriteProfileCards)
       } else {
         setFavoriteProfiles([])
       }

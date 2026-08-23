@@ -105,6 +105,7 @@ export default function EventDetailPage() {
   const [eventProfileId, setEventProfileId] = useState('')
   const [eventSeriesSlug, setEventSeriesSlug] = useState('')
   const [favoriteStatus, setFavoriteStatus] = useState('')
+  const [savingProfileFavorite, setSavingProfileFavorite] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState('')
   const [claimOpen, setClaimOpen] = useState(false)
@@ -280,12 +281,17 @@ export default function EventDetailPage() {
   }
 
   async function toggleProfileFavorite() {
+    if (savingProfileFavorite) return
+
     if (!userId) {
       window.location.href = '/login?type=user'
       return
     }
 
     if (!event) return
+
+    setSavingProfileFavorite(true)
+    setFavoriteStatus('')
 
     let resolvedProfileId = eventProfileId
 
@@ -298,6 +304,7 @@ export default function EventDetailPage() {
 
     if (!resolvedProfileId) {
       setFavoriteStatus('Todavía no se ha encontrado la ficha de este plan.')
+      setSavingProfileFavorite(false)
       return
     }
 
@@ -310,10 +317,14 @@ export default function EventDetailPage() {
 
       if (error) {
         setFavoriteStatus(`No se pudo quitar la ficha: ${error.message}`)
+        setSavingProfileFavorite(false)
         return
       }
 
       setIsProfileFavorite(false)
+      setFavoriteStatus('')
+      setSavingProfileFavorite(false)
+      return
     } else {
       const { error } = await supabase.from('event_profile_favorites').insert({
         user_id: userId,
@@ -321,14 +332,23 @@ export default function EventDetailPage() {
       })
 
       if (error) {
+        if (error.code === '23505' || error.message.toLowerCase().includes('duplicate')) {
+          setIsProfileFavorite(true)
+          setFavoriteStatus('Plan guardado como favorito.')
+          setSavingProfileFavorite(false)
+          return
+        }
+
         setFavoriteStatus(`No se pudo guardar la ficha: ${error.message}`)
+        setSavingProfileFavorite(false)
         return
       }
 
       setIsProfileFavorite(true)
     }
 
-    setFavoriteStatus('')
+    setFavoriteStatus('Plan guardado como favorito.')
+    setSavingProfileFavorite(false)
   }
 
   async function openEventProfilePage() {
@@ -593,9 +613,14 @@ export default function EventDetailPage() {
 
             <button
               onClick={toggleProfileFavorite}
+              disabled={savingProfileFavorite}
               className="btn-secondary mt-3 w-full"
             >
-              {isProfileFavorite ? '❤️ Favorito' : '🤍 Plan favorito'}
+              {savingProfileFavorite
+                ? 'Guardando plan...'
+                : isProfileFavorite
+                  ? '❤️ Plan favorito'
+                  : '🤍 Plan favorito'}
             </button>
 
             <button
