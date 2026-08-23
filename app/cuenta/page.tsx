@@ -532,17 +532,17 @@ export default function AccountPage() {
               {favoriteEvents.length > 0 && (
                 <div className="pb-5 pt-4">
                   <div className="px-5 pb-3">
-                    <h2 className="text-2xl font-black text-white">
+                    <h2 className="text-xl font-black text-white">
                       Fechas guardadas
                     </h2>
                   </div>
 
-                  <div className="flex gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <div className="flex gap-2.5 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     {favoriteEvents.map((event) => (
                       <Link
                         key={event.id}
                         href={`/eventos/${event.slug}`}
-                        className="group relative aspect-[9/16] w-[38vw] max-w-[170px] shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-slate-900"
+                        className="group relative aspect-[9/16] w-[31vw] max-w-[136px] shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-slate-900"
                       >
                         <div
                           className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
@@ -555,24 +555,24 @@ export default function AccountPage() {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
 
-                        <div className="absolute left-2 top-2 rounded-full bg-brand-500 px-2.5 py-1 text-[10px] font-black text-white">
+                        <div className="absolute left-2 top-2 rounded-full bg-brand-500 px-2 py-0.5 text-[9px] font-black text-white">
                           Fecha
                         </div>
 
-                        <div className="absolute inset-x-0 bottom-0 p-3">
+                        <div className="absolute inset-x-0 bottom-0 p-2.5">
                           <div className="mb-2 flex flex-wrap gap-1">
-                            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur">
+                            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[9px] font-medium text-white backdrop-blur">
                               {event.type}
                             </span>
-                            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur">
+                            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[9px] font-medium text-white backdrop-blur">
                               {event.area}
                             </span>
                           </div>
 
-                          <h2 className="line-clamp-2 text-xs font-black uppercase leading-tight text-white">
+                          <h2 className="line-clamp-2 text-[11px] font-black uppercase leading-tight text-white">
                             {event.title}
                           </h2>
-                          <p className="mt-1 line-clamp-2 text-[10px] text-slate-200">
+                          <p className="mt-1 line-clamp-2 text-[9px] text-slate-200">
                             {event.venue} ·{' '}
                             {new Date(event.date).toLocaleDateString('es-ES')} ·{' '}
                             {event.start_time?.slice(0, 5)}
@@ -588,12 +588,12 @@ export default function AccountPage() {
               {favoriteProfiles.length > 0 && (
                 <div className="pt-3">
                   <div className="px-5 pb-3">
-                    <h2 className="text-2xl font-black text-white">
+                    <h2 className="text-xl font-black text-white">
                       Planes favoritos
                     </h2>
                   </div>
 
-                  <div className="flex gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <div className="flex gap-2.5 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     {favoriteProfiles.map((favoriteProfile) => {
                       const nextEvent = favoriteProfile.nextEvent
                       const cover =
@@ -606,7 +606,7 @@ export default function AccountPage() {
                         <Link
                           key={favoriteProfile.id}
                           href={`/eventos/grupo/${favoriteProfile.id}`}
-                          className="group relative aspect-[9/16] w-[38vw] max-w-[170px] shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-slate-900"
+                          className="group relative aspect-[9/16] w-[31vw] max-w-[136px] shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-slate-900"
                         >
                           <div
                             className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
@@ -614,31 +614,31 @@ export default function AccountPage() {
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent" />
 
-                          <div className="absolute left-2 top-2 rounded-full bg-brand-500 px-2.5 py-1 text-[10px] font-black text-white">
+                          <div className="absolute left-2 top-2 rounded-full bg-brand-500 px-2 py-0.5 text-[9px] font-black text-white">
                             Favorito
                           </div>
 
-                          <div className="absolute inset-x-0 bottom-0 p-3">
+                          <div className="absolute inset-x-0 bottom-0 p-2.5">
                             <div className="mb-2 flex flex-wrap gap-1">
                               {favoriteProfile.type && (
-                                <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur">
+                                <span className="rounded-full bg-white/15 px-2 py-0.5 text-[9px] font-medium text-white backdrop-blur">
                                   {favoriteProfile.type}
                                 </span>
                               )}
                               {favoriteProfile.area && (
-                                <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur">
+                                <span className="rounded-full bg-white/15 px-2 py-0.5 text-[9px] font-medium text-white backdrop-blur">
                                   {favoriteProfile.area}
                                 </span>
                               )}
                             </div>
 
-                            <h2 className="line-clamp-2 text-xs font-black uppercase leading-tight text-white">
+                            <h2 className="line-clamp-2 text-[11px] font-black uppercase leading-tight text-white">
                               {favoriteProfile.name}
                             </h2>
-                            <p className="mt-1 line-clamp-1 text-[10px] text-slate-200">
+                            <p className="mt-1 line-clamp-1 text-[9px] text-slate-200">
                               {favoriteProfile.venue_name || nextEvent?.venue || 'Ficha de evento'}
                             </p>
-                            <p className="mt-1 text-[10px] font-bold text-brand-400">
+                            <p className="mt-1 text-[9px] font-bold text-brand-400">
                               {favoriteProfile.eventCount === 1
                                 ? '1 fecha'
                                 : `${favoriteProfile.eventCount} fechas`}
