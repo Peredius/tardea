@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
-import { Heart, Map, MessageSquare, Search, Sparkles, UserRound } from 'lucide-react'
+import { Heart, MessageSquare, Search, Sparkles, UserRound } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
@@ -92,27 +92,6 @@ export function MobileAppNav() {
     return null
   }
 
-  function openMapView() {
-    if (typeof window === 'undefined') return
-
-    if (pathname !== '/') {
-      window.location.href = '/?view=map#eventos'
-      return
-    }
-
-    window.history.pushState(null, '', '/?view=map#eventos')
-    setActiveTab('')
-    setHomeView('map')
-    setHomeHash('eventos')
-    window.dispatchEvent(
-      new CustomEvent('tardeaViewModeChanged', { detail: { viewMode: 'map' } })
-    )
-
-    requestAnimationFrame(() => {
-      document.getElementById('eventos')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    })
-  }
-
   const accountHref = user ? '/cuenta' : '/login?type=user'
   const accountOnlyHref = (href: string) => (user ? href : '/login?type=user')
   const recommendationsHref = user ? '/cuenta?tab=suggestions' : '/?tab=for-you#destacados'
@@ -125,17 +104,6 @@ export function MobileAppNav() {
 
   return (
     <>
-      {!isAuthScreen && (
-        <button
-          type="button"
-          onClick={openMapView}
-          className="fixed bottom-[calc(env(safe-area-inset-bottom)+86px)] left-1/2 z-50 inline-flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-slate-950 px-5 py-3 text-sm font-black text-white shadow-2xl shadow-black/50 ring-1 ring-brand-500/25 backdrop-blur-xl md:hidden"
-        >
-          <Map className="h-5 w-5" />
-          Mapa
-        </button>
-      )}
-
       <nav
         aria-label="Navegación principal móvil"
         className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-black pb-[env(safe-area-inset-bottom)] md:hidden"
