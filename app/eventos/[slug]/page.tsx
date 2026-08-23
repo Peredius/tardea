@@ -78,15 +78,22 @@ async function resolveEventProfileFromServer(eventSlug: string, createIfMissing 
     body: JSON.stringify({ slug: eventSlug, createIfMissing }),
   })
 
-  if (!response.ok) return { eventProfileId: '', seriesSlug: '' }
-
   const payload = (await response.json().catch(() => null)) as
-    | { eventProfileId?: string; seriesSlug?: string }
+    | { eventProfileId?: string; seriesSlug?: string; error?: string }
     | null
+
+  if (!response.ok) {
+    return {
+      eventProfileId: '',
+      seriesSlug: '',
+      error: payload?.error || 'No se pudo preparar la ficha del plan.',
+    }
+  }
 
   return {
     eventProfileId: payload?.eventProfileId || '',
     seriesSlug: payload?.seriesSlug || '',
+    error: payload?.error || '',
   }
 }
 
@@ -300,6 +307,11 @@ export default function EventDetailPage() {
       resolvedProfileId = resolution.eventProfileId
       if (resolvedProfileId) setEventProfileId(resolvedProfileId)
       if (resolution.seriesSlug) setEventSeriesSlug(resolution.seriesSlug)
+      if (!resolvedProfileId && resolution.error) {
+        setFavoriteStatus(resolution.error)
+        setSavingProfileFavorite(false)
+        return
+      }
     }
 
     if (!resolvedProfileId) {
@@ -363,6 +375,10 @@ export default function EventDetailPage() {
       resolvedSeriesSlug = resolution.seriesSlug
       if (resolvedProfileId) setEventProfileId(resolvedProfileId)
       if (resolvedSeriesSlug) setEventSeriesSlug(resolvedSeriesSlug)
+      if (!resolvedProfileId && resolution.error) {
+        setFavoriteStatus(resolution.error)
+        return
+      }
     }
 
     if (!resolvedProfileId && !resolvedSeriesSlug) {

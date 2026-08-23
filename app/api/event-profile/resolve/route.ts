@@ -33,11 +33,11 @@ function getProfileSlug(event: any) {
   return getEventSeriesSlug(event).replace(/__/g, '-').replace(/^-+|-+$/g, '') || 'evento'
 }
 
-function buildProfilePayload(event: any, fallbackEvent: any, slug?: string) {
+function buildProfilePayload(event: any, fallbackEvent: any, ownerUserId?: string | null, slug?: string) {
   const baseEvent = event || fallbackEvent
 
   return {
-    user_id: baseEvent.user_id || null,
+    user_id: baseEvent.user_id || fallbackEvent.user_id || ownerUserId || null,
     name: baseEvent.title || fallbackEvent.title || 'Plan TARDEA',
     slug: slug || getProfileSlug(baseEvent),
     logo_url: baseEvent.cover || fallbackEvent.cover || null,
@@ -188,21 +188,37 @@ export async function POST(request: Request) {
 
   if (!eventProfileId && payload.createIfMissing) {
     const today = new Date().toISOString().split('T')[0]
-    const { data: publicEvents } = await supabaseAdmin
-      .from('events')
-      .select('id, slug, title, venue, area, address, maps_url, type, music, audience, price_from, cover, description, source_url, website_url, instagram_url, tiktok_url, user_id, event_profile_id, published, status, date')
-      .eq('published', true)
-      .eq('status', 'approved')
-      .gte('date', today)
-      .limit(1000)
+    const [{ data: publicEvents }, { data: adminProfile }] = await Promise.all([
+      supabaseAdmin
+        .from('events')
+        .select('id, slug, title, venue, area, address, maps_url, type, music, audience, price_from, cover, description, source_url, website_url, instagram_url, tiktok_url, user_id, event_profile_id, published, status, date')
+        .eq('published', true)
+        .eq('status', 'approved')
+        .gte('date', today)
+        .limit(1000),
+      supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('role', 'admin')
+        .limit(1)
+        .maybeSingle(),
+    ])
 
     const relatedEvents = (publicEvents || []).filter(
       (publicEvent) => getEventSeriesSlug(publicEvent) === seriesSlug
     )
     const baseEvent = relatedEvents[0] || event
+    const ownerUserId = baseEvent.user_id || event.user_id || adminProfile?.id || null
+
+    if (!ownerUserId) {
+      return NextResponse.json(
+        { error: 'No hay usuario admin para crear la ficha interna del plan.' },
+        { status: 500 }
+      )
+    }
 
     const profileSlug = getProfileSlug(baseEvent)
-    const profilePayload = buildProfilePayload(baseEvent, event, profileSlug)
+    const profilePayload = buildProfilePayload(baseEvent, event, ownerUserId, profileSlug)
 
     let { data: newProfile, error: profileInsertError } = await supabaseAdmin
       .from('promoter_event_profiles')
@@ -224,7 +240,7 @@ export async function POST(request: Request) {
       const uniqueSlug = `${profileSlug}-${event.id.slice(0, 8)}`
       const { data: fallbackProfile } = await supabaseAdmin
         .from('promoter_event_profiles')
-        .insert(buildProfilePayload(baseEvent, event, uniqueSlug))
+        .insert(buildProfilePayload(baseEvent, event, ownerUserId, uniqueSlug))
         .select('id')
         .maybeSingle()
 
@@ -232,6 +248,13 @@ export async function POST(request: Request) {
     }
 
     eventProfileId = newProfile?.id || ''
+
+    if (!eventProfileId && profileInsertError) {
+      return NextResponse.json(
+        { error: `No se pudo crear la ficha del plan: ${profileInsertError.message}` },
+        { status: 500 }
+      )
+    }
 
     if (eventProfileId) {
       const relatedIds = Array.from(
