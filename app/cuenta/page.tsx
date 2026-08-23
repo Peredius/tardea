@@ -8,7 +8,6 @@ import {
   MapPin,
   MessageSquare,
   Plus,
-  Search,
   Sparkles,
   UserRound,
 } from 'lucide-react'
@@ -463,8 +462,10 @@ export default function AccountPage() {
                   <p className="text-sm text-slate-300">Favoritos</p>
                 </div>
                 <div>
-                  <p className="text-3xl font-black text-white">0</p>
-                  <p className="text-sm text-slate-300">Comparar</p>
+                  <p className="text-3xl font-black text-white">
+                    {favoriteProfiles.length}
+                  </p>
+                  <p className="text-sm text-slate-300">Planes</p>
                 </div>
                 <div>
                   <p className="text-3xl font-black text-white">0</p>
@@ -472,25 +473,6 @@ export default function AccountPage() {
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="mt-8 grid grid-cols-2 gap-3">
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-5 py-3 text-lg font-semibold text-white transition hover:bg-white/15"
-            >
-              <Search className="h-5 w-5" />
-              Buscar
-            </Link>
-
-            <button
-              type="button"
-              onClick={() => changeAccountTab('suggestions')}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-5 py-3 text-lg font-semibold text-white transition hover:bg-white/15"
-            >
-              <Sparkles className="h-5 w-5" />
-              Sugerencias
-            </button>
           </div>
         </section>
         )}
