@@ -11,8 +11,6 @@ import { supabase } from '@/lib/supabase'
 const hiddenRoutes = [
   '/admin',
   '/dashboard',
-  '/login',
-  '/register',
   '/reset-password',
   '/private-access',
   '/auth',
@@ -81,19 +79,23 @@ export function MobileAppNav() {
   }
 
   const accountHref = user ? '/cuenta' : '/login?type=user'
-  const protectedHref = (href: string) => (user ? href : '/login?type=user')
+  const accountOnlyHref = (href: string) => (user ? href : '/login?type=user')
+  const recommendationsHref = user ? '/cuenta?tab=suggestions' : '/#destacados'
   const isAccount = pathname.startsWith('/cuenta')
   const isSearch = pathname === '/' && homeView !== 'map'
+  const isAuthScreen = pathname === '/login' || pathname === '/register'
 
   return (
     <>
-      <Link
-        href="/?view=map#eventos"
-        className="fixed bottom-[calc(env(safe-area-inset-bottom)+86px)] left-1/2 z-50 inline-flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-slate-950 px-5 py-3 text-sm font-black text-white shadow-2xl shadow-black/50 ring-1 ring-brand-500/25 backdrop-blur-xl md:hidden"
-      >
-        <Map className="h-5 w-5" />
-        Mapa
-      </Link>
+      {!isAuthScreen && (
+        <Link
+          href="/?view=map#eventos"
+          className="fixed bottom-[calc(env(safe-area-inset-bottom)+86px)] left-1/2 z-50 inline-flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-slate-950 px-5 py-3 text-sm font-black text-white shadow-2xl shadow-black/50 ring-1 ring-brand-500/25 backdrop-blur-xl md:hidden"
+        >
+          <Map className="h-5 w-5" />
+          Mapa
+        </Link>
+      )}
 
       <nav
         aria-label="Navegación principal móvil"
@@ -101,7 +103,7 @@ export function MobileAppNav() {
       >
         <div className="mx-auto grid max-w-md grid-cols-5 gap-1 rounded-[30px] border border-white/10 bg-slate-950/95 p-1.5 shadow-2xl shadow-black/50 backdrop-blur-xl">
           <MobileNavItem
-            href={protectedHref('/cuenta?tab=suggestions')}
+            href={recommendationsHref}
             active={isAccount && activeTab === 'suggestions'}
             label="Para ti"
           >
@@ -113,7 +115,7 @@ export function MobileAppNav() {
           </MobileNavItem>
 
           <MobileNavItem
-            href={protectedHref('/cuenta?tab=favorites')}
+            href={accountOnlyHref('/cuenta?tab=favorites')}
             active={isAccount && activeTab === 'favorites'}
             label="Favoritos"
           >
@@ -121,7 +123,7 @@ export function MobileAppNav() {
           </MobileNavItem>
 
           <MobileNavItem
-            href={protectedHref('/cuenta?tab=chats')}
+            href={accountOnlyHref('/cuenta?tab=chats')}
             active={isAccount && activeTab === 'chats'}
             label="Chat"
           >
@@ -129,7 +131,7 @@ export function MobileAppNav() {
           </MobileNavItem>
 
           <MobileNavItem
-            href={protectedHref('/cuenta?tab=profile')}
+            href={accountOnlyHref('/cuenta?tab=profile')}
             active={isAccount && (!activeTab || activeTab === 'profile')}
             label="Perfil"
           >
