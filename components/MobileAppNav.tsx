@@ -116,9 +116,9 @@ export function MobileAppNav() {
 
       <nav
         aria-label="Navegación principal móvil"
-        className="fixed inset-x-0 bottom-0 z-50 px-3 pb-[calc(env(safe-area-inset-bottom)+8px)] pt-2 md:hidden"
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-black pb-[env(safe-area-inset-bottom)] md:hidden"
       >
-        <div className="mx-auto grid max-w-md grid-cols-5 gap-1 rounded-[30px] border border-white/10 bg-slate-950/95 p-1.5 shadow-2xl shadow-black/50 backdrop-blur-xl">
+        <div className="mx-auto grid max-w-md grid-cols-5 bg-black px-2 py-2">
           <MobileNavItem
             href={recommendationsHref}
             active={isRecommendations}
@@ -178,12 +178,13 @@ function MobileNavItem({
   return (
     <Link
       href={href}
-      className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-[24px] text-[10px] font-bold transition ${
+      className={`relative flex min-h-14 flex-col items-center justify-center gap-1 text-[10px] font-bold transition ${
         active
-          ? 'bg-white/10 text-white ring-1 ring-white/10'
-          : 'text-slate-400 hover:bg-white/10 hover:text-white'
+          ? 'text-white'
+          : 'text-slate-500 hover:text-slate-300'
       }`}
     >
+      {active && <span className="absolute top-1 h-0.5 w-6 rounded-full bg-white" />}
       {children}
       <span>{label}</span>
     </Link>
