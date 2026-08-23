@@ -118,6 +118,13 @@ export function MobileAppNav() {
               setActiveTab(user ? 'suggestions' : 'for-you')
               setHomeView('')
               setHomeHash(user ? '' : 'destacados')
+              if (user) {
+                window.dispatchEvent(
+                  new CustomEvent('tardeaAccountTabChanged', {
+                    detail: { tab: 'suggestions' },
+                  })
+                )
+              }
             }}
           >
             <Sparkles className="h-5 w-5" />
@@ -158,7 +165,14 @@ export function MobileAppNav() {
             href={accountOnlyHref('/cuenta?tab=chats')}
             active={isAccount && activeTab === 'chats'}
             label="Chat"
-            onClick={() => setActiveTab('chats')}
+            onClick={() => {
+              setActiveTab('chats')
+              window.dispatchEvent(
+                new CustomEvent('tardeaAccountTabChanged', {
+                  detail: { tab: 'chats' },
+                })
+              )
+            }}
           >
             <MessageSquare className="h-5 w-5" />
           </MobileNavItem>
@@ -167,7 +181,14 @@ export function MobileAppNav() {
             href={accountOnlyHref('/cuenta?tab=profile')}
             active={isAccount && (!activeTab || activeTab === 'profile')}
             label="Perfil"
-            onClick={() => setActiveTab('profile')}
+            onClick={() => {
+              setActiveTab('profile')
+              window.dispatchEvent(
+                new CustomEvent('tardeaAccountTabChanged', {
+                  detail: { tab: 'profile' },
+                })
+              )
+            }}
           >
             {avatarUrl ? (
               <img src={avatarUrl} alt="Mi cuenta" className="h-6 w-6 rounded-full object-cover" />

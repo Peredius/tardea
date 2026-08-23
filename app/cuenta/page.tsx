@@ -8,7 +8,6 @@ import {
   MapPin,
   MessageSquare,
   Plus,
-  ListChecks,
   Search,
   Sparkles,
   UserRound,
@@ -127,11 +126,39 @@ export default function AccountPage() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const tab = new URLSearchParams(window.location.search).get('tab')
-    if (tab === 'profile' || tab === 'favorites' || tab === 'suggestions' || tab === 'compare' || tab === 'chats') {
-      setActiveTab(tab)
+
+    function syncAccountTab() {
+      const tab = new URLSearchParams(window.location.search).get('tab')
+      if (tab === 'profile' || tab === 'favorites' || tab === 'suggestions' || tab === 'compare' || tab === 'chats') {
+        setActiveTab(tab)
+      }
+    }
+
+    function handleAccountTabChanged(event: Event) {
+      const tab = (event as CustomEvent<{ tab?: string }>).detail?.tab
+      if (tab === 'profile' || tab === 'favorites' || tab === 'suggestions' || tab === 'compare' || tab === 'chats') {
+        setActiveTab(tab)
+      }
+    }
+
+    syncAccountTab()
+    window.addEventListener('popstate', syncAccountTab)
+    window.addEventListener('tardeaAccountTabChanged', handleAccountTabChanged)
+
+    return () => {
+      window.removeEventListener('popstate', syncAccountTab)
+      window.removeEventListener('tardeaAccountTabChanged', handleAccountTabChanged)
     }
   }, [])
+
+  function changeAccountTab(tab: AccountTab) {
+    setActiveTab(tab)
+
+    if (typeof window !== 'undefined') {
+      const nextUrl = `/cuenta?tab=${tab}`
+      window.history.replaceState(null, '', nextUrl)
+    }
+  }
 
   const displayName = useMemo(() => {
     const fullName = [profile?.first_name, profile?.last_name]
@@ -299,7 +326,7 @@ export default function AccountPage() {
 
             <button
               type="button"
-              onClick={() => setActiveTab('suggestions')}
+              onClick={() => changeAccountTab('suggestions')}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-5 py-3 text-lg font-semibold text-white transition hover:bg-white/15"
             >
               <Sparkles className="h-5 w-5" />
@@ -308,58 +335,6 @@ export default function AccountPage() {
           </div>
         </section>
         )}
-
-        <section className="mt-8 border-b border-white/10 px-5">
-          <div className="grid grid-cols-4 text-center">
-            <button
-              type="button"
-              onClick={() => setActiveTab('favorites')}
-              className={`flex justify-center border-b-2 py-4 transition ${
-                activeTab === 'favorites'
-                  ? 'border-white text-white'
-                  : 'border-transparent text-slate-500 hover:text-white'
-              }`}
-            >
-              <Heart className="h-8 w-8 fill-current" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('suggestions')}
-              className={`flex justify-center border-b-2 py-4 transition ${
-                activeTab === 'suggestions'
-                  ? 'border-white text-white'
-                  : 'border-transparent text-slate-500 hover:text-white'
-              }`}
-            >
-              <Sparkles className="h-8 w-8 fill-current" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('compare')}
-              className={`flex justify-center border-b-2 py-4 transition ${
-                activeTab === 'compare'
-                  ? 'border-white text-white'
-                : 'border-transparent text-slate-500 hover:text-white'
-              }`}
-            >
-              <ListChecks className="h-8 w-8" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('chats')}
-              className={`flex justify-center border-b-2 py-4 transition ${
-                activeTab === 'chats'
-                  ? 'border-white text-white'
-                  : 'border-transparent text-slate-500 hover:text-white'
-              }`}
-            >
-              <MessageSquare className="h-8 w-8 fill-current" />
-            </button>
-          </div>
-        </section>
 
         {activeTab === 'profile' && (
           <section className="px-5 py-8">
