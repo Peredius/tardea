@@ -1,8 +1,9 @@
 'use client'
 
 import { Suspense, useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Eye, EyeOff, Mail } from 'lucide-react'
+import { Eye, EyeOff, Mail, UserRound } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { BrandLogo } from '@/components/BrandLogo'
 
@@ -79,6 +80,7 @@ function LoginContent() {
   const isUserAccess = accountType === 'user'
 
   const [isRegister, setIsRegister] = useState(false)
+  const [showEmailForm, setShowEmailForm] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -273,15 +275,101 @@ function LoginContent() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="container-page py-16">
+      <div className="container-page py-10 md:py-16">
         <a href="/" className="mb-10 block text-center">
           <BrandLogo className="justify-center" iconClassName="h-11 w-11" />
         </a>
 
+        {isUserAccess && !isRegister && !showEmailForm ? (
+          <div className="mx-auto max-w-md">
+            <div className="text-center">
+              <h1 className="text-2xl font-black leading-tight text-white">
+                Descubre los mejores tardeos en Madrid
+              </h1>
+              <p className="mt-3 text-sm leading-6 text-slate-400">
+                Entra como invitado para explorar. Inicia sesión cuando quieras guardar favoritos, recibir sugerencias y chatear.
+              </p>
+            </div>
+
+            <div className="mt-8 grid grid-cols-3 gap-3">
+              {[
+                ['Tardeo', 'from-brand-500/80 to-fuchsia-500/50'],
+                ['Rooftop', 'from-sky-500/70 to-brand-500/40'],
+                ['Brunch', 'from-amber-400/70 to-brand-500/40'],
+                ['Afterwork', 'from-violet-500/70 to-slate-900'],
+                ['Flamenquito', 'from-rose-500/70 to-orange-400/50'],
+                ['Directos', 'from-emerald-400/70 to-slate-900'],
+              ].map(([label, gradient]) => (
+                <div
+                  key={label}
+                  className={`flex aspect-[3/4] items-end rounded-2xl bg-gradient-to-br ${gradient} p-3 shadow-xl shadow-black/25`}
+                >
+                  <span className="text-xs font-black uppercase tracking-[0.08em] text-white">
+                    {label}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 space-y-3">
+              <button
+                type="button"
+                onClick={() => handleOAuthLogin('google')}
+                className="flex w-full items-center justify-center gap-4 rounded-full bg-white px-5 py-4 text-base font-bold text-slate-950 transition hover:bg-slate-100"
+              >
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-xl font-black text-[#4285F4]">
+                  G
+                </span>
+                Continuar con Google
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowEmailForm(true)}
+                className="flex w-full items-center justify-center gap-4 rounded-full bg-white px-5 py-4 text-base font-bold text-slate-950 transition hover:bg-slate-100"
+              >
+                <Mail className="h-5 w-5" />
+                Continuar con email
+              </button>
+
+              <Link
+                href="/"
+                className="flex w-full items-center justify-center gap-4 rounded-full bg-white/10 px-5 py-4 text-base font-bold text-white transition hover:bg-white/15"
+              >
+                <UserRound className="h-5 w-5" />
+                Entrar como invitado
+              </Link>
+            </div>
+
+            <p className="mx-auto mt-6 max-w-sm text-center text-xs leading-5 text-slate-500">
+              Al continuar, aceptas las{' '}
+              <Link href="/condiciones" className="text-brand-400 hover:underline">
+                condiciones de uso
+              </Link>{' '}
+              y la{' '}
+              <Link href="/privacidad" className="text-brand-400 hover:underline">
+                política de privacidad
+              </Link>
+              .
+            </p>
+          </div>
+        ) : (
         <div className="card mx-auto max-w-md p-6">
           <h1 className="text-center text-3xl font-bold">
-            {accountType === 'venue' ? 'Acceso promotor' : 'Acceso usuario'}
+            {accountType === 'venue' ? 'Acceso promotor' : isRegister ? 'Crear cuenta' : 'Entrar con email'}
           </h1>
+          {isUserAccess && !isRegister && (
+            <button
+              type="button"
+              onClick={() => {
+                setShowEmailForm(false)
+                setMessage('')
+              }}
+              className="mx-auto mt-3 block text-sm font-semibold text-brand-500 hover:text-brand-400"
+            >
+              Volver a opciones de acceso
+            </button>
+          )}
 
           <form
             onSubmit={isRegister ? handleRegister : handleLogin}
@@ -539,6 +627,7 @@ function LoginContent() {
             <button
               onClick={() => {
                 setIsRegister(!isRegister)
+                setShowEmailForm(true)
                 setMessage('')
                 setLegalAccepted(false)
                 setMarketingConsent(false)
@@ -549,6 +638,7 @@ function LoginContent() {
             </button>
           </p>
         </div>
+        )}
       </div>
     </main>
   )
