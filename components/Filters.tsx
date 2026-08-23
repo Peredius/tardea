@@ -105,6 +105,25 @@ function sortAreas(values: string[]) {
   })
 }
 
+function normalizeEventSeriesText(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\b\d{1,2}\s*(?:de\s*)?(?:ene|enero|feb|febrero|mar|marzo|abr|abril|may|mayo|jun|junio|jul|julio|ago|agosto|sep|septiembre|oct|octubre|nov|noviembre|dic|diciembre)\b/gi, ' ')
+    .replace(/\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g, ' ')
+    .replace(/\b20\d{2}\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+function getEventSeriesKey(event: any) {
+  if (event.eventProfileId) return event.eventProfileId
+
+  const normalizedTitle = normalizeEventSeriesText(event.title || 'evento')
+  return `${event.type || 'Tardeo'}__${normalizedTitle || event.slug}`
+}
+
 function getEventCoordinates(event: any) {
   if (typeof event.latitude === 'number' && typeof event.longitude === 'number') {
     return { lat: event.latitude, lng: event.longitude }
@@ -353,6 +372,7 @@ export function Filters() {
         mapsUrl: event.maps_url,
         latitude: event.latitude,
         longitude: event.longitude,
+        eventProfileId: event.event_profile_id,
         featured: event.featured,
         description: event.description,
         perks: event.perks || [],
@@ -404,6 +424,38 @@ export function Filters() {
     })
   }, [area, audience, selectedDates, music, price, type, dbEvents])
 
+  const featuredMapEvents = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0]
+    const upcomingEvents = dbEvents.filter((event) => event.date >= today)
+    const groups = new Map<string, { nextEvent: any; featured: boolean }>()
+
+    upcomingEvents.forEach((event) => {
+      const key = getEventSeriesKey(event)
+      const current = groups.get(key)
+
+      if (!current) {
+        groups.set(key, {
+          nextEvent: event,
+          featured: Boolean(event.featured),
+        })
+        return
+      }
+
+      current.featured = Boolean(current.featured || event.featured)
+    })
+
+    const groupedEvents = Array.from(groups.values())
+    const featuredEvents = groupedEvents
+      .filter((group) => group.featured)
+      .map((group) => group.nextEvent)
+      .slice(0, 40)
+    const fallbackEvents = groupedEvents.map((group) => group.nextEvent).slice(0, 40)
+
+    return featuredEvents.length > 0 ? featuredEvents : fallbackEvents
+  }, [dbEvents])
+
+  const eventsForMap = selectedDates.length > 0 ? filtered : featuredMapEvents
+
   useEffect(() => {
     if (viewMode !== 'map') return
 
@@ -442,7 +494,7 @@ export function Filters() {
 
         const bounds = new google.maps.LatLngBounds()
         const geocoder = new google.maps.Geocoder()
-        const eventsToShow = filtered.slice(0, 40)
+        const eventsToShow = eventsForMap.slice(0, 40)
 
         if (userLocation) {
           const userMarker = new google.maps.Marker({
@@ -493,8 +545,8 @@ export function Filters() {
         }
 
         setMapStatus(
-          filtered.length > 40
-            ? `Mostrando 40 de ${filtered.length} eventos para no saturar el mapa.`
+          eventsForMap.length > 40
+            ? `Mostrando 40 de ${eventsForMap.length} eventos para no saturar el mapa.`
             : ''
         )
       } catch (error) {
@@ -508,11 +560,11 @@ export function Filters() {
     return () => {
       cancelled = true
     }
-  }, [filtered, userLocation, viewMode])
+  }, [eventsForMap, userLocation, viewMode])
 
   useEffect(() => {
-    setActiveEventSlug(filtered[0]?.slug || '')
-  }, [filtered])
+    setActiveEventSlug((viewMode === 'map' ? eventsForMap[0] : filtered[0])?.slug || '')
+  }, [eventsForMap, filtered, viewMode])
 
   function updateActiveEventFromScroll() {
     const carousel = carouselRef.current
@@ -576,12 +628,13 @@ export function Filters() {
     )
   }
 
-  if (selectedDates.length === 0) {
+  if (selectedDates.length === 0 && viewMode !== 'map') {
     return <section id="eventos" className="container-page scroll-mt-24 md:scroll-mt-20" />
   }
 
   return (
     <section id="eventos" className="container-page scroll-mt-24 py-6 md:scroll-mt-20">
+      {selectedDates.length > 0 && (
       <div className="card p-5">
         <button
           type="button"
@@ -722,45 +775,64 @@ export function Filters() {
           )}
         </div>
       </div>
+      )}
 
       <>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="inline-flex w-fit rounded-full border border-white/10 bg-slate-900/80 p-1">
-            <button
-              type="button"
-              onClick={() => setViewMode('list')}
-              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition ${
-                viewMode === 'list'
-                  ? 'bg-brand-500 text-white'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <List className="h-4 w-4" />
-              Lista
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('map')}
-              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition ${
-                viewMode === 'map'
-                  ? 'bg-brand-500 text-white'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <MapIcon className="h-4 w-4" />
-              Mapa
-            </button>
+          <div className="flex flex-col gap-3">
+            <div className="inline-flex w-fit rounded-full border border-white/10 bg-slate-900/80 p-1">
+              {selectedDates.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition ${
+                    viewMode === 'list'
+                      ? 'bg-brand-500 text-white'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <List className="h-4 w-4" />
+                  Lista
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setViewMode('map')}
+                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition ${
+                  viewMode === 'map'
+                    ? 'bg-brand-500 text-white'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <MapIcon className="h-4 w-4" />
+                Mapa
+              </button>
+            </div>
+
+            {viewMode === 'map' && selectedDates.length === 0 && (
+              <p className="text-sm text-slate-400">
+                Estás viendo destacados cercanos. Elige una fecha para buscar más eventos.
+              </p>
+            )}
           </div>
 
           {viewMode === 'map' && (
-            <button
-              type="button"
-              onClick={requestUserLocation}
-              className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-200 transition hover:border-brand-500/60 hover:text-white"
-            >
-              <LocateFixed className="h-4 w-4" />
-              Ver mi ubicacion
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/#buscador"
+                className="inline-flex w-fit items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-xs font-bold text-white transition hover:bg-brand-600"
+              >
+                Volver a buscar
+              </Link>
+              <button
+                type="button"
+                onClick={requestUserLocation}
+                className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-200 transition hover:border-brand-500/60 hover:text-white"
+              >
+                <LocateFixed className="h-4 w-4" />
+                Ver mi ubicación
+              </button>
+            </div>
           )}
         </div>
 
@@ -784,7 +856,7 @@ export function Filters() {
               <div className="absolute left-4 top-4 rounded-2xl border border-white/10 bg-slate-950/85 px-4 py-3 shadow-xl shadow-black/20 backdrop-blur">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-400">Mapa Tardea</p>
                 <p className="mt-1 text-xs text-slate-400">
-                  {filtered.length} evento{filtered.length === 1 ? '' : 's'} filtrado{filtered.length === 1 ? '' : 's'}
+                  {eventsForMap.length} evento{eventsForMap.length === 1 ? '' : 's'} {selectedDates.length > 0 ? 'filtrado' : 'destacado'}{eventsForMap.length === 1 ? '' : 's'}
                 </p>
               </div>
 
@@ -796,7 +868,7 @@ export function Filters() {
             </div>
 
             <div className="space-y-2">
-              {filtered.map((event, index) => {
+              {eventsForMap.map((event, index) => {
                 const isActive = activeEventSlug === event.slug
 
                 return (
