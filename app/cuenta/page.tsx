@@ -13,6 +13,7 @@ import {
   UserRound,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { Navbar } from '@/components/Navbar'
 
 type AccountProfile = {
   first_name: string | null
@@ -277,8 +278,10 @@ export default function AccountPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto min-h-screen w-full max-w-5xl pb-12 pt-[calc(env(safe-area-inset-top)+3rem)] md:pt-5">
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-hero-gradient text-slate-100">
+      <div className="mx-auto min-h-screen w-full max-w-5xl pb-12 pt-8 md:pt-10">
         {activeTab === 'profile' && (
         <section className="px-5 pt-4 md:pt-8">
           <div className="grid grid-cols-[auto_1fr] items-center gap-6">
@@ -596,6 +599,7 @@ export default function AccountPage() {
           </section>
         )}
       </div>
-    </main>
+      </main>
+    </>
   )
 }
