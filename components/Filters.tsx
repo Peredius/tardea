@@ -300,6 +300,12 @@ export function Filters() {
   const googleMarkersRef = useRef<any[]>([])
   const googleInfoWindowRef = useRef<any>(null)
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('view') === 'map') setViewMode('map')
+  }, [])
+
   const activeFilters = [
     type !== 'Todos' ? type : null,
     music !== 'Todas' ? music : null,

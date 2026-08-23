@@ -1,6 +1,7 @@
 import './globals.css'
 import type { Metadata, Viewport } from 'next'
 import { CookieBanner } from '@/components/CookieBanner'
+import { MobileAppNav } from '@/components/MobileAppNav'
 import { PwaRegistrar } from '@/components/PwaRegistrar'
 
 export const metadata: Metadata = {
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es">
       <body>
         {children}
+        <MobileAppNav />
         <CookieBanner />
         <PwaRegistrar />
       </body>
