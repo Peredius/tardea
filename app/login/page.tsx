@@ -73,6 +73,53 @@ const PROVINCE_OPTIONS = [
 
 const REMEMBERED_PROMOTER_EMAIL_KEY = 'tardea_promoter_email'
 
+type LoginPreviewEvent = {
+  slug: string
+  title: string
+  type: string | null
+  cover: string | null
+  date?: string | null
+}
+
+const FALLBACK_LOGIN_CARDS: LoginPreviewEvent[] = [
+  {
+    slug: 'tardeo',
+    title: 'Tardeo',
+    type: 'Tardeo',
+    cover: '/scout-covers/tardeo.svg',
+  },
+  {
+    slug: 'rooftop',
+    title: 'Rooftop',
+    type: 'Rooftop',
+    cover: '/scout-covers/rooftop.svg',
+  },
+  {
+    slug: 'brunch',
+    title: 'Brunch',
+    type: 'Brunch',
+    cover: '/scout-covers/brunch.svg',
+  },
+  {
+    slug: 'afterwork',
+    title: 'Afterwork',
+    type: 'Afterwork',
+    cover: '/scout-covers/tardeo.svg',
+  },
+  {
+    slug: 'flamenquito',
+    title: 'Flamenquito',
+    type: 'Flamenquito',
+    cover: '/scout-covers/flamenquito.svg',
+  },
+  {
+    slug: 'directos',
+    title: 'Directos',
+    type: 'Show en directo',
+    cover: '/scout-covers/tardeo.svg',
+  },
+]
+
 function LoginContent() {
   const searchParams = useSearchParams()
   const type = searchParams.get('type')
@@ -90,6 +137,7 @@ function LoginContent() {
   const [sendingRecovery, setSendingRecovery] = useState(false)
   const [legalAccepted, setLegalAccepted] = useState(false)
   const [marketingConsent, setMarketingConsent] = useState(false)
+  const [featuredLoginEvents, setFeaturedLoginEvents] = useState<LoginPreviewEvent[]>([])
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -108,6 +156,52 @@ function LoginContent() {
       setEmail(rememberedEmail)
     }
   }, [accountType])
+
+  useEffect(() => {
+    if (!isUserAccess) return
+
+    async function loadFeaturedLoginEvents() {
+      const today = new Date().toISOString().split('T')[0]
+
+      const { data: featuredEvents, error: featuredError } = await supabase
+        .from('events')
+        .select('slug, title, type, cover, date')
+        .eq('published', true)
+        .eq('status', 'approved')
+        .eq('featured', true)
+        .gte('date', today)
+        .order('date', { ascending: true })
+        .limit(6)
+
+      if (featuredError) {
+        console.error(featuredError)
+      }
+
+      const { data: upcomingEvents, error: upcomingError } = await supabase
+        .from('events')
+        .select('slug, title, type, cover, date')
+        .eq('published', true)
+        .eq('status', 'approved')
+        .gte('date', today)
+        .order('date', { ascending: true })
+        .limit(12)
+
+      if (upcomingError) {
+        console.error(upcomingError)
+      }
+
+      const uniqueEvents = new Map<string, LoginPreviewEvent>()
+      ;[...(featuredEvents || []), ...(upcomingEvents || [])].forEach((event) => {
+        if (event?.slug && !uniqueEvents.has(event.slug)) {
+          uniqueEvents.set(event.slug, event)
+        }
+      })
+
+      setFeaturedLoginEvents(Array.from(uniqueEvents.values()).slice(0, 6))
+    }
+
+    loadFeaturedLoginEvents()
+  }, [isUserAccess])
 
   function toggleSelection(value: string) {
     setMusicPrefs((current) =>
@@ -273,6 +367,9 @@ function LoginContent() {
     setIsRegister(false)
   }
 
+  const loginPreviewCards =
+    featuredLoginEvents.length > 0 ? featuredLoginEvents : FALLBACK_LOGIN_CARDS
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="container-page py-10 md:py-16">
@@ -292,23 +389,45 @@ function LoginContent() {
             </div>
 
             <div className="mt-8 grid grid-cols-3 gap-3">
-              {[
-                ['Tardeo', 'from-brand-500/80 to-fuchsia-500/50'],
-                ['Rooftop', 'from-sky-500/70 to-brand-500/40'],
-                ['Brunch', 'from-amber-400/70 to-brand-500/40'],
-                ['Afterwork', 'from-violet-500/70 to-slate-900'],
-                ['Flamenquito', 'from-rose-500/70 to-orange-400/50'],
-                ['Directos', 'from-emerald-400/70 to-slate-900'],
-              ].map(([label, gradient]) => (
-                <div
-                  key={label}
-                  className={`flex aspect-[3/4] items-end rounded-2xl bg-gradient-to-br ${gradient} p-3 shadow-xl shadow-black/25`}
-                >
-                  <span className="text-xs font-black uppercase tracking-[0.08em] text-white">
-                    {label}
-                  </span>
-                </div>
-              ))}
+              {loginPreviewCards.map((event) => {
+                const content = (
+                  <>
+                    <div
+                      className="absolute inset-0 bg-cover bg-center opacity-70 transition duration-500 group-hover:scale-105 group-hover:opacity-80"
+                      style={{
+                        backgroundImage: `url(${event.cover || '/scout-covers/tardeo.svg'})`,
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/55 to-slate-950/20" />
+                    <div className="relative z-10 flex h-full flex-col justify-end p-3">
+                      <span className="text-[10px] font-black uppercase tracking-[0.12em] text-brand-200">
+                        {event.type || 'Tardeo'}
+                      </span>
+                      <span className="mt-1 line-clamp-2 text-[11px] font-black uppercase leading-tight text-white">
+                        {event.title}
+                      </span>
+                    </div>
+                  </>
+                )
+
+                return event.slug.startsWith('fallback-') ||
+                  FALLBACK_LOGIN_CARDS.some((card) => card.slug === event.slug) ? (
+                  <div
+                    key={event.slug}
+                    className="group relative aspect-[3/4] overflow-hidden rounded-2xl bg-slate-900 shadow-xl shadow-black/25"
+                  >
+                    {content}
+                  </div>
+                ) : (
+                  <Link
+                    key={event.slug}
+                    href={`/eventos/${event.slug}`}
+                    className="group relative aspect-[3/4] overflow-hidden rounded-2xl bg-slate-900 shadow-xl shadow-black/25"
+                  >
+                    {content}
+                  </Link>
+                )
+              })}
             </div>
 
             <div className="mt-8 space-y-3">
