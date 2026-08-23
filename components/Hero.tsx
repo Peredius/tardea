@@ -112,7 +112,7 @@ export function Hero() {
   }
 
   return (
-    <section className="bg-hero-gradient">
+    <section id="buscador" className="scroll-mt-20 bg-hero-gradient">
       <div className="container-page grid items-center gap-8 py-10 md:grid-cols-[1.15fr_0.85fr] md:gap-12 md:py-12">
         <div className="contents md:block">
           

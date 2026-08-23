@@ -148,7 +148,7 @@ export function Navbar() {
           </a>
         </nav>
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="hidden shrink-0 items-center gap-2 md:flex">
           {user ? (
             <>
               <span className="max-w-[92px] truncate text-xs font-semibold text-slate-200 sm:max-w-none sm:text-sm">

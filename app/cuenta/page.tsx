@@ -40,7 +40,7 @@ type FavoriteEvent = {
   cover: string | null
 }
 
-type AccountTab = 'favorites' | 'suggestions' | 'compare' | 'chats'
+type AccountTab = 'profile' | 'favorites' | 'suggestions' | 'compare' | 'chats'
 
 export default function AccountPage() {
   const avatarInputRef = useRef<HTMLInputElement | null>(null)
@@ -49,7 +49,7 @@ export default function AccountPage() {
   const [profile, setProfile] = useState<AccountProfile | null>(null)
   const [favoriteEvents, setFavoriteEvents] = useState<FavoriteEvent[]>([])
   const [suggestedEvents, setSuggestedEvents] = useState<FavoriteEvent[]>([])
-  const [activeTab, setActiveTab] = useState<AccountTab>('favorites')
+  const [activeTab, setActiveTab] = useState<AccountTab>('profile')
   const [menuOpen, setMenuOpen] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState('')
   const [avatarUploading, setAvatarUploading] = useState(false)
@@ -126,6 +126,14 @@ export default function AccountPage() {
     }
 
     loadAccount()
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const tab = new URLSearchParams(window.location.search).get('tab')
+    if (tab === 'profile' || tab === 'favorites' || tab === 'suggestions' || tab === 'compare' || tab === 'chats') {
+      setActiveTab(tab)
+    }
   }, [])
 
   const displayName = useMemo(() => {
@@ -420,6 +428,35 @@ export default function AccountPage() {
             </button>
           </div>
         </section>
+
+        {activeTab === 'profile' && (
+          <section className="px-5 py-8">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                <p className="text-sm text-slate-400">Zona</p>
+                <p className="mt-2 text-lg font-bold text-white">
+                  {profile?.municipality || 'Sin definir'}
+                </p>
+              </div>
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                <p className="text-sm text-slate-400">Gustos</p>
+                <p className="mt-2 text-lg font-bold text-white">
+                  {profile?.music_preferences?.length
+                    ? profile.music_preferences.join(', ')
+                    : 'Sin definir'}
+                </p>
+              </div>
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                <p className="text-sm text-slate-400">Tardeos visitados</p>
+                <p className="mt-2 text-lg font-bold text-white">Próximamente</p>
+              </div>
+            </div>
+
+            <Link href="/cuenta/perfil" className="btn-primary mt-5 w-full">
+              Editar perfil
+            </Link>
+          </section>
+        )}
 
         {activeTab === 'favorites' && (
           <section className="grid grid-cols-2 gap-1 px-0 pt-1 sm:grid-cols-3 lg:grid-cols-4">
