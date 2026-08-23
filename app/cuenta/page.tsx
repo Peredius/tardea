@@ -299,6 +299,12 @@ export default function AccountPage() {
     }
   }
 
+  useEffect(() => {
+    if (activeTab === 'favorites') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    }
+  }, [activeTab])
+
   const displayName = useMemo(() => {
     const fullName = [profile?.first_name, profile?.last_name]
       .filter(Boolean)
@@ -383,8 +389,20 @@ export default function AccountPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-hero-gradient text-slate-100">
-      <div className="mx-auto min-h-screen w-full max-w-5xl pb-12 pt-8 md:pt-10">
+      <main
+        className={
+          activeTab === 'favorites'
+            ? 'h-[calc(100dvh-86px)] overflow-hidden bg-hero-gradient text-slate-100 md:min-h-screen md:h-auto md:overflow-visible'
+            : 'min-h-screen bg-hero-gradient text-slate-100'
+        }
+      >
+      <div
+        className={
+          activeTab === 'favorites'
+            ? 'mx-auto h-full w-full max-w-5xl overflow-hidden pt-0 md:min-h-screen md:pb-12 md:pt-10'
+            : 'mx-auto min-h-screen w-full max-w-5xl pb-12 pt-8 md:pt-10'
+        }
+      >
         {activeTab === 'profile' && (
         <section className="px-5 pt-4 md:pt-8">
           <div className="grid grid-cols-[auto_1fr] items-center gap-6">
@@ -516,7 +534,7 @@ export default function AccountPage() {
         )}
 
         {activeTab === 'favorites' && (
-          <section className="flex h-[calc(100dvh-132px)] flex-col overflow-hidden px-0 pb-24 pt-4 md:h-auto md:overflow-visible md:pb-28">
+          <section className="flex h-full flex-col overflow-hidden px-0 pb-24 pt-4 md:h-auto md:overflow-visible md:pb-28">
             {favoriteProfiles.length + favoriteEvents.length === 0 ? (
               <div className="px-5 py-12 text-center">
                 <Heart className="mx-auto h-10 w-10 text-brand-500" />
