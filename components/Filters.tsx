@@ -854,7 +854,7 @@ export function Filters() {
         <div
           ref={carouselRef}
           onScroll={updateActiveEventFromScroll}
-          className="-mx-5 mt-8 flex snap-x snap-mandatory gap-2 overflow-x-auto px-5 pb-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden"
+          className="-mx-5 mt-8 flex snap-x snap-proximity items-center gap-1.5 overflow-x-auto px-[24vw] pb-6 pt-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden"
         >
           {filtered.map((event) => {
             const today = new Date().toISOString().split('T')[0]
@@ -866,10 +866,10 @@ export function Filters() {
                 data-event-card
                 data-slug={event.slug}
                 onClick={(clickEvent) => openActiveEventOnTap(event.slug, clickEvent)}
-                className={`group relative flex aspect-[9/16] snap-center overflow-hidden rounded-3xl border border-white/10 bg-slate-900 transition duration-300 sm:card sm:aspect-auto sm:h-full sm:min-h-0 sm:min-w-0 sm:scale-100 sm:flex-col ${
+                className={`group relative flex aspect-[9/16] snap-center overflow-hidden rounded-[1.35rem] border border-white/10 bg-slate-900 transition duration-300 ease-out sm:card sm:aspect-auto sm:h-full sm:min-h-0 sm:min-w-0 sm:translate-y-0 sm:scale-100 sm:flex-col sm:rounded-3xl sm:opacity-100 ${
                   activeEventSlug === event.slug
-                    ? 'min-w-[56vw] scale-100'
-                    : 'min-w-[50vw] scale-[0.94] opacity-80'
+                    ? 'z-10 min-w-[48vw] scale-105 opacity-100 shadow-2xl shadow-black/40'
+                    : 'min-w-[43vw] translate-y-2 scale-[0.9] opacity-65'
                 }`}
               >
                 <Link
