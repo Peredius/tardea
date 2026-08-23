@@ -45,7 +45,6 @@ function buildProfilePayload(event: any, fallbackEvent: any, ownerUserId?: strin
     description: baseEvent.description || fallbackEvent.description || null,
     type: baseEvent.type || fallbackEvent.type || 'Tardeo',
     venue_name: baseEvent.venue || fallbackEvent.venue || null,
-    area: baseEvent.area || fallbackEvent.area || null,
     address: baseEvent.address || fallbackEvent.address || null,
     maps_url: baseEvent.maps_url || fallbackEvent.maps_url || null,
     music: Array.isArray(baseEvent.music) ? baseEvent.music : [],
@@ -172,7 +171,7 @@ export async function POST(request: Request) {
   if (!eventProfileId) {
     const { data: candidateProfiles } = await supabaseAdmin
       .from('promoter_event_profiles')
-      .select('id, name, slug, venue_name, area, type')
+      .select('id, name, slug, venue_name, type')
       .limit(1000)
 
     const bestProfile = (candidateProfiles || [])

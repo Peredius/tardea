@@ -165,7 +165,7 @@ export default function AccountPage() {
         const [{ data: profiles }, { data: profileEvents }] = await Promise.all([
           supabase
             .from('promoter_event_profiles')
-            .select('id, name, venue_name, area, type, music, logo_url, banner_url')
+            .select('id, name, venue_name, type, music, logo_url, banner_url')
             .in('id', favoriteProfileIds),
           supabase
             .from('events')
@@ -209,7 +209,7 @@ export default function AccountPage() {
               id: profileId,
               name: favoriteProfile?.name || nextEvent?.title || 'Plan TARDEA',
               venue_name: favoriteProfile?.venue_name || nextEvent?.venue || null,
-              area: favoriteProfile?.area || nextEvent?.area || null,
+              area: nextEvent?.area || null,
               type: favoriteProfile?.type || nextEvent?.type || null,
               music: canonicalizeMusicList(favoriteProfile?.music || nextEvent?.music || []),
               logo_url: favoriteProfile?.logo_url || nextEvent?.cover || null,
