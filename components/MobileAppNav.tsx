@@ -94,12 +94,12 @@ export function MobileAppNav() {
 
   const accountHref = user ? '/cuenta' : '/login?type=user'
   const accountOnlyHref = (href: string) => (user ? href : '/login?type=user')
-  const recommendationsHref = user ? '/cuenta?tab=suggestions' : '/#destacados'
+  const recommendationsHref = user ? '/cuenta?tab=suggestions' : '/?tab=for-you#destacados'
   const isAccount = pathname.startsWith('/cuenta')
   const isRecommendations = user
     ? isAccount && activeTab === 'suggestions'
-    : pathname === '/' && homeHash === 'destacados'
-  const isSearch = pathname === '/' && homeView !== 'map' && homeHash !== 'destacados'
+    : pathname === '/' && (activeTab === 'for-you' || homeHash === 'destacados')
+  const isSearch = pathname === '/' && !isRecommendations && homeView !== 'map'
   const isAuthScreen = pathname === '/login' || pathname === '/register'
 
   return (
@@ -127,7 +127,7 @@ export function MobileAppNav() {
             <Sparkles className="h-5 w-5" />
           </MobileNavItem>
 
-          <MobileNavItem href="/#buscador" active={isSearch} label="Buscar">
+          <MobileNavItem href="/?tab=search#buscador" active={isSearch} label="Buscar">
             <Search className="h-5 w-5" />
           </MobileNavItem>
 
@@ -180,7 +180,7 @@ function MobileNavItem({
       href={href}
       className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-[24px] text-[10px] font-bold transition ${
         active
-          ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20'
+          ? 'bg-white/10 text-white ring-1 ring-white/10'
           : 'text-slate-400 hover:bg-white/10 hover:text-white'
       }`}
     >
