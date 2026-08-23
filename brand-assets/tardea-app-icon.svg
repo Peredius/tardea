@@ -13,8 +13,8 @@
   <rect width="1024" height="1024" rx="210" fill="url(#tardeaRed)"/>
   <circle cx="-8" cy="512" r="112" fill="#020617"/>
 
-  <g transform="translate(176 184) skewX(-9)" filter="url(#softShadow)">
+  <g transform="translate(208 184) skewX(-9)" filter="url(#softShadow)">
     <path fill="#ffffff" d="M92 0h592L642 174H434L340 656H122l94-482H50L92 0Z"/>
   </g>
-  <circle cx="655" cy="750" r="62" fill="#ffffff"/>
+  <circle cx="687" cy="750" r="62" fill="#ffffff"/>
 </svg>
