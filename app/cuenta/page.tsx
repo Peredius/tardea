@@ -516,7 +516,7 @@ export default function AccountPage() {
         )}
 
         {activeTab === 'favorites' && (
-          <section className="px-0 pb-28 pt-1">
+          <section className="flex h-[calc(100dvh-132px)] flex-col overflow-hidden px-0 pb-24 pt-4 md:h-auto md:overflow-visible md:pb-28">
             {favoriteProfiles.length + favoriteEvents.length === 0 ? (
               <div className="px-5 py-12 text-center">
                 <Heart className="mx-auto h-10 w-10 text-brand-500" />
@@ -530,7 +530,7 @@ export default function AccountPage() {
             ) : (
               <>
               {favoriteEvents.length > 0 && (
-                <div className="pb-5 pt-4">
+                <div className="min-h-0 shrink-0 pb-4 md:pb-5">
                   <div className="px-5 pb-3">
                     <h2 className="text-xl font-black text-white">
                       Fechas guardadas
@@ -586,7 +586,7 @@ export default function AccountPage() {
               )}
 
               {favoriteProfiles.length > 0 && (
-                <div className="pt-3">
+                <div className="min-h-0 shrink-0 pt-2">
                   <div className="px-5 pb-3">
                     <h2 className="text-xl font-black text-white">
                       Planes favoritos
