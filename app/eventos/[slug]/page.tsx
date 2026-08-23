@@ -8,6 +8,7 @@ import {
   CalendarDays,
   Clock3,
   Euro,
+  Heart,
   MapPin,
   Music4,
   Sparkles,
@@ -622,21 +623,33 @@ export default function EventDetailPage() {
 
             <button
               onClick={toggleEventFavorite}
-              className="btn-secondary mt-3 w-full"
+              className="btn-secondary mt-3 flex w-full items-center justify-center gap-2"
             >
-              {isEventFavorite ? '❤️ Fecha guardada' : '🤍 Guardar esta fecha'}
+              <Heart
+                className={`h-5 w-5 ${
+                  isEventFavorite ? 'fill-brand-500 text-brand-500' : 'text-white'
+                }`}
+              />
+              {isEventFavorite ? 'Fecha guardada' : 'Guardar esta fecha'}
             </button>
 
             <button
               onClick={toggleProfileFavorite}
               disabled={savingProfileFavorite}
-              className="btn-secondary mt-3 w-full"
+              className="btn-secondary mt-3 flex w-full items-center justify-center gap-2"
             >
+              {!savingProfileFavorite && (
+                <Heart
+                  className={`h-5 w-5 ${
+                    isProfileFavorite ? 'fill-brand-500 text-brand-500' : 'text-white'
+                  }`}
+                />
+              )}
               {savingProfileFavorite
                 ? 'Guardando plan...'
                 : isProfileFavorite
-                  ? '❤️ Plan favorito'
-                  : '🤍 Plan favorito'}
+                  ? 'Plan favorito'
+                  : 'Plan favorito'}
             </button>
 
             <button
