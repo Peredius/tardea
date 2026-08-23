@@ -87,6 +87,8 @@ export default function AccountPage() {
   const [avatarUrl, setAvatarUrl] = useState('')
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarMessage, setAvatarMessage] = useState('')
+  const [passwordMessage, setPasswordMessage] = useState('')
+  const [sendingPasswordEmail, setSendingPasswordEmail] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -327,6 +329,28 @@ export default function AccountPage() {
     window.location.href = '/'
   }
 
+  async function handlePasswordRecovery() {
+    setPasswordMessage('')
+
+    if (!email) {
+      setPasswordMessage('No se ha podido detectar el email de tu cuenta.')
+      return
+    }
+
+    setSendingPasswordEmail(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+    })
+    setSendingPasswordEmail(false)
+
+    if (error) {
+      setPasswordMessage(`No se pudo enviar el email: ${error.message}`)
+      return
+    }
+
+    setPasswordMessage('Te hemos enviado un enlace para cambiar la contraseña.')
+  }
+
   async function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     if (!file || !userId) return
@@ -500,17 +524,42 @@ export default function AccountPage() {
               </div>
             </div>
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <Link href="/cuenta/perfil" className="btn-primary w-full">
-                Editar perfil
-              </Link>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 py-3 font-bold text-slate-200 transition hover:border-brand-500/50 hover:text-white"
-              >
-                Cerrar sesión
-              </button>
+            <div className="mt-5 rounded-3xl border border-white/10 bg-white/5 p-4">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-brand-500">
+                Preferencias
+              </p>
+
+              <div className="mt-4 grid gap-3">
+                <Link
+                  href="/cuenta/perfil"
+                  className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-brand-500 px-5 py-3 font-bold text-white transition hover:bg-brand-400"
+                >
+                  Editar perfil
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={handlePasswordRecovery}
+                  disabled={sendingPasswordEmail}
+                  className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 py-3 font-bold text-slate-200 transition hover:border-brand-500/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {sendingPasswordEmail ? 'Enviando...' : 'Cambiar contraseña'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-brand-500/40 bg-transparent px-5 py-3 font-bold text-slate-200 transition hover:bg-brand-500/10 hover:text-white"
+                >
+                  Cerrar sesión
+                </button>
+              </div>
+
+              {passwordMessage && (
+                <p className="mt-3 text-sm font-medium text-slate-300">
+                  {passwordMessage}
+                </p>
+              )}
             </div>
           </section>
         )}
