@@ -1,0 +1,51 @@
+{
+  "name": "TARDEA",
+  "short_name": "TARDEA",
+  "description": "Planes de tarde, rooftops, brunches y afterworks en Madrid.",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#050816",
+  "theme_color": "#050816",
+  "categories": ["entertainment", "lifestyle", "food"],
+  "icons": [
+    {
+      "src": "/tardea-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/tardea-app-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Buscar planes",
+      "short_name": "Buscar",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/tardea-app-icon.png",
+          "sizes": "512x512"
+        }
+      ]
+    },
+    {
+      "name": "Mi cuenta",
+      "short_name": "Cuenta",
+      "url": "/cuenta",
+      "icons": [
+        {
+          "src": "/tardea-app-icon.png",
+          "sizes": "512x512"
+        }
+      ]
+    }
+  ]
+}
