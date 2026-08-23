@@ -321,8 +321,31 @@ export function Filters() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const params = new URLSearchParams(window.location.search)
-    if (params.get('view') === 'map') setViewMode('map')
+
+    function syncViewFromUrl() {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('view') === 'map') {
+        setViewMode('map')
+      }
+    }
+
+    function handleViewModeChanged(event: Event) {
+      const nextViewMode = (event as CustomEvent<{ viewMode?: 'list' | 'map' }>).detail
+        ?.viewMode
+
+      if (nextViewMode === 'map' || nextViewMode === 'list') {
+        setViewMode(nextViewMode)
+      }
+    }
+
+    syncViewFromUrl()
+    window.addEventListener('popstate', syncViewFromUrl)
+    window.addEventListener('tardeaViewModeChanged', handleViewModeChanged)
+
+    return () => {
+      window.removeEventListener('popstate', syncViewFromUrl)
+      window.removeEventListener('tardeaViewModeChanged', handleViewModeChanged)
+    }
   }, [])
 
   const activeFilters = [
