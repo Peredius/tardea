@@ -94,7 +94,7 @@ export function Navbar() {
       <div className="container-page relative flex min-h-[86px] items-end justify-center gap-2 pb-4 pt-[calc(env(safe-area-inset-top)+14px)] sm:gap-4 md:h-16 md:min-h-0 md:items-center md:justify-between md:py-0">
         <Link
           href="/"
-          className="absolute left-1/2 flex min-w-0 shrink -translate-x-1/2 items-center md:static md:translate-x-0 md:shrink-0"
+          className="absolute left-1/2 flex min-w-0 shrink -translate-x-1/2 translate-y-1.5 items-center md:static md:translate-x-0 md:translate-y-0 md:shrink-0"
         >
           <BrandLogo
             className="origin-center scale-[0.82] md:origin-left md:scale-100"
