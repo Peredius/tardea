@@ -79,6 +79,7 @@ type LoginPreviewEvent = {
   type: string | null
   cover: string | null
   date?: string | null
+  event_profile_id?: string | null
 }
 
 const FALLBACK_LOGIN_CARDS: LoginPreviewEvent[] = [
@@ -119,6 +120,25 @@ const FALLBACK_LOGIN_CARDS: LoginPreviewEvent[] = [
     cover: '/scout-covers/tardeo.svg',
   },
 ]
+
+function normalizeLoginEventName(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\b\d{1,2}\s*(?:de\s*)?(?:ene|enero|feb|febrero|mar|marzo|abr|abril|may|mayo|jun|junio|jul|julio|ago|agosto|sep|septiembre|oct|octubre|nov|noviembre|dic|diciembre)\b/gi, ' ')
+    .replace(/\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g, ' ')
+    .replace(/\b20\d{2}\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+function getLoginEventGroupKey(event: LoginPreviewEvent) {
+  if (event.event_profile_id) return event.event_profile_id
+
+  const normalizedTitle = normalizeLoginEventName(event.title || 'evento')
+  return `${event.type || 'Tardeo'}__${normalizedTitle || event.slug}`
+}
 
 function LoginContent() {
   const searchParams = useSearchParams()
@@ -165,13 +185,13 @@ function LoginContent() {
 
       const { data: featuredEvents, error: featuredError } = await supabase
         .from('events')
-        .select('slug, title, type, cover, date')
+        .select('slug, title, type, cover, date, event_profile_id')
         .eq('published', true)
         .eq('status', 'approved')
         .eq('featured', true)
         .gte('date', today)
         .order('date', { ascending: true })
-        .limit(6)
+        .limit(40)
 
       if (featuredError) {
         console.error(featuredError)
@@ -179,12 +199,12 @@ function LoginContent() {
 
       const { data: upcomingEvents, error: upcomingError } = await supabase
         .from('events')
-        .select('slug, title, type, cover, date')
+        .select('slug, title, type, cover, date, event_profile_id')
         .eq('published', true)
         .eq('status', 'approved')
         .gte('date', today)
         .order('date', { ascending: true })
-        .limit(12)
+        .limit(60)
 
       if (upcomingError) {
         console.error(upcomingError)
@@ -192,8 +212,11 @@ function LoginContent() {
 
       const uniqueEvents = new Map<string, LoginPreviewEvent>()
       ;[...(featuredEvents || []), ...(upcomingEvents || [])].forEach((event) => {
-        if (event?.slug && !uniqueEvents.has(event.slug)) {
-          uniqueEvents.set(event.slug, event)
+        if (!event?.slug) return
+
+        const groupKey = getLoginEventGroupKey(event)
+        if (!uniqueEvents.has(groupKey)) {
+          uniqueEvents.set(groupKey, event)
         }
       })
 
