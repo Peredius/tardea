@@ -113,11 +113,25 @@ export function MobileAppNav() {
             href={recommendationsHref}
             active={isRecommendations}
             label="Para ti"
+            onClick={() => {
+              setActiveTab(user ? 'suggestions' : 'for-you')
+              setHomeView('')
+              setHomeHash(user ? '' : 'destacados')
+            }}
           >
             <Sparkles className="h-5 w-5" />
           </MobileNavItem>
 
-          <MobileNavItem href="/?tab=search#buscador" active={isSearch} label="Buscar">
+          <MobileNavItem
+            href="/?tab=search#buscador"
+            active={isSearch}
+            label="Buscar"
+            onClick={() => {
+              setActiveTab('search')
+              setHomeView('')
+              setHomeHash('buscador')
+            }}
+          >
             <Search className="h-5 w-5" />
           </MobileNavItem>
 
@@ -125,6 +139,7 @@ export function MobileAppNav() {
             href={accountOnlyHref('/cuenta?tab=favorites')}
             active={isAccount && activeTab === 'favorites'}
             label="Favoritos"
+            onClick={() => setActiveTab('favorites')}
           >
             <Heart className="h-5 w-5" />
           </MobileNavItem>
@@ -133,6 +148,7 @@ export function MobileAppNav() {
             href={accountOnlyHref('/cuenta?tab=chats')}
             active={isAccount && activeTab === 'chats'}
             label="Chat"
+            onClick={() => setActiveTab('chats')}
           >
             <MessageSquare className="h-5 w-5" />
           </MobileNavItem>
@@ -141,6 +157,7 @@ export function MobileAppNav() {
             href={accountOnlyHref('/cuenta?tab=profile')}
             active={isAccount && (!activeTab || activeTab === 'profile')}
             label="Perfil"
+            onClick={() => setActiveTab('profile')}
           >
             {avatarUrl ? (
               <img src={avatarUrl} alt="Mi cuenta" className="h-6 w-6 rounded-full object-cover" />
@@ -158,20 +175,26 @@ function MobileNavItem({
   href,
   active,
   label,
+  onClick,
   children,
 }: {
   href: string
   active: boolean
   label: string
+  onClick?: () => void
   children: ReactNode
 }) {
   return (
     <Link
       href={href}
+      onClick={(event) => {
+        onClick?.()
+        event.currentTarget.blur()
+      }}
       className={`relative flex min-h-14 flex-col items-center justify-center gap-1 text-[10px] font-bold transition ${
         active
           ? 'text-white'
-          : 'text-slate-500 hover:text-slate-300'
+          : 'text-slate-500'
       }`}
     >
       {active && <span className="absolute top-1 h-0.5 w-6 rounded-full bg-white" />}
