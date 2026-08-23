@@ -46,6 +46,32 @@ type EventProfile = {
   website_url: string | null
 }
 
+function normalizeText(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+function getEventSeriesSlug(event: Partial<SeriesEvent> & { venue?: string | null }) {
+  const title = normalizeText(event.title || 'evento')
+    .replace(/\b\d{1,2}\s*(?:de\s*)?(?:ene|enero|feb|febrero|mar|marzo|abr|abril|may|mayo|jun|junio|jul|julio|ago|agosto|sep|septiembre|oct|octubre|nov|noviembre|dic|diciembre)\b/gi, ' ')
+    .replace(/\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g, ' ')
+    .replace(/\b20\d{2}\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  return [event.type || 'Tardeo', title || 'evento'].filter(Boolean).join('__').toLowerCase()
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
+
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString('es-ES', {
     weekday: 'short',
@@ -57,6 +83,7 @@ function formatDate(date: string) {
 export default function EventGroupPage() {
   const params = useParams()
   const profileId = params.id as string
+  const isRealProfileId = isUuid(profileId)
   const [profile, setProfile] = useState<EventProfile | null>(null)
   const [events, setEvents] = useState<SeriesEvent[]>([])
   const [loading, setLoading] = useState(true)
@@ -65,27 +92,54 @@ export default function EventGroupPage() {
     async function loadProfile() {
       const today = new Date().toISOString().split('T')[0]
 
-      const [{ data: profileData }, { data: eventData }] = await Promise.all([
-        supabase
-          .from('promoter_event_profiles')
-          .select('*')
-          .eq('id', profileId)
-          .maybeSingle(),
-        supabase
-          .from('events')
-          .select(
-            'id, event_profile_id, slug, title, venue, area, date, start_time, end_time, type, music, price_from, cover, source_url'
-          )
-          .eq('event_profile_id', profileId)
-          .eq('published', true)
-          .eq('status', 'approved')
-          .gte('date', today)
-          .order('date', { ascending: true }),
-      ])
+      if (isRealProfileId) {
+        const [{ data: profileData }, { data: eventData }] = await Promise.all([
+          supabase
+            .from('promoter_event_profiles')
+            .select('*')
+            .eq('id', profileId)
+            .maybeSingle(),
+          supabase
+            .from('events')
+            .select(
+              'id, event_profile_id, slug, title, venue, area, date, start_time, end_time, type, music, price_from, cover, source_url'
+            )
+            .eq('event_profile_id', profileId)
+            .eq('published', true)
+            .eq('status', 'approved')
+            .gte('date', today)
+            .order('date', { ascending: true }),
+        ])
 
-      setProfile(profileData || null)
+        setProfile(profileData || null)
+        setEvents(
+          (eventData || []).map((event) => ({
+            ...event,
+            music: canonicalizeMusicList(event.music),
+          }))
+        )
+        setLoading(false)
+        return
+      }
+
+      const { data: eventData } = await supabase
+        .from('events')
+        .select(
+          'id, event_profile_id, slug, title, venue, area, date, start_time, end_time, type, music, price_from, cover, source_url'
+        )
+        .eq('published', true)
+        .eq('status', 'approved')
+        .gte('date', today)
+        .order('date', { ascending: true })
+        .limit(1000)
+
+      const publicSeriesEvents = (eventData || []).filter(
+        (event) => getEventSeriesSlug(event) === profileId
+      )
+
+      setProfile(null)
       setEvents(
-        (eventData || []).map((event) => ({
+        publicSeriesEvents.map((event) => ({
           ...event,
           music: canonicalizeMusicList(event.music),
         }))
@@ -94,7 +148,7 @@ export default function EventGroupPage() {
     }
 
     if (profileId) loadProfile()
-  }, [profileId])
+  }, [isRealProfileId, profileId])
 
   const fallbackCover = useMemo(
     () =>
@@ -194,7 +248,11 @@ export default function EventGroupPage() {
                   <p className="text-sm text-slate-400">Próximas fechas aprobadas</p>
                   <p className="mt-1 text-3xl font-black text-white">{events.length}</p>
                 </div>
-                <FavoriteButton eventProfileId={profileId} compact={false} />
+                {isRealProfileId ? (
+                  <FavoriteButton eventProfileId={profileId} compact={false} />
+                ) : (
+                  <span className="badge">Ficha pública</span>
+                )}
               </div>
 
               {venue && (

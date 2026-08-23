@@ -69,22 +69,25 @@ function getProfileMatchScore(event: any, profile: any) {
   return score
 }
 
-async function resolveEventProfileFromServer(eventSlug: string) {
+async function resolveEventProfileFromServer(eventSlug: string, createIfMissing = false) {
   const response = await fetch('/api/event-profile/resolve', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ slug: eventSlug }),
+    body: JSON.stringify({ slug: eventSlug, createIfMissing }),
   })
 
-  if (!response.ok) return ''
+  if (!response.ok) return { eventProfileId: '', seriesSlug: '' }
 
   const payload = (await response.json().catch(() => null)) as
-    | { eventProfileId?: string }
+    | { eventProfileId?: string; seriesSlug?: string }
     | null
 
-  return payload?.eventProfileId || ''
+  return {
+    eventProfileId: payload?.eventProfileId || '',
+    seriesSlug: payload?.seriesSlug || '',
+  }
 }
 
 export default function EventDetailPage() {
@@ -100,6 +103,7 @@ export default function EventDetailPage() {
   const [isEventFavorite, setIsEventFavorite] = useState(false)
   const [isProfileFavorite, setIsProfileFavorite] = useState(false)
   const [eventProfileId, setEventProfileId] = useState('')
+  const [eventSeriesSlug, setEventSeriesSlug] = useState('')
   const [favoriteStatus, setFavoriteStatus] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState('')
@@ -187,7 +191,9 @@ export default function EventDetailPage() {
         }
 
         if (!resolvedProfileId) {
-          resolvedProfileId = await resolveEventProfileFromServer(slug)
+          const resolution = await resolveEventProfileFromServer(slug)
+          resolvedProfileId = resolution.eventProfileId
+          setEventSeriesSlug(resolution.seriesSlug)
         }
 
         setEventProfileId(resolvedProfileId)
@@ -284,8 +290,10 @@ export default function EventDetailPage() {
     let resolvedProfileId = eventProfileId
 
     if (!resolvedProfileId) {
-      resolvedProfileId = await resolveEventProfileFromServer(event.slug)
+      const resolution = await resolveEventProfileFromServer(event.slug, true)
+      resolvedProfileId = resolution.eventProfileId
       if (resolvedProfileId) setEventProfileId(resolvedProfileId)
+      if (resolution.seriesSlug) setEventSeriesSlug(resolution.seriesSlug)
     }
 
     if (!resolvedProfileId) {
@@ -327,18 +335,22 @@ export default function EventDetailPage() {
     if (!event) return
 
     let resolvedProfileId = eventProfileId
+    let resolvedSeriesSlug = eventSeriesSlug
 
     if (!resolvedProfileId) {
-      resolvedProfileId = await resolveEventProfileFromServer(event.slug)
+      const resolution = await resolveEventProfileFromServer(event.slug, true)
+      resolvedProfileId = resolution.eventProfileId
+      resolvedSeriesSlug = resolution.seriesSlug
       if (resolvedProfileId) setEventProfileId(resolvedProfileId)
+      if (resolvedSeriesSlug) setEventSeriesSlug(resolvedSeriesSlug)
     }
 
-    if (!resolvedProfileId) {
+    if (!resolvedProfileId && !resolvedSeriesSlug) {
       setFavoriteStatus('Todavía no se ha encontrado la ficha pública de este plan.')
       return
     }
 
-    window.location.href = `/eventos/grupo/${resolvedProfileId}`
+    window.location.href = `/eventos/grupo/${resolvedProfileId || resolvedSeriesSlug}`
   }
 
   async function submitClaim(e: React.FormEvent) {
