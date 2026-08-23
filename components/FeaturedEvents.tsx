@@ -175,7 +175,7 @@ export function FeaturedEvents() {
                 }}
               />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent" />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent" />
               <FavoriteButton
                 eventId={event.id}
                 eventProfileId={event.event_profile_id}

@@ -1024,7 +1024,7 @@ export function Filters() {
                   }}
                 />
 
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent sm:hidden" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent sm:hidden" />
                 <FavoriteButton
                   eventProfileId={event.eventProfileId}
                   className="absolute right-3 top-3 z-20"
