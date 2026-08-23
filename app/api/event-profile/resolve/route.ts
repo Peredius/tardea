@@ -63,6 +63,32 @@ function buildProfilePayload(event: any, fallbackEvent: any, ownerUserId?: strin
   }
 }
 
+async function insertProfileWithSchemaFallback(supabaseAdmin: any, payload: Record<string, any>) {
+  const cleanPayload = { ...payload }
+  let lastError: any = null
+
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const { data, error } = await supabaseAdmin
+      .from('promoter_event_profiles')
+      .insert(cleanPayload)
+      .select('id')
+      .maybeSingle()
+
+    if (!error) return { data, error: null }
+
+    lastError = error
+    const missingColumn = error.message?.match(/Could not find the '([^']+)' column/)?.[1]
+
+    if (!missingColumn || !(missingColumn in cleanPayload)) {
+      break
+    }
+
+    delete cleanPayload[missingColumn]
+  }
+
+  return { data: null, error: lastError }
+}
+
 function getMatchScore(event: any, profile: any) {
   const eventTitle = normalizeText(event.title || '')
   const eventVenue = normalizeText(event.venue || '')
@@ -219,11 +245,10 @@ export async function POST(request: Request) {
     const profileSlug = getProfileSlug(baseEvent)
     const profilePayload = buildProfilePayload(baseEvent, event, ownerUserId, profileSlug)
 
-    let { data: newProfile, error: profileInsertError } = await supabaseAdmin
-      .from('promoter_event_profiles')
-      .insert(profilePayload)
-      .select('id')
-      .maybeSingle()
+    let { data: newProfile, error: profileInsertError } = await insertProfileWithSchemaFallback(
+      supabaseAdmin,
+      profilePayload
+    )
 
     if (!newProfile && profileInsertError) {
       const { data: existingProfile } = await supabaseAdmin
@@ -237,13 +262,13 @@ export async function POST(request: Request) {
 
     if (!newProfile && profileInsertError) {
       const uniqueSlug = `${profileSlug}-${event.id.slice(0, 8)}`
-      const { data: fallbackProfile } = await supabaseAdmin
-        .from('promoter_event_profiles')
-        .insert(buildProfilePayload(baseEvent, event, ownerUserId, uniqueSlug))
-        .select('id')
-        .maybeSingle()
+      const { data: fallbackProfile, error: fallbackError } = await insertProfileWithSchemaFallback(
+        supabaseAdmin,
+        buildProfilePayload(baseEvent, event, ownerUserId, uniqueSlug)
+      )
 
       newProfile = fallbackProfile || null
+      profileInsertError = fallbackError || profileInsertError
     }
 
     eventProfileId = newProfile?.id || ''
