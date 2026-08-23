@@ -610,6 +610,15 @@ export default function AccountPage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
 
+                  {event.event_profile_id && (
+                    <FavoriteButton
+                      eventProfileId={event.event_profile_id}
+                      label="Guardar evento"
+                      savedLabel="Evento guardado"
+                      className="absolute left-3 top-3 z-20"
+                    />
+                  )}
+
                   <div className="absolute inset-x-0 bottom-0 p-4">
                     <div className="mb-2 flex flex-wrap gap-1.5">
                       <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">

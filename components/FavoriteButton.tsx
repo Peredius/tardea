@@ -9,11 +9,15 @@ export function FavoriteButton({
   eventProfileId,
   className = '',
   compact = true,
+  label,
+  savedLabel,
 }: {
   eventId?: string | null
   eventProfileId?: string | null
   className?: string
   compact?: boolean
+  label?: string
+  savedLabel?: string
 }) {
   const [userId, setUserId] = useState('')
   const [isFavorite, setIsFavorite] = useState(false)
@@ -114,6 +118,25 @@ export function FavoriteButton({
   }
 
   if (!eventId && !eventProfileId) return null
+
+  if (label) {
+    return (
+      <button
+        type="button"
+        onClick={toggleFavorite}
+        disabled={loading}
+        aria-label={isFavorite ? savedLabel || 'Guardado' : label}
+        className={`inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-slate-950/65 px-3 py-2 text-xs font-black text-white shadow-lg shadow-black/20 backdrop-blur transition hover:border-brand-500/70 hover:bg-brand-500/20 disabled:opacity-60 ${className}`}
+      >
+        <Heart
+          className={`h-4 w-4 ${
+            isFavorite ? 'fill-brand-500 text-brand-500' : ''
+          }`}
+        />
+        {isFavorite ? savedLabel || 'Guardado' : label}
+      </button>
+    )
+  }
 
   return (
     <button
