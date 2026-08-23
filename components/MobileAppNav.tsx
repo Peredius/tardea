@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
-import { MapPin, MessageSquare, Search, Sparkles, UserRound } from 'lucide-react'
+import { Heart, MessageSquare, Search, Sparkles, UserRound } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
@@ -131,21 +131,23 @@ export function MobileAppNav() {
           </MobileNavItem>
 
           <MobileNavItem
-            href="/?view=map&tab=near#eventos"
-            active={isNearMe}
-            label="Cerca de mí"
+            href={recommendationsHref}
+            active={isRecommendations}
+            label="Para ti"
             onClick={() => {
-              setActiveTab('near')
-              setHomeView('map')
-              setHomeHash('eventos')
-              window.dispatchEvent(
-                new CustomEvent('tardeaViewModeChanged', {
-                  detail: { viewMode: 'map' },
-                })
-              )
+              setActiveTab(user ? 'suggestions' : 'for-you')
+              setHomeView('')
+              setHomeHash(user ? '' : 'destacados')
+              if (user) {
+                window.dispatchEvent(
+                  new CustomEvent('tardeaAccountTabChanged', {
+                    detail: { tab: 'suggestions' },
+                  })
+                )
+              }
             }}
           >
-            <MapPin className="h-5 w-5" />
+            <Sparkles className="h-5 w-5" />
           </MobileNavItem>
 
           <MobileNavItem
@@ -171,23 +173,19 @@ export function MobileAppNav() {
           </MobileNavItem>
 
           <MobileNavItem
-            href={recommendationsHref}
-            active={isRecommendations}
-            label="Para ti"
+            href={accountOnlyHref('/cuenta?tab=favorites')}
+            active={isAccount && activeTab === 'favorites'}
+            label="Favoritos"
             onClick={() => {
-              setActiveTab(user ? 'suggestions' : 'for-you')
-              setHomeView('')
-              setHomeHash(user ? '' : 'destacados')
-              if (user) {
-                window.dispatchEvent(
-                  new CustomEvent('tardeaAccountTabChanged', {
-                    detail: { tab: 'suggestions' },
-                  })
-                )
-              }
+              setActiveTab('favorites')
+              window.dispatchEvent(
+                new CustomEvent('tardeaAccountTabChanged', {
+                  detail: { tab: 'favorites' },
+                })
+              )
             }}
           >
-            <Sparkles className="h-5 w-5" />
+            <Heart className="h-5 w-5" />
           </MobileNavItem>
 
           <MobileNavItem
