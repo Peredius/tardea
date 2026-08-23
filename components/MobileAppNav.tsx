@@ -111,36 +111,23 @@ export function MobileAppNav() {
       >
         <div className="mx-auto grid max-w-md grid-cols-5 bg-black px-2 py-2">
           <MobileNavItem
-            href={recommendationsHref}
-            active={isRecommendations}
-            label="Para ti"
+            href={accountOnlyHref('/cuenta?tab=profile')}
+            active={isAccount && (!activeTab || activeTab === 'profile')}
+            label="Perfil"
             onClick={() => {
-              setActiveTab(user ? 'suggestions' : 'for-you')
-              setHomeView('')
-              setHomeHash(user ? '' : 'destacados')
-              if (user) {
-                window.dispatchEvent(
-                  new CustomEvent('tardeaAccountTabChanged', {
-                    detail: { tab: 'suggestions' },
-                  })
-                )
-              }
+              setActiveTab('profile')
+              window.dispatchEvent(
+                new CustomEvent('tardeaAccountTabChanged', {
+                  detail: { tab: 'profile' },
+                })
+              )
             }}
           >
-            <Sparkles className="h-5 w-5" />
-          </MobileNavItem>
-
-          <MobileNavItem
-            href="/?tab=search#buscador"
-            active={isSearch}
-            label="Buscar"
-            onClick={() => {
-              setActiveTab('search')
-              setHomeView('')
-              setHomeHash('buscador')
-            }}
-          >
-            <Search className="h-5 w-5" />
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Mi cuenta" className="h-6 w-6 rounded-full object-cover" />
+            ) : (
+              <UserRound className="h-5 w-5" />
+            )}
           </MobileNavItem>
 
           <MobileNavItem
@@ -162,6 +149,48 @@ export function MobileAppNav() {
           </MobileNavItem>
 
           <MobileNavItem
+            href="/?tab=search#buscador"
+            active={isSearch}
+            label="Buscar"
+            prominent
+            onClick={() => {
+              setActiveTab('search')
+              setHomeView('')
+              setHomeHash('buscador')
+            }}
+          >
+            <span
+              className={`flex h-[3.25rem] w-[3.25rem] items-center justify-center rounded-full border transition ${
+                isSearch
+                  ? 'border-brand-500 bg-brand-500 text-white shadow-[0_0_28px_rgba(244,63,94,0.35)]'
+                  : 'border-white/10 bg-slate-900 text-slate-300'
+              }`}
+            >
+              <Search className="h-7 w-7" />
+            </span>
+          </MobileNavItem>
+
+          <MobileNavItem
+            href={recommendationsHref}
+            active={isRecommendations}
+            label="Para ti"
+            onClick={() => {
+              setActiveTab(user ? 'suggestions' : 'for-you')
+              setHomeView('')
+              setHomeHash(user ? '' : 'destacados')
+              if (user) {
+                window.dispatchEvent(
+                  new CustomEvent('tardeaAccountTabChanged', {
+                    detail: { tab: 'suggestions' },
+                  })
+                )
+              }
+            }}
+          >
+            <Sparkles className="h-5 w-5" />
+          </MobileNavItem>
+
+          <MobileNavItem
             href={accountOnlyHref('/cuenta?tab=chats')}
             active={isAccount && activeTab === 'chats'}
             label="Chat"
@@ -176,26 +205,6 @@ export function MobileAppNav() {
           >
             <MessageSquare className="h-5 w-5" />
           </MobileNavItem>
-
-          <MobileNavItem
-            href={accountOnlyHref('/cuenta?tab=profile')}
-            active={isAccount && (!activeTab || activeTab === 'profile')}
-            label="Perfil"
-            onClick={() => {
-              setActiveTab('profile')
-              window.dispatchEvent(
-                new CustomEvent('tardeaAccountTabChanged', {
-                  detail: { tab: 'profile' },
-                })
-              )
-            }}
-          >
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="Mi cuenta" className="h-6 w-6 rounded-full object-cover" />
-            ) : (
-              <UserRound className="h-5 w-5" />
-            )}
-          </MobileNavItem>
         </div>
       </nav>
     </>
@@ -207,12 +216,14 @@ function MobileNavItem({
   active,
   label,
   onClick,
+  prominent = false,
   children,
 }: {
   href: string
   active: boolean
   label: string
   onClick?: () => void
+  prominent?: boolean
   children: ReactNode
 }) {
   return (
@@ -222,13 +233,15 @@ function MobileNavItem({
         onClick?.()
         event.currentTarget.blur()
       }}
-      className={`relative flex min-h-14 flex-col items-center justify-center gap-1 text-[10px] font-bold transition ${
+      className={`relative flex flex-col items-center justify-center gap-1 font-bold transition ${
+        prominent ? '-mt-4 min-h-[4.75rem] text-[11px]' : 'min-h-14 text-[10px]'
+      } ${
         active
           ? 'text-white'
           : 'text-slate-500'
       }`}
     >
-      {active && <span className="absolute top-1 h-0.5 w-6 rounded-full bg-white" />}
+      {active && !prominent && <span className="absolute top-1 h-0.5 w-6 rounded-full bg-white" />}
       {children}
       <span>{label}</span>
     </Link>
