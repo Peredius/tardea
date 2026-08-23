@@ -41,7 +41,9 @@ export default function EventDetailPage() {
 
   const [event, setEvent] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isFavorite, setIsFavorite] = useState(false)
+  const [isEventFavorite, setIsEventFavorite] = useState(false)
+  const [isProfileFavorite, setIsProfileFavorite] = useState(false)
+  const [eventProfileName, setEventProfileName] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState('')
   const [claimOpen, setClaimOpen] = useState(false)
@@ -82,29 +84,39 @@ export default function EventDetailPage() {
 
       if (existingClaim?.status) setClaimStatus(existingClaim.status)
 
-      const favoriteQuery = data.event_profile_id
-        ? supabase
-            .from('event_profile_favorites')
-            .select('event_profile_id')
-            .eq('user_id', user.id)
-            .eq('event_profile_id', data.event_profile_id)
-            .maybeSingle()
-        : supabase
-            .from('favorites')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('event_id', data.id)
-            .maybeSingle()
+      const { data: eventFavorite } = await supabase
+        .from('favorites')
+        .select('event_id')
+        .eq('user_id', user.id)
+        .eq('event_id', data.id)
+        .maybeSingle()
 
-      const { data: favorite } = await favoriteQuery
+      if (eventFavorite) setIsEventFavorite(true)
 
-      if (favorite) setIsFavorite(true)
+      if (data.event_profile_id) {
+        const { data: eventProfile } = await supabase
+          .from('promoter_event_profiles')
+          .select('name')
+          .eq('id', data.event_profile_id)
+          .maybeSingle()
+
+        setEventProfileName(eventProfile?.name || '')
+
+        const { data: profileFavorite } = await supabase
+          .from('event_profile_favorites')
+          .select('event_profile_id')
+          .eq('user_id', user.id)
+          .eq('event_profile_id', data.event_profile_id)
+          .maybeSingle()
+
+        if (profileFavorite) setIsProfileFavorite(true)
+      }
     }
 
     loadEvent()
   }, [slug])
 
-  async function toggleFavorite() {
+  async function toggleEventFavorite() {
     if (!userId) {
       window.location.href = '/login?type=user'
       return
@@ -112,42 +124,47 @@ export default function EventDetailPage() {
 
     if (!event) return
 
-    if (event.event_profile_id) {
-      if (isFavorite) {
-        await supabase
-          .from('event_profile_favorites')
-          .delete()
-          .eq('user_id', userId)
-          .eq('event_profile_id', event.event_profile_id)
-
-        setIsFavorite(false)
-      } else {
-        await supabase.from('event_profile_favorites').insert({
-          user_id: userId,
-          event_profile_id: event.event_profile_id,
-        })
-
-        setIsFavorite(true)
-      }
-
-      return
-    }
-
-    if (isFavorite) {
+    if (isEventFavorite) {
       await supabase
         .from('favorites')
         .delete()
         .eq('user_id', userId)
         .eq('event_id', event.id)
 
-      setIsFavorite(false)
+      setIsEventFavorite(false)
     } else {
       await supabase.from('favorites').insert({
         user_id: userId,
         event_id: event.id,
       })
 
-      setIsFavorite(true)
+      setIsEventFavorite(true)
+    }
+  }
+
+  async function toggleProfileFavorite() {
+    if (!userId) {
+      window.location.href = '/login?type=user'
+      return
+    }
+
+    if (!event?.event_profile_id) return
+
+    if (isProfileFavorite) {
+      await supabase
+        .from('event_profile_favorites')
+        .delete()
+        .eq('user_id', userId)
+        .eq('event_profile_id', event.event_profile_id)
+
+      setIsProfileFavorite(false)
+    } else {
+      await supabase.from('event_profile_favorites').insert({
+        user_id: userId,
+        event_profile_id: event.event_profile_id,
+      })
+
+      setIsProfileFavorite(true)
     }
   }
 
@@ -259,17 +276,35 @@ export default function EventDetailPage() {
               {event.description}
             </p>
 
-            <button
-              onClick={toggleFavorite}
-              className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand-500 hover:underline"
-            >
-              <Heart
-                className={`h-5 w-5 ${
-                  isFavorite ? 'fill-brand-500' : ''
-                }`}
-              />
-              {isFavorite ? 'Guardado en favoritos' : event.event_profile_id ? 'Guardar tardeo' : 'Guardar evento'}
-            </button>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                onClick={toggleEventFavorite}
+                className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 px-4 py-2 text-sm font-semibold text-brand-500 transition hover:bg-brand-500/10"
+              >
+                <Heart
+                  className={`h-5 w-5 ${
+                    isEventFavorite ? 'fill-brand-500' : ''
+                  }`}
+                />
+                {isEventFavorite ? 'Evento guardado' : 'Guardar este evento'}
+              </button>
+
+              {event.event_profile_id && (
+                <button
+                  onClick={toggleProfileFavorite}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-brand-500/50 hover:text-white"
+                >
+                  <Heart
+                    className={`h-5 w-5 ${
+                      isProfileFavorite ? 'fill-brand-500 text-brand-500' : ''
+                    }`}
+                  />
+                  {isProfileFavorite
+                    ? `${eventProfileName || event.title} guardado`
+                    : `Guardar ${eventProfileName || event.title}`}
+                </button>
+              )}
+            </div>
 
             {!event.user_id && (
               <button
@@ -410,11 +445,22 @@ export default function EventDetailPage() {
             </a>
 
             <button
-              onClick={toggleFavorite}
+              onClick={toggleEventFavorite}
               className="btn-secondary mt-3 w-full"
             >
-              {isFavorite ? '❤️ Guardado' : event.event_profile_id ? '🤍 Guardar tardeo' : '🤍 Guardar en favoritos'}
+              {isEventFavorite ? '❤️ Evento guardado' : '🤍 Guardar este evento'}
             </button>
+
+            {event.event_profile_id && (
+              <button
+                onClick={toggleProfileFavorite}
+                className="btn-secondary mt-3 w-full"
+              >
+                {isProfileFavorite
+                  ? `❤️ ${eventProfileName || event.title} guardado`
+                  : `🤍 Guardar ${eventProfileName || event.title}`}
+              </button>
+            )}
           </div>
 
           {event.reel_url && (

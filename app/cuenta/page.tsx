@@ -145,7 +145,7 @@ export default function AccountPage() {
           music: canonicalizeMusicList(event.music),
         }))
 
-        setFavoriteEvents(favoriteEventRows.filter((event) => !event.event_profile_id))
+        setFavoriteEvents(favoriteEventRows)
       }
 
       const { data: profileFavorites } = await supabase
@@ -158,17 +158,6 @@ export default function AccountPage() {
           .map((favorite) => favorite.event_profile_id)
           .filter(Boolean)
       )
-
-      if (eventIds.length > 0) {
-        const { data: favoriteEventsWithProfiles } = await supabase
-          .from('events')
-          .select('event_profile_id')
-          .in('id', eventIds)
-
-        ;(favoriteEventsWithProfiles || []).forEach((event) => {
-          if (event.event_profile_id) profileIdsFromFavorites.add(event.event_profile_id)
-        })
-      }
 
       const favoriteProfileIds = Array.from(profileIdsFromFavorites)
 

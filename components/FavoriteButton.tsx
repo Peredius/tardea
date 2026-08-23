@@ -34,24 +34,19 @@ export function FavoriteButton({
 
       if (!nextUserId || (!eventId && !eventProfileId)) return
 
-      if (eventProfileId) {
-        const { data } = await supabase
-          .from('event_profile_favorites')
-          .select('event_profile_id')
-          .eq('user_id', nextUserId)
-          .eq('event_profile_id', eventProfileId)
-          .maybeSingle()
-
-        if (!cancelled) setIsFavorite(Boolean(data))
-        return
-      }
-
-      const { data } = await supabase
-        .from('favorites')
-        .select('event_id')
-        .eq('user_id', nextUserId)
-        .eq('event_id', eventId)
-        .maybeSingle()
+      const { data } = eventId
+        ? await supabase
+            .from('favorites')
+            .select('event_id')
+            .eq('user_id', nextUserId)
+            .eq('event_id', eventId)
+            .maybeSingle()
+        : await supabase
+            .from('event_profile_favorites')
+            .select('event_profile_id')
+            .eq('user_id', nextUserId)
+            .eq('event_profile_id', eventProfileId)
+            .maybeSingle()
 
       if (!cancelled) setIsFavorite(Boolean(data))
     }
@@ -76,7 +71,7 @@ export function FavoriteButton({
 
     setLoading(true)
 
-    if (eventProfileId) {
+    if (!eventId && eventProfileId) {
       if (isFavorite) {
         const { error } = await supabase
           .from('event_profile_favorites')
