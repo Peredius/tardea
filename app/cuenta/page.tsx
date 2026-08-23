@@ -5,9 +5,7 @@ import Link from 'next/link'
 import {
   CalendarDays,
   Heart,
-  LockKeyhole,
   MapPin,
-  Menu,
   MessageSquare,
   Plus,
   ListChecks,
@@ -50,7 +48,6 @@ export default function AccountPage() {
   const [favoriteEvents, setFavoriteEvents] = useState<FavoriteEvent[]>([])
   const [suggestedEvents, setSuggestedEvents] = useState<FavoriteEvent[]>([])
   const [activeTab, setActiveTab] = useState<AccountTab>('profile')
-  const [menuOpen, setMenuOpen] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState('')
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarMessage, setAvatarMessage] = useState('')
@@ -147,11 +144,6 @@ export default function AccountPage() {
     return 'Usuario'
   }, [email, profile])
 
-  const username = useMemo(
-    () => displayName.toLowerCase().replace(/\s+/g, '_'),
-    [displayName]
-  )
-
   const initials = displayName
     .split(' ')
     .map((part) => part[0])
@@ -224,69 +216,8 @@ export default function AccountPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto min-h-screen w-full max-w-5xl pb-12">
-        <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/90 px-5 py-4 backdrop-blur">
-          <div className="flex items-center justify-between gap-4">
-            <Link
-              href="/"
-              aria-label="Ir a TARDEA"
-              className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5 transition hover:border-brand-500/60 hover:bg-brand-500/15"
-            >
-              <img
-                src="/tardea-icon.svg"
-                alt="TARDEA"
-                className="h-full w-full object-cover"
-              />
-            </Link>
-
-            <div className="flex min-w-0 items-center gap-2 text-xl font-black text-white sm:text-2xl">
-              <LockKeyhole className="h-5 w-5 shrink-0 text-slate-300" />
-              <span className="truncate">{username}</span>
-            </div>
-
-            <div className="relative flex items-center gap-3">
-              <button
-                type="button"
-                aria-label="Chats"
-                onClick={() => setActiveTab('chats')}
-                className="relative inline-flex h-11 w-11 items-center justify-center rounded-full text-white transition hover:bg-white/10"
-              >
-                <MessageSquare className="h-8 w-8 fill-white" />
-                <span className="absolute right-1 top-0 h-5 min-w-5 rounded-full bg-brand-500 px-1 text-xs font-bold leading-5 text-white">
-                  0
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setMenuOpen((current) => !current)}
-                aria-label="Abrir menu"
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full text-white transition hover:bg-white/10"
-              >
-                <Menu className="h-8 w-8" />
-              </button>
-
-              {menuOpen && (
-                <div className="absolute right-0 top-14 w-48 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl shadow-black/30">
-                  <Link
-                    href="/cuenta/perfil"
-                    className="block border-b border-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-                  >
-                    Editar perfil
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={handleSignOut}
-                    className="block w-full px-4 py-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white"
-                  >
-                    Cerrar sesion
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
-
+      <div className="mx-auto min-h-screen w-full max-w-5xl pb-12 pt-5">
+        {activeTab === 'profile' && (
         <section className="px-5 pt-8">
           <div className="grid grid-cols-[auto_1fr] items-center gap-6">
             <div className="relative">
@@ -376,6 +307,7 @@ export default function AccountPage() {
             </button>
           </div>
         </section>
+        )}
 
         <section className="mt-8 border-b border-white/10 px-5">
           <div className="grid grid-cols-4 text-center">
@@ -452,9 +384,18 @@ export default function AccountPage() {
               </div>
             </div>
 
-            <Link href="/cuenta/perfil" className="btn-primary mt-5 w-full">
-              Editar perfil
-            </Link>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <Link href="/cuenta/perfil" className="btn-primary w-full">
+                Editar perfil
+              </Link>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 py-3 font-bold text-slate-200 transition hover:border-brand-500/50 hover:text-white"
+              >
+                Cerrar sesión
+              </button>
+            </div>
           </section>
         )}
 

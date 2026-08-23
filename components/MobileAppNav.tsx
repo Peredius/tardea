@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
-import { Heart, MessageSquare, Search, Sparkles, UserRound } from 'lucide-react'
+import { MapPin, MessageSquare, Search, Sparkles, UserRound } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
@@ -99,6 +99,7 @@ export function MobileAppNav() {
   const isRecommendations = user
     ? isAccount && activeTab === 'suggestions'
     : pathname === '/' && (activeTab === 'for-you' || homeHash === 'destacados')
+  const isNearMe = pathname === '/' && homeView === 'map'
   const isSearch = pathname === '/' && !isRecommendations && homeView !== 'map'
   const isAuthScreen = pathname === '/login' || pathname === '/register'
 
@@ -136,12 +137,21 @@ export function MobileAppNav() {
           </MobileNavItem>
 
           <MobileNavItem
-            href={accountOnlyHref('/cuenta?tab=favorites')}
-            active={isAccount && activeTab === 'favorites'}
-            label="Favoritos"
-            onClick={() => setActiveTab('favorites')}
+            href="/?view=map&tab=near#eventos"
+            active={isNearMe}
+            label="Cerca de mí"
+            onClick={() => {
+              setActiveTab('near')
+              setHomeView('map')
+              setHomeHash('eventos')
+              window.dispatchEvent(
+                new CustomEvent('tardeaViewModeChanged', {
+                  detail: { viewMode: 'map' },
+                })
+              )
+            }}
           >
-            <Heart className="h-5 w-5" />
+            <MapPin className="h-5 w-5" />
           </MobileNavItem>
 
           <MobileNavItem
