@@ -109,7 +109,7 @@ export default function EventGroupPage() {
     return (
       <main>
         <Navbar />
-        <section className="container-page py-16 text-slate-400">Cargando tardeo...</section>
+        <section className="container-page py-16 text-slate-400">Cargando plan...</section>
       </main>
     )
   }
@@ -162,7 +162,7 @@ export default function EventGroupPage() {
                 )}
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.24em] text-brand-500">
-                    Ficha de tardeo
+                    Ficha del plan
                   </p>
                   <h1 className="mt-2 text-4xl font-black tracking-tight text-white md:text-6xl">
                     {title}
@@ -191,7 +191,7 @@ export default function EventGroupPage() {
             <div className="card p-5">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm text-slate-400">Próximas fechas</p>
+                  <p className="text-sm text-slate-400">Próximas fechas aprobadas</p>
                   <p className="mt-1 text-3xl font-black text-white">{events.length}</p>
                 </div>
                 <FavoriteButton eventProfileId={profileId} compact={false} />
@@ -227,11 +227,11 @@ export default function EventGroupPage() {
       </section>
 
       <section className="container-page py-12">
-        <h2 className="text-3xl font-black text-white">Todas sus fechas</h2>
+        <h2 className="text-3xl font-black text-white">Próximas fechas</h2>
 
         {events.length === 0 ? (
           <div className="card mt-6 p-8 text-slate-400">
-            Todavía no hay fechas próximas aprobadas para esta ficha.
+            Todavía no hay fechas próximas aprobadas para este plan.
           </div>
         ) : (
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

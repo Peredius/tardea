@@ -323,6 +323,24 @@ export default function EventDetailPage() {
     setFavoriteStatus('')
   }
 
+  async function openEventProfilePage() {
+    if (!event) return
+
+    let resolvedProfileId = eventProfileId
+
+    if (!resolvedProfileId) {
+      resolvedProfileId = await resolveEventProfileFromServer(event.slug)
+      if (resolvedProfileId) setEventProfileId(resolvedProfileId)
+    }
+
+    if (!resolvedProfileId) {
+      setFavoriteStatus('Todavía no se ha encontrado la ficha pública de este plan.')
+      return
+    }
+
+    window.location.href = `/eventos/grupo/${resolvedProfileId}`
+  }
+
   async function submitClaim(e: React.FormEvent) {
     e.preventDefault()
 
@@ -566,6 +584,13 @@ export default function EventDetailPage() {
               className="btn-secondary mt-3 w-full"
             >
               {isProfileFavorite ? '❤️ Favorito' : '🤍 Plan favorito'}
+            </button>
+
+            <button
+              onClick={openEventProfilePage}
+              className="btn-secondary mt-3 w-full"
+            >
+              Ver todas las fechas de este plan
             </button>
 
             {favoriteStatus && (
