@@ -8,7 +8,6 @@ import {
   CalendarDays,
   Clock3,
   Euro,
-  Heart,
   MapPin,
   Music4,
   Sparkles,
@@ -43,7 +42,7 @@ export default function EventDetailPage() {
   const [loading, setLoading] = useState(true)
   const [isEventFavorite, setIsEventFavorite] = useState(false)
   const [isProfileFavorite, setIsProfileFavorite] = useState(false)
-  const [eventProfileName, setEventProfileName] = useState('')
+  const [eventProfileId, setEventProfileId] = useState('')
   const [favoriteStatus, setFavoriteStatus] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState('')
@@ -66,6 +65,31 @@ export default function EventDetailPage() {
 
       setEvent(data)
       setLoading(false)
+
+      let resolvedProfileId = data?.event_profile_id || ''
+
+      if (data) {
+        if (resolvedProfileId) {
+          const { data: eventProfile } = await supabase
+            .from('promoter_event_profiles')
+            .select('id, name')
+            .eq('id', resolvedProfileId)
+            .maybeSingle()
+
+          resolvedProfileId = eventProfile?.id || resolvedProfileId
+        } else if (data.title) {
+          const { data: matchingProfile } = await supabase
+            .from('promoter_event_profiles')
+            .select('id, name')
+            .ilike('name', `%${data.title}%`)
+            .limit(1)
+            .maybeSingle()
+
+          resolvedProfileId = matchingProfile?.id || ''
+        }
+
+        setEventProfileId(resolvedProfileId)
+      }
 
       const {
         data: { user },
@@ -94,20 +118,12 @@ export default function EventDetailPage() {
 
       if (eventFavorite) setIsEventFavorite(true)
 
-      if (data.event_profile_id) {
-        const { data: eventProfile } = await supabase
-          .from('promoter_event_profiles')
-          .select('name')
-          .eq('id', data.event_profile_id)
-          .maybeSingle()
-
-        setEventProfileName(eventProfile?.name || '')
-
+      if (resolvedProfileId) {
         const { data: profileFavorite } = await supabase
           .from('event_profile_favorites')
           .select('event_profile_id')
           .eq('user_id', user.id)
-          .eq('event_profile_id', data.event_profile_id)
+          .eq('event_profile_id', resolvedProfileId)
           .maybeSingle()
 
         if (profileFavorite) setIsProfileFavorite(true)
@@ -161,14 +177,14 @@ export default function EventDetailPage() {
       return
     }
 
-    if (!event?.event_profile_id) return
+    if (!eventProfileId) return
 
     if (isProfileFavorite) {
       const { error } = await supabase
         .from('event_profile_favorites')
         .delete()
         .eq('user_id', userId)
-        .eq('event_profile_id', event.event_profile_id)
+        .eq('event_profile_id', eventProfileId)
 
       if (error) {
         setFavoriteStatus(`No se pudo quitar la ficha: ${error.message}`)
@@ -179,7 +195,7 @@ export default function EventDetailPage() {
     } else {
       const { error } = await supabase.from('event_profile_favorites').insert({
         user_id: userId,
-        event_profile_id: event.event_profile_id,
+        event_profile_id: eventProfileId,
       })
 
       if (error) {
@@ -300,57 +316,6 @@ export default function EventDetailPage() {
             <p className="mt-5 text-lg text-slate-300">
               {event.description}
             </p>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button
-                onClick={toggleEventFavorite}
-                className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 px-4 py-2 text-sm font-semibold text-brand-500 transition hover:bg-brand-500/10"
-              >
-                <Heart
-                  className={`h-5 w-5 ${
-                    isEventFavorite ? 'fill-brand-500' : ''
-                  }`}
-                />
-                {isEventFavorite ? 'Fecha guardada' : 'Guardar solo esta fecha'}
-              </button>
-
-              {event.event_profile_id && (
-                <button
-                  onClick={toggleProfileFavorite}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-brand-500/50 hover:text-white"
-                >
-                  <Heart
-                    className={`h-5 w-5 ${
-                      isProfileFavorite ? 'fill-brand-500 text-brand-500' : ''
-                    }`}
-                  />
-                  {isProfileFavorite
-                    ? `Siguiendo ${eventProfileName || event.title}`
-                    : `Seguir ${eventProfileName || event.title}`}
-                </button>
-              )}
-            </div>
-
-            {favoriteStatus && (
-              <p className="mt-3 rounded-2xl border border-brand-500/30 bg-brand-500/10 px-4 py-3 text-sm text-brand-200">
-                {favoriteStatus}
-              </p>
-            )}
-
-            {!event.user_id && (
-              <button
-                type="button"
-                onClick={() => {
-                  document.getElementById('claim-event')?.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start',
-                  })
-                }}
-                className="btn-secondary mt-5 w-full sm:hidden"
-              >
-                ¿Eres el promotor? Reclamar evento
-              </button>
-            )}
           </div>
         </div>
       </section>
@@ -479,17 +444,17 @@ export default function EventDetailPage() {
               onClick={toggleEventFavorite}
               className="btn-secondary mt-3 w-full"
             >
-              {isEventFavorite ? '❤️ Fecha guardada' : '🤍 Guardar solo esta fecha'}
+              {isEventFavorite ? '❤️ Fecha guardada' : '🤍 Guardar esta fecha'}
             </button>
 
-            {event.event_profile_id && (
+            {eventProfileId && (
               <button
                 onClick={toggleProfileFavorite}
                 className="btn-secondary mt-3 w-full"
               >
                 {isProfileFavorite
-                  ? `❤️ Siguiendo ${eventProfileName || event.title}`
-                  : `🤍 Seguir ${eventProfileName || event.title}`}
+                  ? `❤️ Evento guardado`
+                  : `🤍 Guardar evento`}
               </button>
             )}
 
