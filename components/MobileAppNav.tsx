@@ -24,14 +24,28 @@ export function MobileAppNav() {
   const pathname = usePathname()
   const [activeTab, setActiveTab] = useState('')
   const [homeView, setHomeView] = useState('')
+  const [homeHash, setHomeHash] = useState('')
   const [user, setUser] = useState<User | null>(null)
   const [avatarUrl, setAvatarUrl] = useState('')
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const params = new URLSearchParams(window.location.search)
-    setActiveTab(params.get('tab') || '')
-    setHomeView(params.get('view') || '')
+
+    function syncNavigationState() {
+      const params = new URLSearchParams(window.location.search)
+      setActiveTab(params.get('tab') || '')
+      setHomeView(params.get('view') || '')
+      setHomeHash(window.location.hash.replace('#', ''))
+    }
+
+    syncNavigationState()
+    window.addEventListener('hashchange', syncNavigationState)
+    window.addEventListener('popstate', syncNavigationState)
+
+    return () => {
+      window.removeEventListener('hashchange', syncNavigationState)
+      window.removeEventListener('popstate', syncNavigationState)
+    }
   }, [pathname])
 
   useEffect(() => {
@@ -82,7 +96,10 @@ export function MobileAppNav() {
   const accountOnlyHref = (href: string) => (user ? href : '/login?type=user')
   const recommendationsHref = user ? '/cuenta?tab=suggestions' : '/#destacados'
   const isAccount = pathname.startsWith('/cuenta')
-  const isSearch = pathname === '/' && homeView !== 'map'
+  const isRecommendations = user
+    ? isAccount && activeTab === 'suggestions'
+    : pathname === '/' && homeHash === 'destacados'
+  const isSearch = pathname === '/' && homeView !== 'map' && homeHash !== 'destacados'
   const isAuthScreen = pathname === '/login' || pathname === '/register'
 
   return (
@@ -104,7 +121,7 @@ export function MobileAppNav() {
         <div className="mx-auto grid max-w-md grid-cols-5 gap-1 rounded-[30px] border border-white/10 bg-slate-950/95 p-1.5 shadow-2xl shadow-black/50 backdrop-blur-xl">
           <MobileNavItem
             href={recommendationsHref}
-            active={isAccount && activeTab === 'suggestions'}
+            active={isRecommendations}
             label="Para ti"
           >
             <Sparkles className="h-5 w-5" />
