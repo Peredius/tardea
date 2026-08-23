@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
   if (!isAllowedAuthEmail(payload.email)) {
     return NextResponse.json(
-      { error: 'Ahora mismo TARDEA está en pruebas privadas. Esta cuenta no tiene acceso todavía.' },
+      { error: 'Próximamente abriremos TARDEA. Ahora mismo estamos en pruebas privadas.' },
       { status: 403 }
     )
   }

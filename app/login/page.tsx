@@ -171,7 +171,7 @@ function LoginContent() {
 
   useEffect(() => {
     if (locked === '1') {
-      setMessage('Ahora mismo TARDEA está en pruebas privadas. Esta cuenta no tiene acceso todavía.')
+      setMessage('Próximamente abriremos TARDEA. Ahora mismo estamos en pruebas privadas.')
       setLoginFailed(true)
     }
   }, [locked])
@@ -256,7 +256,7 @@ function LoginContent() {
     const payload = await response.json().catch(() => null)
     setMessage(
       payload?.error ||
-        'Ahora mismo TARDEA está en pruebas privadas. Esta cuenta no tiene acceso todavía.'
+        'Próximamente abriremos TARDEA. Ahora mismo estamos en pruebas privadas.'
     )
     setLoginFailed(true)
     return false

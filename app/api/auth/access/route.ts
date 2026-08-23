@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { isAllowedAuthEmail, isAuthLockdownEnabled } from '@/lib/auth-lockdown'
 
+const LOCKDOWN_MESSAGE =
+  'Próximamente abriremos TARDEA. Ahora mismo estamos en pruebas privadas.'
+
 export async function POST(request: Request) {
   const payload = (await request.json().catch(() => null)) as
     | { email?: string | null }
@@ -15,7 +18,7 @@ export async function POST(request: Request) {
       {
         ok: false,
         locked: true,
-        error: 'Ahora mismo TARDEA está en pruebas privadas. Esta cuenta no tiene acceso todavía.',
+        error: LOCKDOWN_MESSAGE,
       },
       { status: 403 }
     )
@@ -23,4 +26,3 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ ok: true, locked: true })
 }
-

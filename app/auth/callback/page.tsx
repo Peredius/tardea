@@ -38,7 +38,7 @@ function AuthCallbackContent() {
 
       if (!accessResponse.ok) {
         await supabase.auth.signOut()
-        setMessage('Ahora mismo TARDEA está en pruebas privadas. Esta cuenta no tiene acceso todavía.')
+        setMessage('Próximamente abriremos TARDEA. Ahora mismo estamos en pruebas privadas.')
         window.location.href = `/login?type=${type}&locked=1`
         return
       }

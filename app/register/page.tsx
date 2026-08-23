@@ -32,7 +32,7 @@ function RegisterContent() {
     const payload = await response.json().catch(() => null)
     setMessage(
       payload?.error ||
-        'Ahora mismo TARDEA está en pruebas privadas. Esta cuenta no tiene acceso todavía.'
+        'Próximamente abriremos TARDEA. Ahora mismo estamos en pruebas privadas.'
     )
     return false
   }
