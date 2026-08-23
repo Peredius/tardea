@@ -514,6 +514,17 @@ export default function AccountPage() {
               </div>
             ) : (
               <>
+              {favoriteProfiles.length > 0 && (
+                <div className="col-span-full px-5 pb-3 pt-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-brand-500">
+                    Tardeos que sigues
+                  </p>
+                  <h2 className="mt-1 text-2xl font-black text-white">
+                    Tus fichas favoritas
+                  </h2>
+                </div>
+              )}
+
               {favoriteProfiles.map((favoriteProfile) => {
                 const nextEvent = favoriteProfile.nextEvent
                 const cover =
@@ -570,6 +581,17 @@ export default function AccountPage() {
                   </Link>
                 )
               })}
+
+              {favoriteEvents.length > 0 && (
+                <div className="col-span-full px-5 pb-3 pt-8">
+                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-brand-500">
+                    Fechas guardadas
+                  </p>
+                  <h2 className="mt-1 text-2xl font-black text-white">
+                    Eventos concretos
+                  </h2>
+                </div>
+              )}
 
               {favoriteEvents.map((event) => (
                 <Link

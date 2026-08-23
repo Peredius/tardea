@@ -44,6 +44,7 @@ export default function EventDetailPage() {
   const [isEventFavorite, setIsEventFavorite] = useState(false)
   const [isProfileFavorite, setIsProfileFavorite] = useState(false)
   const [eventProfileName, setEventProfileName] = useState('')
+  const [favoriteStatus, setFavoriteStatus] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState('')
   const [claimOpen, setClaimOpen] = useState(false)
@@ -125,21 +126,33 @@ export default function EventDetailPage() {
     if (!event) return
 
     if (isEventFavorite) {
-      await supabase
+      const { error } = await supabase
         .from('favorites')
         .delete()
         .eq('user_id', userId)
         .eq('event_id', event.id)
 
+      if (error) {
+        setFavoriteStatus(`No se pudo quitar el evento: ${error.message}`)
+        return
+      }
+
       setIsEventFavorite(false)
     } else {
-      await supabase.from('favorites').insert({
+      const { error } = await supabase.from('favorites').insert({
         user_id: userId,
         event_id: event.id,
       })
 
+      if (error) {
+        setFavoriteStatus(`No se pudo guardar el evento: ${error.message}`)
+        return
+      }
+
       setIsEventFavorite(true)
     }
+
+    setFavoriteStatus('')
   }
 
   async function toggleProfileFavorite() {
@@ -151,21 +164,33 @@ export default function EventDetailPage() {
     if (!event?.event_profile_id) return
 
     if (isProfileFavorite) {
-      await supabase
+      const { error } = await supabase
         .from('event_profile_favorites')
         .delete()
         .eq('user_id', userId)
         .eq('event_profile_id', event.event_profile_id)
 
+      if (error) {
+        setFavoriteStatus(`No se pudo quitar la ficha: ${error.message}`)
+        return
+      }
+
       setIsProfileFavorite(false)
     } else {
-      await supabase.from('event_profile_favorites').insert({
+      const { error } = await supabase.from('event_profile_favorites').insert({
         user_id: userId,
         event_profile_id: event.event_profile_id,
       })
 
+      if (error) {
+        setFavoriteStatus(`No se pudo guardar la ficha: ${error.message}`)
+        return
+      }
+
       setIsProfileFavorite(true)
     }
+
+    setFavoriteStatus('')
   }
 
   async function submitClaim(e: React.FormEvent) {
@@ -286,7 +311,7 @@ export default function EventDetailPage() {
                     isEventFavorite ? 'fill-brand-500' : ''
                   }`}
                 />
-                {isEventFavorite ? 'Evento guardado' : 'Guardar este evento'}
+                {isEventFavorite ? 'Fecha guardada' : 'Guardar solo esta fecha'}
               </button>
 
               {event.event_profile_id && (
@@ -300,11 +325,17 @@ export default function EventDetailPage() {
                     }`}
                   />
                   {isProfileFavorite
-                    ? `${eventProfileName || event.title} guardado`
-                    : `Guardar ${eventProfileName || event.title}`}
+                    ? `Siguiendo ${eventProfileName || event.title}`
+                    : `Seguir ${eventProfileName || event.title}`}
                 </button>
               )}
             </div>
+
+            {favoriteStatus && (
+              <p className="mt-3 rounded-2xl border border-brand-500/30 bg-brand-500/10 px-4 py-3 text-sm text-brand-200">
+                {favoriteStatus}
+              </p>
+            )}
 
             {!event.user_id && (
               <button
@@ -448,7 +479,7 @@ export default function EventDetailPage() {
               onClick={toggleEventFavorite}
               className="btn-secondary mt-3 w-full"
             >
-              {isEventFavorite ? '❤️ Evento guardado' : '🤍 Guardar este evento'}
+              {isEventFavorite ? '❤️ Fecha guardada' : '🤍 Guardar solo esta fecha'}
             </button>
 
             {event.event_profile_id && (
@@ -457,9 +488,15 @@ export default function EventDetailPage() {
                 className="btn-secondary mt-3 w-full"
               >
                 {isProfileFavorite
-                  ? `❤️ ${eventProfileName || event.title} guardado`
-                  : `🤍 Guardar ${eventProfileName || event.title}`}
+                  ? `❤️ Siguiendo ${eventProfileName || event.title}`
+                  : `🤍 Seguir ${eventProfileName || event.title}`}
               </button>
+            )}
+
+            {favoriteStatus && (
+              <p className="mt-3 rounded-2xl border border-brand-500/30 bg-brand-500/10 px-4 py-3 text-sm text-brand-200">
+                {favoriteStatus}
+              </p>
             )}
           </div>
 
