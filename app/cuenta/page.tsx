@@ -598,9 +598,9 @@ export default function AccountPage() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-4">
+              <div className="pt-3">
                 {favoriteEvents.length > 0 && (
-                  <div className="col-span-full px-5 pb-3 pt-4">
+                  <div className="px-5 pb-3">
                     <p className="text-xs font-bold uppercase tracking-[0.22em] text-brand-500">
                       Fechas guardadas
                     </p>
@@ -610,59 +610,51 @@ export default function AccountPage() {
                   </div>
                 )}
 
-                {favoriteEvents.map((event) => (
-                  <Link
-                    key={event.id}
-                    href={`/eventos/${event.slug}`}
-                    className="group relative aspect-[3/4] overflow-hidden bg-slate-900"
-                  >
-                    <div
-                      className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
-                      style={{
-                        backgroundImage: `url(${
-                          event.cover ||
-                          'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
-                        })`,
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
-
-                    {event.event_profile_id && (
-                      <FavoriteButton
-                        eventProfileId={event.event_profile_id}
-                        label="Plan favorito"
-                        savedLabel="Favorito"
-                        className="absolute left-3 top-3 z-20"
+                <div className="flex gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {favoriteEvents.map((event) => (
+                    <Link
+                      key={event.id}
+                      href={`/eventos/${event.slug}`}
+                      className="group relative aspect-[9/16] w-[38vw] max-w-[170px] shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-slate-900"
+                    >
+                      <div
+                        className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
+                        style={{
+                          backgroundImage: `url(${
+                            event.cover ||
+                            'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
+                          })`,
+                        }}
                       />
-                    )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
 
-                    <div className="absolute inset-x-0 bottom-0 p-4">
-                      <div className="mb-2 flex flex-wrap gap-1.5">
-                        <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
-                          {event.type}
-                        </span>
-                        <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
-                          {event.area}
-                        </span>
-                        <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
-                          {event.price_from === 0
-                            ? 'Desde gratis'
-                            : `Desde ${event.price_from} EUR`}
-                        </span>
+                      <div className="absolute left-2 top-2 rounded-full bg-brand-500 px-2.5 py-1 text-[10px] font-black text-white">
+                        Fecha
                       </div>
 
-                      <h2 className="line-clamp-2 text-base font-black uppercase leading-tight text-white">
-                        {event.title}
-                      </h2>
-                      <p className="mt-2 line-clamp-2 text-xs text-slate-200">
-                        {event.venue} ·{' '}
-                        {new Date(event.date).toLocaleDateString('es-ES')} ·{' '}
-                        {event.start_time?.slice(0, 5)}
-                        {event.end_time ? ` - ${event.end_time.slice(0, 5)}` : ''}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
+                      <div className="absolute inset-x-0 bottom-0 p-3">
+                        <div className="mb-2 flex flex-wrap gap-1">
+                          <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur">
+                            {event.type}
+                          </span>
+                          <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur">
+                            {event.area}
+                          </span>
+                        </div>
+
+                        <h2 className="line-clamp-2 text-xs font-black uppercase leading-tight text-white">
+                          {event.title}
+                        </h2>
+                        <p className="mt-1 line-clamp-2 text-[10px] text-slate-200">
+                          {event.venue} ·{' '}
+                          {new Date(event.date).toLocaleDateString('es-ES')} ·{' '}
+                          {event.start_time?.slice(0, 5)}
+                          {event.end_time ? ` - ${event.end_time.slice(0, 5)}` : ''}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               </div>
               </>
             )}
