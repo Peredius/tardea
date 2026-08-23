@@ -278,9 +278,9 @@ export default function AccountPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto min-h-screen w-full max-w-5xl pb-12 pt-5">
+      <div className="mx-auto min-h-screen w-full max-w-5xl pb-12 pt-[calc(env(safe-area-inset-top)+3rem)] md:pt-5">
         {activeTab === 'profile' && (
-        <section className="px-5 pt-8">
+        <section className="px-5 pt-4 md:pt-8">
           <div className="grid grid-cols-[auto_1fr] items-center gap-6">
             <div className="relative">
               <button
@@ -471,7 +471,7 @@ export default function AccountPage() {
         )}
 
         {activeTab === 'suggestions' && (
-          <section className="px-5 pb-28 pt-4">
+          <section className="px-5 pb-28 pt-4 md:pt-8">
             {suggestedEvents.length === 0 ? (
               <div className="px-5 py-12 text-center">
                 <Sparkles className="mx-auto h-10 w-10 text-brand-500" />
