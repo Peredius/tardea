@@ -77,7 +77,7 @@ const defaultConfig: ScoutConfig = {
     price_from: 0,
   },
   allowed_types: ['Tardeo', 'Rooftop', 'Brunch', 'Afterwork'],
-  allowed_music: ['Comercial', 'Indie', 'Electronica', 'Reguetón', 'Flamenquito', 'Pop', 'Remember', 'Show en directo'],
+  allowed_music: ['Comercial', 'Indie', 'Electrónica', 'Reguetón', 'Flamenquito', 'Pop', 'Remember', 'Show en directo'],
   cover_by_type: {
     Tardeo: '/scout-covers/tardeo.svg',
     Rooftop: '/scout-covers/rooftop.svg',
@@ -85,7 +85,7 @@ const defaultConfig: ScoutConfig = {
     Afterwork: '/scout-covers/tardeo.svg',
   },
   cover_by_music: {
-    Electronica: '/scout-covers/electronica.svg',
+    Electrónica: '/scout-covers/electronica.svg',
     Flamenquito: '/scout-covers/flamenquito.svg',
   },
   type_keywords: {
@@ -95,7 +95,7 @@ const defaultConfig: ScoutConfig = {
     Tardeo: ['tardeo', 'tardear', 'fiesta tarde'],
   },
   music_keywords: {
-    Electronica: ['electronica', 'electrónica', 'techno', 'house', 'dj set'],
+    Electrónica: ['electronica', 'electrónica', 'techno', 'house', 'dj set'],
     Flamenquito: ['flamenquito', 'rumba', 'flamenco', 'sevillanas'],
     Indie: ['indie', 'alternativo'],
     Remember: ['remember', '90s', '2000', 'clasicos', 'clásicos'],

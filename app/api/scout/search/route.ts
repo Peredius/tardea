@@ -47,7 +47,7 @@ const typeSearchTerms: Record<string, string[]> = {
 }
 
 const musicKeywords: Record<string, string[]> = {
-  Electronica: ['electronica', 'electrónica', 'techno', 'house', 'dj set'],
+  Electrónica: ['electronica', 'electrónica', 'techno', 'house', 'dj set'],
   Flamenquito: ['flamenquito', 'flamenco', 'rumba', 'sevillanas'],
   Indie: ['indie', 'alternativo'],
   Remember: ['remember', '90s', '2000', 'clasicos', 'clásicos'],
@@ -621,7 +621,7 @@ export async function POST(request: Request) {
           music,
           audience: 'Mixto',
           price_from: details.priceFrom || inferPrice(text),
-          cover: music[0] === 'Electronica'
+          cover: music[0] === 'Electrónica'
             ? '/scout-covers/electronica.svg'
             : type === 'Brunch'
               ? '/scout-covers/brunch.svg'

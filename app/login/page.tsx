@@ -11,7 +11,7 @@ const MUSIC_OPTIONS = [
   'Comercial',
   'Show en directo',
   'Indie',
-  'Electronica',
+  'Electrónica',
   'Reguetón',
   'Flamenquito',
   'Pop',

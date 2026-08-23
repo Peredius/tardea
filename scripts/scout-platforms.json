@@ -43,7 +43,7 @@
       "site:xceed.me/es/madrid/events rooftop",
       "site:xceed.me/es/madrid/events club Madrid"
     ],
-    "best_for": ["Clubbing", "Discotecas", "Electronica", "Tardeo noche"],
+    "best_for": ["Clubbing", "Discotecas", "Electrónica", "Tardeo noche"],
     "signals": ["clubs", "eventos", "listas de invitados", "mesas", "ticketing"],
     "scout_strategy": "Alta prioridad para eventos de clubbing y salas. Separar electronica de comercial para recomendaciones.",
     "image_policy": "No copiar imagen. Cover provisional TARDEA.",
@@ -109,9 +109,9 @@
       "site:ra.co/events/es/Madrid house",
       "site:ra.co/events/es/Madrid electronic"
     ],
-    "best_for": ["Electronica", "Clubbing", "Techno", "House"],
+    "best_for": ["Electrónica", "Clubbing", "Techno", "House"],
     "signals": ["genre", "venue", "lineup", "RA picks"],
-    "scout_strategy": "Prioridad media para electronica. No mezclar con comercial; segmentar claramente como Electronica.",
+    "scout_strategy": "Prioridad media para electrónica. No mezclar con comercial; segmentar claramente como Electrónica.",
     "image_policy": "No copiar artwork. Cover provisional electronica.",
     "notes": "Muy bueno para descubrir oferta electronica real de Madrid."
   },
@@ -126,7 +126,7 @@
       "site:shotgun.live Madrid techno",
       "site:shotgun.live Madrid brunch"
     ],
-    "best_for": ["Electronica", "Festivales", "Discotecas", "Eventos de promotor"],
+    "best_for": ["Electrónica", "Festivales", "Discotecas", "Eventos de promotor"],
     "signals": ["venue", "upcoming events", "organizer", "tickets"],
     "scout_strategy": "Prioridad media. Buena para electronica/festivales y fiestas de promotor.",
     "image_policy": "No copiar imagen. Fuente y cover provisional.",
@@ -276,7 +276,7 @@
       "site:clubbingspain.com Madrid club",
       "site:clubbingspain.com Madrid electronica"
     ],
-    "best_for": ["Electronica", "Techno", "House", "Clubbing"],
+    "best_for": ["Electrónica", "Techno", "House", "Clubbing"],
     "signals": ["lineup", "club", "Madrid", "fecha"],
     "scout_strategy": "Prioridad media para electronica. Usar como agenda de descubrimiento y confirmar ticketing.",
     "image_policy": "No copiar imagen ni flyer. Cover provisional electronica.",

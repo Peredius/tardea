@@ -56,7 +56,7 @@ const typeKeywords: Record<string, string[]> = {
 }
 
 const musicKeywords: Record<string, string[]> = {
-  Electronica: ['electronica', 'electrónica', 'techno', 'house', 'dj set'],
+  Electrónica: ['electronica', 'electrónica', 'techno', 'house', 'dj set'],
   Flamenquito: ['flamenquito', 'flamenco', 'rumba', 'sevillanas'],
   Indie: ['indie', 'alternativo'],
   Remember: ['remember', '90s', '2000', 'clasicos', 'clásicos'],

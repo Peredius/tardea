@@ -482,7 +482,7 @@ function inferMusic(text: string) {
     ['Remember', ['remember', '90s', '2000']],
     ['Show en directo', ['directo', 'live', 'concierto', 'musica en vivo', 'música en vivo', 'banda', 'actuacion', 'actuación']],
     ['Flamenquito', ['flamenquito', 'flamenco', 'rumba']],
-    ['Electronica', ['electronica', 'electro', 'techno', 'house']],
+    ['Electrónica', ['electronica', 'electrónica', 'electro', 'techno', 'house']],
     ['Reguetón', ['reggaeton', 'reguetón', 'regueton', 'urbano', 'urban']],
     ['Indie', ['indie']],
     ['Pop', ['pop']],

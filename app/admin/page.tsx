@@ -17,7 +17,7 @@ function generateSlug(title: string, date: string) {
   return date ? `${cleanTitle}-${date}` : cleanTitle
 }
 
-const MUSIC_OPTIONS = ['Comercial', 'Show en directo', 'Electronica', 'Reguetón', 'Pop', 'Indie', 'Flamenquito', 'Remember']
+const MUSIC_OPTIONS = ['Comercial', 'Show en directo', 'Electrónica', 'Reguetón', 'Pop', 'Indie', 'Flamenquito', 'Remember']
 const AUDIENCE_OPTIONS = ['18-25', '25-35', '30+', 'Mixto']
 const EVENT_TYPE_OPTIONS = ['Tardeo', 'Rooftop', 'Brunch', 'Afterwork', 'Fitness Party', 'Fiesta']
 const AREA_OPTIONS = [
@@ -124,7 +124,7 @@ function createResearchRow(values: Partial<ResearchRow> = {}): ResearchRow {
 }
 
 function scoutCoverFor(type: string, music: string) {
-  if (music === 'Electronica') return '/scout-covers/electronica.svg'
+  if (music === 'Electrónica') return '/scout-covers/electronica.svg'
   if (music === 'Flamenquito') return '/scout-covers/flamenquito.svg'
   if (type === 'Brunch') return '/scout-covers/brunch.svg'
   if (type === 'Rooftop') return '/scout-covers/rooftop.svg'

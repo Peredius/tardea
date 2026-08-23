@@ -23,6 +23,8 @@ import {
   priceRanges,
 } from '@/lib/data'
 import { supabase } from '@/lib/supabase'
+import { FavoriteButton } from '@/components/FavoriteButton'
+import { canonicalizeMusicList, normalizeMusicKey } from '@/lib/music'
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''
 let googleMapsLoader: Promise<void> | null = null
@@ -305,7 +307,7 @@ export function Filters() {
   const [audience, setAudience] = useState('Todas')
   const [price, setPrice] = useState('Todos')
   const [area, setArea] = useState('Todas')
-  const [dbEvents, setDbEvents] = useState(events)
+  const [dbEvents, setDbEvents] = useState<any[]>(events)
   const [activeEventSlug, setActiveEventSlug] = useState('')
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
@@ -377,6 +379,7 @@ export function Filters() {
       }
 
       const mappedEvents = data.map((event) => ({
+        id: event.id,
         slug: event.slug,
         title: event.title,
         venue: event.venue,
@@ -386,7 +389,7 @@ export function Filters() {
         startTime: event.start_time,
         endTime: event.end_time,
         type: event.type,
-        music: event.music || [],
+        music: canonicalizeMusicList(event.music),
         audience: event.audience,
         priceFrom: event.price_from,
         cover: event.cover,
@@ -434,7 +437,10 @@ export function Filters() {
     return dbEvents.filter((event) => {
       if (!selectedDates.includes(event.date)) return false
       if (type !== 'Todos' && event.type !== type) return false
-      if (music !== 'Todas' && !event.music.includes(music as never)) {
+      if (
+        music !== 'Todas' &&
+        !event.music.some((item: string) => normalizeMusicKey(item) === normalizeMusicKey(music))
+      ) {
         return false
       }
       if (audience !== 'Todas' && event.audience !== audience) return false
@@ -979,6 +985,7 @@ export function Filters() {
                 />
 
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent sm:hidden" />
+                <FavoriteButton eventId={event.id} className="absolute right-3 top-3 z-20" />
 
                 <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-end p-4 sm:justify-start">
                   <div className="mb-2 flex flex-wrap gap-1.5 sm:mb-3 sm:gap-2">
@@ -1004,7 +1011,7 @@ export function Filters() {
                   </p>
 
                   <div className="mt-3 hidden flex-wrap gap-1.5 sm:mt-5 sm:flex sm:gap-2">
-                    {event.music.slice(0, 2).map((item) => (
+                    {event.music.slice(0, 2).map((item: string) => (
                       <span key={item} className="badge">
                         {item}
                       </span>

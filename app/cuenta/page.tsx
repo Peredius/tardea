@@ -14,6 +14,8 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Navbar } from '@/components/Navbar'
+import { FavoriteButton } from '@/components/FavoriteButton'
+import { canonicalizeMusicList, normalizeMusicKey } from '@/lib/music'
 
 type AccountProfile = {
   first_name: string | null
@@ -42,17 +44,8 @@ type FavoriteEvent = {
 
 type AccountTab = 'profile' | 'favorites' | 'suggestions' | 'compare' | 'chats'
 
-function normalizeMusic(value: string) {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
 function eventSeriesKey(event: FavoriteEvent) {
-  return event.event_profile_id || `${normalizeMusic(event.title)}__${normalizeMusic(event.venue)}`
+  return event.event_profile_id || `${normalizeMusicKey(event.title)}__${normalizeMusicKey(event.venue)}`
 }
 
 function getNearestEventBySeries(events: FavoriteEvent[]) {
@@ -103,7 +96,14 @@ export default function AccountPage() {
         .eq('id', user.id)
         .maybeSingle()
 
-      setProfile(profileData ?? null)
+      setProfile(
+        profileData
+          ? {
+              ...profileData,
+              music_preferences: canonicalizeMusicList(profileData.music_preferences),
+            }
+          : null
+      )
       setAvatarUrl(profileData?.avatar_url ?? '')
 
       const { data: favorites } = await supabase
@@ -124,12 +124,17 @@ export default function AccountPage() {
           .in('id', eventIds)
           .order('date', { ascending: true })
 
-        setFavoriteEvents(events || [])
+        setFavoriteEvents(
+          (events || []).map((event) => ({
+            ...event,
+            music: canonicalizeMusicList(event.music),
+          }))
+        )
       }
 
       const today = new Date().toISOString().split('T')[0]
       const musicPreferences = profileData?.music_preferences || []
-      const normalizedPreferences = new Set(musicPreferences.map(normalizeMusic))
+      const normalizedPreferences = new Set(musicPreferences.map(normalizeMusicKey))
       const { data: suggestionPool } = await supabase
         .from('events')
         .select(
@@ -146,12 +151,17 @@ export default function AccountPage() {
         if (normalizedPreferences.size === 0) return true
 
         return (event.music || []).some((musicItem: string) =>
-          normalizedPreferences.has(normalizeMusic(musicItem))
+          normalizedPreferences.has(normalizeMusicKey(musicItem))
         )
       })
 
       setSuggestedEvents(
-        getNearestEventBySeries(suggestions).slice(0, 12)
+        getNearestEventBySeries(
+          suggestions.map((event) => ({
+            ...event,
+            music: canonicalizeMusicList(event.music),
+          }))
+        ).slice(0, 12)
       )
 
       setLoading(false)
@@ -530,6 +540,7 @@ export default function AccountPage() {
                       <div className="absolute left-4 top-4 rounded-full bg-brand-500 px-3 py-1.5 text-xs font-black text-white shadow-lg shadow-brand-500/20">
                         Para ti
                       </div>
+                      <FavoriteButton eventId={event.id} className="absolute right-4 top-4 z-20" />
 
                       <div className="absolute inset-x-0 bottom-0 p-5">
                         <div className="mb-3 flex flex-wrap gap-2">
