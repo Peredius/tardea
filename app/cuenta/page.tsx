@@ -516,9 +516,9 @@ export default function AccountPage() {
         )}
 
         {activeTab === 'favorites' && (
-          <section className="grid grid-cols-2 gap-1 px-0 pt-1 sm:grid-cols-3 lg:grid-cols-4">
+          <section className="px-0 pb-28 pt-1">
             {favoriteProfiles.length + favoriteEvents.length === 0 ? (
-              <div className="col-span-full px-5 py-12 text-center">
+              <div className="px-5 py-12 text-center">
                 <Heart className="mx-auto h-10 w-10 text-brand-500" />
                 <h2 className="mt-4 text-2xl font-bold text-white">
                   Sin favoritos todavia
@@ -530,137 +530,140 @@ export default function AccountPage() {
             ) : (
               <>
               {favoriteProfiles.length > 0 && (
-                <div className="col-span-full px-5 pb-3 pt-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-brand-500">
-                    Planes favoritos
-                  </p>
-                  <h2 className="mt-1 text-2xl font-black text-white">
-                    Tus planes guardados
-                  </h2>
+                <div className="pb-5 pt-4">
+                  <div className="px-5 pb-3">
+                    <p className="text-xs font-bold uppercase tracking-[0.22em] text-brand-500">
+                      Planes favoritos
+                    </p>
+                    <h2 className="mt-1 text-2xl font-black text-white">
+                      Tus planes guardados
+                    </h2>
+                  </div>
+
+                  <div className="flex gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {favoriteProfiles.map((favoriteProfile) => {
+                      const nextEvent = favoriteProfile.nextEvent
+                      const cover =
+                        favoriteProfile.logo_url ||
+                        favoriteProfile.banner_url ||
+                        nextEvent?.cover ||
+                        'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
+
+                      return (
+                        <Link
+                          key={favoriteProfile.id}
+                          href={`/eventos/grupo/${favoriteProfile.id}`}
+                          className="group relative aspect-[9/16] w-[38vw] max-w-[170px] shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-slate-900"
+                        >
+                          <div
+                            className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
+                            style={{ backgroundImage: `url(${cover})` }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent" />
+
+                          <div className="absolute left-2 top-2 rounded-full bg-brand-500 px-2.5 py-1 text-[10px] font-black text-white">
+                            Favorito
+                          </div>
+
+                          <div className="absolute inset-x-0 bottom-0 p-3">
+                            <div className="mb-2 flex flex-wrap gap-1">
+                              {favoriteProfile.type && (
+                                <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur">
+                                  {favoriteProfile.type}
+                                </span>
+                              )}
+                              {favoriteProfile.area && (
+                                <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur">
+                                  {favoriteProfile.area}
+                                </span>
+                              )}
+                            </div>
+
+                            <h2 className="line-clamp-2 text-xs font-black uppercase leading-tight text-white">
+                              {favoriteProfile.name}
+                            </h2>
+                            <p className="mt-1 line-clamp-1 text-[10px] text-slate-200">
+                              {favoriteProfile.venue_name || nextEvent?.venue || 'Ficha de evento'}
+                            </p>
+                            <p className="mt-1 text-[10px] font-bold text-brand-400">
+                              {favoriteProfile.eventCount === 1
+                                ? '1 fecha'
+                                : `${favoriteProfile.eventCount} fechas`}
+                            </p>
+                          </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
 
-              {favoriteProfiles.map((favoriteProfile) => {
-                const nextEvent = favoriteProfile.nextEvent
-                const cover =
-                  favoriteProfile.banner_url ||
-                  favoriteProfile.logo_url ||
-                  nextEvent?.cover ||
-                  'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
+              <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-4">
+                {favoriteEvents.length > 0 && (
+                  <div className="col-span-full px-5 pb-3 pt-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.22em] text-brand-500">
+                      Fechas guardadas
+                    </p>
+                    <h2 className="mt-1 text-2xl font-black text-white">
+                      Eventos concretos
+                    </h2>
+                  </div>
+                )}
 
-                return (
+                {favoriteEvents.map((event) => (
                   <Link
-                    key={favoriteProfile.id}
-                    href={`/eventos/grupo/${favoriteProfile.id}`}
+                    key={event.id}
+                    href={`/eventos/${event.slug}`}
                     className="group relative aspect-[3/4] overflow-hidden bg-slate-900"
                   >
                     <div
                       className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
-                      style={{ backgroundImage: `url(${cover})` }}
+                      style={{
+                        backgroundImage: `url(${
+                          event.cover ||
+                          'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
+                        })`,
+                      }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
 
-                    <div className="absolute left-3 top-3 rounded-full bg-brand-500 px-3 py-1 text-xs font-black text-white">
-                      Favorito
-                    </div>
+                    {event.event_profile_id && (
+                      <FavoriteButton
+                        eventProfileId={event.event_profile_id}
+                        label="Plan favorito"
+                        savedLabel="Favorito"
+                        className="absolute left-3 top-3 z-20"
+                      />
+                    )}
 
                     <div className="absolute inset-x-0 bottom-0 p-4">
                       <div className="mb-2 flex flex-wrap gap-1.5">
-                        {favoriteProfile.type && (
-                          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
-                            {favoriteProfile.type}
-                          </span>
-                        )}
-                        {favoriteProfile.area && (
-                          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
-                            {favoriteProfile.area}
-                          </span>
-                        )}
+                        <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
+                          {event.type}
+                        </span>
+                        <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
+                          {event.area}
+                        </span>
+                        <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
+                          {event.price_from === 0
+                            ? 'Desde gratis'
+                            : `Desde ${event.price_from} EUR`}
+                        </span>
                       </div>
 
                       <h2 className="line-clamp-2 text-base font-black uppercase leading-tight text-white">
-                        {favoriteProfile.name}
+                        {event.title}
                       </h2>
                       <p className="mt-2 line-clamp-2 text-xs text-slate-200">
-                        {favoriteProfile.venue_name || nextEvent?.venue || 'Ficha de evento'}
-                        {nextEvent
-                          ? ` · Próxima fecha ${new Date(nextEvent.date).toLocaleDateString('es-ES')}`
-                          : ''}
-                      </p>
-                      <p className="mt-2 text-xs font-bold text-brand-400">
-                        {favoriteProfile.eventCount === 1
-                          ? '1 fecha próxima'
-                          : `${favoriteProfile.eventCount} fechas próximas`}
+                        {event.venue} ·{' '}
+                        {new Date(event.date).toLocaleDateString('es-ES')} ·{' '}
+                        {event.start_time?.slice(0, 5)}
+                        {event.end_time ? ` - ${event.end_time.slice(0, 5)}` : ''}
                       </p>
                     </div>
                   </Link>
-                )
-              })}
-
-              {favoriteEvents.length > 0 && (
-                <div className="col-span-full px-5 pb-3 pt-8">
-                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-brand-500">
-                    Fechas guardadas
-                  </p>
-                  <h2 className="mt-1 text-2xl font-black text-white">
-                    Eventos concretos
-                  </h2>
-                </div>
-              )}
-
-              {favoriteEvents.map((event) => (
-                <Link
-                  key={event.id}
-                  href={`/eventos/${event.slug}`}
-                  className="group relative aspect-[3/4] overflow-hidden bg-slate-900"
-                >
-                  <div
-                    className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
-                    style={{
-                      backgroundImage: `url(${
-                        event.cover ||
-                        'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
-                      })`,
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
-
-                  {event.event_profile_id && (
-                    <FavoriteButton
-                      eventProfileId={event.event_profile_id}
-                      label="Plan favorito"
-                      savedLabel="Favorito"
-                      className="absolute left-3 top-3 z-20"
-                    />
-                  )}
-
-                  <div className="absolute inset-x-0 bottom-0 p-4">
-                    <div className="mb-2 flex flex-wrap gap-1.5">
-                      <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
-                        {event.type}
-                      </span>
-                      <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
-                        {event.area}
-                      </span>
-                      <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
-                        {event.price_from === 0
-                          ? 'Desde gratis'
-                          : `Desde ${event.price_from} EUR`}
-                      </span>
-                    </div>
-
-                    <h2 className="line-clamp-2 text-base font-black uppercase leading-tight text-white">
-                      {event.title}
-                    </h2>
-                    <p className="mt-2 line-clamp-2 text-xs text-slate-200">
-                      {event.venue} ·{' '}
-                      {new Date(event.date).toLocaleDateString('es-ES')} ·{' '}
-                      {event.start_time?.slice(0, 5)}
-                      {event.end_time ? ` - ${event.end_time.slice(0, 5)}` : ''}
-                    </p>
-                  </div>
-                </Link>
-              ))}
+                ))}
+              </div>
               </>
             )}
           </section>

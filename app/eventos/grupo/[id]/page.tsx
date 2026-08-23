@@ -152,8 +152,8 @@ export default function EventGroupPage() {
 
   const fallbackCover = useMemo(
     () =>
-      profile?.banner_url ||
       profile?.logo_url ||
+      profile?.banner_url ||
       events[0]?.cover ||
       'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80',
     [events, profile]
@@ -292,11 +292,11 @@ export default function EventGroupPage() {
             Todavía no hay fechas próximas aprobadas para este plan.
           </div>
         ) : (
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 flex gap-4 overflow-x-auto pb-4 [scrollbar-width:none] sm:grid sm:grid-cols-2 sm:overflow-visible lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
             {events.map((event) => (
               <article
                 key={event.id}
-                className="group overflow-hidden rounded-3xl border border-white/10 bg-white/5"
+                className="group w-[76vw] max-w-[340px] shrink-0 overflow-hidden rounded-3xl border border-white/10 bg-white/5 sm:w-auto sm:max-w-none"
               >
                 <Link
                   href={`/eventos/${event.slug}`}
