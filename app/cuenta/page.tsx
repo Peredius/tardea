@@ -25,6 +25,7 @@ type AccountProfile = {
 
 type FavoriteEvent = {
   id: string
+  event_profile_id: string | null
   slug: string
   title: string
   venue: string
@@ -33,11 +34,40 @@ type FavoriteEvent = {
   start_time: string | null
   end_time: string | null
   type: string
+  music: string[] | null
   price_from: number | null
   cover: string | null
 }
 
 type AccountTab = 'profile' | 'favorites' | 'suggestions' | 'compare' | 'chats'
+
+function normalizeMusic(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function eventSeriesKey(event: FavoriteEvent) {
+  return event.event_profile_id || `${normalizeMusic(event.title)}__${normalizeMusic(event.venue)}`
+}
+
+function getNearestEventBySeries(events: FavoriteEvent[]) {
+  const groups = new Map<string, FavoriteEvent>()
+
+  events.forEach((event) => {
+    const key = eventSeriesKey(event)
+    const current = groups.get(key)
+
+    if (!current || event.date < current.date) {
+      groups.set(key, event)
+    }
+  })
+
+  return Array.from(groups.values()).sort((a, b) => a.date.localeCompare(b.date))
+}
 
 export default function AccountPage() {
   const avatarInputRef = useRef<HTMLInputElement | null>(null)
@@ -88,7 +118,7 @@ export default function AccountPage() {
         const { data: events } = await supabase
           .from('events')
           .select(
-            'id, slug, title, venue, area, date, start_time, end_time, type, price_from, cover'
+            'id, event_profile_id, slug, title, venue, area, date, start_time, end_time, type, music, price_from, cover'
           )
           .in('id', eventIds)
           .order('date', { ascending: true })
@@ -98,24 +128,29 @@ export default function AccountPage() {
 
       const today = new Date().toISOString().split('T')[0]
       const musicPreferences = profileData?.music_preferences || []
-      let suggestionsQuery = supabase
+      const normalizedPreferences = new Set(musicPreferences.map(normalizeMusic))
+      const { data: suggestionPool } = await supabase
         .from('events')
         .select(
-          'id, slug, title, venue, area, date, start_time, end_time, type, price_from, cover'
+          'id, event_profile_id, slug, title, venue, area, date, start_time, end_time, type, music, price_from, cover'
         )
         .eq('published', true)
         .eq('status', 'approved')
         .gte('date', today)
         .order('date', { ascending: true })
-        .limit(8)
+        .limit(80)
 
-      if (musicPreferences.length > 0) {
-        suggestionsQuery = suggestionsQuery.overlaps('music', musicPreferences)
-      }
+      const suggestions = (suggestionPool || []).filter((event) => {
+        if (eventIds.includes(event.id)) return false
+        if (normalizedPreferences.size === 0) return true
 
-      const { data: suggestions } = await suggestionsQuery
+        return (event.music || []).some((musicItem: string) =>
+          normalizedPreferences.has(normalizeMusic(musicItem))
+        )
+      })
+
       setSuggestedEvents(
-        (suggestions || []).filter((event) => !eventIds.includes(event.id))
+        getNearestEventBySeries(suggestions).slice(0, 12)
       )
 
       setLoading(false)
@@ -436,70 +471,98 @@ export default function AccountPage() {
         )}
 
         {activeTab === 'suggestions' && (
-          <section className="grid grid-cols-2 gap-1 px-0 pt-1 sm:grid-cols-3 lg:grid-cols-4">
+          <section className="px-5 pb-28 pt-4">
             {suggestedEvents.length === 0 ? (
-              <div className="col-span-full px-5 py-12 text-center">
+              <div className="px-5 py-12 text-center">
                 <Sparkles className="mx-auto h-10 w-10 text-brand-500" />
                 <h2 className="mt-4 text-2xl font-bold text-white">
-                  Sin sugerencias todavia
+                  Sin sugerencias todavía
                 </h2>
                 <p className="mx-auto mt-2 max-w-sm text-sm text-slate-400">
-                  Completa tus gustos musicales para que podamos recomendarte
-                  planes que encajen contigo.
+                  Cuando tengamos eventos que coincidan con tus gustos,
+                  aparecerán aquí.
                 </p>
                 <Link href="/cuenta/perfil" className="btn-primary mt-5">
-                  Completar perfil
+                  Editar gustos
                 </Link>
               </div>
             ) : (
-              suggestedEvents.map((event) => (
-                <Link
-                  key={event.id}
-                  href={`/eventos/${event.slug}`}
-                  className="group relative aspect-[3/4] overflow-hidden bg-slate-900"
-                >
-                  <div
-                    className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
-                    style={{
-                      backgroundImage: `url(${
-                        event.cover ||
-                        'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
-                      })`,
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
-
-                  <div className="absolute left-3 top-3 rounded-full bg-brand-500 px-3 py-1 text-xs font-bold text-white shadow-lg shadow-brand-500/20">
+              <>
+                <div className="mb-5">
+                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-brand-500">
                     Para ti
-                  </div>
-
-                  <div className="absolute inset-x-0 bottom-0 p-4">
-                    <div className="mb-2 flex flex-wrap gap-1.5">
-                      <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
-                        {event.type}
-                      </span>
-                      <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
-                        {event.area}
-                      </span>
-                      <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
-                        {event.price_from === 0
-                          ? 'Desde gratis'
-                          : `Desde ${event.price_from} EUR`}
-                      </span>
-                    </div>
-
-                    <h2 className="line-clamp-2 text-base font-black uppercase leading-tight text-white">
-                      {event.title}
-                    </h2>
-                    <p className="mt-2 line-clamp-2 text-xs text-slate-200">
-                      {event.venue} ·{' '}
-                      {new Date(event.date).toLocaleDateString('es-ES')} ·{' '}
-                      {event.start_time?.slice(0, 5)}
-                      {event.end_time ? ` - ${event.end_time.slice(0, 5)}` : ''}
+                  </p>
+                  <h2 className="mt-2 text-3xl font-black text-white">
+                    Según tus gustos
+                  </h2>
+                  {profile?.music_preferences?.length ? (
+                    <p className="mt-2 text-sm text-slate-400">
+                      {profile.music_preferences.join(', ')}
                     </p>
-                  </div>
-                </Link>
-              ))
+                  ) : (
+                    <p className="mt-2 text-sm text-slate-400">
+                      Destacados hasta que completes tus gustos.
+                    </p>
+                  )}
+                </div>
+
+                <div className="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {suggestedEvents.map((event) => (
+                    <Link
+                      key={event.id}
+                      href={`/eventos/${event.slug}`}
+                      className="group relative h-[520px] w-[78vw] max-w-[330px] shrink-0 snap-center overflow-hidden rounded-[28px] border border-white/10 bg-slate-900 shadow-2xl shadow-black/30"
+                    >
+                      <div
+                        className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
+                        style={{
+                          backgroundImage: `url(${
+                            event.cover ||
+                            'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
+                          })`,
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-slate-950/10" />
+
+                      <div className="absolute left-4 top-4 rounded-full bg-brand-500 px-3 py-1.5 text-xs font-black text-white shadow-lg shadow-brand-500/20">
+                        Para ti
+                      </div>
+
+                      <div className="absolute inset-x-0 bottom-0 p-5">
+                        <div className="mb-3 flex flex-wrap gap-2">
+                          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
+                            {event.type}
+                          </span>
+                          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
+                            {event.area}
+                          </span>
+                          {(event.music || []).slice(0, 2).map((musicItem) => (
+                            <span
+                              key={musicItem}
+                              className="rounded-full bg-brand-500/80 px-3 py-1 text-xs font-semibold text-white backdrop-blur"
+                            >
+                              {musicItem}
+                            </span>
+                          ))}
+                        </div>
+
+                        <h2 className="line-clamp-2 text-2xl font-black uppercase leading-tight text-white">
+                          {event.title}
+                        </h2>
+                        <p className="mt-3 line-clamp-2 text-sm font-medium text-slate-200">
+                          {event.venue} ·{' '}
+                          {new Date(event.date).toLocaleDateString('es-ES')} ·{' '}
+                          {event.start_time?.slice(0, 5)}
+                          {event.end_time ? ` - ${event.end_time.slice(0, 5)}` : ''}
+                        </p>
+                        <p className="mt-4 text-sm font-black text-brand-400">
+                          Ver evento →
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </>
             )}
           </section>
         )}
