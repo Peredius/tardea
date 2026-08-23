@@ -280,19 +280,17 @@ function mapInfoWindowHtml(event: any, userLocation: { lat: number; lng: number 
   const routeUrl = googleMapsRouteUrl(event, userLocation)
   const mapsUrl = googleMapsSearchUrl(event)
   const meta = [
-    event.venue,
-    displayAreaName(event.area),
     [formatMapDate(event.date), event.startTime?.slice(0, 5)].filter(Boolean).join(' · '),
   ].filter(Boolean)
 
   return `
-    <div style="width:230px;max-width:230px;padding:2px 0 0;font-family:Inter,Arial,sans-serif;color:#0f172a;">
-      <div style="font-size:14px;font-weight:900;line-height:1.2;margin-bottom:6px;">${escapeMapHtml(event.title)}</div>
-      <div style="font-size:12px;line-height:1.45;color:#475569;margin-bottom:10px;">${escapeMapHtml(meta.join(' · '))}</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <a href="${eventUrl}" style="display:inline-flex;border-radius:999px;background:#f43f5e;color:white;padding:7px 10px;font-size:12px;font-weight:800;text-decoration:none;">Ver evento</a>
-        <a href="${routeUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;border-radius:999px;background:#111827;color:white;padding:7px 10px;font-size:12px;font-weight:800;text-decoration:none;">Ruta</a>
-        <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;border-radius:999px;border:1px solid #cbd5e1;color:#334155;padding:7px 10px;font-size:12px;font-weight:800;text-decoration:none;">Google Maps</a>
+    <div style="width:150px;max-width:150px;padding:0;font-family:Inter,Arial,sans-serif;color:#0f172a;font-size:11px;line-height:1.25;">
+      <div style="font-size:11px;font-weight:900;line-height:1.2;margin-bottom:4px;">${escapeMapHtml(event.title)}</div>
+      <div style="font-size:11px;line-height:1.25;color:#475569;margin-bottom:7px;">${escapeMapHtml(meta.join(' · '))}</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">
+        <a href="${eventUrl}" style="display:inline-flex;border-radius:999px;background:#f43f5e;color:white;padding:5px 7px;font-size:10px;font-weight:800;text-decoration:none;line-height:1;">Ver</a>
+        <a href="${routeUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;border-radius:999px;background:#111827;color:white;padding:5px 7px;font-size:10px;font-weight:800;text-decoration:none;line-height:1;">Ruta</a>
+        <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;border-radius:999px;border:1px solid #cbd5e1;color:#334155;padding:5px 7px;font-size:10px;font-weight:800;text-decoration:none;line-height:1;">Maps</a>
       </div>
     </div>
   `
