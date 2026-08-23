@@ -126,6 +126,42 @@ function getEventSeriesKey(event: any) {
   return `${event.type || 'Tardeo'}__${normalizedTitle || event.slug}`
 }
 
+function getEventSeriesSlug(event: any) {
+  const title = normalizeEventSeriesText(event.title || 'evento')
+    .replace(/\s+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  return [event.type || 'Tardeo', title || event.slug || 'evento']
+    .filter(Boolean)
+    .join('__')
+    .toLowerCase()
+}
+
+function getEventGroupHref(event: any) {
+  return `/eventos/grupo/${event.eventProfileId || getEventSeriesSlug(event)}`
+}
+
+function groupEventsBySeries(eventList: any[]) {
+  const groups = new Map<string, any>()
+
+  eventList.forEach((event) => {
+    const key = getEventSeriesKey(event)
+    const current = groups.get(key)
+
+    if (!current) {
+      groups.set(key, {
+        ...event,
+        groupedDateCount: 1,
+      })
+      return
+    }
+
+    current.groupedDateCount = (current.groupedDateCount || 1) + 1
+  })
+
+  return Array.from(groups.values())
+}
+
 function getEventCoordinates(event: any) {
   if (typeof event.latitude === 'number' && typeof event.longitude === 'number') {
     return { lat: event.latitude, lng: event.longitude }
@@ -451,6 +487,8 @@ export function Filters() {
     })
   }, [area, audience, selectedDates, music, price, type, dbEvents])
 
+  const groupedFiltered = useMemo(() => groupEventsBySeries(filtered), [filtered])
+
   const featuredMapEvents = useMemo(() => {
     const today = new Date().toISOString().split('T')[0]
     const upcomingEvents = dbEvents.filter((event) => event.date >= today)
@@ -481,7 +519,7 @@ export function Filters() {
     return featuredEvents.length > 0 ? featuredEvents : fallbackEvents
   }, [dbEvents])
 
-  const eventsForMap = selectedDates.length > 0 ? filtered : featuredMapEvents
+  const eventsForMap = selectedDates.length > 0 ? groupedFiltered : featuredMapEvents
 
   useEffect(() => {
     if (viewMode !== 'map') return
@@ -590,8 +628,8 @@ export function Filters() {
   }, [eventsForMap, userLocation, viewMode])
 
   useEffect(() => {
-    setActiveEventSlug((viewMode === 'map' ? eventsForMap[0] : filtered[0])?.slug || '')
-  }, [eventsForMap, filtered, viewMode])
+    setActiveEventSlug((viewMode === 'map' ? eventsForMap[0] : groupedFiltered[0])?.slug || '')
+  }, [eventsForMap, groupedFiltered, viewMode])
 
   function updateActiveEventFromScroll() {
     const carousel = carouselRef.current
@@ -621,6 +659,7 @@ export function Filters() {
 
   function openActiveEventOnTap(
     slug: string,
+    href: string,
     event: MouseEvent<HTMLElement>
   ) {
     if (window.innerWidth >= 640) return
@@ -629,7 +668,7 @@ export function Filters() {
     if (target.closest('a, button, input, select, textarea')) return
 
     if (activeEventSlug === slug) {
-      window.location.href = `/eventos/${slug}`
+      window.location.href = href
     }
   }
 
@@ -677,7 +716,7 @@ export function Filters() {
           <span className="inline-flex items-center gap-3">
             {selectedDates.length > 0 && (
               <span className="text-sm font-semibold text-white">
-                {filtered.length} encontrados
+                {groupedFiltered.length} encontrados
               </span>
             )}
             <ChevronDown
@@ -797,7 +836,7 @@ export function Filters() {
 
           {selectedDates.length > 0 && (
             <p className="text-sm font-semibold text-white">
-              {filtered.length} eventos encontrados
+              {groupedFiltered.length} eventos encontrados
             </p>
           )}
         </div>
@@ -955,16 +994,17 @@ export function Filters() {
           onScroll={updateActiveEventFromScroll}
           className="-mx-4 mt-8 flex snap-x snap-proximity items-center gap-1.5 overflow-x-auto px-[24vw] pb-6 pt-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden"
         >
-          {filtered.map((event) => {
+          {groupedFiltered.map((event) => {
             const today = new Date().toISOString().split('T')[0]
             const isPastEvent = event.date < today
+            const eventGroupHref = getEventGroupHref(event)
 
             return (
               <article
                 key={event.slug}
                 data-event-card
                 data-slug={event.slug}
-                onClick={(clickEvent) => openActiveEventOnTap(event.slug, clickEvent)}
+                onClick={(clickEvent) => openActiveEventOnTap(event.slug, eventGroupHref, clickEvent)}
                 className={`group relative flex aspect-[9/16] snap-center overflow-hidden rounded-[1.35rem] border border-white/10 bg-slate-900 transition duration-300 ease-out sm:card sm:aspect-auto sm:h-full sm:min-h-0 sm:min-w-0 sm:translate-y-0 sm:scale-100 sm:flex-col sm:rounded-3xl sm:opacity-100 ${
                   activeEventSlug === event.slug
                     ? 'z-10 min-w-[48vw] scale-105 opacity-100 shadow-2xl shadow-black/40'
@@ -972,7 +1012,7 @@ export function Filters() {
                 }`}
               >
                 <Link
-                  href={`/eventos/${event.slug}`}
+                  href={eventGroupHref}
                   aria-label={`Ver ${event.title}`}
                   className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105 sm:relative sm:h-44 sm:min-h-0 sm:w-full sm:shrink-0"
                   style={{
@@ -986,7 +1026,6 @@ export function Filters() {
 
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent sm:hidden" />
                 <FavoriteButton
-                  eventId={event.id}
                   eventProfileId={event.eventProfileId}
                   className="absolute right-3 top-3 z-20"
                 />
@@ -1001,6 +1040,9 @@ export function Filters() {
                     </span>
 
                     {isPastEvent && <span className="badge">Evento pasado</span>}
+                    {event.groupedDateCount > 1 && (
+                      <span className="badge">{event.groupedDateCount} fechas</span>
+                    )}
                   </div>
 
                   <h3 className="line-clamp-2 text-base font-semibold leading-tight text-white sm:text-lg">
@@ -1023,8 +1065,8 @@ export function Filters() {
                   </div>
 
                   <div className="mt-3 flex gap-2 sm:mt-auto sm:gap-3 sm:pt-4">
-                    <Link href={`/eventos/${event.slug}`} className="text-sm font-semibold text-brand-500 hover:underline">
-                      Ver evento →
+                    <Link href={eventGroupHref} className="text-sm font-semibold text-brand-500 hover:underline">
+                      Ver fechas →
                     </Link>
 
                     {!isPastEvent && (
