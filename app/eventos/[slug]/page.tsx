@@ -510,8 +510,8 @@ export default function EventDetailPage() {
                 className="btn-secondary mt-3 w-full"
               >
                 {isProfileFavorite
-                  ? `❤️ Plan seguido`
-                  : `🤍 Seguir este plan`}
+                  ? `❤️ Favorito`
+                  : `🤍 Plan favorito`}
               </button>
             )}
 
