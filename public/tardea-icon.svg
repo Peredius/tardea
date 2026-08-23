@@ -8,7 +8,8 @@
   </defs>
   <rect width="96" height="96" rx="20" fill="url(#tardeaRed)"/>
   <circle cx="-1" cy="48" r="10.5" fill="#020617"/>
-  <g transform="translate(19 17) skewX(-9)">
+  <g transform="translate(16 17) skewX(-9)">
     <path fill="#fff" d="M8.5 0h55.5l-4 16.3H40.7l-8.8 45.2H11.4l8.8-45.2H4.7L8.5 0Z"/>
   </g>
+  <circle cx="76" cy="66" r="7.3" fill="#fff"/>
 </svg>
