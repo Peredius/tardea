@@ -28,6 +28,21 @@ function AuthCallbackContent() {
         return
       }
 
+      const accessResponse = await fetch('/api/auth/access', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: user.email }),
+      })
+
+      if (!accessResponse.ok) {
+        await supabase.auth.signOut()
+        setMessage('Ahora mismo TARDEA está en pruebas privadas. Esta cuenta no tiene acceso todavía.')
+        window.location.href = `/login?type=${type}&locked=1`
+        return
+      }
+
       const { data: profile, error: profileLoadError } = await supabase
         .from('profiles')
         .select(

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { isAllowedAuthEmail } from '@/lib/auth-lockdown'
 
 type ProfilePayload = {
   id?: string
@@ -23,6 +24,13 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: 'Faltan datos de la cuenta.' },
       { status: 400 }
+    )
+  }
+
+  if (!isAllowedAuthEmail(payload.email)) {
+    return NextResponse.json(
+      { error: 'Ahora mismo TARDEA está en pruebas privadas. Esta cuenta no tiene acceso todavía.' },
+      { status: 403 }
     )
   }
 

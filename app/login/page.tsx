@@ -143,6 +143,7 @@ function getLoginEventGroupKey(event: LoginPreviewEvent) {
 function LoginContent() {
   const searchParams = useSearchParams()
   const type = searchParams.get('type')
+  const locked = searchParams.get('locked')
   const accountType = type === 'venue' ? 'venue' : 'user'
   const isUserAccess = accountType === 'user'
 
@@ -167,6 +168,13 @@ function LoginContent() {
   const [municipality, setMunicipality] = useState('')
   const [province, setProvince] = useState('Madrid')
   const [musicPrefs, setMusicPrefs] = useState<string[]>([])
+
+  useEffect(() => {
+    if (locked === '1') {
+      setMessage('Ahora mismo TARDEA está en pruebas privadas. Esta cuenta no tiene acceso todavía.')
+      setLoginFailed(true)
+    }
+  }, [locked])
 
   useEffect(() => {
     if (accountType !== 'venue') return
@@ -234,6 +242,26 @@ function LoginContent() {
     )
   }
 
+  async function canUseEmail(emailValue: string) {
+    const response = await fetch('/api/auth/access', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email: emailValue }),
+    })
+
+    if (response.ok) return true
+
+    const payload = await response.json().catch(() => null)
+    setMessage(
+      payload?.error ||
+        'Ahora mismo TARDEA está en pruebas privadas. Esta cuenta no tiene acceso todavía.'
+    )
+    setLoginFailed(true)
+    return false
+  }
+
   async function handleOAuthLogin(provider: 'google') {
     setMessage('')
 
@@ -258,6 +286,8 @@ function LoginContent() {
     e.preventDefault()
     setMessage('')
     setLoginFailed(false)
+
+    if (!(await canUseEmail(email))) return
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -317,6 +347,8 @@ function LoginContent() {
       return
     }
 
+    if (!(await canUseEmail(email))) return
+
     setSendingRecovery(true)
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
@@ -341,6 +373,8 @@ function LoginContent() {
       setMessage('Debes aceptar la politica de privacidad y las condiciones.')
       return
     }
+
+    if (!(await canUseEmail(email))) return
 
     const { data, error } = await supabase.auth.signUp({
       email,

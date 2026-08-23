@@ -18,6 +18,25 @@ function RegisterContent() {
   const [legalAccepted, setLegalAccepted] = useState(false)
   const [marketingConsent, setMarketingConsent] = useState(false)
 
+  async function canUseEmail(emailValue: string) {
+    const response = await fetch('/api/auth/access', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email: emailValue }),
+    })
+
+    if (response.ok) return true
+
+    const payload = await response.json().catch(() => null)
+    setMessage(
+      payload?.error ||
+        'Ahora mismo TARDEA está en pruebas privadas. Esta cuenta no tiene acceso todavía.'
+    )
+    return false
+  }
+
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
     setMessage('')
@@ -26,6 +45,8 @@ function RegisterContent() {
       setMessage('Debes aceptar la politica de privacidad y las condiciones.')
       return
     }
+
+    if (!(await canUseEmail(email))) return
 
     const { data, error } = await supabase.auth.signUp({
       email,
