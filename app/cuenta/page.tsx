@@ -517,10 +517,10 @@ export default function AccountPage() {
               {favoriteProfiles.length > 0 && (
                 <div className="col-span-full px-5 pb-3 pt-4">
                   <p className="text-xs font-bold uppercase tracking-[0.22em] text-brand-500">
-                    Tardeos que sigues
+                    Planes favoritos
                   </p>
                   <h2 className="mt-1 text-2xl font-black text-white">
-                    Tus fichas favoritas
+                    Tus planes guardados
                   </h2>
                 </div>
               )}
@@ -528,9 +528,9 @@ export default function AccountPage() {
               {favoriteProfiles.map((favoriteProfile) => {
                 const nextEvent = favoriteProfile.nextEvent
                 const cover =
-                  nextEvent?.cover ||
                   favoriteProfile.banner_url ||
                   favoriteProfile.logo_url ||
+                  nextEvent?.cover ||
                   'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
 
                 return (
