@@ -117,6 +117,29 @@ export default function EventDetailPage() {
 
           resolvedProfileId = eventProfile?.id || resolvedProfileId
         } else if (data.title) {
+          const { data: sameTitleEvent } = await supabase
+            .from('events')
+            .select('event_profile_id')
+            .eq('title', data.title)
+            .not('event_profile_id', 'is', null)
+            .limit(1)
+            .maybeSingle()
+
+          resolvedProfileId = sameTitleEvent?.event_profile_id || ''
+
+          if (!resolvedProfileId && data.venue) {
+            const { data: sameVenueEvent } = await supabase
+              .from('events')
+              .select('event_profile_id')
+              .eq('venue', data.venue)
+              .eq('type', data.type || 'Tardeo')
+              .not('event_profile_id', 'is', null)
+              .limit(1)
+              .maybeSingle()
+
+            resolvedProfileId = sameVenueEvent?.event_profile_id || ''
+          }
+
           const { data: directMatch } = await supabase
             .from('promoter_event_profiles')
             .select('id, name')
@@ -124,7 +147,7 @@ export default function EventDetailPage() {
             .limit(1)
             .maybeSingle()
 
-          resolvedProfileId = directMatch?.id || ''
+          resolvedProfileId = resolvedProfileId || directMatch?.id || ''
 
           if (!resolvedProfileId) {
             const { data: candidateProfiles } = await supabase
