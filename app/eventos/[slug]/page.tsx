@@ -69,6 +69,24 @@ function getProfileMatchScore(event: any, profile: any) {
   return score
 }
 
+async function resolveEventProfileFromServer(eventSlug: string) {
+  const response = await fetch('/api/event-profile/resolve', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ slug: eventSlug }),
+  })
+
+  if (!response.ok) return ''
+
+  const payload = (await response.json().catch(() => null)) as
+    | { eventProfileId?: string }
+    | null
+
+  return payload?.eventProfileId || ''
+}
+
 export default function EventDetailPage() {
   const params = useParams()
   const searchParams = useSearchParams()
@@ -168,6 +186,10 @@ export default function EventDetailPage() {
           }
         }
 
+        if (!resolvedProfileId) {
+          resolvedProfileId = await resolveEventProfileFromServer(slug)
+        }
+
         setEventProfileId(resolvedProfileId)
       }
 
@@ -257,14 +279,26 @@ export default function EventDetailPage() {
       return
     }
 
-    if (!eventProfileId) return
+    if (!event) return
+
+    let resolvedProfileId = eventProfileId
+
+    if (!resolvedProfileId) {
+      resolvedProfileId = await resolveEventProfileFromServer(event.slug)
+      if (resolvedProfileId) setEventProfileId(resolvedProfileId)
+    }
+
+    if (!resolvedProfileId) {
+      setFavoriteStatus('Todavía no se ha encontrado la ficha de este plan.')
+      return
+    }
 
     if (isProfileFavorite) {
       const { error } = await supabase
         .from('event_profile_favorites')
         .delete()
         .eq('user_id', userId)
-        .eq('event_profile_id', eventProfileId)
+        .eq('event_profile_id', resolvedProfileId)
 
       if (error) {
         setFavoriteStatus(`No se pudo quitar la ficha: ${error.message}`)
@@ -275,7 +309,7 @@ export default function EventDetailPage() {
     } else {
       const { error } = await supabase.from('event_profile_favorites').insert({
         user_id: userId,
-        event_profile_id: eventProfileId,
+        event_profile_id: resolvedProfileId,
       })
 
       if (error) {
@@ -527,16 +561,12 @@ export default function EventDetailPage() {
               {isEventFavorite ? '❤️ Fecha guardada' : '🤍 Guardar esta fecha'}
             </button>
 
-            {eventProfileId && (
-              <button
-                onClick={toggleProfileFavorite}
-                className="btn-secondary mt-3 w-full"
-              >
-                {isProfileFavorite
-                  ? `❤️ Favorito`
-                  : `🤍 Plan favorito`}
-              </button>
-            )}
+            <button
+              onClick={toggleProfileFavorite}
+              className="btn-secondary mt-3 w-full"
+            >
+              {isProfileFavorite ? '❤️ Favorito' : '🤍 Plan favorito'}
+            </button>
 
             {favoriteStatus && (
               <p className="mt-3 rounded-2xl border border-brand-500/30 bg-brand-500/10 px-4 py-3 text-sm text-brand-200">
