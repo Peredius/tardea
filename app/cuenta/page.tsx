@@ -42,6 +42,19 @@ type FavoriteEvent = {
   cover: string | null
 }
 
+type FavoriteProfile = {
+  id: string
+  name: string
+  venue_name: string | null
+  area: string | null
+  type: string | null
+  music: string[] | null
+  logo_url: string | null
+  banner_url: string | null
+  nextEvent: FavoriteEvent | null
+  eventCount: number
+}
+
 type AccountTab = 'profile' | 'favorites' | 'suggestions' | 'compare' | 'chats'
 
 function eventSeriesKey(event: FavoriteEvent) {
@@ -68,6 +81,7 @@ export default function AccountPage() {
   const [userId, setUserId] = useState('')
   const [email, setEmail] = useState<string | null>(null)
   const [profile, setProfile] = useState<AccountProfile | null>(null)
+  const [favoriteProfiles, setFavoriteProfiles] = useState<FavoriteProfile[]>([])
   const [favoriteEvents, setFavoriteEvents] = useState<FavoriteEvent[]>([])
   const [suggestedEvents, setSuggestedEvents] = useState<FavoriteEvent[]>([])
   const [activeTab, setActiveTab] = useState<AccountTab>('profile')
@@ -106,6 +120,8 @@ export default function AccountPage() {
       )
       setAvatarUrl(profileData?.avatar_url ?? '')
 
+      const today = new Date().toISOString().split('T')[0]
+
       const { data: favorites } = await supabase
         .from('favorites')
         .select('event_id')
@@ -124,15 +140,88 @@ export default function AccountPage() {
           .in('id', eventIds)
           .order('date', { ascending: true })
 
-        setFavoriteEvents(
-          (events || []).map((event) => ({
-            ...event,
-            music: canonicalizeMusicList(event.music),
-          }))
-        )
+        const favoriteEventRows = (events || []).map((event) => ({
+          ...event,
+          music: canonicalizeMusicList(event.music),
+        }))
+
+        setFavoriteEvents(favoriteEventRows.filter((event) => !event.event_profile_id))
       }
 
-      const today = new Date().toISOString().split('T')[0]
+      const { data: profileFavorites } = await supabase
+        .from('event_profile_favorites')
+        .select('event_profile_id')
+        .eq('user_id', user.id)
+
+      const profileIdsFromFavorites = new Set<string>(
+        (profileFavorites || [])
+          .map((favorite) => favorite.event_profile_id)
+          .filter(Boolean)
+      )
+
+      if (eventIds.length > 0) {
+        const { data: favoriteEventsWithProfiles } = await supabase
+          .from('events')
+          .select('event_profile_id')
+          .in('id', eventIds)
+
+        ;(favoriteEventsWithProfiles || []).forEach((event) => {
+          if (event.event_profile_id) profileIdsFromFavorites.add(event.event_profile_id)
+        })
+      }
+
+      const favoriteProfileIds = Array.from(profileIdsFromFavorites)
+
+      if (favoriteProfileIds.length > 0) {
+        const [{ data: profiles }, { data: profileEvents }] = await Promise.all([
+          supabase
+            .from('promoter_event_profiles')
+            .select('id, name, venue_name, area, type, music, logo_url, banner_url')
+            .in('id', favoriteProfileIds),
+          supabase
+            .from('events')
+            .select(
+              'id, event_profile_id, slug, title, venue, area, date, start_time, end_time, type, music, price_from, cover'
+            )
+            .in('event_profile_id', favoriteProfileIds)
+            .eq('published', true)
+            .eq('status', 'approved')
+            .gte('date', today)
+            .order('date', { ascending: true }),
+        ])
+
+        const eventsByProfile = new Map<string, FavoriteEvent[]>()
+
+        ;(profileEvents || []).forEach((event) => {
+          if (!event.event_profile_id) return
+          const nextEvent = {
+            ...event,
+            music: canonicalizeMusicList(event.music),
+          }
+          eventsByProfile.set(event.event_profile_id, [
+            ...(eventsByProfile.get(event.event_profile_id) || []),
+            nextEvent,
+          ])
+        })
+
+        setFavoriteProfiles(
+          (profiles || [])
+            .map((favoriteProfile) => {
+              const profileEventsList = eventsByProfile.get(favoriteProfile.id) || []
+
+              return {
+                ...favoriteProfile,
+                music: canonicalizeMusicList(favoriteProfile.music),
+                nextEvent: profileEventsList[0] || null,
+                eventCount: profileEventsList.length,
+              }
+            })
+            .sort((a, b) => a.name.localeCompare(b.name))
+        )
+      } else {
+        setFavoriteProfiles([])
+      }
+
       const musicPreferences = profileData?.music_preferences || []
       const normalizedPreferences = new Set(musicPreferences.map(normalizeMusicKey))
       const { data: suggestionPool } = await supabase
@@ -347,7 +436,7 @@ export default function AccountPage() {
               <div className="mt-6 grid grid-cols-3 gap-4 text-center">
                 <div>
                   <p className="text-3xl font-black text-white">
-                    {favoriteEvents.length}
+                    {favoriteProfiles.length + favoriteEvents.length}
                   </p>
                   <p className="text-sm text-slate-300">Favoritos</p>
                 </div>
@@ -424,7 +513,7 @@ export default function AccountPage() {
 
         {activeTab === 'favorites' && (
           <section className="grid grid-cols-2 gap-1 px-0 pt-1 sm:grid-cols-3 lg:grid-cols-4">
-            {favoriteEvents.length === 0 ? (
+            {favoriteProfiles.length + favoriteEvents.length === 0 ? (
               <div className="col-span-full px-5 py-12 text-center">
                 <Heart className="mx-auto h-10 w-10 text-brand-500" />
                 <h2 className="mt-4 text-2xl font-bold text-white">
@@ -435,7 +524,65 @@ export default function AccountPage() {
                 </Link>
               </div>
             ) : (
-              favoriteEvents.map((event) => (
+              <>
+              {favoriteProfiles.map((favoriteProfile) => {
+                const nextEvent = favoriteProfile.nextEvent
+                const cover =
+                  nextEvent?.cover ||
+                  favoriteProfile.banner_url ||
+                  favoriteProfile.logo_url ||
+                  'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
+
+                return (
+                  <Link
+                    key={favoriteProfile.id}
+                    href={`/eventos/grupo/${favoriteProfile.id}`}
+                    className="group relative aspect-[3/4] overflow-hidden bg-slate-900"
+                  >
+                    <div
+                      className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
+                      style={{ backgroundImage: `url(${cover})` }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent" />
+
+                    <div className="absolute left-3 top-3 rounded-full bg-brand-500 px-3 py-1 text-xs font-black text-white">
+                      Favorito
+                    </div>
+
+                    <div className="absolute inset-x-0 bottom-0 p-4">
+                      <div className="mb-2 flex flex-wrap gap-1.5">
+                        {favoriteProfile.type && (
+                          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
+                            {favoriteProfile.type}
+                          </span>
+                        )}
+                        {favoriteProfile.area && (
+                          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
+                            {favoriteProfile.area}
+                          </span>
+                        )}
+                      </div>
+
+                      <h2 className="line-clamp-2 text-base font-black uppercase leading-tight text-white">
+                        {favoriteProfile.name}
+                      </h2>
+                      <p className="mt-2 line-clamp-2 text-xs text-slate-200">
+                        {favoriteProfile.venue_name || nextEvent?.venue || 'Ficha de evento'}
+                        {nextEvent
+                          ? ` · Próxima fecha ${new Date(nextEvent.date).toLocaleDateString('es-ES')}`
+                          : ''}
+                      </p>
+                      <p className="mt-2 text-xs font-bold text-brand-400">
+                        {favoriteProfile.eventCount === 1
+                          ? '1 fecha próxima'
+                          : `${favoriteProfile.eventCount} fechas próximas`}
+                      </p>
+                    </div>
+                  </Link>
+                )
+              })}
+
+              {favoriteEvents.map((event) => (
                 <Link
                   key={event.id}
                   href={`/eventos/${event.slug}`}
@@ -478,7 +625,8 @@ export default function AccountPage() {
                     </p>
                   </div>
                 </Link>
-              ))
+              ))}
+              </>
             )}
           </section>
         )}
@@ -540,7 +688,11 @@ export default function AccountPage() {
                       <div className="absolute left-4 top-4 rounded-full bg-brand-500 px-3 py-1.5 text-xs font-black text-white shadow-lg shadow-brand-500/20">
                         Para ti
                       </div>
-                      <FavoriteButton eventId={event.id} className="absolute right-4 top-4 z-20" />
+                      <FavoriteButton
+                        eventId={event.id}
+                        eventProfileId={event.event_profile_id}
+                        className="absolute right-4 top-4 z-20"
+                      />
 
                       <div className="absolute inset-x-0 bottom-0 p-5">
                         <div className="mb-3 flex flex-wrap gap-2">

@@ -6,10 +6,12 @@ import { supabase } from '@/lib/supabase'
 
 export function FavoriteButton({
   eventId,
+  eventProfileId,
   className = '',
   compact = true,
 }: {
   eventId?: string | null
+  eventProfileId?: string | null
   className?: string
   compact?: boolean
 }) {
@@ -30,7 +32,19 @@ export function FavoriteButton({
       const nextUserId = user?.id || ''
       setUserId(nextUserId)
 
-      if (!nextUserId || !eventId) return
+      if (!nextUserId || (!eventId && !eventProfileId)) return
+
+      if (eventProfileId) {
+        const { data } = await supabase
+          .from('event_profile_favorites')
+          .select('event_profile_id')
+          .eq('user_id', nextUserId)
+          .eq('event_profile_id', eventProfileId)
+          .maybeSingle()
+
+        if (!cancelled) setIsFavorite(Boolean(data))
+        return
+      }
 
       const { data } = await supabase
         .from('favorites')
@@ -47,13 +61,13 @@ export function FavoriteButton({
     return () => {
       cancelled = true
     }
-  }, [eventId])
+  }, [eventId, eventProfileId])
 
   async function toggleFavorite(event: MouseEvent<HTMLButtonElement>) {
     event.preventDefault()
     event.stopPropagation()
 
-    if (!eventId) return
+    if (!eventId && !eventProfileId) return
 
     if (!userId) {
       window.location.href = '/login?type=user'
@@ -61,6 +75,28 @@ export function FavoriteButton({
     }
 
     setLoading(true)
+
+    if (eventProfileId) {
+      if (isFavorite) {
+        const { error } = await supabase
+          .from('event_profile_favorites')
+          .delete()
+          .eq('user_id', userId)
+          .eq('event_profile_id', eventProfileId)
+
+        if (!error) setIsFavorite(false)
+      } else {
+        const { error } = await supabase.from('event_profile_favorites').insert({
+          user_id: userId,
+          event_profile_id: eventProfileId,
+        })
+
+        if (!error) setIsFavorite(true)
+      }
+
+      setLoading(false)
+      return
+    }
 
     if (isFavorite) {
       const { error } = await supabase
@@ -82,7 +118,7 @@ export function FavoriteButton({
     setLoading(false)
   }
 
-  if (!eventId) return null
+  if (!eventId && !eventProfileId) return null
 
   return (
     <button

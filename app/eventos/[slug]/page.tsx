@@ -82,12 +82,21 @@ export default function EventDetailPage() {
 
       if (existingClaim?.status) setClaimStatus(existingClaim.status)
 
-      const { data: favorite } = await supabase
-        .from('favorites')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('event_id', data.id)
-        .maybeSingle()
+      const favoriteQuery = data.event_profile_id
+        ? supabase
+            .from('event_profile_favorites')
+            .select('event_profile_id')
+            .eq('user_id', user.id)
+            .eq('event_profile_id', data.event_profile_id)
+            .maybeSingle()
+        : supabase
+            .from('favorites')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('event_id', data.id)
+            .maybeSingle()
+
+      const { data: favorite } = await favoriteQuery
 
       if (favorite) setIsFavorite(true)
     }
@@ -102,6 +111,27 @@ export default function EventDetailPage() {
     }
 
     if (!event) return
+
+    if (event.event_profile_id) {
+      if (isFavorite) {
+        await supabase
+          .from('event_profile_favorites')
+          .delete()
+          .eq('user_id', userId)
+          .eq('event_profile_id', event.event_profile_id)
+
+        setIsFavorite(false)
+      } else {
+        await supabase.from('event_profile_favorites').insert({
+          user_id: userId,
+          event_profile_id: event.event_profile_id,
+        })
+
+        setIsFavorite(true)
+      }
+
+      return
+    }
 
     if (isFavorite) {
       await supabase
@@ -238,7 +268,7 @@ export default function EventDetailPage() {
                   isFavorite ? 'fill-brand-500' : ''
                 }`}
               />
-              {isFavorite ? 'Guardado en favoritos' : 'Guardar evento'}
+              {isFavorite ? 'Guardado en favoritos' : event.event_profile_id ? 'Guardar tardeo' : 'Guardar evento'}
             </button>
 
             {!event.user_id && (
@@ -383,7 +413,7 @@ export default function EventDetailPage() {
               onClick={toggleFavorite}
               className="btn-secondary mt-3 w-full"
             >
-              {isFavorite ? '❤️ Guardado' : '🤍 Guardar en favoritos'}
+              {isFavorite ? '❤️ Guardado' : event.event_profile_id ? '🤍 Guardar tardeo' : '🤍 Guardar en favoritos'}
             </button>
           </div>
 

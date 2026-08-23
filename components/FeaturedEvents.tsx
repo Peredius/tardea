@@ -176,7 +176,11 @@ export function FeaturedEvents() {
               />
 
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent" />
-              <FavoriteButton eventId={event.id} className="absolute right-3 top-3 z-20" />
+              <FavoriteButton
+                eventId={event.id}
+                eventProfileId={event.event_profile_id}
+                className="absolute right-3 top-3 z-20"
+              />
 
               <div className="relative z-10 mt-auto flex min-w-0 flex-1 flex-col justify-end self-end p-4">
                 <div className="mb-2 flex flex-wrap gap-1.5 sm:gap-2">

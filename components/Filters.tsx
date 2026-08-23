@@ -985,7 +985,11 @@ export function Filters() {
                 />
 
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent sm:hidden" />
-                <FavoriteButton eventId={event.id} className="absolute right-3 top-3 z-20" />
+                <FavoriteButton
+                  eventId={event.id}
+                  eventProfileId={event.eventProfileId}
+                  className="absolute right-3 top-3 z-20"
+                />
 
                 <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-end p-4 sm:justify-start">
                   <div className="mb-2 flex flex-wrap gap-1.5 sm:mb-3 sm:gap-2">
