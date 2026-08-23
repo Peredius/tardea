@@ -1,7 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-  <rect width="1024" height="1024" rx="224" fill="#020617"/>
-  <g transform="translate(184 128) rotate(-6 328 384)">
-    <path fill="#f43f5e" fill-rule="evenodd" d="M162 0h384c49 0 85 44 76 92l-77 409c-10 54-58 93-113 93H52c-49 0-85-44-76-92l25-132a79 79 0 0 0 0-151L26 92C36 38 84 0 162 0Z M-42 242a75 75 0 1 1 0 150V242Z"/>
-    <path fill="#fff" d="M201 135h334l-22 112H403l-45 232H226l45-232h-92l22-112Z"/>
+  <defs>
+    <linearGradient id="tardeaRed" x1="92" y1="90" x2="930" y2="930" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ff3f66"/>
+      <stop offset="0.55" stop-color="#f43f5e"/>
+      <stop offset="1" stop-color="#d61f47"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="38" stdDeviation="34" flood-color="#020617" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" rx="210" fill="url(#tardeaRed)"/>
+  <circle cx="-8" cy="512" r="112" fill="#020617"/>
+
+  <g transform="translate(206 184) skewX(-9)" filter="url(#softShadow)">
+    <path fill="#ffffff" d="M92 0h592L642 174H434L340 656H122l94-482H50L92 0Z"/>
   </g>
 </svg>

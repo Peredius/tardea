@@ -6,7 +6,7 @@ import { PwaRegistrar } from '@/components/PwaRegistrar'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.tardea.com'),
-  applicationName: 'TARDEA',
+  applicationName: 'TARDEA.',
   title: 'TARDEA | Buscador de tardeos en Madrid',
   description:
     'Descubre tardeos, rooftops, brunches y afterworks en Madrid con filtros por fecha, musica, zona, edad y precio.',
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'TARDEA',
+    title: 'TARDEA.',
   },
   formatDetection: {
     telephone: false,
