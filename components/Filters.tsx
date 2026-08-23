@@ -137,38 +137,20 @@ function getEventSeriesSlug(event: any) {
     .toLowerCase()
 }
 
-function getEventGroupHref(event: any) {
-  return `/eventos/grupo/${event.eventProfileId || getEventSeriesSlug(event)}`
-}
-
 function getEventTime(event: any) {
   return new Date(`${event.date}T${event.startTime || '00:00'}`).getTime()
 }
 
-function formatShortEventDate(event: any) {
-  return new Date(event.date).toLocaleDateString('es-ES', {
-    day: 'numeric',
-    month: 'short',
-  })
-}
-
-function groupEventsBySeries(eventList: any[], allEvents: any[]) {
+function groupEventsBySeries(eventList: any[]) {
   const groups = new Map<string, any>()
-  const today = new Date().toISOString().split('T')[0]
 
   eventList.forEach((event) => {
     const key = getEventSeriesKey(event)
     const current = groups.get(key)
 
     if (!current) {
-      const seriesDates = allEvents
-        .filter((candidate) => candidate.date >= today && getEventSeriesKey(candidate) === key)
-        .sort((first, second) => getEventTime(first) - getEventTime(second))
-
       groups.set(key, {
         ...event,
-        groupedDateCount: seriesDates.length || 1,
-        groupedDates: seriesDates,
       })
       return
     }
@@ -509,7 +491,7 @@ export function Filters() {
     })
   }, [area, audience, selectedDates, music, price, type, dbEvents])
 
-  const groupedFiltered = useMemo(() => groupEventsBySeries(filtered, dbEvents), [filtered, dbEvents])
+  const groupedFiltered = useMemo(() => groupEventsBySeries(filtered), [filtered])
 
   const featuredMapEvents = useMemo(() => {
     const today = new Date().toISOString().split('T')[0]
@@ -1019,18 +1001,14 @@ export function Filters() {
           {groupedFiltered.map((event) => {
             const today = new Date().toISOString().split('T')[0]
             const isPastEvent = event.date < today
-            const eventGroupHref = getEventGroupHref(event)
-            const otherDates = (event.groupedDates || [])
-              .filter((dateEvent: any) => dateEvent.id !== event.id)
-              .slice(0, 5)
-            const remainingDates = Math.max((event.groupedDateCount || 1) - otherDates.length - 1, 0)
+            const eventHref = `/eventos/${event.slug}`
 
             return (
               <article
                 key={event.slug}
                 data-event-card
                 data-slug={event.slug}
-                onClick={(clickEvent) => openActiveEventOnTap(event.slug, eventGroupHref, clickEvent)}
+                onClick={(clickEvent) => openActiveEventOnTap(event.slug, eventHref, clickEvent)}
                 className={`group relative flex aspect-[9/16] snap-center overflow-hidden rounded-[1.35rem] border border-white/10 bg-slate-900 transition duration-300 ease-out sm:card sm:aspect-auto sm:h-full sm:min-h-0 sm:min-w-0 sm:translate-y-0 sm:scale-100 sm:flex-col sm:rounded-3xl sm:opacity-100 ${
                   activeEventSlug === event.slug
                     ? 'z-10 min-w-[48vw] scale-105 opacity-100 shadow-2xl shadow-black/40'
@@ -1038,7 +1016,7 @@ export function Filters() {
                 }`}
               >
                 <Link
-                  href={eventGroupHref}
+                  href={eventHref}
                   aria-label={`Ver ${event.title}`}
                   className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105 sm:relative sm:h-44 sm:min-h-0 sm:w-full sm:shrink-0"
                   style={{
@@ -1066,9 +1044,6 @@ export function Filters() {
                     </span>
 
                     {isPastEvent && <span className="badge">Evento pasado</span>}
-                    {event.groupedDateCount > 1 && (
-                      <span className="badge">{event.groupedDateCount} fechas</span>
-                    )}
                   </div>
 
                   <h3 className="line-clamp-2 text-base font-semibold leading-tight text-white sm:text-lg">
@@ -1090,30 +1065,9 @@ export function Filters() {
                     ))}
                   </div>
 
-                  {otherDates.length > 0 && (
-                    <div className="mt-4 hidden rounded-2xl border border-white/10 bg-slate-950/35 p-3 sm:block">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
-                        Otras fechas de este plan
-                      </p>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {otherDates.map((dateEvent: any) => (
-                          <span key={dateEvent.id} className="rounded-full bg-white/8 px-2.5 py-1 text-[11px] font-semibold text-slate-200">
-                            {formatShortEventDate(dateEvent)}
-                            {dateEvent.startTime ? ` · ${dateEvent.startTime.slice(0, 5)}` : ''}
-                          </span>
-                        ))}
-                        {remainingDates > 0 && (
-                          <span className="rounded-full bg-brand-500/15 px-2.5 py-1 text-[11px] font-bold text-brand-300">
-                            +{remainingDates}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
                   <div className="mt-3 flex gap-2 sm:mt-auto sm:gap-3 sm:pt-4">
-                    <Link href={eventGroupHref} className="text-sm font-semibold text-brand-500 hover:underline">
-                      Ver fechas →
+                    <Link href={eventHref} className="text-sm font-semibold text-brand-500 hover:underline">
+                      Ver evento →
                     </Link>
 
                     {!isPastEvent && (
