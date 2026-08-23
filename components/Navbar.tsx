@@ -90,11 +90,14 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/80 backdrop-blur">
-      <div className="container-page flex h-16 items-center justify-between gap-2 sm:gap-4">
-        <Link href="/" className="flex min-w-0 shrink items-center sm:shrink-0">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/95 backdrop-blur">
+      <div className="container-page relative flex min-h-[86px] items-end justify-center gap-2 pb-4 pt-[calc(env(safe-area-inset-top)+14px)] sm:gap-4 md:h-16 md:min-h-0 md:items-center md:justify-between md:py-0">
+        <Link
+          href="/"
+          className="absolute left-1/2 flex min-w-0 shrink -translate-x-1/2 items-center md:static md:translate-x-0 md:shrink-0"
+        >
           <BrandLogo
-            className="scale-[0.78] origin-left sm:scale-100"
+            className="origin-center scale-[0.82] md:origin-left md:scale-100"
             iconClassName="h-10 w-10 sm:h-11 sm:w-11"
             textClassName="text-[1.15rem] sm:text-[1.45rem]"
           />
