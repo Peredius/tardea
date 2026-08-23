@@ -30,6 +30,45 @@ function WhatsAppIcon({ className = '' }: { className?: string }) {
   )
 }
 
+function normalizeEventText(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+function getProfileMatchScore(event: any, profile: any) {
+  const eventTitle = normalizeEventText(event.title || '')
+  const eventVenue = normalizeEventText(event.venue || '')
+  const eventArea = normalizeEventText(event.area || '')
+  const profileName = normalizeEventText(profile.name || '')
+  const profileSlug = normalizeEventText(profile.slug || '')
+  const profileVenue = normalizeEventText(profile.venue_name || '')
+  const profileArea = normalizeEventText(profile.area || '')
+
+  let score = 0
+
+  if (eventTitle && profileName === eventTitle) score += 10
+  else if (eventTitle && profileName && profileName.includes(eventTitle)) score += 7
+  else if (eventTitle && profileName && eventTitle.includes(profileName)) score += 5
+  else if (eventTitle && profileSlug.includes(eventTitle)) score += 4
+
+  if (eventVenue && profileVenue === eventVenue) score += 5
+  else if (
+    eventVenue &&
+    profileVenue &&
+    (profileVenue.includes(eventVenue) || eventVenue.includes(profileVenue))
+  ) {
+    score += 3
+  }
+
+  if (eventArea && profileArea === eventArea) score += 2
+
+  return score
+}
+
 export default function EventDetailPage() {
   const params = useParams()
   const searchParams = useSearchParams()
@@ -78,14 +117,32 @@ export default function EventDetailPage() {
 
           resolvedProfileId = eventProfile?.id || resolvedProfileId
         } else if (data.title) {
-          const { data: matchingProfile } = await supabase
+          const { data: directMatch } = await supabase
             .from('promoter_event_profiles')
             .select('id, name')
             .ilike('name', `%${data.title}%`)
             .limit(1)
             .maybeSingle()
 
-          resolvedProfileId = matchingProfile?.id || ''
+          resolvedProfileId = directMatch?.id || ''
+
+          if (!resolvedProfileId) {
+            const { data: candidateProfiles } = await supabase
+              .from('promoter_event_profiles')
+              .select('id, name, slug, venue_name, area, type')
+              .eq('type', data.type || 'Tardeo')
+              .limit(250)
+
+            const bestProfile = (candidateProfiles || [])
+              .map((profile) => ({
+                profile,
+                score: getProfileMatchScore(data, profile),
+              }))
+              .filter((item) => item.score >= 7)
+              .sort((a, b) => b.score - a.score)[0]?.profile
+
+            resolvedProfileId = bestProfile?.id || ''
+          }
         }
 
         setEventProfileId(resolvedProfileId)
@@ -453,8 +510,8 @@ export default function EventDetailPage() {
                 className="btn-secondary mt-3 w-full"
               >
                 {isProfileFavorite
-                  ? `❤️ Evento guardado`
-                  : `🤍 Guardar evento`}
+                  ? `❤️ Plan seguido`
+                  : `🤍 Seguir este plan`}
               </button>
             )}
 
