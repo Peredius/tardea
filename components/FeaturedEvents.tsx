@@ -150,7 +150,7 @@ export function FeaturedEvents() {
       <div
         ref={carouselRef}
         onScroll={updateActiveEventFromScroll}
-        className="-mx-5 flex snap-x snap-proximity items-center gap-1.5 overflow-x-auto px-[24vw] pb-6 pt-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden"
+        className="-mx-4 flex snap-x snap-proximity items-center gap-1.5 overflow-x-auto px-[24vw] pb-6 pt-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden"
       >
         {featured.map((event) => (
           <article
