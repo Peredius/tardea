@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { Navbar } from '@/components/Navbar'
 
 const MUSIC_OPTIONS = [
   'Comercial',
@@ -174,6 +175,7 @@ function ProfileForm() {
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100">
+        <Navbar />
         <div className="container-page py-16">
           <p className="text-slate-400">Cargando perfil...</p>
         </div>
@@ -183,8 +185,12 @@ function ProfileForm() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="container-page py-12">
-        <form onSubmit={handleSubmit} className="card mx-auto max-w-xl p-6">
+      <Navbar />
+      <div className="container-page py-8 md:py-12">
+        <form
+          onSubmit={handleSubmit}
+          className="card mx-auto max-w-xl p-6 md:max-w-5xl md:border-0 md:bg-transparent md:p-0 md:shadow-none"
+        >
           {!isFirstTime && (
             <Link
               href="/cuenta"
@@ -203,7 +209,7 @@ function ProfileForm() {
             Completa tus datos
           </h1>
 
-          <div className="mt-6 grid gap-4">
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
             <input
               className="input"
               placeholder="Nombre"
@@ -297,7 +303,7 @@ function ProfileForm() {
               </select>
             </div>
 
-            <div>
+            <div className="md:col-span-2">
               <p className="mb-2 text-sm text-slate-400">
                 Gustos musicales
               </p>
@@ -320,12 +326,12 @@ function ProfileForm() {
               </div>
             </div>
 
-            <button className="btn-primary w-full" type="submit" disabled={saving}>
+            <button className="btn-primary w-full md:col-span-2" type="submit" disabled={saving}>
               {saving ? 'Guardando...' : 'Guardar perfil'}
             </button>
 
             {message && (
-              <p className="text-center text-sm text-brand-500">{message}</p>
+              <p className="text-center text-sm text-brand-500 md:col-span-2">{message}</p>
             )}
           </div>
         </form>
