@@ -16,6 +16,7 @@ type SearchProfile = {
   logo_url: string | null
   banner_url: string | null
   nextDate?: string | null
+  href?: string
 }
 
 export function Navbar() {
@@ -136,7 +137,7 @@ export function Navbar() {
               {results.map((profile) => (
                 <Link
                   key={profile.id}
-                  href={`/eventos/grupo/${profile.id}`}
+                  href={profile.href || `/eventos/grupo/${profile.id}`}
                   onClick={() => {
                     setQuery('')
                     setResults([])
