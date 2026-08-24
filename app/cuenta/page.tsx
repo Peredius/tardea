@@ -410,9 +410,6 @@ export default function AccountPage() {
                     {favoriteProfiles.length + favoriteEvents.length}
                   </p>
                   <p className="text-xs text-slate-300">Favoritos</p>
-                  <p className="mt-1 text-[10px] font-semibold text-slate-500">
-                    Visitados: próximamente
-                  </p>
                 </button>
                 <button
                   type="button"
@@ -621,6 +618,11 @@ export default function AccountPage() {
                     Cuando guardes planes o fechas, aparecerán aquí.
                   </div>
                 )}
+              </section>
+
+              <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+                <p className="text-xs text-slate-400">Tardeos visitados</p>
+                <p className="mt-2 text-lg font-black text-white">Próximamente</p>
               </section>
 
               <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
