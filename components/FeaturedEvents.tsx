@@ -151,7 +151,7 @@ export function FeaturedEvents() {
       <div
         ref={carouselRef}
         onScroll={updateActiveEventFromScroll}
-        className="-mx-4 flex snap-x snap-proximity items-center gap-1.5 overflow-x-auto px-[24vw] pb-6 pt-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden"
+        className="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-5 pb-6 pt-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden"
       >
         {featured.map((event) => (
           <article
@@ -159,13 +159,13 @@ export function FeaturedEvents() {
             data-event-card
             data-slug={event.slug}
             onClick={(clickEvent) => openActiveEventOnTap(event.slug, clickEvent)}
-            className={`group snap-center overflow-hidden rounded-[1.35rem] border border-white/10 bg-white/5 transition duration-300 ease-out hover:border-brand-500/40 sm:min-w-0 sm:translate-y-0 sm:scale-100 sm:rounded-3xl sm:opacity-100 ${
+            className={`group h-[520px] w-[78vw] max-w-[330px] shrink-0 snap-center overflow-hidden rounded-[28px] border bg-white/5 shadow-2xl shadow-black/30 transition duration-300 ease-out hover:border-brand-500/40 sm:h-auto sm:w-auto sm:max-w-none sm:shrink sm:translate-y-0 sm:scale-100 sm:rounded-3xl sm:opacity-100 ${
               activeEventSlug === event.slug
-                ? 'z-10 min-w-[48vw] scale-105 opacity-100 shadow-2xl shadow-black/40'
-                : 'min-w-[43vw] translate-y-2 scale-[0.9] opacity-65'
+                ? 'border-brand-500/50'
+                : 'border-white/10'
             }`}
           >
-            <div className="relative flex aspect-[9/16] overflow-hidden">
+            <div className="relative flex h-full overflow-hidden sm:aspect-[9/16]">
               <Link
                 href={`/eventos/${event.slug}`}
                 aria-label={`Ver ${event.title}`}
