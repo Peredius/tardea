@@ -7,34 +7,97 @@ import { Search, UserRound } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { BrandLogo } from '@/components/BrandLogo'
 
+type SearchProfile = {
+  id: string
+  name: string
+  venue_name: string | null
+  type: string | null
+  logo_url: string | null
+  banner_url: string | null
+  nextDate?: string | null
+}
+
 export function Navbar() {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<any[]>([])
+  const [results, setResults] = useState<SearchProfile[]>([])
   const [user, setUser] = useState<User | null>(null)
   const [firstName, setFirstName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
 
   useEffect(() => {
-    async function searchEvents() {
-      if (query.trim().length < 2) {
+    let cancelled = false
+
+    async function searchProfiles() {
+      const searchTerm = query.trim()
+
+      if (searchTerm.length < 2) {
         setResults([])
         return
       }
 
-      const { data } = await supabase
+      const [{ data: nameMatches }, { data: venueMatches }] = await Promise.all([
+        supabase
+          .from('promoter_event_profiles')
+          .select('id, name, venue_name, type, logo_url, banner_url')
+          .eq('is_active', true)
+          .ilike('name', `%${searchTerm}%`)
+          .limit(8),
+        supabase
+          .from('promoter_event_profiles')
+          .select('id, name, venue_name, type, logo_url, banner_url')
+          .eq('is_active', true)
+          .ilike('venue_name', `%${searchTerm}%`)
+          .limit(8),
+      ])
+
+      const profiles = Array.from(
+        new Map([...(nameMatches || []), ...(venueMatches || [])].map((profile) => [profile.id, profile])).values()
+      ).slice(0, 8)
+
+      if (profiles.length === 0) {
+        if (!cancelled) setResults([])
+        return
+      }
+
+      const today = new Date().toISOString().split('T')[0]
+      const { data: eventRows } = await supabase
         .from('events')
-        .select('title, slug, venue, date')
+        .select('event_profile_id, date')
+        .in(
+          'event_profile_id',
+          profiles.map((profile) => profile.id)
+        )
         .eq('published', true)
         .eq('status', 'approved')
-        .ilike('title', `%${query}%`)
+        .gte('date', today)
         .order('date', { ascending: true })
-        .limit(6)
 
-      setResults(data || [])
+      const nextDateByProfile = new Map<string, string>()
+
+      ;(eventRows || []).forEach((event) => {
+        if (event.event_profile_id && !nextDateByProfile.has(event.event_profile_id)) {
+          nextDateByProfile.set(event.event_profile_id, event.date)
+        }
+      })
+
+      const profilesWithDates = profiles
+        .map((profile) => ({
+          ...profile,
+          nextDate: nextDateByProfile.get(profile.id) || null,
+        }))
+        .filter((profile) => profile.nextDate)
+        .sort((a, b) => (a.nextDate || '').localeCompare(b.nextDate || ''))
+        .slice(0, 6)
+
+      if (!cancelled) setResults(profilesWithDates)
     }
 
-    searchEvents()
+    searchProfiles()
+
+    return () => {
+      cancelled = true
+    }
   }, [query])
 
   useEffect(() => {
@@ -109,29 +172,28 @@ export function Navbar() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar eventos..."
+              placeholder="Buscar planes..."
               className="w-full bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
             />
           </div>
 
           {results.length > 0 && (
             <div className="absolute left-0 right-0 top-12 overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-xl">
-              {results.map((event) => (
+              {results.map((profile) => (
                 <Link
-                  key={event.slug}
-                  href={`/eventos/${event.slug}`}
+                  key={profile.id}
+                  href={`/eventos/grupo/${profile.id}`}
                   onClick={() => {
                     setQuery('')
                     setResults([])
                   }}
                   className="block border-b border-white/10 px-4 py-3 transition hover:bg-white/5 last:border-b-0"
                 >
-                  <p className="font-medium text-white">{event.title}</p>
+                  <p className="font-medium text-white">{profile.name}</p>
                   <p className="mt-1 text-xs text-slate-400">
-                    {event.venue}
-                    {event.date
-                      ? ` · ${new Date(event.date).toLocaleDateString('es-ES')}`
-                      : ''}
+                    {[profile.venue_name, profile.type, profile.nextDate ? `Próxima fecha ${new Date(profile.nextDate).toLocaleDateString('es-ES')}` : null]
+                      .filter(Boolean)
+                      .join(' · ')}
                   </p>
                 </Link>
               ))}
@@ -140,23 +202,26 @@ export function Navbar() {
         </div>
 
         <nav className="hidden gap-6 text-sm text-slate-300 lg:flex">
-          <a href="#destacados" className="hover:text-white">
+          <Link href="/#destacados" className="hover:text-white">
             Destacados
-          </a>
-          <a href="#zonas" className="hover:text-white">
+          </Link>
+          <Link href="/#zonas" className="hover:text-white">
             Zonas
-          </a>
-          <a href="#newsletter" className="hover:text-white">
+          </Link>
+          <Link href="/#newsletter" className="hover:text-white">
             Newsletter
-          </a>
+          </Link>
         </nav>
 
         <div className="hidden shrink-0 items-center gap-2 md:flex">
           {user ? (
             <>
-              <span className="max-w-[92px] truncate text-xs font-semibold text-slate-200 sm:max-w-none sm:text-sm">
+              <Link
+                href="/cuenta"
+                className="max-w-[92px] truncate text-xs font-semibold text-slate-200 transition hover:text-white sm:max-w-none sm:text-sm"
+              >
                 Hola, {firstName || 'usuario'}
-              </span>
+              </Link>
 
               <div className="relative">
                 <button
