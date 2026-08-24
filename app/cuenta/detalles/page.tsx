@@ -1,9 +1,7 @@
 'use client'
 
 import { ChangeEvent, useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
 import {
-  ArrowLeft,
   Camera,
   CheckCircle2,
   KeyRound,
@@ -216,15 +214,7 @@ export default function AccountDetailsPage() {
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <Navbar />
       <div className="container-page py-8 md:py-12">
-        <Link
-          href="/cuenta"
-          className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.2em] text-brand-500 transition hover:text-brand-400"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Volver
-        </Link>
-
-        <section className="mx-auto mt-8 max-w-xl md:max-w-5xl">
+        <section className="mx-auto max-w-xl md:max-w-5xl">
           <p className="text-sm font-black uppercase tracking-[0.25em] text-brand-500">
             Mi cuenta
           </p>

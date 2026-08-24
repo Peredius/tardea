@@ -1,9 +1,7 @@
 'use client'
 
 import { Suspense, useEffect, useState } from 'react'
-import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Navbar } from '@/components/Navbar'
 
@@ -191,16 +189,6 @@ function ProfileForm() {
           onSubmit={handleSubmit}
           className="card mx-auto max-w-xl p-6 md:max-w-5xl md:border-0 md:bg-transparent md:p-0 md:shadow-none"
         >
-          {!isFirstTime && (
-            <Link
-              href="/cuenta"
-              className="mb-5 inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-brand-500 transition hover:text-brand-400"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Volver
-            </Link>
-          )}
-
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-500">
             {isFirstTime ? 'Antes de seguir' : 'Mi perfil'}
           </p>
