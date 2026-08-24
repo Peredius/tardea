@@ -1,6 +1,6 @@
 'use client'
 
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import {
   CalendarDays,
@@ -11,7 +11,6 @@ import {
   MapPin,
   MessageSquare,
   Pencil,
-  Plus,
   Sparkles,
   UserRound,
 } from 'lucide-react'
@@ -82,8 +81,6 @@ function getNearestEventBySeries(events: FavoriteEvent[]) {
 }
 
 export default function AccountPage() {
-  const avatarInputRef = useRef<HTMLInputElement | null>(null)
-  const [userId, setUserId] = useState('')
   const [email, setEmail] = useState<string | null>(null)
   const [profile, setProfile] = useState<AccountProfile | null>(null)
   const [favoriteProfiles, setFavoriteProfiles] = useState<FavoriteProfile[]>([])
@@ -91,8 +88,6 @@ export default function AccountPage() {
   const [suggestedEvents, setSuggestedEvents] = useState<FavoriteEvent[]>([])
   const [activeTab, setActiveTab] = useState<AccountTab>('profile')
   const [avatarUrl, setAvatarUrl] = useState('')
-  const [avatarUploading, setAvatarUploading] = useState(false)
-  const [avatarMessage, setAvatarMessage] = useState('')
   const [emailConfirmed, setEmailConfirmed] = useState(false)
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -110,7 +105,6 @@ export default function AccountPage() {
 
       setEmail(user.email ?? null)
       setEmailConfirmed(Boolean(user.email_confirmed_at))
-      setUserId(user.id)
 
       const { data: profileData } = await supabase
         .from('profiles')
@@ -341,54 +335,6 @@ export default function AccountPage() {
     window.location.href = '/'
   }
 
-  async function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    if (!file || !userId) return
-
-    setAvatarUploading(true)
-    setAvatarMessage('')
-
-    const safeFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-')
-    const filePath = `avatars/${userId}/${Date.now()}-${safeFileName}`
-
-    const { error: uploadError } = await supabase.storage
-      .from('events')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: true,
-      })
-
-    if (uploadError) {
-      setAvatarUploading(false)
-      setAvatarMessage(`No se pudo subir la foto: ${uploadError.message}`)
-      event.target.value = ''
-      return
-    }
-
-    const { data } = supabase.storage.from('events').getPublicUrl(filePath)
-    const nextAvatarUrl = data.publicUrl
-
-    const { error: profileError } = await supabase.from('profiles').upsert(
-      {
-        id: userId,
-        role: 'user',
-        avatar_url: nextAvatarUrl,
-      },
-      { onConflict: 'id' }
-    )
-
-    setAvatarUploading(false)
-    event.target.value = ''
-
-    if (profileError) {
-      setAvatarMessage(`Foto subida, pero no se pudo guardar: ${profileError.message}`)
-      return
-    }
-
-    setAvatarUrl(nextAvatarUrl)
-    setAvatarMessage('Foto actualizada')
-  }
-
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -420,12 +366,7 @@ export default function AccountPage() {
         <section className="px-5 pt-3 md:pt-8">
           <div className="grid grid-cols-[auto_1fr] items-center gap-5">
             <div className="relative">
-              <button
-                type="button"
-                onClick={() => avatarInputRef.current?.click()}
-                className="relative flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 via-fuchsia-500 to-orange-400 p-1 sm:h-32 sm:w-32"
-                aria-label="Cambiar foto de perfil"
-              >
+              <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 via-fuchsia-500 to-orange-400 p-1 sm:h-32 sm:w-32">
                 <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-slate-900 text-3xl font-black text-white sm:text-4xl">
                   {avatarUrl ? (
                     <img
@@ -437,14 +378,11 @@ export default function AccountPage() {
                     initials || <UserRound className="h-10 w-10" />
                   )}
                 </span>
-                <span className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-4 border-slate-950 bg-white text-slate-950 sm:h-10 sm:w-10">
-                  <Plus className="h-5 w-5" />
-                </span>
-              </button>
+              </div>
               <button
                 type="button"
                 onClick={() => changeAccountTab('chats')}
-                className="absolute -right-1 -top-1 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-slate-950 text-slate-200 shadow-xl transition hover:border-brand-500/50 hover:text-white"
+                className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-4 border-slate-950 bg-white text-slate-950 shadow-xl transition hover:bg-brand-500 hover:text-white sm:h-10 sm:w-10"
                 aria-label="Abrir chats"
               >
                 <MessageSquare className="h-4 w-4" />
@@ -452,29 +390,10 @@ export default function AccountPage() {
                   0
                 </span>
               </button>
-
-              <input
-                ref={avatarInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarChange}
-              />
-
-              {avatarUploading && (
-                <p className="mt-2 text-center text-xs font-semibold text-brand-500">
-                  Subiendo...
-                </p>
-              )}
-              {avatarMessage && (
-                <p className="mt-2 text-center text-xs text-slate-400">
-                  {avatarMessage}
-                </p>
-              )}
             </div>
 
             <div className="min-w-0">
-              <div>
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div className="min-w-0">
                   <h1 className="truncate text-xl font-black text-white sm:text-3xl">
                     {displayName}
@@ -482,8 +401,16 @@ export default function AccountPage() {
                   <p className="mt-1 truncate text-xs text-slate-400 sm:text-sm">
                     {population}
                   </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <p className="truncate text-xs font-semibold text-slate-300 sm:text-sm">
+                </div>
+
+                <div className="min-w-0 md:min-w-[260px] md:text-right">
+                  <p className="line-clamp-1 text-sm font-black text-white">
+                    {profile?.music_preferences?.length
+                      ? profile.music_preferences.join(', ')
+                      : 'Sin definir'}
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 md:justify-end">
+                    <p className="truncate text-xs font-semibold text-slate-300">
                       {email}
                     </p>
                     {emailConfirmed ? (
@@ -500,11 +427,6 @@ export default function AccountPage() {
                       </span>
                     )}
                   </div>
-                  <p className="mt-2 line-clamp-1 text-xs font-semibold text-slate-400 sm:text-sm">
-                    {profile?.music_preferences?.length
-                      ? `Gustos: ${profile.music_preferences.join(', ')}`
-                      : 'Sin definir'}
-                  </p>
                 </div>
               </div>
 

@@ -1,20 +1,26 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { ChangeEvent, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft,
+  Camera,
   CheckCircle2,
   KeyRound,
   Mail,
   Trash2,
+  UserRound,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 export default function AccountDetailsPage() {
+  const avatarInputRef = useRef<HTMLInputElement | null>(null)
+  const [userId, setUserId] = useState('')
   const [email, setEmail] = useState<string | null>(null)
   const [newEmail, setNewEmail] = useState('')
   const [emailConfirmed, setEmailConfirmed] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState('')
+  const [avatarUploading, setAvatarUploading] = useState(false)
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [sendingConfirmationEmail, setSendingConfirmationEmail] = useState(false)
@@ -36,6 +42,15 @@ export default function AccountDetailsPage() {
       setEmail(user.email ?? null)
       setNewEmail(user.email ?? '')
       setEmailConfirmed(Boolean(user.email_confirmed_at))
+      setUserId(user.id)
+
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      setAvatarUrl(profileData?.avatar_url ?? '')
       setLoading(false)
     }
 
@@ -109,6 +124,54 @@ export default function AccountDetailsPage() {
     setMessage('Te hemos enviado un correo para confirmar el cambio.')
   }
 
+  async function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file || !userId) return
+
+    setAvatarUploading(true)
+    setMessage('')
+
+    const safeFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-')
+    const filePath = `avatars/${userId}/${Date.now()}-${safeFileName}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('events')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true,
+      })
+
+    if (uploadError) {
+      setAvatarUploading(false)
+      setMessage(`No se pudo subir la foto: ${uploadError.message}`)
+      event.target.value = ''
+      return
+    }
+
+    const { data } = supabase.storage.from('events').getPublicUrl(filePath)
+    const nextAvatarUrl = data.publicUrl
+
+    const { error: profileError } = await supabase.from('profiles').upsert(
+      {
+        id: userId,
+        role: 'user',
+        avatar_url: nextAvatarUrl,
+      },
+      { onConflict: 'id' }
+    )
+
+    setAvatarUploading(false)
+    event.target.value = ''
+
+    if (profileError) {
+      setMessage(`Foto subida, pero no se pudo guardar: ${profileError.message}`)
+      return
+    }
+
+    setAvatarUrl(nextAvatarUrl)
+    setMessage('Foto actualizada.')
+  }
+
   async function handleDeleteAccount() {
     setShowDeleteConfirm(false)
     setDeletingAccount(true)
@@ -167,6 +230,47 @@ export default function AccountDetailsPage() {
           </h1>
 
           <div className="mt-6 overflow-hidden rounded-3xl border border-white/10 bg-white/5">
+            <div className="flex items-center gap-4 p-5">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 via-fuchsia-500 to-orange-400 p-1">
+                <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-slate-900 text-white">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="Foto de perfil"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <UserRound className="h-8 w-8" />
+                  )}
+                </span>
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-brand-500">
+                  Foto de perfil
+                </p>
+                <p className="mt-1 text-sm text-slate-400">
+                  Cambia la imagen que aparece en tu cuenta.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={avatarUploading}
+                  className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-2xl border border-white/10 px-4 text-sm font-black text-white transition hover:bg-white/10 disabled:opacity-60"
+                >
+                  <Camera className="h-4 w-4 text-brand-500" />
+                  {avatarUploading ? 'Subiendo...' : 'Cambiar foto'}
+                </button>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+              </div>
+            </div>
+
             <div className="p-5">
               <p className="text-xs text-slate-400">Correo electrónico</p>
               <div className="mt-2 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
