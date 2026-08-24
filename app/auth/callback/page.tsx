@@ -8,7 +8,7 @@ function AuthCallbackContent() {
   const searchParams = useSearchParams()
   const authType = searchParams.get('type')
   const type = authType === 'venue' ? 'venue' : 'user'
-  const [message, setMessage] = useState('Completando inicio de sesion...')
+  const [message, setMessage] = useState('Completando inicio de sesión...')
 
   useEffect(() => {
     async function completeLogin() {
@@ -23,7 +23,7 @@ function AuthCallbackContent() {
       } = await supabase.auth.getUser()
 
       if (error || !user) {
-        setMessage('No se pudo completar el inicio de sesion.')
+        setMessage('No se pudo completar el inicio de sesión.')
         window.location.href = `/login?type=${type}`
         return
       }
@@ -87,7 +87,7 @@ function AuthCallbackContent() {
 
         if (profileError) {
           setMessage(
-            `Sesion iniciada, pero no se pudo crear el perfil: ${profileError.message}`
+            `Sesión iniciada, pero no se pudo crear el perfil: ${profileError.message}`
           )
           return
         }

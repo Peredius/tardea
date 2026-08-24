@@ -155,6 +155,7 @@ function LoginContent() {
   const [venueName, setVenueName] = useState('')
   const [message, setMessage] = useState('')
   const [loginFailed, setLoginFailed] = useState(false)
+  const [accessLocked, setAccessLocked] = useState(false)
   const [sendingRecovery, setSendingRecovery] = useState(false)
   const [legalAccepted, setLegalAccepted] = useState(false)
   const [marketingConsent, setMarketingConsent] = useState(false)
@@ -172,7 +173,8 @@ function LoginContent() {
   useEffect(() => {
     if (locked === '1') {
       setMessage('Próximamente abriremos TARDEA. Ahora mismo estamos en pruebas privadas.')
-      setLoginFailed(true)
+      setAccessLocked(true)
+      setLoginFailed(false)
     }
   }, [locked])
 
@@ -258,7 +260,8 @@ function LoginContent() {
       payload?.error ||
         'Próximamente abriremos TARDEA. Ahora mismo estamos en pruebas privadas.'
     )
-    setLoginFailed(true)
+    setAccessLocked(true)
+    setLoginFailed(false)
     return false
   }
 
@@ -278,7 +281,7 @@ function LoginContent() {
     })
 
     if (error) {
-      setMessage('No se pudo iniciar sesion con Google')
+      setMessage('No se pudo iniciar sesión con Google.')
     }
   }
 
@@ -286,6 +289,7 @@ function LoginContent() {
     e.preventDefault()
     setMessage('')
     setLoginFailed(false)
+    setAccessLocked(false)
 
     if (!(await canUseEmail(email))) return
 
@@ -297,6 +301,7 @@ function LoginContent() {
     if (error) {
       setMessage('Email o contraseña incorrectos.')
       setLoginFailed(true)
+      setAccessLocked(false)
       return
     }
 
@@ -340,9 +345,10 @@ function LoginContent() {
 
   async function sendPasswordRecovery() {
     setMessage('')
+    setAccessLocked(false)
 
     if (!email) {
-      setMessage('Escribe primero tu email para enviarte el enlace.')
+      setMessage('Escribe primero tu correo para enviarte el enlace.')
       setLoginFailed(true)
       return
     }
@@ -356,7 +362,7 @@ function LoginContent() {
     setSendingRecovery(false)
 
     if (error) {
-      setMessage(`No se pudo enviar el email: ${error.message}`)
+      setMessage(`No se pudo enviar el correo: ${error.message}`)
       setLoginFailed(true)
       return
     }
@@ -370,7 +376,7 @@ function LoginContent() {
     setMessage('')
 
     if (!legalAccepted) {
-      setMessage('Debes aceptar la politica de privacidad y las condiciones.')
+      setMessage('Debes aceptar la política de privacidad y las condiciones.')
       return
     }
 
@@ -382,7 +388,7 @@ function LoginContent() {
     })
 
     if (error) {
-      setMessage('Error al crear cuenta')
+      setMessage('No se pudo crear la cuenta.')
       return
     }
 
@@ -505,7 +511,7 @@ function LoginContent() {
                 className="flex w-full items-center justify-center gap-4 rounded-full bg-white px-5 py-4 text-base font-bold text-slate-950 transition hover:bg-slate-100"
               >
                 <Mail className="h-5 w-5" />
-                Continuar con email
+                Continuar con correo
               </button>
 
               <Link
@@ -532,7 +538,7 @@ function LoginContent() {
         ) : (
         <div className="card mx-auto max-w-md p-6">
           <h1 className="text-center text-3xl font-bold">
-            {accountType === 'venue' ? 'Acceso promotor' : isRegister ? 'Crear cuenta' : 'Entrar con email'}
+            {accountType === 'venue' ? 'Acceso promotor' : isRegister ? 'Crear cuenta' : 'Entrar con correo'}
           </h1>
           {isUserAccess && !isRegister && (
             <button
@@ -719,7 +725,7 @@ function LoginContent() {
                   <span>
                     Acepto la{' '}
                     <a href="/privacidad" className="text-brand-500 hover:underline">
-                      politica de privacidad
+                      política de privacidad
                     </a>{' '}
                     y las{' '}
                     <a href="/condiciones" className="text-brand-500 hover:underline">
@@ -748,13 +754,21 @@ function LoginContent() {
             </button>
 
             {message && (
-              <p className="text-center text-sm text-brand-500">{message}</p>
+              <p
+                className={`rounded-2xl border px-4 py-3 text-center text-sm ${
+                  accessLocked
+                    ? 'border-amber-400/25 bg-amber-400/10 text-amber-100'
+                    : 'border-brand-500/25 bg-brand-500/10 text-brand-200'
+                }`}
+              >
+                {message}
+              </p>
             )}
 
-            {!isRegister && loginFailed && (
+            {!isRegister && loginFailed && !accessLocked && (
               <div className="rounded-2xl border border-brand-500/30 bg-brand-500/10 p-4 text-center">
                 <p className="text-sm text-slate-200">
-                  Si ese correo esta registrado, puedes recibir un enlace para crear una nueva contraseña.
+                  Si ese correo está registrado, puedes recibir un enlace para crear una nueva contraseña.
                 </p>
                 <button
                   type="button"
@@ -792,7 +806,7 @@ function LoginContent() {
 
                 <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
                   <Mail className="h-4 w-4" />
-                  Tambien puedes usar tu correo electronico arriba.
+                  También puedes usar tu correo electrónico arriba.
                 </div>
               </div>
             </div>
@@ -810,7 +824,7 @@ function LoginContent() {
               }}
               className="text-brand-500 hover:underline"
             >
-              {isRegister ? 'Iniciar sesion' : 'Crear cuenta'}
+              {isRegister ? 'Iniciar sesión' : 'Crear cuenta'}
             </button>
           </p>
         </div>

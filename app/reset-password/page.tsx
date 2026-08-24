@@ -22,7 +22,7 @@ export default function ResetPasswordPage() {
 
       setHasSession(Boolean(session))
       if (!session) {
-        setMessage('Este enlace no esta activo o ha caducado. Pide otro email de recuperacion.')
+        setMessage('Este enlace no está activo o ha caducado. Pide otro correo de recuperación.')
       }
     }
 

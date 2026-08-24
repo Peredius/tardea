@@ -42,7 +42,7 @@ function RegisterContent() {
     setMessage('')
 
     if (!legalAccepted) {
-      setMessage('Debes aceptar la politica de privacidad y las condiciones.')
+      setMessage('Debes aceptar la política de privacidad y las condiciones.')
       return
     }
 
@@ -54,7 +54,7 @@ function RegisterContent() {
     })
 
     if (error) {
-      setMessage('Error al crear cuenta')
+      setMessage('No se pudo crear la cuenta.')
       return
     }
 
@@ -85,7 +85,7 @@ function RegisterContent() {
       }
     }
 
-    setMessage('Cuenta creada. Revisa tu email o inicia sesión.')
+    setMessage('Cuenta creada. Revisa tu correo o inicia sesión.')
   }
 
   return (
@@ -120,7 +120,7 @@ function RegisterContent() {
             <input
               className="input"
               type="email"
-              placeholder="Email"
+              placeholder="Correo electrónico"
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -159,7 +159,7 @@ function RegisterContent() {
                 <span>
                   Acepto la{' '}
                   <a href="/privacidad" className="text-brand-500 hover:underline">
-                    politica de privacidad
+                    política de privacidad
                   </a>{' '}
                   y las{' '}
                   <a href="/condiciones" className="text-brand-500 hover:underline">
