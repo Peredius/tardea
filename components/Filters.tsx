@@ -996,7 +996,7 @@ export function Filters() {
         <div
           ref={carouselRef}
           onScroll={updateActiveEventFromScroll}
-          className="-mx-4 mt-8 flex snap-x snap-proximity items-center gap-1.5 overflow-x-auto px-[24vw] pb-6 pt-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden"
+          className="-mx-5 mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-5 pb-6 pt-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden"
         >
           {groupedFiltered.map((event) => {
             const today = new Date().toISOString().split('T')[0]
@@ -1009,10 +1009,10 @@ export function Filters() {
                 data-event-card
                 data-slug={event.slug}
                 onClick={(clickEvent) => openActiveEventOnTap(event.slug, eventHref, clickEvent)}
-                className={`group relative flex aspect-[9/16] snap-center overflow-hidden rounded-[1.35rem] border border-white/10 bg-slate-900 transition duration-300 ease-out sm:card sm:aspect-auto sm:h-full sm:min-h-0 sm:min-w-0 sm:translate-y-0 sm:scale-100 sm:flex-col sm:rounded-3xl sm:opacity-100 ${
+                className={`group relative flex h-[520px] w-[78vw] max-w-[330px] shrink-0 snap-center overflow-hidden rounded-[28px] border bg-slate-900 shadow-2xl shadow-black/30 transition duration-300 ease-out sm:card sm:aspect-auto sm:h-full sm:min-h-0 sm:w-auto sm:max-w-none sm:shrink sm:flex-col sm:rounded-3xl sm:opacity-100 ${
                   activeEventSlug === event.slug
-                    ? 'z-10 min-w-[48vw] scale-105 opacity-100 shadow-2xl shadow-black/40'
-                    : 'min-w-[43vw] translate-y-2 scale-[0.9] opacity-65'
+                    ? 'border-brand-500/50'
+                    : 'border-white/10'
                 }`}
               >
                 <Link
