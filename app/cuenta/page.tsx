@@ -5,14 +5,18 @@ import Link from 'next/link'
 import {
   CalendarDays,
   ChevronRight,
+  CheckCircle2,
   Heart,
   KeyRound,
   LogOut,
+  Mail,
   MapPin,
   MessageSquare,
   Pencil,
+  Phone,
   Plus,
   Sparkles,
+  Trash2,
   UserRound,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -21,8 +25,10 @@ import { FavoriteButton } from '@/components/FavoriteButton'
 import { canonicalizeMusicList, normalizeMusicKey } from '@/lib/music'
 
 type AccountProfile = {
+  user_alias: string | null
   first_name: string | null
   last_name: string | null
+  mobile_phone: string | null
   municipality: string | null
   province: string | null
   music_preferences: string[] | null
@@ -93,6 +99,14 @@ export default function AccountPage() {
   const [avatarMessage, setAvatarMessage] = useState('')
   const [passwordMessage, setPasswordMessage] = useState('')
   const [sendingPasswordEmail, setSendingPasswordEmail] = useState(false)
+  const [emailConfirmed, setEmailConfirmed] = useState(false)
+  const [accountAlias, setAccountAlias] = useState('')
+  const [mobilePhone, setMobilePhone] = useState('')
+  const [newEmail, setNewEmail] = useState('')
+  const [accountMessage, setAccountMessage] = useState('')
+  const [savingAccountDetails, setSavingAccountDetails] = useState(false)
+  const [sendingConfirmationEmail, setSendingConfirmationEmail] = useState(false)
+  const [deletingAccount, setDeletingAccount] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -107,11 +121,13 @@ export default function AccountPage() {
       }
 
       setEmail(user.email ?? null)
+      setNewEmail(user.email ?? '')
+      setEmailConfirmed(Boolean(user.email_confirmed_at))
       setUserId(user.id)
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('first_name, last_name, municipality, province, music_preferences, avatar_url')
+        .select('user_alias, first_name, last_name, mobile_phone, municipality, province, music_preferences, avatar_url')
         .eq('id', user.id)
         .maybeSingle()
 
@@ -124,6 +140,8 @@ export default function AccountPage() {
           : null
       )
       setAvatarUrl(profileData?.avatar_url ?? '')
+      setAccountAlias(profileData?.user_alias ?? '')
+      setMobilePhone(profileData?.mobile_phone ?? '')
 
       const today = new Date().toISOString().split('T')[0]
 
@@ -311,6 +329,8 @@ export default function AccountPage() {
   }, [activeTab])
 
   const displayName = useMemo(() => {
+    if (profile?.user_alias?.trim()) return profile.user_alias.trim()
+
     const fullName = [profile?.first_name, profile?.last_name]
       .filter(Boolean)
       .join(' ')
@@ -320,6 +340,15 @@ export default function AccountPage() {
     if (email) return email.split('@')[0]
     return 'Usuario'
   }, [email, profile])
+
+  const realName = useMemo(() => {
+    return [profile?.first_name, profile?.last_name]
+      .filter(Boolean)
+      .join(' ')
+      .trim()
+  }, [profile])
+
+  const population = profile?.municipality || profile?.province || 'Población sin definir'
 
   const initials = displayName
     .split(' ')
@@ -353,6 +382,124 @@ export default function AccountPage() {
     }
 
     setPasswordMessage('Te hemos enviado un enlace para cambiar la contraseña.')
+  }
+
+  async function handleSaveAccountDetails() {
+    if (!userId) return
+
+    setSavingAccountDetails(true)
+    setAccountMessage('')
+
+    const { error } = await supabase
+      .from('profiles')
+      .upsert(
+        {
+          id: userId,
+          role: 'user',
+          user_alias: accountAlias.trim() || null,
+          mobile_phone: mobilePhone.trim() || null,
+        },
+        { onConflict: 'id' }
+      )
+
+    setSavingAccountDetails(false)
+
+    if (error) {
+      setAccountMessage(`No se pudieron guardar los detalles: ${error.message}`)
+      return
+    }
+
+    setProfile((current) =>
+      current
+        ? {
+            ...current,
+            user_alias: accountAlias.trim() || null,
+            mobile_phone: mobilePhone.trim() || null,
+          }
+        : current
+    )
+    setAccountMessage('Detalles de la cuenta guardados.')
+  }
+
+  async function handleChangeEmail() {
+    const nextEmail = newEmail.trim()
+    setAccountMessage('')
+
+    if (!nextEmail || nextEmail === email) {
+      setAccountMessage('Escribe un correo nuevo para cambiarlo.')
+      return
+    }
+
+    const { error } = await supabase.auth.updateUser({ email: nextEmail })
+
+    if (error) {
+      setAccountMessage(`No se pudo cambiar el correo: ${error.message}`)
+      return
+    }
+
+    setAccountMessage('Te hemos enviado un correo para confirmar el cambio.')
+  }
+
+  async function handleSendConfirmationEmail() {
+    setAccountMessage('')
+
+    if (!email) {
+      setAccountMessage('No se ha podido detectar el correo de tu cuenta.')
+      return
+    }
+
+    setSendingConfirmationEmail(true)
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+    setSendingConfirmationEmail(false)
+
+    if (error) {
+      setAccountMessage(`No se pudo enviar la confirmación: ${error.message}`)
+      return
+    }
+
+    setAccountMessage('Te hemos enviado un correo de confirmación.')
+  }
+
+  async function handleDeleteAccount() {
+    if (!window.confirm('¿Seguro que quieres eliminar tu cuenta de TARDEA? Esta acción no se puede deshacer.')) {
+      return
+    }
+
+    setDeletingAccount(true)
+    setAccountMessage('')
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session?.access_token) {
+      setDeletingAccount(false)
+      setAccountMessage('Tu sesión no está activa. Vuelve a iniciar sesión.')
+      return
+    }
+
+    const response = await fetch('/api/account/delete', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    })
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => null)
+      setDeletingAccount(false)
+      setAccountMessage(data?.error || 'No se pudo eliminar la cuenta.')
+      return
+    }
+
+    await supabase.auth.signOut()
+    window.location.href = '/'
   }
 
   async function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
@@ -480,25 +627,37 @@ export default function AccountPage() {
               <h1 className="truncate text-xl font-black text-white sm:text-3xl">
                 {displayName}
               </h1>
-              <p className="mt-1 truncate text-xs text-slate-400 sm:text-sm">{email}</p>
+              <p className="mt-1 truncate text-xs text-slate-400 sm:text-sm">{population}</p>
 
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-                <div>
+                <button
+                  type="button"
+                  onClick={() => changeAccountTab('favorites')}
+                  className="rounded-2xl px-2 py-1 transition hover:bg-white/10"
+                >
                   <p className="text-2xl font-black text-white">
                     {favoriteProfiles.length + favoriteEvents.length}
                   </p>
                   <p className="text-xs text-slate-300">Favoritos</p>
-                </div>
-                <div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => changeAccountTab('favorites')}
+                  className="rounded-2xl px-2 py-1 transition hover:bg-white/10"
+                >
                   <p className="text-2xl font-black text-white">
                     {favoriteProfiles.length}
                   </p>
                   <p className="text-xs text-slate-300">Planes</p>
-                </div>
-                <div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => changeAccountTab('chats')}
+                  className="rounded-2xl px-2 py-1 transition hover:bg-white/10"
+                >
                   <p className="text-2xl font-black text-white">0</p>
                   <p className="text-xs text-slate-300">Chats</p>
-                </div>
+                </button>
               </div>
             </div>
           </div>
@@ -509,9 +668,9 @@ export default function AccountPage() {
           <section className="px-5 py-5">
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-xs text-slate-400">Zona</p>
+                <p className="text-xs text-slate-400">Población</p>
                 <p className="mt-1 text-base font-bold text-white">
-                  {profile?.municipality || 'Sin definir'}
+                  {population}
                 </p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -529,6 +688,72 @@ export default function AccountPage() {
             </div>
 
             <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+              <p className="px-4 pt-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-500">
+                Detalles de la cuenta
+              </p>
+
+              <div className="mt-3 space-y-3 px-4 pb-4">
+                <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3">
+                  <p className="text-[11px] font-semibold text-slate-500">Correo electrónico</p>
+                  <div className="mt-1 flex items-center justify-between gap-3">
+                    <p className="truncate text-sm font-bold text-white">{email}</p>
+                    {emailConfirmed ? (
+                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-black text-emerald-300">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Confirmado
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleSendConfirmationEmail}
+                        disabled={sendingConfirmationEmail}
+                        className="shrink-0 rounded-full border border-brand-500/40 px-2 py-1 text-[10px] font-black text-brand-400 disabled:opacity-60"
+                      >
+                        {sendingConfirmationEmail ? 'Enviando...' : 'Confirmar'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="block">
+                    <span className="mb-1 block text-[11px] font-semibold text-slate-500">Alias público</span>
+                    <input
+                      className="input min-h-11 text-sm"
+                      value={accountAlias}
+                      onChange={(event) => setAccountAlias(event.target.value)}
+                      placeholder={realName || displayName}
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1 flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+                      <Phone className="h-3 w-3" />
+                      Móvil
+                    </span>
+                    <input
+                      className="input min-h-11 text-sm"
+                      value={mobilePhone}
+                      onChange={(event) => setMobilePhone(event.target.value)}
+                      placeholder="Para ofertas y avisos"
+                      inputMode="tel"
+                      autoComplete="tel"
+                    />
+                  </label>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleSaveAccountDetails}
+                  disabled={savingAccountDetails}
+                  className="min-h-11 w-full rounded-2xl bg-white/10 px-4 text-sm font-black text-white transition hover:bg-white/15 disabled:opacity-60"
+                >
+                  {savingAccountDetails ? 'Guardando...' : 'Guardar detalles'}
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
               <p className="px-4 pt-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-500">
                 Preferencias
               </p>
@@ -558,6 +783,31 @@ export default function AccountPage() {
                   <ChevronRight className="h-4 w-4 text-slate-500" />
                 </button>
 
+                <div className="px-4 py-3">
+                  <label className="block">
+                    <span className="mb-2 flex items-center gap-3 text-sm font-bold text-slate-200">
+                      <Mail className="h-4 w-4 text-brand-500" />
+                      Cambiar correo
+                    </span>
+                    <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                      <input
+                        className="input min-h-11 text-sm"
+                        value={newEmail}
+                        onChange={(event) => setNewEmail(event.target.value)}
+                        type="email"
+                        autoComplete="email"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleChangeEmail}
+                        className="min-h-11 rounded-2xl border border-white/10 px-4 text-sm font-black text-white transition hover:border-brand-500/50"
+                      >
+                        Enviar
+                      </button>
+                    </div>
+                  </label>
+                </div>
+
                 <button
                   type="button"
                   onClick={handleSignOut}
@@ -569,11 +819,24 @@ export default function AccountPage() {
                   </span>
                   <ChevronRight className="h-4 w-4 text-slate-500" />
                 </button>
+
+                <button
+                  type="button"
+                  onClick={handleDeleteAccount}
+                  disabled={deletingAccount}
+                  className="flex min-h-12 w-full items-center justify-between px-4 py-3 text-left text-sm font-bold text-red-300 transition hover:bg-red-500/10 hover:text-red-200 disabled:opacity-60"
+                >
+                  <span className="flex items-center gap-3">
+                    <Trash2 className="h-4 w-4 text-red-300" />
+                    {deletingAccount ? 'Eliminando...' : 'Eliminar cuenta'}
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-red-300/60" />
+                </button>
               </div>
 
-              {passwordMessage && (
+              {(passwordMessage || accountMessage) && (
                 <p className="border-t border-white/10 px-4 py-3 text-xs font-medium text-slate-300">
-                  {passwordMessage}
+                  {accountMessage || passwordMessage}
                 </p>
               )}
             </div>

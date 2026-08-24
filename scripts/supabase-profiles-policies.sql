@@ -10,6 +10,12 @@ alter table public.profiles
 add column if not exists city text;
 
 alter table public.profiles
+add column if not exists user_alias text;
+
+alter table public.profiles
+add column if not exists mobile_phone text;
+
+alter table public.profiles
 add column if not exists municipality text;
 
 alter table public.profiles
