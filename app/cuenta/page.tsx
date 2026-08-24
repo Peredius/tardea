@@ -577,7 +577,192 @@ export default function AccountPage() {
               </div>
             </div>
 
-            <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+            <div className="mt-8 hidden space-y-8 md:block">
+              <section>
+                <div className="mb-4 flex items-end justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.22em] text-brand-500">
+                      Para ti
+                    </p>
+                    <h2 className="mt-1 text-2xl font-black text-white">
+                      Según tus gustos
+                    </h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => changeAccountTab('suggestions')}
+                    className="text-sm font-bold text-brand-400 transition hover:text-brand-300"
+                  >
+                    Ver todo →
+                  </button>
+                </div>
+
+                {suggestedEvents.length > 0 ? (
+                  <div className="grid grid-cols-4 gap-4">
+                    {suggestedEvents.slice(0, 4).map((event) => (
+                      <Link
+                        key={event.id}
+                        href={`/eventos/${event.slug}`}
+                        className="group relative aspect-[9/16] overflow-hidden rounded-2xl border border-white/10 bg-slate-900"
+                      >
+                        <div
+                          className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
+                          style={{
+                            backgroundImage: `url(${
+                              event.cover ||
+                              'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
+                            })`,
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent" />
+                        <FavoriteButton
+                          eventId={event.id}
+                          eventProfileId={event.event_profile_id}
+                          className="absolute right-3 top-3 z-20"
+                        />
+                        <div className="absolute inset-x-0 bottom-0 p-4">
+                          <div className="mb-2 flex flex-wrap gap-1.5">
+                            <span className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
+                              {event.type}
+                            </span>
+                            <span className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
+                              {event.area}
+                            </span>
+                          </div>
+                          <h3 className="line-clamp-2 text-sm font-black uppercase text-white">
+                            {event.title}
+                          </h3>
+                          <p className="mt-1 line-clamp-2 text-xs text-slate-200">
+                            {event.venue} · {new Date(event.date).toLocaleDateString('es-ES')}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-sm text-slate-400">
+                    Completa tus gustos para ver sugerencias más afinadas.
+                  </div>
+                )}
+              </section>
+
+              <section>
+                <div className="mb-4 flex items-end justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.22em] text-brand-500">
+                      Favoritos
+                    </p>
+                    <h2 className="mt-1 text-2xl font-black text-white">
+                      Planes y fechas guardadas
+                    </h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => changeAccountTab('favorites')}
+                    className="text-sm font-bold text-brand-400 transition hover:text-brand-300"
+                  >
+                    Ver favoritos →
+                  </button>
+                </div>
+
+                {favoriteProfiles.length + favoriteEvents.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                      <h3 className="text-lg font-black text-white">Planes favoritos</h3>
+                      <div className="mt-4 grid grid-cols-2 gap-3">
+                        {favoriteProfiles.slice(0, 2).map((favoriteProfile) => {
+                          const nextEvent = favoriteProfile.nextEvent
+                          const cover =
+                            favoriteProfile.logo_url ||
+                            favoriteProfile.banner_url ||
+                            nextEvent?.cover ||
+                            'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
+
+                          return (
+                            <Link
+                              key={favoriteProfile.id}
+                              href={`/eventos/grupo/${favoriteProfile.id}`}
+                              className="group relative aspect-[9/16] overflow-hidden rounded-2xl border border-white/10 bg-slate-900"
+                            >
+                              <div
+                                className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
+                                style={{ backgroundImage: `url(${cover})` }}
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent" />
+                              <div className="absolute inset-x-0 bottom-0 p-3">
+                                <h4 className="line-clamp-2 text-xs font-black uppercase text-white">
+                                  {favoriteProfile.name}
+                                </h4>
+                                <p className="mt-1 text-[11px] font-bold text-brand-400">
+                                  {favoriteProfile.eventCount === 1
+                                    ? '1 fecha'
+                                    : `${favoriteProfile.eventCount} fechas`}
+                                </p>
+                              </div>
+                            </Link>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                      <h3 className="text-lg font-black text-white">Fechas guardadas</h3>
+                      <div className="mt-4 grid grid-cols-2 gap-3">
+                        {favoriteEvents.slice(0, 2).map((event) => (
+                          <Link
+                            key={event.id}
+                            href={`/eventos/${event.slug}`}
+                            className="group relative aspect-[9/16] overflow-hidden rounded-2xl border border-white/10 bg-slate-900"
+                          >
+                            <div
+                              className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
+                              style={{
+                                backgroundImage: `url(${
+                                  event.cover ||
+                                  'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
+                                })`,
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent" />
+                            <div className="absolute inset-x-0 bottom-0 p-3">
+                              <h4 className="line-clamp-2 text-xs font-black uppercase text-white">
+                                {event.title}
+                              </h4>
+                              <p className="mt-1 text-[11px] text-slate-200">
+                                {new Date(event.date).toLocaleDateString('es-ES')}
+                              </p>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-sm text-slate-400">
+                    Cuando guardes planes o fechas, aparecerán aquí.
+                  </div>
+                )}
+              </section>
+
+              <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="h-5 w-5 text-brand-500" />
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.22em] text-brand-500">
+                      Chat
+                    </p>
+                    <h2 className="mt-1 text-2xl font-black text-white">
+                      Conversaciones
+                    </h2>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm text-slate-400">
+                  Aquí centralizaremos chats con la app y con promotores.
+                </p>
+              </section>
+            </div>
+
+            <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-white/5 md:hidden">
               <p className="px-4 pt-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-500">
                 Preferencias
               </p>

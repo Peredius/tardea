@@ -193,12 +193,19 @@ export function Navbar() {
                     >
                       Editar perfil
                     </Link>
+                    <Link
+                      href="/cuenta/detalles"
+                      onClick={() => setAccountMenuOpen(false)}
+                      className="block border-b border-white/10 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10 hover:text-white"
+                    >
+                      Detalles de la cuenta
+                    </Link>
                     <button
                       type="button"
                       onClick={handleSignOut}
                       className="block w-full px-4 py-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white"
                     >
-                      Cerrar sesion
+                      Cerrar sesión
                     </button>
                   </div>
                 )}
