@@ -328,6 +328,8 @@ export default function AccountPage() {
     return 'Usuario'
   }, [email, profile])
 
+  const population = profile?.municipality || profile?.province || 'Población sin definir'
+
   const initials = displayName
     .split(' ')
     .map((part) => part[0])
@@ -492,6 +494,9 @@ export default function AccountPage() {
               <h1 className="truncate text-xl font-black text-white sm:text-3xl">
                 {displayName}
               </h1>
+              <p className="mt-1 truncate text-xs text-slate-400 sm:text-sm">
+                {population}
+              </p>
 
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
                 <button
