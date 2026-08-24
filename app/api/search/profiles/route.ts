@@ -49,6 +49,30 @@ function normalizeSearchKey(value: string | null | undefined) {
     .replace(/[\u0300-\u036f]/g, '')
 }
 
+const outsideMadridAreaKeys = new Set(
+  [
+    'Alcorcón',
+    'Alcorcon',
+    'Móstoles',
+    'Mostoles',
+    'Getafe',
+    'Leganés',
+    'Leganes',
+    'Alcobendas',
+    'San Sebastián de los Reyes',
+    'San Sebastian de los Reyes',
+    'Pozuelo',
+    'Majadahonda',
+    'Boadilla',
+    'Boadilla del Monte',
+    'Fuenlabrada',
+  ].map(normalizeSearchKey)
+)
+
+function isMadridCapitalArea(value?: string | null) {
+  return !outsideMadridAreaKeys.has(normalizeSearchKey(value || 'Madrid'))
+}
+
 function getSupabaseClients() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -138,11 +162,28 @@ async function runProfileSearch(supabaseClient: SupabaseClient, query: string) {
         .limit(30),
     ])
 
+  const madridAreaEventsResponse =
+    normalizeSearchKey(query) === 'madrid'
+      ? await supabaseClient
+          .from('events')
+          .select(eventSelect)
+          .eq('published', true)
+          .eq('status', 'approved')
+          .gte('date', today)
+          .order('date', { ascending: true })
+          .limit(200)
+      : { data: [] as SearchEvent[] }
+
+  const madridCapitalEvents = ((madridAreaEventsResponse.data || []) as SearchEvent[]).filter((event) =>
+    isMadridCapitalArea(event.area)
+  )
+
   const eventMatches = uniqueById([
     ...((titleEvents || []) as SearchEvent[]),
     ...((venueEvents || []) as SearchEvent[]),
     ...((areaEvents || []) as SearchEvent[]),
     ...((typeEvents || []) as SearchEvent[]),
+    ...madridCapitalEvents,
   ])
   const profileIdsFromEvents = Array.from(
     new Set(eventMatches.map((event) => event.event_profile_id).filter(Boolean) as string[])

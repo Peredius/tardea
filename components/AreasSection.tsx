@@ -125,10 +125,40 @@ function normalizeKey(value: string) {
     .trim()
 }
 
+const outsideMadridAreaKeys = new Set(
+  [
+    'Alcorcón',
+    'Alcorcon',
+    'Móstoles',
+    'Mostoles',
+    'Getafe',
+    'Leganés',
+    'Leganes',
+    'Alcobendas',
+    'San Sebastián de los Reyes',
+    'San Sebastian de los Reyes',
+    'Pozuelo',
+    'Majadahonda',
+    'Boadilla',
+    'Boadilla del Monte',
+    'Fuenlabrada',
+  ].map(normalizeKey)
+)
+
 function displayAreaName(value?: string | null) {
   if (!value) return 'Madrid'
   const key = normalizeKey(value)
   return areaAliases[key] || value.trim()
+}
+
+function isMadridCapitalArea(value?: string | null) {
+  const areaName = displayAreaName(value)
+  return !outsideMadridAreaKeys.has(normalizeKey(areaName))
+}
+
+function matchesAreaSelection(eventArea: string | null | undefined, selectedArea: string) {
+  if (selectedArea === 'Madrid') return isMadridCapitalArea(eventArea)
+  return displayAreaName(eventArea) === selectedArea
 }
 
 function areaRank(area: string) {
@@ -223,6 +253,15 @@ export function AreasSection() {
       }
     })
 
+    const madridCapitalEvents = events.filter((event) => isMadridCapitalArea(event.area)).sort(compareByDate)
+    if (madridCapitalEvents.length > 0) {
+      groups.set('Madrid', {
+        name: 'Madrid',
+        count: madridCapitalEvents.length,
+        nextEvent: madridCapitalEvents[0],
+      })
+    }
+
     return Array.from(groups.values()).sort((first, second) => {
       const rankDiff = areaRank(first.name) - areaRank(second.name)
       if (rankDiff !== 0) return rankDiff
@@ -241,7 +280,7 @@ export function AreasSection() {
     const groupedEvents = new Map<string, AreaEvent>()
 
     events
-      .filter((event) => displayAreaName(event.area) === selectedArea)
+      .filter((event) => matchesAreaSelection(event.area, selectedArea))
       .sort(compareByDate)
       .forEach((event) => {
         const key = getPlanKey(event)

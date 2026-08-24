@@ -88,11 +88,39 @@ function normalizeAreaKey(value: string) {
 }
 
 const priorityAreaKeys = priorityAreas.map(normalizeAreaKey)
+const outsideMadridAreaKeys = new Set(
+  [
+    'Alcorcón',
+    'Alcorcon',
+    'Móstoles',
+    'Mostoles',
+    'Getafe',
+    'Leganés',
+    'Leganes',
+    'Alcobendas',
+    'San Sebastián de los Reyes',
+    'San Sebastian de los Reyes',
+    'Pozuelo',
+    'Majadahonda',
+    'Boadilla',
+    'Fuenlabrada',
+  ].map(normalizeAreaKey)
+)
 
 function displayAreaName(value: string) {
   const normalized = normalizeAreaKey(value)
   if (normalized === 'chamartin') return 'Chamartín'
   return value
+}
+
+function isMadridCapitalArea(value?: string | null) {
+  const normalized = normalizeAreaKey(value || 'Madrid')
+  return !outsideMadridAreaKeys.has(normalized)
+}
+
+function matchesAreaFilter(eventArea: string | null | undefined, selectedArea: string) {
+  if (selectedArea === 'Madrid') return isMadridCapitalArea(eventArea)
+  return displayAreaName(eventArea || 'Madrid') === selectedArea
 }
 
 function sortAreas(values: string[]) {
@@ -485,7 +513,7 @@ export function Filters() {
       }
       if (audience !== 'Todas' && event.audience !== audience) return false
       if (!matchesPrice(price, event.priceFrom)) return false
-      if (area !== 'Todas' && displayAreaName(event.area) !== area) return false
+      if (area !== 'Todas' && !matchesAreaFilter(event.area, area)) return false
 
       return true
     })
