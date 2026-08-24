@@ -5,7 +5,6 @@ import Link from 'next/link'
 import {
   CalendarDays,
   ChevronRight,
-  CheckCircle2,
   Heart,
   LogOut,
   MapPin,
@@ -88,7 +87,6 @@ export default function AccountPage() {
   const [suggestedEvents, setSuggestedEvents] = useState<FavoriteEvent[]>([])
   const [activeTab, setActiveTab] = useState<AccountTab>('profile')
   const [avatarUrl, setAvatarUrl] = useState('')
-  const [emailConfirmed, setEmailConfirmed] = useState(false)
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -104,7 +102,6 @@ export default function AccountPage() {
       }
 
       setEmail(user.email ?? null)
-      setEmailConfirmed(Boolean(user.email_confirmed_at))
 
       const { data: profileData } = await supabase
         .from('profiles')
@@ -393,42 +390,12 @@ export default function AccountPage() {
             </div>
 
             <div className="min-w-0">
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div className="min-w-0">
-                  <h1 className="truncate text-xl font-black text-white sm:text-3xl">
-                    {displayName}
-                  </h1>
-                  <p className="mt-1 truncate text-xs text-slate-400 sm:text-sm">
-                    {population}
-                  </p>
-                </div>
-
-                <div className="min-w-0 md:min-w-[260px] md:text-right">
-                  <p className="line-clamp-1 text-sm font-black text-white">
-                    {profile?.music_preferences?.length
-                      ? profile.music_preferences.join(', ')
-                      : 'Sin definir'}
-                  </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 md:justify-end">
-                    <p className="truncate text-xs font-semibold text-slate-300">
-                      {email}
-                    </p>
-                    {emailConfirmed ? (
-                      <span
-                        className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-300"
-                        aria-label="Correo verificado"
-                        title="Correo verificado"
-                      >
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                      </span>
-                    ) : (
-                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-400/15 px-2 py-1 text-[10px] font-black text-amber-200">
-                        Correo no verificado
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <h1 className="truncate text-xl font-black text-white sm:text-3xl">
+                {displayName}
+              </h1>
+              <p className="mt-1 truncate text-xs text-slate-400 sm:text-sm">
+                {population}
+              </p>
 
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
                 <button
