@@ -137,6 +137,7 @@ export default function AccountPage() {
             'id, event_profile_id, slug, title, venue, area, date, start_time, end_time, type, music, price_from, cover'
           )
           .in('id', eventIds)
+          .gte('date', today)
           .order('date', { ascending: true })
 
         const favoriteEventRows = (events || []).map((event) => ({
@@ -145,6 +146,8 @@ export default function AccountPage() {
         }))
 
         setFavoriteEvents(favoriteEventRows)
+      } else {
+        setFavoriteEvents([])
       }
 
       const { data: profileFavorites } = await supabase
@@ -669,7 +672,7 @@ export default function AccountPage() {
               <div className="px-5 py-12 text-center">
                 <Heart className="mx-auto h-10 w-10 text-brand-500" />
                 <h2 className="mt-4 text-2xl font-bold text-white">
-                  Sin favoritos todavia
+                  Sin favoritos todavía
                 </h2>
                 <Link href="/" className="btn-primary mt-5">
                   Buscar planes

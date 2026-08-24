@@ -8,7 +8,7 @@ const discoveryPoints = [
   },
   {
     icon: Music4,
-    title: 'Tardeos por musica y zona',
+    title: 'Tardeos por música y zona',
     text: 'Filtra por ambiente, estilo musical, precio y barrio.',
   },
   {
@@ -18,7 +18,7 @@ const discoveryPoints = [
   },
 ]
 
-const upcomingAreas = ['Salamanca', 'Chamberi', 'Malasaña', 'La Latina', 'Centro', 'Chamartin']
+const upcomingAreas = ['Salamanca', 'Chamberí', 'Malasaña', 'La Latina', 'Centro', 'Chamartín']
 
 export function AreasSection() {
   return (
@@ -34,7 +34,7 @@ export function AreasSection() {
           </h2>
 
           <p className="mt-3 max-w-2xl text-slate-400">
-            Elige fecha, zona, musica y presupuesto para descubrir planes de
+            Elige fecha, zona, música y presupuesto para descubrir planes de
             tardeo en Madrid.
           </p>
 
@@ -61,7 +61,7 @@ export function AreasSection() {
         <div className="card flex flex-col justify-between p-6 md:p-8">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-500">
-              Proximamente
+              Próximamente
             </p>
 
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">
@@ -69,8 +69,8 @@ export function AreasSection() {
             </h2>
 
             <p className="mt-3 text-sm text-slate-400">
-              Activaremos paginas por zona para descubrir tardeos cercanos y
-              mejorar las busquedas locales.
+              Activaremos páginas por zona para descubrir tardeos cercanos y
+              mejorar las búsquedas locales.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-2">

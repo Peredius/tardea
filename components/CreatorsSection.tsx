@@ -17,7 +17,7 @@ export function CreatorsSection() {
                 <UsersRound className="h-5 w-5" />
               </span>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                Proximamente
+                Próximamente
               </p>
             </div>
 
@@ -25,8 +25,8 @@ export function CreatorsSection() {
               Planes recomendados por creadores
             </h2>
             <p className="mt-3 max-w-2xl text-sm text-slate-400">
-              Estamos preparando una seleccion de tardeos elegidos por perfiles
-              de Madrid para descubrir planes con mas criterio social.
+              Estamos preparando una selección de tardeos elegidos por perfiles
+              de Madrid para descubrir planes con más criterio social.
             </p>
           </div>
 

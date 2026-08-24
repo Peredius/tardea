@@ -23,9 +23,9 @@ export function CookieBanner() {
       <div className="mx-auto flex max-w-3xl flex-col gap-3 rounded-2xl border border-white/10 bg-slate-950/95 p-4 text-sm text-slate-300 shadow-2xl shadow-black/40 backdrop-blur md:flex-row md:items-center md:justify-between">
         <p className="leading-6">
           Usamos cookies necesarias para que TARDEA funcione correctamente y
-          mejorar la experiencia. Puedes leer mas en nuestra{' '}
+          mejorar la experiencia. Puedes leer más en nuestra{' '}
           <a href="/cookies" className="font-semibold text-brand-500 hover:underline">
-            politica de cookies
+            política de cookies
           </a>
           .
         </p>

@@ -15,12 +15,12 @@ export default function TermsPage() {
         {
           title: 'Promotores',
           content:
-            'Los promotores podran crear fichas y enviar eventos para revision. TARDEA podra aprobar, modificar o rechazar eventos para asegurar que la informacion sea clara y adecuada.',
+            'Los promotores podrán crear fichas y enviar eventos para revisión. TARDEA podrá aprobar, modificar o rechazar eventos para asegurar que la información sea clara y adecuada.',
         },
         {
           title: 'Servicios de pago',
           content:
-            'Los recursos, destacados, campanas o servicios promocionales para promotores se regularan con condiciones especificas cuando esten disponibles.',
+            'Los recursos, destacados, campañas o servicios promocionales para promotores se regularán con condiciones específicas cuando estén disponibles.',
         },
       ]}
     />
