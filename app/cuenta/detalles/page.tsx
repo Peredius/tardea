@@ -1,0 +1,279 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import {
+  ArrowLeft,
+  CheckCircle2,
+  KeyRound,
+  Mail,
+  Trash2,
+} from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+
+export default function AccountDetailsPage() {
+  const [email, setEmail] = useState<string | null>(null)
+  const [newEmail, setNewEmail] = useState('')
+  const [emailConfirmed, setEmailConfirmed] = useState(false)
+  const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [sendingConfirmationEmail, setSendingConfirmationEmail] = useState(false)
+  const [sendingPasswordEmail, setSendingPasswordEmail] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deletingAccount, setDeletingAccount] = useState(false)
+
+  useEffect(() => {
+    async function loadAccount() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        window.location.href = '/login?type=user'
+        return
+      }
+
+      setEmail(user.email ?? null)
+      setNewEmail(user.email ?? '')
+      setEmailConfirmed(Boolean(user.email_confirmed_at))
+      setLoading(false)
+    }
+
+    loadAccount()
+  }, [])
+
+  async function handleSendConfirmationEmail() {
+    setMessage('')
+
+    if (!email) {
+      setMessage('No se ha podido detectar el correo de tu cuenta.')
+      return
+    }
+
+    setSendingConfirmationEmail(true)
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+    setSendingConfirmationEmail(false)
+
+    if (error) {
+      setMessage(`No se pudo enviar la confirmación: ${error.message}`)
+      return
+    }
+
+    setMessage('Te hemos enviado un correo de confirmación.')
+  }
+
+  async function handlePasswordRecovery() {
+    setMessage('')
+
+    if (!email) {
+      setMessage('No se ha podido detectar el correo de tu cuenta.')
+      return
+    }
+
+    setSendingPasswordEmail(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+    })
+    setSendingPasswordEmail(false)
+
+    if (error) {
+      setMessage(`No se pudo enviar el correo: ${error.message}`)
+      return
+    }
+
+    setMessage('Te hemos enviado un enlace para cambiar la contraseña.')
+  }
+
+  async function handleChangeEmail() {
+    setMessage('')
+    const nextEmail = newEmail.trim()
+
+    if (!nextEmail || nextEmail === email) {
+      setMessage('Escribe un correo distinto al actual.')
+      return
+    }
+
+    const { error } = await supabase.auth.updateUser({ email: nextEmail })
+
+    if (error) {
+      setMessage(`No se pudo cambiar el correo: ${error.message}`)
+      return
+    }
+
+    setMessage('Te hemos enviado un correo para confirmar el cambio.')
+  }
+
+  async function handleDeleteAccount() {
+    setShowDeleteConfirm(false)
+    setDeletingAccount(true)
+    setMessage('')
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    const response = await fetch('/api/account/delete', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${session?.access_token ?? ''}`,
+      },
+    })
+
+    const result = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      setDeletingAccount(false)
+      setMessage(`No se pudo eliminar la cuenta: ${result?.error ?? 'Error desconocido.'}`)
+      return
+    }
+
+    await supabase.auth.signOut()
+    window.location.href = '/'
+  }
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-100">
+        <div className="container-page py-16">
+          <p className="text-slate-400">Cargando detalles...</p>
+        </div>
+      </main>
+    )
+  }
+
+  return (
+    <main className="min-h-screen bg-slate-950 text-slate-100">
+      <div className="container-page py-10">
+        <Link
+          href="/cuenta"
+          className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.2em] text-brand-500 transition hover:text-brand-400"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Volver
+        </Link>
+
+        <section className="mx-auto mt-8 max-w-xl">
+          <p className="text-sm font-black uppercase tracking-[0.25em] text-brand-500">
+            Mi cuenta
+          </p>
+          <h1 className="mt-2 text-3xl font-black text-white">
+            Detalles de la cuenta
+          </h1>
+
+          <div className="mt-6 overflow-hidden rounded-3xl border border-white/10 bg-white/5">
+            <div className="p-5">
+              <p className="text-xs text-slate-400">Correo electrónico</p>
+              <div className="mt-2 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
+                <p className="truncate text-base font-black text-white">{email}</p>
+                {emailConfirmed ? (
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-black text-emerald-300">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Confirmado
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleSendConfirmationEmail}
+                    disabled={sendingConfirmationEmail}
+                    className="shrink-0 rounded-full border border-brand-500/40 px-3 py-1 text-[11px] font-black text-brand-400 disabled:opacity-60"
+                  >
+                    {sendingConfirmationEmail ? 'Enviando...' : 'Confirmar correo'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="divide-y divide-white/10 border-t border-white/10">
+              <button
+                type="button"
+                onClick={handlePasswordRecovery}
+                disabled={sendingPasswordEmail}
+                className="flex min-h-14 w-full items-center gap-3 px-5 py-4 text-left text-sm font-black text-white transition hover:bg-white/10 disabled:opacity-60"
+              >
+                <KeyRound className="h-4 w-4 text-brand-500" />
+                {sendingPasswordEmail ? 'Enviando correo...' : 'Cambiar contraseña'}
+              </button>
+
+              <div className="px-5 py-4">
+                <label className="flex items-center gap-3 text-sm font-black text-white">
+                  <Mail className="h-4 w-4 text-brand-500" />
+                  Cambiar correo
+                </label>
+                <input
+                  className="input mt-3"
+                  type="email"
+                  value={newEmail}
+                  onChange={(event) => setNewEmail(event.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={handleChangeEmail}
+                  className="mt-3 min-h-12 w-full rounded-2xl border border-brand-500/45 px-4 text-sm font-black text-white transition hover:bg-brand-500/10"
+                >
+                  Enviar confirmación
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={deletingAccount}
+                className="flex min-h-14 w-full items-center gap-3 px-5 py-4 text-left text-sm font-black text-rose-300 transition hover:bg-rose-500/10 disabled:opacity-60"
+              >
+                <Trash2 className="h-4 w-4" />
+                {deletingAccount ? 'Eliminando cuenta...' : 'Eliminar cuenta'}
+              </button>
+            </div>
+
+            {message && (
+              <p className="border-t border-white/10 px-5 py-4 text-sm font-semibold text-slate-300">
+                {message}
+              </p>
+            )}
+          </div>
+        </section>
+      </div>
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 px-5 backdrop-blur-md">
+          <div className="w-full max-w-sm rounded-[28px] border border-brand-500/35 bg-slate-950 p-5 shadow-2xl shadow-brand-500/10">
+            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-500/15 text-brand-500">
+              <Trash2 className="h-5 w-5" />
+            </div>
+
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-brand-500">
+              Confirmación
+            </p>
+            <h2 className="mt-2 text-2xl font-black text-white">¿Eliminar cuenta?</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              Tu cuenta se eliminará de TARDEA. Esta acción no se puede deshacer.
+            </p>
+
+            <div className="mt-6 grid gap-3">
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                className="min-h-12 rounded-2xl bg-brand-500 px-4 text-sm font-black text-white transition hover:bg-brand-400"
+              >
+                Sí, eliminar cuenta
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="min-h-12 rounded-2xl border border-white/10 bg-white/5 px-4 text-sm font-black text-white transition hover:bg-white/10"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
+  )
+}

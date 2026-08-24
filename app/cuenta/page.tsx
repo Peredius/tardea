@@ -7,15 +7,12 @@ import {
   ChevronRight,
   CheckCircle2,
   Heart,
-  KeyRound,
   LogOut,
-  Mail,
   MapPin,
   MessageSquare,
   Pencil,
   Plus,
   Sparkles,
-  Trash2,
   UserRound,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -64,7 +61,6 @@ type FavoriteProfile = {
 }
 
 type AccountTab = 'profile' | 'favorites' | 'suggestions' | 'compare' | 'chats'
-type ConfirmAction = 'signout' | 'delete' | null
 
 function eventSeriesKey(event: FavoriteEvent) {
   return event.event_profile_id || `${normalizeMusicKey(event.title)}__${normalizeMusicKey(event.venue)}`
@@ -97,15 +93,10 @@ export default function AccountPage() {
   const [avatarUrl, setAvatarUrl] = useState('')
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarMessage, setAvatarMessage] = useState('')
-  const [passwordMessage, setPasswordMessage] = useState('')
-  const [sendingPasswordEmail, setSendingPasswordEmail] = useState(false)
   const [emailConfirmed, setEmailConfirmed] = useState(false)
-  const [newEmail, setNewEmail] = useState('')
   const [accountMessage, setAccountMessage] = useState('')
-  const [showAccountDetails, setShowAccountDetails] = useState(false)
   const [sendingConfirmationEmail, setSendingConfirmationEmail] = useState(false)
-  const [deletingAccount, setDeletingAccount] = useState(false)
-  const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null)
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -120,7 +111,6 @@ export default function AccountPage() {
       }
 
       setEmail(user.email ?? null)
-      setNewEmail(user.email ?? '')
       setEmailConfirmed(Boolean(user.email_confirmed_at))
       setUserId(user.id)
 
@@ -338,8 +328,6 @@ export default function AccountPage() {
     return 'Usuario'
   }, [email, profile])
 
-  const population = profile?.municipality || profile?.province || 'Población sin definir'
-
   const initials = displayName
     .split(' ')
     .map((part) => part[0])
@@ -348,50 +336,9 @@ export default function AccountPage() {
     .toUpperCase()
 
   async function handleSignOut() {
-    setConfirmAction(null)
+    setShowSignOutConfirm(false)
     await supabase.auth.signOut()
     window.location.href = '/'
-  }
-
-  async function handlePasswordRecovery() {
-    setPasswordMessage('')
-
-    if (!email) {
-      setPasswordMessage('No se ha podido detectar el email de tu cuenta.')
-      return
-    }
-
-    setSendingPasswordEmail(true)
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
-    })
-    setSendingPasswordEmail(false)
-
-    if (error) {
-      setPasswordMessage(`No se pudo enviar el email: ${error.message}`)
-      return
-    }
-
-    setPasswordMessage('Te hemos enviado un enlace para cambiar la contraseña.')
-  }
-
-  async function handleChangeEmail() {
-    const nextEmail = newEmail.trim()
-    setAccountMessage('')
-
-    if (!nextEmail || nextEmail === email) {
-      setAccountMessage('Escribe un correo nuevo para cambiarlo.')
-      return
-    }
-
-    const { error } = await supabase.auth.updateUser({ email: nextEmail })
-
-    if (error) {
-      setAccountMessage(`No se pudo cambiar el correo: ${error.message}`)
-      return
-    }
-
-    setAccountMessage('Te hemos enviado un correo para confirmar el cambio.')
   }
 
   async function handleSendConfirmationEmail() {
@@ -418,39 +365,6 @@ export default function AccountPage() {
     }
 
     setAccountMessage('Te hemos enviado un correo de confirmación.')
-  }
-
-  async function handleDeleteAccount() {
-    setConfirmAction(null)
-    setDeletingAccount(true)
-    setAccountMessage('')
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-
-    if (!session?.access_token) {
-      setDeletingAccount(false)
-      setAccountMessage('Tu sesión no está activa. Vuelve a iniciar sesión.')
-      return
-    }
-
-    const response = await fetch('/api/account/delete', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-      },
-    })
-
-    if (!response.ok) {
-      const data = await response.json().catch(() => null)
-      setDeletingAccount(false)
-      setAccountMessage(data?.error || 'No se pudo eliminar la cuenta.')
-      return
-    }
-
-    await supabase.auth.signOut()
-    window.location.href = '/'
   }
 
   async function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
@@ -578,7 +492,6 @@ export default function AccountPage() {
               <h1 className="truncate text-xl font-black text-white sm:text-3xl">
                 {displayName}
               </h1>
-              <p className="mt-1 truncate text-xs text-slate-400 sm:text-sm">{population}</p>
 
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
                 <button
@@ -617,6 +530,33 @@ export default function AccountPage() {
 
         {activeTab === 'profile' && (
           <section className="px-5 py-5">
+            <div className="mb-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p className="text-xs text-slate-400">Correo electrónico</p>
+              <div className="mt-1 flex items-center justify-between gap-3">
+                <p className="truncate text-base font-bold text-white">{email}</p>
+                {emailConfirmed ? (
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-black text-emerald-300">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Verificado
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleSendConfirmationEmail}
+                    disabled={sendingConfirmationEmail}
+                    className="shrink-0 rounded-full border border-brand-500/40 px-3 py-1 text-[10px] font-black text-brand-400 disabled:opacity-60"
+                  >
+                    {sendingConfirmationEmail ? 'Enviando...' : 'Verificar'}
+                  </button>
+                )}
+              </div>
+              {accountMessage && (
+                <p className="mt-2 text-xs font-medium text-slate-300">
+                  {accountMessage}
+                </p>
+              )}
+            </div>
+
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <p className="text-xs text-slate-400">Gustos</p>
@@ -649,102 +589,20 @@ export default function AccountPage() {
                   <ChevronRight className="h-4 w-4 text-slate-500" />
                 </Link>
 
-                <button
-                  type="button"
-                  onClick={() => setShowAccountDetails((current) => !current)}
-                  className="flex min-h-12 w-full items-center justify-between px-4 py-3 text-left text-sm font-bold text-slate-200 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                <Link
+                  href="/cuenta/detalles"
+                  className="flex min-h-12 items-center justify-between px-4 py-3 text-sm font-bold text-slate-200 transition hover:bg-white/10 hover:text-white"
                 >
                   <span className="flex items-center gap-3">
                     <UserRound className="h-4 w-4 text-brand-500" />
                     Detalles de la cuenta
                   </span>
-                  <ChevronRight className={`h-4 w-4 text-slate-500 transition ${showAccountDetails ? 'rotate-90' : ''}`} />
-                </button>
-
-                {showAccountDetails && (
-                  <div className="space-y-3 bg-slate-950/20 px-4 py-4">
-                    <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3">
-                      <p className="text-[11px] font-semibold text-slate-500">Correo electrónico</p>
-                      <div className="mt-1 flex items-center justify-between gap-3">
-                        <p className="truncate text-sm font-bold text-white">{email}</p>
-                        {emailConfirmed ? (
-                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-black text-emerald-300">
-                            <CheckCircle2 className="h-3 w-3" />
-                            Confirmado
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={handleSendConfirmationEmail}
-                            disabled={sendingConfirmationEmail}
-                            className="shrink-0 rounded-full border border-brand-500/40 px-2 py-1 text-[10px] font-black text-brand-400 disabled:opacity-60"
-                          >
-                            {sendingConfirmationEmail ? 'Enviando...' : 'Confirmar'}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handlePasswordRecovery}
-                      disabled={sendingPasswordEmail}
-                      className="flex min-h-11 w-full items-center justify-between rounded-2xl border border-white/10 px-4 text-left text-sm font-bold text-slate-200 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      <span className="flex items-center gap-3">
-                        <KeyRound className="h-4 w-4 text-brand-500" />
-                        {sendingPasswordEmail ? 'Enviando...' : 'Cambiar contraseña'}
-                      </span>
-                      <ChevronRight className="h-4 w-4 text-slate-500" />
-                    </button>
-
-                    <label className="block">
-                      <span className="mb-2 flex items-center gap-3 text-sm font-bold text-slate-200">
-                        <Mail className="h-4 w-4 text-brand-500" />
-                        Cambiar correo
-                      </span>
-                      <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-                        <input
-                          className="input min-h-11 text-sm"
-                          value={newEmail}
-                          onChange={(event) => setNewEmail(event.target.value)}
-                          type="email"
-                          autoComplete="email"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleChangeEmail}
-                          className="min-h-11 rounded-2xl border border-white/10 px-4 text-sm font-black text-white transition hover:border-brand-500/50"
-                        >
-                          Enviar
-                        </button>
-                      </div>
-                    </label>
-
-                    <button
-                      type="button"
-                      onClick={() => setConfirmAction('delete')}
-                      disabled={deletingAccount}
-                      className="flex min-h-11 w-full items-center justify-between rounded-2xl border border-red-300/20 px-4 text-left text-sm font-bold text-red-300 transition hover:bg-red-500/10 hover:text-red-200 disabled:opacity-60"
-                    >
-                      <span className="flex items-center gap-3">
-                        <Trash2 className="h-4 w-4 text-red-300" />
-                        {deletingAccount ? 'Eliminando...' : 'Eliminar cuenta'}
-                      </span>
-                      <ChevronRight className="h-4 w-4 text-red-300/60" />
-                    </button>
-
-                    {(passwordMessage || accountMessage) && (
-                      <p className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-300">
-                        {accountMessage || passwordMessage}
-                      </p>
-                    )}
-                  </div>
-                )}
+                  <ChevronRight className="h-4 w-4 text-slate-500" />
+                </Link>
 
                 <button
                   type="button"
-                  onClick={() => setConfirmAction('signout')}
+                  onClick={() => setShowSignOutConfirm(true)}
                   className="mt-3 flex min-h-12 w-full items-center justify-center gap-3 rounded-2xl border border-brand-500/40 px-4 py-3 text-center text-sm font-black text-white transition hover:bg-brand-500/10"
                 >
                   <LogOut className="h-4 w-4 text-brand-500" />
@@ -1027,48 +885,32 @@ export default function AccountPage() {
         )}
       </div>
 
-      {confirmAction && (
+      {showSignOutConfirm && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 px-5 backdrop-blur-md">
           <div className="w-full max-w-sm rounded-[28px] border border-brand-500/35 bg-slate-950 p-5 shadow-2xl shadow-brand-500/10">
             <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-500/15 text-brand-500">
-              {confirmAction === 'delete' ? (
-                <Trash2 className="h-5 w-5" />
-              ) : (
-                <LogOut className="h-5 w-5" />
-              )}
+              <LogOut className="h-5 w-5" />
             </div>
 
             <p className="text-xs font-black uppercase tracking-[0.22em] text-brand-500">
               Confirmación
             </p>
-            <h2 className="mt-2 text-2xl font-black text-white">
-              {confirmAction === 'delete'
-                ? '¿Eliminar cuenta?'
-                : '¿Cerrar sesión?'}
-            </h2>
+            <h2 className="mt-2 text-2xl font-black text-white">¿Cerrar sesión?</h2>
             <p className="mt-3 text-sm leading-6 text-slate-300">
-              {confirmAction === 'delete'
-                ? 'Tu cuenta se eliminará de TARDEA. Esta acción no se puede deshacer.'
-                : 'Saldrás de tu cuenta en este dispositivo.'}
+              Saldrás de tu cuenta en este dispositivo.
             </p>
 
             <div className="mt-6 grid gap-3">
               <button
                 type="button"
-                onClick={confirmAction === 'delete' ? handleDeleteAccount : handleSignOut}
-                disabled={deletingAccount}
+                onClick={handleSignOut}
                 className="min-h-12 rounded-2xl bg-brand-500 px-4 text-sm font-black text-white transition hover:bg-brand-400 disabled:opacity-60"
               >
-                {confirmAction === 'delete'
-                  ? deletingAccount
-                    ? 'Eliminando...'
-                    : 'Sí, eliminar cuenta'
-                  : 'Sí, cerrar sesión'}
+                Sí, cerrar sesión
               </button>
               <button
                 type="button"
-                onClick={() => setConfirmAction(null)}
-                disabled={deletingAccount}
+                onClick={() => setShowSignOutConfirm(false)}
                 className="min-h-12 rounded-2xl border border-white/10 bg-white/5 px-4 text-sm font-black text-white transition hover:bg-white/10 disabled:opacity-60"
               >
                 Cancelar
