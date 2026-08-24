@@ -422,7 +422,7 @@ export default function AccountPage() {
   }
 
   async function handleDeleteAccount() {
-    if (!window.confirm('¿Seguro que quieres eliminar tu cuenta de TARDEA? Esta acción no se puede deshacer.')) {
+    if (!window.confirm('¿De verdad quieres eliminar tu cuenta? Esta acción no se puede deshacer.')) {
       return
     }
 
