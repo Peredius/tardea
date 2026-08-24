@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { BadgePercent, CalendarCheck, MapPinned, Music4 } from 'lucide-react'
+import { BadgePercent, CalendarCheck, MapPinned, Music4, Sparkles, UsersRound } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { FavoriteButton } from '@/components/FavoriteButton'
 
@@ -44,6 +44,12 @@ const discoveryPoints = [
     title: 'Ofertas para usuarios registrados',
     text: 'Preparamos ventajas para que recibas planes que encajen contigo.',
   },
+]
+
+const userRecommendationIdeas = [
+  'Rooftops y planes con vistas',
+  'Tardeos comerciales',
+  'Brunch y planes de domingo',
 ]
 
 const areaAliases: Record<string, string> = {
@@ -250,42 +256,8 @@ export function AreasSection() {
 
   return (
     <section id="zonas" className="container-page py-12">
-      <div className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
-        <div className="card p-6 md:p-8">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-500/15 text-brand-500">
-            <MapPinned className="h-5 w-5" />
-          </div>
-
-          <h2 className="mt-5 text-3xl font-bold tracking-tight text-white">
-            Encuentra tu tardeo ideal
-          </h2>
-
-          <p className="mt-3 max-w-2xl text-slate-400">
-            Elige fecha, zona, música y presupuesto para descubrir planes de
-            tardeo en Madrid.
-          </p>
-
-          <div className="mt-6 grid gap-3 md:grid-cols-3">
-            {discoveryPoints.map((item) => {
-              const Icon = item.icon
-
-              return (
-                <div
-                  key={item.title}
-                  className="rounded-2xl border border-white/10 bg-slate-900/60 p-4"
-                >
-                  <Icon className="h-5 w-5 text-brand-500" />
-                  <h3 className="mt-3 font-semibold text-white">
-                    {item.title}
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-400">{item.text}</p>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        <div className="card flex flex-col justify-between p-6 md:p-8">
+      <div className="card p-6 md:p-8">
+        <div className="grid gap-6 lg:grid-cols-[0.75fr_1.25fr] lg:items-center">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-500">
               Zonas
@@ -295,11 +267,14 @@ export function AreasSection() {
               Zonas de Madrid con eventos
             </h2>
 
-            <p className="mt-3 text-sm text-slate-400">
-              Pulsa una zona para ver el evento más próximo que tenemos activo.
+            <p className="mt-3 max-w-xl text-sm text-slate-400">
+              Pulsa una zona y verás los planes más próximos, agrupados para que
+              no se repita el mismo evento con varias fechas.
             </p>
+          </div>
 
-            <div className="mt-6 flex flex-wrap gap-2">
+          <div>
+            <div className="flex flex-wrap gap-2">
               {areaSummaries.map((area) => (
                 <button
                   key={area.name}
@@ -406,6 +381,73 @@ export function AreasSection() {
           </div>
         </div>
       )}
+
+      <div className="mt-8 grid gap-4 lg:grid-cols-2">
+        <div className="card p-6 md:p-8">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-500/15 text-brand-500">
+            <MapPinned className="h-5 w-5" />
+          </div>
+
+          <h2 className="mt-5 text-2xl font-bold tracking-tight text-white">
+            Encuentra tu tardeo ideal
+          </h2>
+
+          <p className="mt-3 max-w-2xl text-sm text-slate-400">
+            Elige fecha, zona, música y presupuesto para descubrir planes de
+            tardeo en Madrid.
+          </p>
+
+          <div className="mt-6 grid gap-3 md:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+            {discoveryPoints.map((item) => {
+              const Icon = item.icon
+
+              return (
+                <div
+                  key={item.title}
+                  className="rounded-2xl border border-white/10 bg-slate-900/60 p-4"
+                >
+                  <Icon className="h-5 w-5 text-brand-500" />
+                  <h3 className="mt-3 font-semibold text-white">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-slate-400">{item.text}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="card p-6 md:p-8">
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/5 text-brand-500">
+              <UsersRound className="h-5 w-5" />
+            </span>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+              Próximamente
+            </p>
+          </div>
+
+          <h2 className="mt-5 text-2xl font-bold tracking-tight text-white">
+            Planes recomendados por usuarios
+          </h2>
+          <p className="mt-3 max-w-2xl text-sm text-slate-400">
+            Más adelante podremos mostrar reseñas y selecciones de usuarios para
+            descubrir tardeos con criterio real.
+          </p>
+
+          <div className="mt-6 flex flex-wrap gap-2">
+            {userRecommendationIdeas.map((idea) => (
+              <span
+                key={idea}
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/60 px-3 py-2 text-xs font-medium text-slate-300"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-brand-500" />
+                {idea}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
     </section>
   )
 }
