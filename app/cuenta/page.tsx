@@ -379,11 +379,11 @@ export default function AccountPage() {
               <button
                 type="button"
                 onClick={() => changeAccountTab('chats')}
-                className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-4 border-slate-950 bg-white text-slate-950 shadow-xl transition hover:bg-brand-500 hover:text-white sm:h-10 sm:w-10"
+                className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center text-white drop-shadow-[0_10px_20px_rgba(0,0,0,0.45)] transition hover:text-brand-500 sm:h-10 sm:w-10"
                 aria-label="Abrir chats"
               >
-                <MessageSquare className="h-4 w-4" />
-                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-500 px-1 text-[9px] font-black text-white">
+                <MessageSquare className="h-7 w-7 sm:h-8 sm:w-8" strokeWidth={2.4} />
+                <span className="absolute -right-0.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-500 px-1 text-[9px] font-black text-white ring-2 ring-slate-950">
                   0
                 </span>
               </button>
