@@ -11,10 +11,21 @@ type SearchProfile = {
   id: string
   name: string
   venue_name: string | null
+  area: string | null
   type: string | null
   logo_url: string | null
   banner_url: string | null
   nextDate?: string | null
+}
+
+type SearchEvent = {
+  id: string
+  event_profile_id: string | null
+  title: string
+  venue: string | null
+  area: string | null
+  type: string | null
+  date: string
 }
 
 export function Navbar() {
@@ -36,23 +47,87 @@ export function Navbar() {
         return
       }
 
-      const [{ data: nameMatches }, { data: venueMatches }] = await Promise.all([
+      const [{ data: nameMatches }, { data: venueMatches }, { data: titleEvents }, { data: venueEvents }, { data: areaEvents }, { data: typeEvents }] = await Promise.all([
         supabase
           .from('promoter_event_profiles')
-          .select('id, name, venue_name, type, logo_url, banner_url')
+          .select('id, name, venue_name, area, type, logo_url, banner_url')
           .eq('is_active', true)
           .ilike('name', `%${searchTerm}%`)
           .limit(8),
         supabase
           .from('promoter_event_profiles')
-          .select('id, name, venue_name, type, logo_url, banner_url')
+          .select('id, name, venue_name, area, type, logo_url, banner_url')
           .eq('is_active', true)
           .ilike('venue_name', `%${searchTerm}%`)
           .limit(8),
+        supabase
+          .from('events')
+          .select('id, event_profile_id, title, venue, area, type, date')
+          .eq('published', true)
+          .eq('status', 'approved')
+          .gte('date', new Date().toISOString().split('T')[0])
+          .ilike('title', `%${searchTerm}%`)
+          .order('date', { ascending: true })
+          .limit(12),
+        supabase
+          .from('events')
+          .select('id, event_profile_id, title, venue, area, type, date')
+          .eq('published', true)
+          .eq('status', 'approved')
+          .gte('date', new Date().toISOString().split('T')[0])
+          .ilike('venue', `%${searchTerm}%`)
+          .order('date', { ascending: true })
+          .limit(12),
+        supabase
+          .from('events')
+          .select('id, event_profile_id, title, venue, area, type, date')
+          .eq('published', true)
+          .eq('status', 'approved')
+          .gte('date', new Date().toISOString().split('T')[0])
+          .ilike('area', `%${searchTerm}%`)
+          .order('date', { ascending: true })
+          .limit(12),
+        supabase
+          .from('events')
+          .select('id, event_profile_id, title, venue, area, type, date')
+          .eq('published', true)
+          .eq('status', 'approved')
+          .gte('date', new Date().toISOString().split('T')[0])
+          .ilike('type', `%${searchTerm}%`)
+          .order('date', { ascending: true })
+          .limit(12),
       ])
 
+      const eventMatches = Array.from(
+        new Map(
+          [
+            ...((titleEvents || []) as SearchEvent[]),
+            ...((venueEvents || []) as SearchEvent[]),
+            ...((areaEvents || []) as SearchEvent[]),
+            ...((typeEvents || []) as SearchEvent[]),
+          ].map((event) => [event.id, event])
+        ).values()
+      )
+
+      const profileIdsFromEvents = Array.from(
+        new Set(eventMatches.map((event) => event.event_profile_id).filter(Boolean) as string[])
+      )
+
+      const { data: profilesFromEvents } = profileIdsFromEvents.length
+        ? await supabase
+            .from('promoter_event_profiles')
+            .select('id, name, venue_name, area, type, logo_url, banner_url')
+            .eq('is_active', true)
+            .in('id', profileIdsFromEvents)
+        : { data: [] as SearchProfile[] }
+
       const profiles = Array.from(
-        new Map([...(nameMatches || []), ...(venueMatches || [])].map((profile) => [profile.id, profile])).values()
+        new Map(
+          [...(nameMatches || []), ...(venueMatches || []), ...(profilesFromEvents || [])].map((profile) => [
+            profile.id,
+            profile,
+          ])
+        ).values()
       ).slice(0, 8)
 
       if (profiles.length === 0) {
@@ -191,7 +266,7 @@ export function Navbar() {
                 >
                   <p className="font-medium text-white">{profile.name}</p>
                   <p className="mt-1 text-xs text-slate-400">
-                    {[profile.venue_name, profile.type, profile.nextDate ? `Próxima fecha ${new Date(profile.nextDate).toLocaleDateString('es-ES')}` : null]
+                    {[profile.venue_name || profile.area, profile.type, profile.nextDate ? `Próxima fecha ${new Date(profile.nextDate).toLocaleDateString('es-ES')}` : null]
                       .filter(Boolean)
                       .join(' · ')}
                   </p>
