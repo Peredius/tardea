@@ -474,7 +474,7 @@ export default function AccountPage() {
             </div>
 
             <div className="min-w-0">
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div>
                 <div className="min-w-0">
                   <h1 className="truncate text-xl font-black text-white sm:text-3xl">
                     {displayName}
@@ -487,9 +487,12 @@ export default function AccountPage() {
                       {email}
                     </p>
                     {emailConfirmed ? (
-                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-black text-emerald-300">
-                        <CheckCircle2 className="h-3 w-3" />
-                        Verificado
+                      <span
+                        className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-300"
+                        aria-label="Correo verificado"
+                        title="Correo verificado"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
                       </span>
                     ) : (
                       <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-400/15 px-2 py-1 text-[10px] font-black text-amber-200">
@@ -497,13 +500,9 @@ export default function AccountPage() {
                       </span>
                     )}
                   </div>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 md:min-w-[220px] md:text-right">
-                  <p className="text-[11px] font-semibold text-slate-400">Gustos</p>
-                  <p className="mt-1 line-clamp-2 text-sm font-black text-white">
+                  <p className="mt-2 line-clamp-1 text-xs font-semibold text-slate-400 sm:text-sm">
                     {profile?.music_preferences?.length
-                      ? profile.music_preferences.join(', ')
+                      ? `Gustos: ${profile.music_preferences.join(', ')}`
                       : 'Sin definir'}
                   </p>
                 </div>
