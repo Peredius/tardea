@@ -224,7 +224,7 @@ export default function AccountDetailsPage() {
           Volver
         </Link>
 
-        <section className="mt-8 max-w-xl md:max-w-5xl">
+        <section className="mx-auto mt-8 max-w-xl md:max-w-5xl">
           <p className="text-sm font-black uppercase tracking-[0.25em] text-brand-500">
             Mi cuenta
           </p>
