@@ -18,16 +18,6 @@ type SearchProfile = {
   nextDate?: string | null
 }
 
-type SearchEvent = {
-  id: string
-  event_profile_id: string | null
-  title: string
-  venue: string | null
-  area: string | null
-  type: string | null
-  date: string
-}
-
 export function Navbar() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchProfile[]>([])
@@ -47,125 +37,14 @@ export function Navbar() {
         return
       }
 
-      const [{ data: nameMatches }, { data: venueMatches }, { data: titleEvents }, { data: venueEvents }, { data: areaEvents }, { data: typeEvents }] = await Promise.all([
-        supabase
-          .from('promoter_event_profiles')
-          .select('id, name, venue_name, area, type, logo_url, banner_url')
-          .eq('is_active', true)
-          .ilike('name', `%${searchTerm}%`)
-          .limit(8),
-        supabase
-          .from('promoter_event_profiles')
-          .select('id, name, venue_name, area, type, logo_url, banner_url')
-          .eq('is_active', true)
-          .ilike('venue_name', `%${searchTerm}%`)
-          .limit(8),
-        supabase
-          .from('events')
-          .select('id, event_profile_id, title, venue, area, type, date')
-          .eq('published', true)
-          .eq('status', 'approved')
-          .gte('date', new Date().toISOString().split('T')[0])
-          .ilike('title', `%${searchTerm}%`)
-          .order('date', { ascending: true })
-          .limit(12),
-        supabase
-          .from('events')
-          .select('id, event_profile_id, title, venue, area, type, date')
-          .eq('published', true)
-          .eq('status', 'approved')
-          .gte('date', new Date().toISOString().split('T')[0])
-          .ilike('venue', `%${searchTerm}%`)
-          .order('date', { ascending: true })
-          .limit(12),
-        supabase
-          .from('events')
-          .select('id, event_profile_id, title, venue, area, type, date')
-          .eq('published', true)
-          .eq('status', 'approved')
-          .gte('date', new Date().toISOString().split('T')[0])
-          .ilike('area', `%${searchTerm}%`)
-          .order('date', { ascending: true })
-          .limit(12),
-        supabase
-          .from('events')
-          .select('id, event_profile_id, title, venue, area, type, date')
-          .eq('published', true)
-          .eq('status', 'approved')
-          .gte('date', new Date().toISOString().split('T')[0])
-          .ilike('type', `%${searchTerm}%`)
-          .order('date', { ascending: true })
-          .limit(12),
-      ])
-
-      const eventMatches = Array.from(
-        new Map(
-          [
-            ...((titleEvents || []) as SearchEvent[]),
-            ...((venueEvents || []) as SearchEvent[]),
-            ...((areaEvents || []) as SearchEvent[]),
-            ...((typeEvents || []) as SearchEvent[]),
-          ].map((event) => [event.id, event])
-        ).values()
-      )
-
-      const profileIdsFromEvents = Array.from(
-        new Set(eventMatches.map((event) => event.event_profile_id).filter(Boolean) as string[])
-      )
-
-      const { data: profilesFromEvents } = profileIdsFromEvents.length
-        ? await supabase
-            .from('promoter_event_profiles')
-            .select('id, name, venue_name, area, type, logo_url, banner_url')
-            .eq('is_active', true)
-            .in('id', profileIdsFromEvents)
-        : { data: [] as SearchProfile[] }
-
-      const profiles = Array.from(
-        new Map(
-          [...(nameMatches || []), ...(venueMatches || []), ...(profilesFromEvents || [])].map((profile) => [
-            profile.id,
-            profile,
-          ])
-        ).values()
-      ).slice(0, 8)
-
-      if (profiles.length === 0) {
-        if (!cancelled) setResults([])
-        return
-      }
-
-      const today = new Date().toISOString().split('T')[0]
-      const { data: eventRows } = await supabase
-        .from('events')
-        .select('event_profile_id, date')
-        .in(
-          'event_profile_id',
-          profiles.map((profile) => profile.id)
-        )
-        .eq('published', true)
-        .eq('status', 'approved')
-        .gte('date', today)
-        .order('date', { ascending: true })
-
-      const nextDateByProfile = new Map<string, string>()
-
-      ;(eventRows || []).forEach((event) => {
-        if (event.event_profile_id && !nextDateByProfile.has(event.event_profile_id)) {
-          nextDateByProfile.set(event.event_profile_id, event.date)
-        }
+      const response = await fetch(`/api/search/profiles?q=${encodeURIComponent(searchTerm)}`, {
+        cache: 'no-store',
       })
+      const payload = await response.json().catch(() => null)
 
-      const profilesWithDates = profiles
-        .map((profile) => ({
-          ...profile,
-          nextDate: nextDateByProfile.get(profile.id) || null,
-        }))
-        .filter((profile) => profile.nextDate)
-        .sort((a, b) => (a.nextDate || '').localeCompare(b.nextDate || ''))
-        .slice(0, 6)
-
-      if (!cancelled) setResults(profilesWithDates)
+      if (!cancelled) {
+        setResults(response.ok ? payload?.results || [] : [])
+      }
     }
 
     searchProfiles()
