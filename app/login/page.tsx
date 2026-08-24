@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Eye, EyeOff, Mail, UserRound } from 'lucide-react'
+import { Eye, EyeOff, Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { BrandLogo } from '@/components/BrandLogo'
 
@@ -447,7 +447,7 @@ function LoginContent() {
                 Descubre los mejores tardeos en Madrid
               </h1>
               <p className="mt-3 text-sm leading-6 text-slate-400">
-                Entra como invitado para explorar. Inicia sesión cuando quieras guardar favoritos, recibir sugerencias y chatear.
+                Puedes explorar los eventos desde el buscador. Inicia sesión cuando quieras guardar favoritos, recibir sugerencias y chatear.
               </p>
             </div>
 
@@ -514,13 +514,6 @@ function LoginContent() {
                 Continuar con correo
               </button>
 
-              <Link
-                href="/"
-                className="flex w-full items-center justify-center gap-4 rounded-full bg-white/10 px-5 py-4 text-base font-bold text-white transition hover:bg-white/15"
-              >
-                <UserRound className="h-5 w-5" />
-                Entrar como invitado
-              </Link>
             </div>
 
             <p className="mx-auto mt-6 max-w-sm text-center text-xs leading-5 text-slate-500">
