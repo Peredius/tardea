@@ -140,6 +140,33 @@ function formatShortDate(date: string) {
   })
 }
 
+function normalizePlanText(value?: string | null) {
+  return normalizeKey(value || '')
+    .replace(
+      /\b\d{1,2}\s*(de\s*)?(ene|enero|feb|febrero|mar|marzo|abr|abril|may|mayo|jun|junio|jul|julio|ago|agosto|sep|septiembre|oct|octubre|nov|noviembre|dic|diciembre)\b/g,
+      ' '
+    )
+    .replace(/\b\d{1,2}[/-]\d{1,2}([/-]\d{2,4})?\b/g, ' ')
+    .replace(/\b20\d{2}\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function getPlanKey(event: AreaEvent) {
+  if (event.event_profile_id) return `profile:${event.event_profile_id}`
+
+  const title = normalizePlanText(event.title)
+  const venue = normalizePlanText(event.venue)
+  const type = normalizePlanText(event.type)
+
+  return [type, title, venue].filter(Boolean).join('__') || event.slug
+}
+
+function compareByDate(first: AreaEvent, second: AreaEvent) {
+  if (first.date !== second.date) return first.date.localeCompare(second.date)
+  return (first.start_time || '').localeCompare(second.start_time || '')
+}
+
 export function AreasSection() {
   const [events, setEvents] = useState<AreaEvent[]>([])
   const [selectedArea, setSelectedArea] = useState<string | null>(null)
@@ -205,12 +232,19 @@ export function AreasSection() {
   const activeAreaEvents = useMemo(() => {
     if (!selectedArea) return []
 
-    return events
+    const groupedEvents = new Map<string, AreaEvent>()
+
+    events
       .filter((event) => displayAreaName(event.area) === selectedArea)
-      .sort((first, second) => {
-        if (first.date !== second.date) return first.date.localeCompare(second.date)
-        return (first.start_time || '').localeCompare(second.start_time || '')
+      .sort(compareByDate)
+      .forEach((event) => {
+        const key = getPlanKey(event)
+        if (!groupedEvents.has(key)) {
+          groupedEvents.set(key, event)
+        }
       })
+
+    return Array.from(groupedEvents.values())
       .slice(0, 8)
   }, [events, selectedArea])
 
@@ -303,8 +337,8 @@ export function AreasSection() {
               </h2>
             </div>
             <p className="text-sm font-semibold text-slate-300">
-              {activeArea.count} evento{activeArea.count === 1 ? '' : 's'} próximo
-              {activeArea.count === 1 ? '' : 's'}
+              {activeAreaEvents.length} plan{activeAreaEvents.length === 1 ? '' : 'es'} con
+              próxima fecha
             </p>
           </div>
 
