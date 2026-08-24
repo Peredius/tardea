@@ -79,6 +79,8 @@ function ProfileForm() {
   const [userId, setUserId] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [userAlias, setUserAlias] = useState('')
+  const [mobilePhone, setMobilePhone] = useState('')
   const [birthDate, setBirthDate] = useState('')
   const [address, setAddress] = useState('')
   const [postalCode, setPostalCode] = useState('')
@@ -102,7 +104,7 @@ function ProfileForm() {
       const { data } = await supabase
         .from('profiles')
         .select(
-          'first_name, last_name, birth_date, address, postal_code, municipality, province, city, music_preferences'
+          'first_name, last_name, user_alias, mobile_phone, birth_date, address, postal_code, municipality, province, city, music_preferences'
         )
         .eq('id', user.id)
         .maybeSingle()
@@ -112,6 +114,8 @@ function ProfileForm() {
 
       setFirstName(data?.first_name ?? metadataFirstName ?? '')
       setLastName(data?.last_name ?? metadataLastName.join(' ') ?? '')
+      setUserAlias(data?.user_alias ?? '')
+      setMobilePhone(data?.mobile_phone ?? '')
       setBirthDate(data?.birth_date ?? '')
       setAddress(data?.address ?? '')
       setPostalCode(data?.postal_code ?? '')
@@ -143,6 +147,8 @@ function ProfileForm() {
         role: 'user',
         first_name: firstName,
         last_name: lastName,
+        user_alias: userAlias.trim() || null,
+        mobile_phone: mobilePhone.trim() || null,
         birth_date: birthDate,
         address,
         postal_code: postalCode,
@@ -212,6 +218,22 @@ function ProfileForm() {
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               required
+            />
+
+            <input
+              className="input"
+              placeholder="Alias público (opcional)"
+              value={userAlias}
+              onChange={(e) => setUserAlias(e.target.value)}
+            />
+
+            <input
+              className="input"
+              placeholder="Móvil (opcional)"
+              value={mobilePhone}
+              onChange={(e) => setMobilePhone(e.target.value)}
+              inputMode="tel"
+              autoComplete="tel"
             />
 
             <div>

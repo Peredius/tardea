@@ -13,7 +13,6 @@ import {
   MapPin,
   MessageSquare,
   Pencil,
-  Phone,
   Plus,
   Sparkles,
   Trash2,
@@ -100,11 +99,9 @@ export default function AccountPage() {
   const [passwordMessage, setPasswordMessage] = useState('')
   const [sendingPasswordEmail, setSendingPasswordEmail] = useState(false)
   const [emailConfirmed, setEmailConfirmed] = useState(false)
-  const [accountAlias, setAccountAlias] = useState('')
-  const [mobilePhone, setMobilePhone] = useState('')
   const [newEmail, setNewEmail] = useState('')
   const [accountMessage, setAccountMessage] = useState('')
-  const [savingAccountDetails, setSavingAccountDetails] = useState(false)
+  const [showAccountDetails, setShowAccountDetails] = useState(false)
   const [sendingConfirmationEmail, setSendingConfirmationEmail] = useState(false)
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -140,8 +137,6 @@ export default function AccountPage() {
           : null
       )
       setAvatarUrl(profileData?.avatar_url ?? '')
-      setAccountAlias(profileData?.user_alias ?? '')
-      setMobilePhone(profileData?.mobile_phone ?? '')
 
       const today = new Date().toISOString().split('T')[0]
 
@@ -341,13 +336,6 @@ export default function AccountPage() {
     return 'Usuario'
   }, [email, profile])
 
-  const realName = useMemo(() => {
-    return [profile?.first_name, profile?.last_name]
-      .filter(Boolean)
-      .join(' ')
-      .trim()
-  }, [profile])
-
   const population = profile?.municipality || profile?.province || 'Población sin definir'
 
   const initials = displayName
@@ -382,43 +370,6 @@ export default function AccountPage() {
     }
 
     setPasswordMessage('Te hemos enviado un enlace para cambiar la contraseña.')
-  }
-
-  async function handleSaveAccountDetails() {
-    if (!userId) return
-
-    setSavingAccountDetails(true)
-    setAccountMessage('')
-
-    const { error } = await supabase
-      .from('profiles')
-      .upsert(
-        {
-          id: userId,
-          role: 'user',
-          user_alias: accountAlias.trim() || null,
-          mobile_phone: mobilePhone.trim() || null,
-        },
-        { onConflict: 'id' }
-      )
-
-    setSavingAccountDetails(false)
-
-    if (error) {
-      setAccountMessage(`No se pudieron guardar los detalles: ${error.message}`)
-      return
-    }
-
-    setProfile((current) =>
-      current
-        ? {
-            ...current,
-            user_alias: accountAlias.trim() || null,
-            mobile_phone: mobilePhone.trim() || null,
-          }
-        : current
-    )
-    setAccountMessage('Detalles de la cuenta guardados.')
   }
 
   async function handleChangeEmail() {
@@ -666,13 +617,7 @@ export default function AccountPage() {
 
         {activeTab === 'profile' && (
           <section className="px-5 py-5">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-xs text-slate-400">Población</p>
-                <p className="mt-1 text-base font-bold text-white">
-                  {population}
-                </p>
-              </div>
+            <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <p className="text-xs text-slate-400">Gustos</p>
                 <p className="mt-1 text-base font-bold text-white">
@@ -688,72 +633,6 @@ export default function AccountPage() {
             </div>
 
             <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-              <p className="px-4 pt-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-500">
-                Detalles de la cuenta
-              </p>
-
-              <div className="mt-3 space-y-3 px-4 pb-4">
-                <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3">
-                  <p className="text-[11px] font-semibold text-slate-500">Correo electrónico</p>
-                  <div className="mt-1 flex items-center justify-between gap-3">
-                    <p className="truncate text-sm font-bold text-white">{email}</p>
-                    {emailConfirmed ? (
-                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-black text-emerald-300">
-                        <CheckCircle2 className="h-3 w-3" />
-                        Confirmado
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleSendConfirmationEmail}
-                        disabled={sendingConfirmationEmail}
-                        className="shrink-0 rounded-full border border-brand-500/40 px-2 py-1 text-[10px] font-black text-brand-400 disabled:opacity-60"
-                      >
-                        {sendingConfirmationEmail ? 'Enviando...' : 'Confirmar'}
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="block">
-                    <span className="mb-1 block text-[11px] font-semibold text-slate-500">Alias público</span>
-                    <input
-                      className="input min-h-11 text-sm"
-                      value={accountAlias}
-                      onChange={(event) => setAccountAlias(event.target.value)}
-                      placeholder={realName || displayName}
-                    />
-                  </label>
-
-                  <label className="block">
-                    <span className="mb-1 flex items-center gap-1 text-[11px] font-semibold text-slate-500">
-                      <Phone className="h-3 w-3" />
-                      Móvil
-                    </span>
-                    <input
-                      className="input min-h-11 text-sm"
-                      value={mobilePhone}
-                      onChange={(event) => setMobilePhone(event.target.value)}
-                      placeholder="Para ofertas y avisos"
-                      inputMode="tel"
-                      autoComplete="tel"
-                    />
-                  </label>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleSaveAccountDetails}
-                  disabled={savingAccountDetails}
-                  className="min-h-11 w-full rounded-2xl bg-white/10 px-4 text-sm font-black text-white transition hover:bg-white/15 disabled:opacity-60"
-                >
-                  {savingAccountDetails ? 'Guardando...' : 'Guardar detalles'}
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
               <p className="px-4 pt-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-500">
                 Preferencias
               </p>
@@ -772,41 +651,96 @@ export default function AccountPage() {
 
                 <button
                   type="button"
-                  onClick={handlePasswordRecovery}
-                  disabled={sendingPasswordEmail}
+                  onClick={() => setShowAccountDetails((current) => !current)}
                   className="flex min-h-12 w-full items-center justify-between px-4 py-3 text-left text-sm font-bold text-slate-200 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <span className="flex items-center gap-3">
-                    <KeyRound className="h-4 w-4 text-brand-500" />
-                    {sendingPasswordEmail ? 'Enviando...' : 'Cambiar contraseña'}
+                    <UserRound className="h-4 w-4 text-brand-500" />
+                    Detalles de la cuenta
                   </span>
-                  <ChevronRight className="h-4 w-4 text-slate-500" />
+                  <ChevronRight className={`h-4 w-4 text-slate-500 transition ${showAccountDetails ? 'rotate-90' : ''}`} />
                 </button>
 
-                <div className="px-4 py-3">
-                  <label className="block">
-                    <span className="mb-2 flex items-center gap-3 text-sm font-bold text-slate-200">
-                      <Mail className="h-4 w-4 text-brand-500" />
-                      Cambiar correo
-                    </span>
-                    <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-                      <input
-                        className="input min-h-11 text-sm"
-                        value={newEmail}
-                        onChange={(event) => setNewEmail(event.target.value)}
-                        type="email"
-                        autoComplete="email"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleChangeEmail}
-                        className="min-h-11 rounded-2xl border border-white/10 px-4 text-sm font-black text-white transition hover:border-brand-500/50"
-                      >
-                        Enviar
-                      </button>
+                {showAccountDetails && (
+                  <div className="space-y-3 bg-slate-950/20 px-4 py-4">
+                    <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3">
+                      <p className="text-[11px] font-semibold text-slate-500">Correo electrónico</p>
+                      <div className="mt-1 flex items-center justify-between gap-3">
+                        <p className="truncate text-sm font-bold text-white">{email}</p>
+                        {emailConfirmed ? (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-black text-emerald-300">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Confirmado
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={handleSendConfirmationEmail}
+                            disabled={sendingConfirmationEmail}
+                            className="shrink-0 rounded-full border border-brand-500/40 px-2 py-1 text-[10px] font-black text-brand-400 disabled:opacity-60"
+                          >
+                            {sendingConfirmationEmail ? 'Enviando...' : 'Confirmar'}
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </label>
-                </div>
+
+                    <button
+                      type="button"
+                      onClick={handlePasswordRecovery}
+                      disabled={sendingPasswordEmail}
+                      className="flex min-h-11 w-full items-center justify-between rounded-2xl border border-white/10 px-4 text-left text-sm font-bold text-slate-200 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <span className="flex items-center gap-3">
+                        <KeyRound className="h-4 w-4 text-brand-500" />
+                        {sendingPasswordEmail ? 'Enviando...' : 'Cambiar contraseña'}
+                      </span>
+                      <ChevronRight className="h-4 w-4 text-slate-500" />
+                    </button>
+
+                    <label className="block">
+                      <span className="mb-2 flex items-center gap-3 text-sm font-bold text-slate-200">
+                        <Mail className="h-4 w-4 text-brand-500" />
+                        Cambiar correo
+                      </span>
+                      <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                        <input
+                          className="input min-h-11 text-sm"
+                          value={newEmail}
+                          onChange={(event) => setNewEmail(event.target.value)}
+                          type="email"
+                          autoComplete="email"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleChangeEmail}
+                          className="min-h-11 rounded-2xl border border-white/10 px-4 text-sm font-black text-white transition hover:border-brand-500/50"
+                        >
+                          Enviar
+                        </button>
+                      </div>
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={handleDeleteAccount}
+                      disabled={deletingAccount}
+                      className="flex min-h-11 w-full items-center justify-between rounded-2xl border border-red-300/20 px-4 text-left text-sm font-bold text-red-300 transition hover:bg-red-500/10 hover:text-red-200 disabled:opacity-60"
+                    >
+                      <span className="flex items-center gap-3">
+                        <Trash2 className="h-4 w-4 text-red-300" />
+                        {deletingAccount ? 'Eliminando...' : 'Eliminar cuenta'}
+                      </span>
+                      <ChevronRight className="h-4 w-4 text-red-300/60" />
+                    </button>
+
+                    {(passwordMessage || accountMessage) && (
+                      <p className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-300">
+                        {accountMessage || passwordMessage}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 <button
                   type="button"
@@ -819,26 +753,7 @@ export default function AccountPage() {
                   </span>
                   <ChevronRight className="h-4 w-4 text-slate-500" />
                 </button>
-
-                <button
-                  type="button"
-                  onClick={handleDeleteAccount}
-                  disabled={deletingAccount}
-                  className="flex min-h-12 w-full items-center justify-between px-4 py-3 text-left text-sm font-bold text-red-300 transition hover:bg-red-500/10 hover:text-red-200 disabled:opacity-60"
-                >
-                  <span className="flex items-center gap-3">
-                    <Trash2 className="h-4 w-4 text-red-300" />
-                    {deletingAccount ? 'Eliminando...' : 'Eliminar cuenta'}
-                  </span>
-                  <ChevronRight className="h-4 w-4 text-red-300/60" />
-                </button>
               </div>
-
-              {(passwordMessage || accountMessage) && (
-                <p className="border-t border-white/10 px-4 py-3 text-xs font-medium text-slate-300">
-                  {accountMessage || passwordMessage}
-                </p>
-              )}
             </div>
           </section>
         )}
