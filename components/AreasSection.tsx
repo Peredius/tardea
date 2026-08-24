@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { BadgePercent, CalendarCheck, MapPinned, MapPin, Music4 } from 'lucide-react'
+import { BadgePercent, CalendarCheck, MapPinned, Music4 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { FavoriteButton } from '@/components/FavoriteButton'
 
 type AreaEvent = {
   id: string
@@ -13,8 +14,11 @@ type AreaEvent = {
   area: string | null
   date: string
   start_time: string | null
+  end_time: string | null
   type: string | null
   music: string[] | null
+  price_from: number | null
+  cover: string | null
   event_profile_id: string | null
 }
 
@@ -136,12 +140,6 @@ function formatShortDate(date: string) {
   })
 }
 
-function profileHref(event: AreaEvent) {
-  return event.event_profile_id
-    ? `/eventos/grupo/${event.event_profile_id}`
-    : `/eventos/${event.slug}`
-}
-
 export function AreasSection() {
   const [events, setEvents] = useState<AreaEvent[]>([])
   const [selectedArea, setSelectedArea] = useState<string | null>(null)
@@ -152,7 +150,7 @@ export function AreasSection() {
 
       const { data, error } = await supabase
         .from('events')
-        .select('id, slug, title, venue, area, date, start_time, type, music, event_profile_id')
+        .select('id, slug, title, venue, area, date, start_time, end_time, type, music, price_from, cover, event_profile_id')
         .eq('published', true)
         .eq('status', 'approved')
         .gte('date', today)
@@ -203,6 +201,18 @@ export function AreasSection() {
     () => areaSummaries.find((area) => area.name === selectedArea) || null,
     [areaSummaries, selectedArea]
   )
+
+  const activeAreaEvents = useMemo(() => {
+    if (!selectedArea) return []
+
+    return events
+      .filter((event) => displayAreaName(event.area) === selectedArea)
+      .sort((first, second) => {
+        if (first.date !== second.date) return first.date.localeCompare(second.date)
+        return (first.start_time || '').localeCompare(second.start_time || '')
+      })
+      .slice(0, 8)
+  }, [events, selectedArea])
 
   return (
     <section id="zonas" className="container-page py-12">
@@ -272,42 +282,7 @@ export function AreasSection() {
               ))}
             </div>
 
-            {activeArea ? (
-              <div className="mt-6 rounded-2xl border border-brand-500/30 bg-slate-950/50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-400">
-                  Próximo en {activeArea.name}
-                </p>
-                <h3 className="mt-2 text-xl font-bold text-white">
-                  {activeArea.nextEvent.title}
-                </h3>
-                <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-300">
-                  <span className="badge">
-                    {formatShortDate(activeArea.nextEvent.date)}
-                    {activeArea.nextEvent.start_time
-                      ? ` · ${activeArea.nextEvent.start_time.slice(0, 5)}`
-                      : ''}
-                  </span>
-                  {activeArea.nextEvent.type && (
-                    <span className="badge">{activeArea.nextEvent.type}</span>
-                  )}
-                  <span className="badge">
-                    {activeArea.count} evento{activeArea.count === 1 ? '' : 's'}
-                  </span>
-                </div>
-                {activeArea.nextEvent.venue && (
-                  <p className="mt-3 flex items-center gap-2 text-sm text-slate-400">
-                    <MapPin className="h-4 w-4 text-brand-500" />
-                    {activeArea.nextEvent.venue}
-                  </p>
-                )}
-                <Link
-                  href={profileHref(activeArea.nextEvent)}
-                  className="mt-4 inline-flex rounded-full bg-brand-500 px-5 py-2 text-sm font-bold text-white transition hover:bg-brand-400"
-                >
-                  Ver evento
-                </Link>
-              </div>
-            ) : (
+            {!activeArea && (
               <p className="mt-6 rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-400">
                 Selecciona una zona para ver su próximo evento.
               </p>
@@ -315,6 +290,88 @@ export function AreasSection() {
           </div>
         </div>
       </div>
+
+      {activeArea && (
+        <div className="mt-8">
+          <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-500">
+                Eventos por zona
+              </p>
+              <h2 className="mt-2 text-3xl font-bold tracking-tight text-white">
+                Próximos eventos en {activeArea.name}
+              </h2>
+            </div>
+            <p className="text-sm font-semibold text-slate-300">
+              {activeArea.count} evento{activeArea.count === 1 ? '' : 's'} próximo
+              {activeArea.count === 1 ? '' : 's'}
+            </p>
+          </div>
+
+          <div className="-mx-4 flex snap-x snap-proximity items-center gap-1.5 overflow-x-auto px-[24vw] pb-6 pt-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+            {activeAreaEvents.map((event) => (
+              <article
+                key={event.slug}
+                className="group relative flex aspect-[9/16] min-w-[48vw] snap-center overflow-hidden rounded-[1.35rem] border border-white/10 bg-slate-900 transition duration-300 ease-out hover:border-brand-500/40 sm:card sm:aspect-auto sm:min-w-0 sm:flex-col sm:rounded-3xl"
+              >
+                <Link
+                  href={`/eventos/${event.slug}`}
+                  aria-label={`Ver ${event.title}`}
+                  className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105 sm:relative sm:h-44 sm:min-h-0 sm:w-full sm:shrink-0"
+                  style={{
+                    backgroundImage: `url(${
+                      event.cover ||
+                      'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
+                    })`,
+                  }}
+                />
+
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent sm:hidden" />
+                <FavoriteButton
+                  eventId={event.id}
+                  eventProfileId={event.event_profile_id}
+                  className="absolute right-3 top-3 z-20"
+                />
+
+                <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-end p-4 sm:justify-start">
+                  <div className="mb-2 flex flex-wrap gap-1.5 sm:mb-3 sm:gap-2">
+                    {event.type && <span className="badge">{event.type}</span>}
+                    <span className="badge">{activeArea.name}</span>
+                    <span className="badge">
+                      Desde {event.price_from === 0 ? 'gratis' : `${event.price_from || 0}€`}
+                    </span>
+                  </div>
+
+                  <h3 className="line-clamp-2 text-base font-semibold leading-tight text-white sm:text-lg">
+                    {event.title}
+                  </h3>
+
+                  <p className="mt-2 line-clamp-2 text-xs text-slate-200 sm:text-sm sm:text-slate-300">
+                    {event.venue} · {new Date(event.date).toLocaleDateString('es-ES')} ·{' '}
+                    {event.start_time?.slice(0, 5)}
+                    {event.end_time ? ` - ${event.end_time.slice(0, 5)}` : ''}
+                  </p>
+
+                  <div className="mt-3 hidden flex-wrap gap-1.5 sm:mt-5 sm:flex sm:gap-2">
+                    {(event.music || []).slice(0, 2).map((item) => (
+                      <span key={item} className="badge">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+
+                  <Link
+                    href={`/eventos/${event.slug}`}
+                    className="mt-3 text-sm font-semibold text-brand-500 hover:underline sm:mt-auto sm:pt-4"
+                  >
+                    Ver evento →
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   )
 }
