@@ -11,7 +11,10 @@
     "scout-events": "tsx --env-file=.env.local scripts/tardea-scout.ts",
     "scout-discover": "tsx --env-file=.env.local scripts/tardea-scout-discover.ts",
     "scout-auto": "npm run scout-discover && npm run scout-events -- --sources=scripts/scout-sources.generated.json",
-    "scout-check": "tsx --env-file=.env.local scripts/tardea-scout-check.ts"
+    "scout-check": "tsx --env-file=.env.local scripts/tardea-scout-check.ts",
+    "ios:add": "npx cap add ios",
+    "ios:sync": "npx cap sync ios",
+    "ios:open": "npx cap open ios"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.8",
@@ -21,6 +24,9 @@
     "react-dom": "18.3.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/ios": "^8.5.0",
     "@types/node": "20.14.12",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
