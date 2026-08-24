@@ -4,9 +4,13 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   CalendarDays,
+  ChevronRight,
   Heart,
+  KeyRound,
+  LogOut,
   MapPin,
   MessageSquare,
+  Pencil,
   Plus,
   Sparkles,
   UserRound,
@@ -427,16 +431,16 @@ export default function AccountPage() {
         }
       >
         {activeTab === 'profile' && (
-        <section className="px-5 pt-4 md:pt-8">
-          <div className="grid grid-cols-[auto_1fr] items-center gap-6">
+        <section className="px-5 pt-3 md:pt-8">
+          <div className="grid grid-cols-[auto_1fr] items-center gap-5">
             <div className="relative">
               <button
                 type="button"
                 onClick={() => avatarInputRef.current?.click()}
-                className="relative flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 via-fuchsia-500 to-orange-400 p-1 sm:h-36 sm:w-36"
+                className="relative flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 via-fuchsia-500 to-orange-400 p-1 sm:h-32 sm:w-32"
                 aria-label="Cambiar foto de perfil"
               >
-                <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-slate-900 text-4xl font-black text-white">
+                <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-slate-900 text-3xl font-black text-white sm:text-4xl">
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}
@@ -447,8 +451,8 @@ export default function AccountPage() {
                     initials || <UserRound className="h-10 w-10" />
                   )}
                 </span>
-                <span className="absolute bottom-1 right-1 flex h-11 w-11 items-center justify-center rounded-full border-4 border-slate-950 bg-white text-slate-950">
-                  <Plus className="h-6 w-6" />
+                <span className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-4 border-slate-950 bg-white text-slate-950 sm:h-10 sm:w-10">
+                  <Plus className="h-5 w-5" />
                 </span>
               </button>
 
@@ -473,27 +477,27 @@ export default function AccountPage() {
             </div>
 
             <div className="min-w-0">
-              <h1 className="truncate text-2xl font-black text-white sm:text-4xl">
+              <h1 className="truncate text-xl font-black text-white sm:text-3xl">
                 {displayName}
               </h1>
-              <p className="mt-1 truncate text-sm text-slate-400">{email}</p>
+              <p className="mt-1 truncate text-xs text-slate-400 sm:text-sm">{email}</p>
 
-              <div className="mt-6 grid grid-cols-3 gap-4 text-center">
+              <div className="mt-4 grid grid-cols-3 gap-3 text-center">
                 <div>
-                  <p className="text-3xl font-black text-white">
+                  <p className="text-2xl font-black text-white">
                     {favoriteProfiles.length + favoriteEvents.length}
                   </p>
-                  <p className="text-sm text-slate-300">Favoritos</p>
+                  <p className="text-xs text-slate-300">Favoritos</p>
                 </div>
                 <div>
-                  <p className="text-3xl font-black text-white">
+                  <p className="text-2xl font-black text-white">
                     {favoriteProfiles.length}
                   </p>
-                  <p className="text-sm text-slate-300">Planes</p>
+                  <p className="text-xs text-slate-300">Planes</p>
                 </div>
                 <div>
-                  <p className="text-3xl font-black text-white">0</p>
-                  <p className="text-sm text-slate-300">Chats</p>
+                  <p className="text-2xl font-black text-white">0</p>
+                  <p className="text-xs text-slate-300">Chats</p>
                 </div>
               </div>
             </div>
@@ -502,61 +506,73 @@ export default function AccountPage() {
         )}
 
         {activeTab === 'profile' && (
-          <section className="px-5 py-8">
+          <section className="px-5 py-5">
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-                <p className="text-sm text-slate-400">Zona</p>
-                <p className="mt-2 text-lg font-bold text-white">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs text-slate-400">Zona</p>
+                <p className="mt-1 text-base font-bold text-white">
                   {profile?.municipality || 'Sin definir'}
                 </p>
               </div>
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-                <p className="text-sm text-slate-400">Gustos</p>
-                <p className="mt-2 text-lg font-bold text-white">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs text-slate-400">Gustos</p>
+                <p className="mt-1 text-base font-bold text-white">
                   {profile?.music_preferences?.length
                     ? profile.music_preferences.join(', ')
                     : 'Sin definir'}
                 </p>
               </div>
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-                <p className="text-sm text-slate-400">Tardeos visitados</p>
-                <p className="mt-2 text-lg font-bold text-white">Próximamente</p>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs text-slate-400">Tardeos visitados</p>
+                <p className="mt-1 text-base font-bold text-white">Próximamente</p>
               </div>
             </div>
 
-            <div className="mt-5 rounded-3xl border border-white/10 bg-white/5 p-4">
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-brand-500">
+            <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+              <p className="px-4 pt-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-500">
                 Preferencias
               </p>
 
-              <div className="mt-4 grid gap-3">
+              <div className="mt-3 divide-y divide-white/10">
                 <Link
                   href="/cuenta/perfil"
-                  className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-brand-500 px-5 py-3 font-bold text-white transition hover:bg-brand-400"
+                  className="flex min-h-12 items-center justify-between px-4 py-3 text-sm font-bold text-white transition hover:bg-white/10"
                 >
-                  Editar perfil
+                  <span className="flex items-center gap-3">
+                    <Pencil className="h-4 w-4 text-brand-500" />
+                    Editar perfil
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-slate-500" />
                 </Link>
 
                 <button
                   type="button"
                   onClick={handlePasswordRecovery}
                   disabled={sendingPasswordEmail}
-                  className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 py-3 font-bold text-slate-200 transition hover:border-brand-500/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex min-h-12 w-full items-center justify-between px-4 py-3 text-left text-sm font-bold text-slate-200 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {sendingPasswordEmail ? 'Enviando...' : 'Cambiar contraseña'}
+                  <span className="flex items-center gap-3">
+                    <KeyRound className="h-4 w-4 text-brand-500" />
+                    {sendingPasswordEmail ? 'Enviando...' : 'Cambiar contraseña'}
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-slate-500" />
                 </button>
 
                 <button
                   type="button"
                   onClick={handleSignOut}
-                  className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-brand-500/40 bg-transparent px-5 py-3 font-bold text-slate-200 transition hover:bg-brand-500/10 hover:text-white"
+                  className="flex min-h-12 w-full items-center justify-between px-4 py-3 text-left text-sm font-bold text-slate-200 transition hover:bg-brand-500/10 hover:text-white"
                 >
-                  Cerrar sesión
+                  <span className="flex items-center gap-3">
+                    <LogOut className="h-4 w-4 text-brand-500" />
+                    Cerrar sesión
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-slate-500" />
                 </button>
               </div>
 
               {passwordMessage && (
-                <p className="mt-3 text-sm font-medium text-slate-300">
+                <p className="border-t border-white/10 px-4 py-3 text-xs font-medium text-slate-300">
                   {passwordMessage}
                 </p>
               )}
