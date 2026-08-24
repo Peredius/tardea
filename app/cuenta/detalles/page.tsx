@@ -359,7 +359,9 @@ export default function AccountDetailsPage() {
             <p className="text-xs font-black uppercase tracking-[0.22em] text-brand-500">
               Confirmación
             </p>
-            <h2 className="mt-2 text-2xl font-black text-white">¿Eliminar cuenta?</h2>
+            <h2 className="mt-2 text-2xl font-black text-white">
+              ¿Seguro que quieres eliminar tu cuenta?
+            </h2>
             <p className="mt-3 text-sm leading-6 text-slate-300">
               Tu cuenta se eliminará de TARDEA. Esta acción no se puede deshacer.
             </p>
