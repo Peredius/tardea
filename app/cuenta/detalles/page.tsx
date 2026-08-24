@@ -177,14 +177,19 @@ export default function AccountDetailsPage() {
                     Confirmado
                   </span>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={handleSendConfirmationEmail}
-                    disabled={sendingConfirmationEmail}
-                    className="shrink-0 rounded-full border border-brand-500/40 px-3 py-1 text-[11px] font-black text-brand-400 disabled:opacity-60"
-                  >
-                    {sendingConfirmationEmail ? 'Enviando...' : 'Confirmar correo'}
-                  </button>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="hidden rounded-full bg-amber-400/15 px-3 py-1 text-[11px] font-black text-amber-200 sm:inline-flex">
+                      Correo no verificado
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleSendConfirmationEmail}
+                      disabled={sendingConfirmationEmail}
+                      className="rounded-full border border-brand-500/40 px-3 py-1 text-[11px] font-black text-brand-400 disabled:opacity-60"
+                    >
+                      {sendingConfirmationEmail ? 'Enviando...' : 'Confirmar'}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

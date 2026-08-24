@@ -94,8 +94,6 @@ export default function AccountPage() {
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarMessage, setAvatarMessage] = useState('')
   const [emailConfirmed, setEmailConfirmed] = useState(false)
-  const [accountMessage, setAccountMessage] = useState('')
-  const [sendingConfirmationEmail, setSendingConfirmationEmail] = useState(false)
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -343,32 +341,6 @@ export default function AccountPage() {
     window.location.href = '/'
   }
 
-  async function handleSendConfirmationEmail() {
-    setAccountMessage('')
-
-    if (!email) {
-      setAccountMessage('No se ha podido detectar el correo de tu cuenta.')
-      return
-    }
-
-    setSendingConfirmationEmail(true)
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-    setSendingConfirmationEmail(false)
-
-    if (error) {
-      setAccountMessage(`No se pudo enviar la confirmación: ${error.message}`)
-      return
-    }
-
-    setAccountMessage('Te hemos enviado un correo de confirmación.')
-  }
-
   async function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     if (!file || !userId) return
@@ -469,6 +441,17 @@ export default function AccountPage() {
                   <Plus className="h-5 w-5" />
                 </span>
               </button>
+              <button
+                type="button"
+                onClick={() => changeAccountTab('chats')}
+                className="absolute -right-1 -top-1 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-slate-950 text-slate-200 shadow-xl transition hover:border-brand-500/50 hover:text-white"
+                aria-label="Abrir chats"
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-500 px-1 text-[9px] font-black text-white">
+                  0
+                </span>
+              </button>
 
               <input
                 ref={avatarInputRef}
@@ -491,12 +474,40 @@ export default function AccountPage() {
             </div>
 
             <div className="min-w-0">
-              <h1 className="truncate text-xl font-black text-white sm:text-3xl">
-                {displayName}
-              </h1>
-              <p className="mt-1 truncate text-xs text-slate-400 sm:text-sm">
-                {population}
-              </p>
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div className="min-w-0">
+                  <h1 className="truncate text-xl font-black text-white sm:text-3xl">
+                    {displayName}
+                  </h1>
+                  <p className="mt-1 truncate text-xs text-slate-400 sm:text-sm">
+                    {population}
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <p className="truncate text-xs font-semibold text-slate-300 sm:text-sm">
+                      {email}
+                    </p>
+                    {emailConfirmed ? (
+                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-black text-emerald-300">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Verificado
+                      </span>
+                    ) : (
+                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-400/15 px-2 py-1 text-[10px] font-black text-amber-200">
+                        Correo no verificado
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 md:min-w-[220px] md:text-right">
+                  <p className="text-[11px] font-semibold text-slate-400">Gustos</p>
+                  <p className="mt-1 line-clamp-2 text-sm font-black text-white">
+                    {profile?.music_preferences?.length
+                      ? profile.music_preferences.join(', ')
+                      : 'Sin definir'}
+                  </p>
+                </div>
+              </div>
 
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
                 <button
@@ -508,6 +519,9 @@ export default function AccountPage() {
                     {favoriteProfiles.length + favoriteEvents.length}
                   </p>
                   <p className="text-xs text-slate-300">Favoritos</p>
+                  <p className="mt-1 text-[10px] font-semibold text-slate-500">
+                    Visitados: próximamente
+                  </p>
                 </button>
                 <button
                   type="button"
@@ -535,49 +549,7 @@ export default function AccountPage() {
 
         {activeTab === 'profile' && (
           <section className="px-5 py-5">
-            <div className="mb-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p className="text-xs text-slate-400">Correo electrónico</p>
-              <div className="mt-1 flex items-center justify-between gap-3">
-                <p className="truncate text-base font-bold text-white">{email}</p>
-                {emailConfirmed ? (
-                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-black text-emerald-300">
-                    <CheckCircle2 className="h-3 w-3" />
-                    Verificado
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleSendConfirmationEmail}
-                    disabled={sendingConfirmationEmail}
-                    className="shrink-0 rounded-full border border-brand-500/40 px-3 py-1 text-[10px] font-black text-brand-400 disabled:opacity-60"
-                  >
-                    {sendingConfirmationEmail ? 'Enviando...' : 'Verificar'}
-                  </button>
-                )}
-              </div>
-              {accountMessage && (
-                <p className="mt-2 text-xs font-medium text-slate-300">
-                  {accountMessage}
-                </p>
-              )}
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-xs text-slate-400">Gustos</p>
-                <p className="mt-1 text-base font-bold text-white">
-                  {profile?.music_preferences?.length
-                    ? profile.music_preferences.join(', ')
-                    : 'Sin definir'}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-xs text-slate-400">Tardeos visitados</p>
-                <p className="mt-1 text-base font-bold text-white">Próximamente</p>
-              </div>
-            </div>
-
-            <div className="mt-8 hidden space-y-8 md:block">
+            <div className="hidden space-y-8 md:block">
               <section>
                 <div className="mb-4 flex items-end justify-between gap-4">
                   <div>
