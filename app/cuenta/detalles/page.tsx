@@ -224,7 +224,7 @@ export default function AccountDetailsPage() {
           Volver
         </Link>
 
-        <section className="mx-auto mt-8 max-w-xl md:max-w-5xl">
+        <section className="mt-8 max-w-xl md:max-w-5xl">
           <p className="text-sm font-black uppercase tracking-[0.25em] text-brand-500">
             Mi cuenta
           </p>
@@ -274,9 +274,9 @@ export default function AccountDetailsPage() {
               </div>
             </div>
 
-            <div className="p-5 md:mt-8 md:px-0">
+            <div className="p-5 md:mt-8 md:px-0 md:py-0">
               <p className="text-xs text-slate-400">Correo electrónico</p>
-              <div className="mt-2 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
+              <div className="mt-2 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 md:border-transparent md:bg-transparent md:px-0">
                 <p className="truncate text-base font-black text-white">{email}</p>
                 {emailConfirmed ? (
                   <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-black text-emerald-300">
@@ -301,24 +301,24 @@ export default function AccountDetailsPage() {
               </div>
             </div>
 
-            <div className="divide-y divide-white/10 border-t border-white/10 md:mt-2 md:grid md:grid-cols-2 md:gap-4 md:divide-y-0 md:border-t-0">
+            <div className="divide-y divide-white/10 border-t border-white/10 md:mt-6 md:space-y-4 md:divide-y-0 md:pt-4">
               <button
                 type="button"
                 onClick={handlePasswordRecovery}
                 disabled={sendingPasswordEmail}
-                className="flex min-h-14 w-full items-center gap-3 px-5 py-4 text-left text-sm font-black text-white transition hover:bg-white/10 disabled:opacity-60 md:rounded-2xl md:border md:border-white/10 md:bg-white/5"
+                className="flex min-h-14 w-full items-center gap-3 px-5 py-4 text-left text-sm font-black text-white transition hover:bg-white/10 disabled:opacity-60 md:min-h-0 md:w-fit md:px-0 md:py-2 md:hover:bg-transparent"
               >
                 <KeyRound className="h-4 w-4 text-brand-500" />
                 {sendingPasswordEmail ? 'Enviando correo...' : 'Cambiar contraseña'}
               </button>
 
-              <div className="px-5 py-4 md:rounded-2xl md:border md:border-white/10 md:bg-white/5">
-                <label className="flex items-center gap-3 text-sm font-black text-white">
+              <div className="px-5 py-4 md:flex md:items-center md:gap-3 md:px-0 md:py-2">
+                <label className="flex items-center gap-3 text-sm font-black text-white md:min-w-40">
                   <Mail className="h-4 w-4 text-brand-500" />
                   Cambiar correo
                 </label>
                 <input
-                  className="input mt-3"
+                  className="input mt-3 md:mt-0 md:min-h-11 md:flex-1 md:bg-transparent"
                   type="email"
                   value={newEmail}
                   onChange={(event) => setNewEmail(event.target.value)}
@@ -326,7 +326,7 @@ export default function AccountDetailsPage() {
                 <button
                   type="button"
                   onClick={handleChangeEmail}
-                  className="mt-3 min-h-12 w-full rounded-2xl border border-brand-500/45 px-4 text-sm font-black text-white transition hover:bg-brand-500/10"
+                  className="mt-3 min-h-12 w-full rounded-2xl border border-brand-500/45 px-4 text-sm font-black text-white transition hover:bg-brand-500/10 md:mt-0 md:w-auto md:bg-transparent md:px-5"
                 >
                   Enviar confirmación
                 </button>
@@ -336,7 +336,7 @@ export default function AccountDetailsPage() {
                 type="button"
                 onClick={() => setShowDeleteConfirm(true)}
                 disabled={deletingAccount}
-                className="flex min-h-14 w-full items-center gap-3 px-5 py-4 text-left text-sm font-black text-rose-300 transition hover:bg-rose-500/10 disabled:opacity-60 md:col-span-2 md:rounded-2xl md:border md:border-rose-500/30 md:bg-rose-500/5"
+                className="flex min-h-14 w-full items-center gap-3 px-5 py-4 text-left text-sm font-black text-rose-300 transition hover:bg-rose-500/10 disabled:opacity-60 md:min-h-0 md:w-fit md:px-0 md:py-2 md:hover:bg-transparent"
               >
                 <Trash2 className="h-4 w-4" />
                 {deletingAccount ? 'Eliminando cuenta...' : 'Eliminar cuenta'}
