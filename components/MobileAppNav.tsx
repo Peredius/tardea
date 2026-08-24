@@ -94,11 +94,9 @@ export function MobileAppNav() {
 
   const accountHref = user ? '/cuenta' : '/login?type=user'
   const accountOnlyHref = (href: string) => (user ? href : '/login?type=user')
-  const recommendationsHref = user ? '/cuenta?tab=suggestions' : '/?tab=for-you#destacados'
+  const recommendationsHref = accountOnlyHref('/cuenta?tab=suggestions')
   const isAccount = pathname.startsWith('/cuenta')
-  const isRecommendations = user
-    ? isAccount && activeTab === 'suggestions'
-    : pathname === '/' && (activeTab === 'for-you' || homeHash === 'destacados')
+  const isRecommendations = Boolean(user && isAccount && activeTab === 'suggestions')
   const isNearMe = pathname === '/' && homeView === 'map'
   const isSearch = pathname === '/' && !isRecommendations && homeView !== 'map'
   const isAuthScreen = pathname === '/login' || pathname === '/register'
@@ -135,9 +133,9 @@ export function MobileAppNav() {
             active={isRecommendations}
             label="Para ti"
             onClick={() => {
-              setActiveTab(user ? 'suggestions' : 'for-you')
+              setActiveTab(user ? 'suggestions' : '')
               setHomeView('')
-              setHomeHash(user ? '' : 'destacados')
+              setHomeHash('')
               if (user) {
                 window.dispatchEvent(
                   new CustomEvent('tardeaAccountTabChanged', {
