@@ -440,6 +440,22 @@ export default function AccountPage() {
 
         {activeTab === 'profile' && (
           <section className="px-5 py-5">
+            <div className="mb-5 grid gap-3 md:hidden">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs text-slate-400">Gustos</p>
+                <p className="mt-2 text-base font-black text-white">
+                  {profile?.music_preferences?.length
+                    ? profile.music_preferences.join(', ')
+                    : 'Completa tus gustos'}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs text-slate-400">Tardeos visitados</p>
+                <p className="mt-2 text-base font-black text-white">Próximamente</p>
+              </div>
+            </div>
+
             <div className="hidden space-y-8 md:block">
               <section>
                 <div className="mb-4 flex items-end justify-between gap-4">
