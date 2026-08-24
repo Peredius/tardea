@@ -64,6 +64,7 @@ type FavoriteProfile = {
 }
 
 type AccountTab = 'profile' | 'favorites' | 'suggestions' | 'compare' | 'chats'
+type ConfirmAction = 'signout' | 'delete' | null
 
 function eventSeriesKey(event: FavoriteEvent) {
   return event.event_profile_id || `${normalizeMusicKey(event.title)}__${normalizeMusicKey(event.venue)}`
@@ -104,6 +105,7 @@ export default function AccountPage() {
   const [showAccountDetails, setShowAccountDetails] = useState(false)
   const [sendingConfirmationEmail, setSendingConfirmationEmail] = useState(false)
   const [deletingAccount, setDeletingAccount] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -346,10 +348,7 @@ export default function AccountPage() {
     .toUpperCase()
 
   async function handleSignOut() {
-    if (!window.confirm('¿De verdad quieres cerrar sesión?')) {
-      return
-    }
-
+    setConfirmAction(null)
     await supabase.auth.signOut()
     window.location.href = '/'
   }
@@ -422,10 +421,7 @@ export default function AccountPage() {
   }
 
   async function handleDeleteAccount() {
-    if (!window.confirm('¿De verdad quieres eliminar tu cuenta? Esta acción no se puede deshacer.')) {
-      return
-    }
-
+    setConfirmAction(null)
     setDeletingAccount(true)
     setAccountMessage('')
 
@@ -727,7 +723,7 @@ export default function AccountPage() {
 
                     <button
                       type="button"
-                      onClick={handleDeleteAccount}
+                      onClick={() => setConfirmAction('delete')}
                       disabled={deletingAccount}
                       className="flex min-h-11 w-full items-center justify-between rounded-2xl border border-red-300/20 px-4 text-left text-sm font-bold text-red-300 transition hover:bg-red-500/10 hover:text-red-200 disabled:opacity-60"
                     >
@@ -748,7 +744,7 @@ export default function AccountPage() {
 
                 <button
                   type="button"
-                  onClick={handleSignOut}
+                  onClick={() => setConfirmAction('signout')}
                   className="mt-3 flex min-h-12 w-full items-center justify-center gap-3 rounded-2xl border border-brand-500/40 px-4 py-3 text-center text-sm font-black text-white transition hover:bg-brand-500/10"
                 >
                   <LogOut className="h-4 w-4 text-brand-500" />
@@ -1030,6 +1026,57 @@ export default function AccountPage() {
           </section>
         )}
       </div>
+
+      {confirmAction && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 px-5 backdrop-blur-md">
+          <div className="w-full max-w-sm rounded-[28px] border border-brand-500/35 bg-slate-950 p-5 shadow-2xl shadow-brand-500/10">
+            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-500/15 text-brand-500">
+              {confirmAction === 'delete' ? (
+                <Trash2 className="h-5 w-5" />
+              ) : (
+                <LogOut className="h-5 w-5" />
+              )}
+            </div>
+
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-brand-500">
+              Confirmación
+            </p>
+            <h2 className="mt-2 text-2xl font-black text-white">
+              {confirmAction === 'delete'
+                ? '¿Eliminar cuenta?'
+                : '¿Cerrar sesión?'}
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              {confirmAction === 'delete'
+                ? 'Tu cuenta se eliminará de TARDEA. Esta acción no se puede deshacer.'
+                : 'Saldrás de tu cuenta en este dispositivo.'}
+            </p>
+
+            <div className="mt-6 grid gap-3">
+              <button
+                type="button"
+                onClick={confirmAction === 'delete' ? handleDeleteAccount : handleSignOut}
+                disabled={deletingAccount}
+                className="min-h-12 rounded-2xl bg-brand-500 px-4 text-sm font-black text-white transition hover:bg-brand-400 disabled:opacity-60"
+              >
+                {confirmAction === 'delete'
+                  ? deletingAccount
+                    ? 'Eliminando...'
+                    : 'Sí, eliminar cuenta'
+                  : 'Sí, cerrar sesión'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmAction(null)}
+                disabled={deletingAccount}
+                className="min-h-12 rounded-2xl border border-white/10 bg-white/5 px-4 text-sm font-black text-white transition hover:bg-white/10 disabled:opacity-60"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </main>
     </>
   )
