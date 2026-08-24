@@ -346,6 +346,10 @@ export default function AccountPage() {
     .toUpperCase()
 
   async function handleSignOut() {
+    if (!window.confirm('¿De verdad quieres cerrar sesión?')) {
+      return
+    }
+
     await supabase.auth.signOut()
     window.location.href = '/'
   }
@@ -745,13 +749,10 @@ export default function AccountPage() {
                 <button
                   type="button"
                   onClick={handleSignOut}
-                  className="flex min-h-12 w-full items-center justify-between px-4 py-3 text-left text-sm font-bold text-slate-200 transition hover:bg-brand-500/10 hover:text-white"
+                  className="mt-3 flex min-h-12 w-full items-center justify-center gap-3 rounded-2xl border border-brand-500/40 px-4 py-3 text-center text-sm font-black text-white transition hover:bg-brand-500/10"
                 >
-                  <span className="flex items-center gap-3">
-                    <LogOut className="h-4 w-4 text-brand-500" />
-                    Cerrar sesión
-                  </span>
-                  <ChevronRight className="h-4 w-4 text-slate-500" />
+                  <LogOut className="h-4 w-4 text-brand-500" />
+                  Cerrar sesión
                 </button>
               </div>
             </div>
