@@ -290,6 +290,7 @@ export default function AdminEventSeriesPage() {
   const [loading, setLoading] = useState(true)
   const [events, setEvents] = useState<any[]>([])
   const [researchItems, setResearchItems] = useState<any[]>([])
+  const [eventProfile, setEventProfile] = useState<any>(null)
   const [message, setMessage] = useState('')
   const [editingEventId, setEditingEventId] = useState('')
   const [editingExtrasDraft, setEditingExtrasDraft] = useState('')
@@ -382,7 +383,21 @@ export default function AdminEventSeriesPage() {
       return
     }
 
-    setEvents((data || []).filter((event) => getEventSeriesSlug(event) === series || getLegacyEventSeriesSlug(event) === series))
+    const seriesEvents = (data || []).filter((event) => getEventSeriesSlug(event) === series || getLegacyEventSeriesSlug(event) === series)
+    setEvents(seriesEvents)
+
+    const profileId = seriesEvents.find((event) => event.event_profile_id)?.event_profile_id
+    if (profileId) {
+      const { data: profileData } = await supabase
+        .from('promoter_event_profiles')
+        .select('*')
+        .eq('id', profileId)
+        .maybeSingle()
+
+      setEventProfile(profileData || null)
+    } else {
+      setEventProfile(null)
+    }
 
     const { data: researchData } = await supabase
       .from('event_research_items')
@@ -398,12 +413,22 @@ export default function AdminEventSeriesPage() {
   }, [series])
 
   const mainEvent = events[0] || researchItems[0]
+  const profileCover = eventProfile?.logo_url || eventProfile?.banner_url || ''
+  const headerCover = profileCover || mainEvent?.cover || ''
+  const baseTitle = eventProfile?.name || mainEvent?.title || ''
+  const baseVenue = eventProfile?.venue_name || mainEvent?.venue || ''
+  const baseArea = eventProfile?.area || mainEvent?.area || ''
+  const baseType = eventProfile?.type || mainEvent?.type || 'Tardeo'
+  const baseMusic = eventProfile?.music || mainEvent?.music || 'Comercial'
+  const baseAudience = eventProfile?.audience || mainEvent?.audience || 'Mixto'
+  const basePrice = eventProfile?.price_from ?? mainEvent?.price_from ?? 0
+  const profileDescription = eventProfile?.description || ''
   const eventDescriptions = useMemo(
     () => Array.from(new Set(events.map((event) => (event.description || '').trim()).filter(Boolean))),
     [events]
   )
-  const baseDescription = (researchItems[0]?.notes || (eventDescriptions.length <= 1 ? eventDescriptions[0] : '') || '').trim()
-  const isProfileReviewed = Boolean(mainEvent?.profile_reviewed)
+  const baseDescription = (profileDescription || researchItems[0]?.notes || (eventDescriptions.length <= 1 ? eventDescriptions[0] : '') || '').trim()
+  const isProfileReviewed = Boolean(eventProfile?.profile_reviewed ?? mainEvent?.profile_reviewed)
   const isSeriesFeatured = events.some((event) => event.featured)
   const upcomingEvents = useMemo(
     () => events.filter((event) => !event.date || event.date >= new Date().toISOString().slice(0, 10)),
@@ -440,24 +465,26 @@ export default function AdminEventSeriesPage() {
   const monitorUrl = getFirstUrl(mainEvent?.website_url, websiteUrl, ticketUrl, mainEvent?.source_url)
 
   function openBaseEditor() {
-    const currentCover = mainEvent.cover || ''
+    const currentCover = profileCover || mainEvent.cover || ''
     setBaseForm({
-      title: mainEvent.title || '',
+      title: eventProfile?.name || mainEvent.title || '',
       promoter_group: mainEvent.promoter_group || '',
-      type: mainEvent.type || 'Tardeo',
-      music: Array.isArray(mainEvent.music)
-        ? mainEvent.music
-        : (mainEvent.music || 'Comercial').split(',').map((item: string) => item.trim()).filter(Boolean),
-      audience: mainEvent.audience || 'Mixto',
-      venue: mainEvent.venue || '',
-      area: mainEvent.area || 'Madrid',
-      address: mainEvent.address || '',
-      maps_url: mainEvent.maps_url || '',
-      price_from: mainEvent.price_from?.toString() || '0',
-      website_url: getFirstUrl(mainEvent.website_url, websiteUrl),
+      type: eventProfile?.type || mainEvent.type || 'Tardeo',
+      music: Array.isArray(eventProfile?.music)
+        ? eventProfile.music
+        : Array.isArray(mainEvent.music)
+          ? mainEvent.music
+          : (eventProfile?.music || mainEvent.music || 'Comercial').split(',').map((item: string) => item.trim()).filter(Boolean),
+      audience: eventProfile?.audience || mainEvent.audience || 'Mixto',
+      venue: eventProfile?.venue_name || mainEvent.venue || '',
+      area: eventProfile?.area || mainEvent.area || 'Madrid',
+      address: eventProfile?.address || mainEvent.address || '',
+      maps_url: eventProfile?.maps_url || mainEvent.maps_url || '',
+      price_from: (eventProfile?.price_from ?? mainEvent.price_from)?.toString() || '0',
+      website_url: getFirstUrl(eventProfile?.website_url, mainEvent.website_url, websiteUrl),
       source_url: getFirstUrl(mainEvent.source_url, ticketUrl),
-      instagram_url: getFirstUrl(mainEvent.instagram_url, instagramUrl),
-      tiktok_url: getFirstUrl(mainEvent.tiktok_url, tiktokUrl),
+      instagram_url: getFirstUrl(eventProfile?.instagram_url, mainEvent.instagram_url, instagramUrl),
+      tiktok_url: getFirstUrl(eventProfile?.tiktok_url, mainEvent.tiktok_url, tiktokUrl),
       cover: currentCover,
       description: baseDescription || mainEvent.description || '',
     })
@@ -614,6 +641,12 @@ export default function AdminEventSeriesPage() {
         setMessage(`No se pudo guardar la ficha base: ${profileError.message}`)
         return
       }
+
+      setEventProfile((current: any) => ({
+        ...(current || {}),
+        id: profileId,
+        ...pendingProfilePayload,
+      }))
     }
 
     const researchIds = researchItems.map((item) => item.id).filter(Boolean)
@@ -644,6 +677,7 @@ export default function AdminEventSeriesPage() {
 
     setIsEditingBase(false)
     setBaseCoverFile(null)
+    setBaseForm((current: any) => ({ ...current, cover: coverUrl }))
     setBaseCoverPreview('')
     setBaseSaving(false)
     setMessage('Datos base de la ficha guardados. Los carteles de cada fecha no se han cambiado.')
@@ -1406,14 +1440,14 @@ export default function AdminEventSeriesPage() {
       <section className="mt-8 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
         <div>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            {mainEvent.cover && (
-              <img src={mainEvent.cover} alt="" className="h-16 w-16 rounded-2xl object-cover" />
+            {headerCover && (
+              <img src={headerCover} alt="" className="h-16 w-16 rounded-2xl object-cover" />
             )}
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-500">Ficha interna</p>
-              <h1 className="text-4xl font-black">{mainEvent.title}</h1>
+              <h1 className="text-4xl font-black">{baseTitle}</h1>
               <p className="mt-2 text-slate-400">
-                {[mainEvent.venue, mainEvent.area, mainEvent.type].filter(Boolean).join(' - ')}
+                {[baseVenue, baseArea, baseType].filter(Boolean).join(' - ')}
               </p>
             </div>
           </div>
@@ -1461,10 +1495,10 @@ export default function AdminEventSeriesPage() {
           </div>
           <div className="mt-4 space-y-2 text-sm text-slate-300">
             <p><span className="text-slate-500">Promotor:</span> {mainEvent.promoter_group || 'Sin grupo'}</p>
-            <p><span className="text-slate-500">Tipo:</span> {mainEvent.type || 'Tardeo'}</p>
-            <p><span className="text-slate-500">Musica:</span> {Array.isArray(mainEvent.music) ? mainEvent.music.join(', ') : mainEvent.music || 'Comercial'}</p>
-            <p><span className="text-slate-500">Edad:</span> {mainEvent.audience || 'Mixto'}</p>
-            <p><span className="text-slate-500">Precio:</span> Desde {mainEvent.price_from || 0} EUR</p>
+            <p><span className="text-slate-500">Tipo:</span> {baseType}</p>
+            <p><span className="text-slate-500">Musica:</span> {Array.isArray(baseMusic) ? baseMusic.join(', ') : baseMusic || 'Comercial'}</p>
+            <p><span className="text-slate-500">Edad:</span> {baseAudience}</p>
+            <p><span className="text-slate-500">Precio:</span> Desde {basePrice || 0} EUR</p>
             <p><span className="text-slate-500">Fuente:</span> {mainEvent.source_name || 'No indicada'}</p>
           </div>
           {mainEvent.source_url && (
