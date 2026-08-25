@@ -300,6 +300,7 @@ export default function AdminEventSeriesPage() {
   const [baseCoverFile, setBaseCoverFile] = useState<File | null>(null)
   const [baseCoverPreview, setBaseCoverPreview] = useState('')
   const [baseSaving, setBaseSaving] = useState(false)
+  const [applyingBaseSection, setApplyingBaseSection] = useState('')
   const [uploadingEventCoverId, setUploadingEventCoverId] = useState('')
   const [reviewSaving, setReviewSaving] = useState(false)
   const [featuredSaving, setFeaturedSaving] = useState(false)
@@ -497,14 +498,17 @@ export default function AdminEventSeriesPage() {
     setBaseCoverPreview('')
   }
 
-  async function saveBaseProfile() {
-    setBaseSaving(true)
+  function getBaseMusicList() {
     const musicList = Array.isArray(baseForm.music)
       ? baseForm.music
       : (baseForm.music || '')
-        .split(',')
-        .map((item: string) => item.trim())
-        .filter(Boolean)
+          .split(',')
+          .map((item: string) => item.trim())
+          .filter(Boolean)
+    return musicList.length ? musicList : ['Comercial']
+  }
+
+  async function uploadBaseCover() {
     let coverUrl = baseForm.cover || null
 
     if (baseCoverFile) {
@@ -520,27 +524,40 @@ export default function AdminEventSeriesPage() {
         .upload(fileName, baseCoverFile, { upsert: true })
 
       if (uploadError) {
-        setBaseSaving(false)
-        setMessage(`No se pudo subir el cartel: ${uploadError.message}`)
-        return
+        throw new Error(uploadError.message)
       }
 
       const { data } = supabase.storage.from('events').getPublicUrl(fileName)
       coverUrl = data.publicUrl
     }
 
+    return coverUrl
+  }
+
+  async function saveBaseProfile() {
+    setBaseSaving(true)
+    const musicList = getBaseMusicList()
+    let coverUrl = baseForm.cover || null
+
+    try {
+      coverUrl = await uploadBaseCover()
+    } catch (error: any) {
+      setBaseSaving(false)
+      setMessage(`No se pudo subir el cartel base: ${error.message}`)
+      return
+    }
+
     const sharedPayload = {
       title: baseForm.title || mainEvent.title,
       promoter_group: baseForm.promoter_group || null,
       type: baseForm.type || 'Tardeo',
-      music: musicList.length ? musicList : ['Comercial'],
+      music: musicList,
       audience: baseForm.audience || 'Mixto',
       price_from: baseForm.price_from ? Number(baseForm.price_from) : 0,
       website_url: baseForm.website_url || null,
       source_url: baseForm.source_url || null,
       instagram_url: baseForm.instagram_url || null,
       tiktok_url: baseForm.tiktok_url || null,
-      cover: coverUrl,
       description: baseForm.description || null,
       profile_reviewed: true,
     }
@@ -578,6 +595,37 @@ export default function AdminEventSeriesPage() {
       }
     }
 
+    const profileId = events.find((event) => event.event_profile_id)?.event_profile_id
+    if (profileId) {
+      const { error } = await supabase
+        .from('promoter_event_profiles')
+        .update({
+          name: sharedPayload.title,
+          type: sharedPayload.type,
+          venue_name: baseLocation.venue,
+          area: baseLocation.area,
+          address: baseLocation.address,
+          maps_url: baseLocation.maps_url,
+          music: sharedPayload.music,
+          audience: sharedPayload.audience,
+          price_from: sharedPayload.price_from,
+          website_url: sharedPayload.website_url,
+          instagram_url: sharedPayload.instagram_url,
+          tiktok_url: sharedPayload.tiktok_url,
+          logo_url: coverUrl,
+          banner_url: coverUrl,
+          description: sharedPayload.description,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', profileId)
+
+      if (error) {
+        setBaseSaving(false)
+        setMessage(`Datos guardados en fechas, pero no en la ficha base: ${error.message}`)
+        return
+      }
+    }
+
     const researchIds = researchItems.map((item) => item.id).filter(Boolean)
     if (researchIds.length > 0) {
       const { error } = await supabase
@@ -609,11 +657,98 @@ export default function AdminEventSeriesPage() {
     setBaseCoverFile(null)
     setBaseCoverPreview('')
     setBaseSaving(false)
-    setMessage('Datos base de la ficha guardados')
+    setMessage('Datos base de la ficha guardados. Los carteles de cada fecha no se han cambiado.')
     if (newSeries !== series) {
       router.replace(`/admin/eventos/${newSeries}`)
       return
     }
+    loadEvents()
+  }
+
+  async function applyBaseSectionToAllEvents(section: 'main' | 'location' | 'links' | 'cover' | 'description') {
+    if (events.length === 0) return
+
+    setApplyingBaseSection(section)
+    const musicList = getBaseMusicList()
+    let coverUrl = baseForm.cover || null
+
+    try {
+      if (section === 'cover') {
+        coverUrl = await uploadBaseCover()
+      }
+    } catch (error: any) {
+      setApplyingBaseSection('')
+      setMessage(`No se pudo subir el cartel base: ${error.message}`)
+      return
+    }
+
+    const sectionNames = {
+      main: 'datos principales',
+      location: 'ubicación',
+      links: 'enlaces',
+      cover: 'cartel base',
+      description: 'descripción',
+    }
+
+    const updates = await Promise.all(
+      events.map((event) => {
+        const payload: Record<string, any> = {}
+
+        if (section === 'main') {
+          payload.title = baseForm.title || event.title
+          payload.type = baseForm.type || event.type || 'Tardeo'
+          payload.music = musicList
+          payload.audience = baseForm.audience || event.audience || 'Mixto'
+          payload.price_from = baseForm.price_from ? Number(baseForm.price_from) : 0
+          payload.slug = generateSlug(payload.title, event.date)
+          payload.perks = buildPerksWithExtras(
+            { ...event, title: payload.title, type: payload.type, music: payload.music, audience: payload.audience, price_from: payload.price_from },
+            getEventExtras(event).join(', ')
+          )
+        }
+
+        if (section === 'location') {
+          payload.venue = baseForm.venue || null
+          payload.area = baseForm.area || null
+          payload.address = baseForm.address || null
+          payload.maps_url = baseForm.maps_url || null
+        }
+
+        if (section === 'links') {
+          payload.website_url = baseForm.website_url || null
+          payload.source_url = baseForm.source_url || null
+          payload.instagram_url = baseForm.instagram_url || null
+          payload.tiktok_url = baseForm.tiktok_url || null
+        }
+
+        if (section === 'cover') {
+          payload.cover = coverUrl
+          payload.image_status = coverUrl ? 'base_applied' : null
+        }
+
+        if (section === 'description') {
+          payload.description = baseForm.description || null
+        }
+
+        return supabase.from('events').update(payload).eq('id', event.id)
+      })
+    )
+
+    const failed = updates.find((result) => result.error)
+    setApplyingBaseSection('')
+
+    if (failed?.error) {
+      setMessage(`No se pudo aplicar ${sectionNames[section]}: ${failed.error.message}`)
+      return
+    }
+
+    if (section === 'cover') {
+      setBaseCoverFile(null)
+      setBaseForm((current: any) => ({ ...current, cover: coverUrl }))
+      setBaseCoverPreview(coverUrl || '')
+    }
+
+    setMessage(`Se ha aplicado ${sectionNames[section]} a todas las fechas.`)
     loadEvents()
   }
 
@@ -1375,7 +1510,7 @@ export default function AdminEventSeriesPage() {
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-500">Editar ficha</p>
               <h2 className="text-2xl font-bold">Datos base y enlaces</h2>
-              <p className="mt-1 text-sm text-slate-400">Estos cambios se aplican a todas las fechas de esta ficha.</p>
+              <p className="mt-1 text-sm text-slate-400">El cartel de Datos base es independiente. Usa “Aplicar a todos los eventos” solo cuando quieras copiar una sección a todas las fechas.</p>
             </div>
             <button type="button" onClick={closeBaseEditor} className="text-sm font-semibold text-slate-400 hover:text-white">Cerrar</button>
           </div>
@@ -1429,10 +1564,40 @@ export default function AdminEventSeriesPage() {
               {['Mixto', ...AUDIENCE_OPTIONS].map((option) => <option key={option}>{option}</option>)}
             </select>
             <input className="input" value={baseForm.price_from || ''} onChange={(event) => updateBaseForm('price_from', event.target.value)} placeholder="Precio desde" />
+            <div className="lg:col-span-2">
+              <button
+                type="button"
+                onClick={() => applyBaseSectionToAllEvents('main')}
+                disabled={Boolean(applyingBaseSection)}
+                className="rounded-full border border-brand-500/40 px-4 py-2 text-xs font-bold text-brand-100 hover:border-brand-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {applyingBaseSection === 'main' ? 'Aplicando...' : 'Aplicar datos principales a todos los eventos'}
+              </button>
+            </div>
+            <div className="lg:col-span-2">
+              <button
+                type="button"
+                onClick={() => applyBaseSectionToAllEvents('location')}
+                disabled={Boolean(applyingBaseSection)}
+                className="rounded-full border border-brand-500/40 px-4 py-2 text-xs font-bold text-brand-100 hover:border-brand-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {applyingBaseSection === 'location' ? 'Aplicando...' : 'Aplicar ubicación a todos los eventos'}
+              </button>
+            </div>
             <input className="input" value={baseForm.website_url || ''} onChange={(event) => updateBaseForm('website_url', event.target.value)} placeholder="Web oficial" />
             <input className="input" value={baseForm.source_url || ''} onChange={(event) => updateBaseForm('source_url', event.target.value)} placeholder="Tiquetera" />
             <input className="input" value={baseForm.instagram_url || ''} onChange={(event) => updateBaseForm('instagram_url', event.target.value)} placeholder="Instagram" />
             <input className="input" value={baseForm.tiktok_url || ''} onChange={(event) => updateBaseForm('tiktok_url', event.target.value)} placeholder="TikTok" />
+            <div className="lg:col-span-2">
+              <button
+                type="button"
+                onClick={() => applyBaseSectionToAllEvents('links')}
+                disabled={Boolean(applyingBaseSection)}
+                className="rounded-full border border-brand-500/40 px-4 py-2 text-xs font-bold text-brand-100 hover:border-brand-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {applyingBaseSection === 'links' ? 'Aplicando...' : 'Aplicar enlaces a todos los eventos'}
+              </button>
+            </div>
             <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4 lg:col-span-2">
               <div className="grid gap-4 md:grid-cols-[140px_1fr] md:items-center">
                 <div className="aspect-square overflow-hidden rounded-2xl bg-slate-950">
@@ -1446,16 +1611,26 @@ export default function AdminEventSeriesPage() {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-white">Cartel principal</p>
-                  <p className="mt-1 text-xs text-slate-500">Sube el cartel desde tu ordenador. Se guardara como imagen base de todas las fechas de esta ficha.</p>
-                  <label className="mt-3 inline-flex cursor-pointer rounded-full border border-white/10 px-4 py-2 text-xs font-bold text-slate-200 hover:border-brand-500/60">
-                    Subir cartel
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(event) => handleBaseCoverChange(event.target.files?.[0] || null)}
-                    />
-                  </label>
+                  <p className="mt-1 text-xs text-slate-500">Sube el cartel desde tu ordenador. Se guardará como imagen base de la ficha, sin cambiar los carteles de cada fecha.</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <label className="inline-flex cursor-pointer rounded-full border border-white/10 px-4 py-2 text-xs font-bold text-slate-200 hover:border-brand-500/60">
+                      Subir cartel base
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(event) => handleBaseCoverChange(event.target.files?.[0] || null)}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => applyBaseSectionToAllEvents('cover')}
+                      disabled={Boolean(applyingBaseSection)}
+                      className="rounded-full border border-brand-500/40 px-4 py-2 text-xs font-bold text-brand-100 hover:border-brand-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {applyingBaseSection === 'cover' ? 'Aplicando...' : 'Aplicar cartel a todos los eventos'}
+                    </button>
+                  </div>
                   {baseCoverFile && (
                     <p className="mt-2 truncate text-xs text-brand-200">{baseCoverFile.name}</p>
                   )}
@@ -1463,6 +1638,16 @@ export default function AdminEventSeriesPage() {
               </div>
             </div>
             <textarea className="input lg:col-span-2" value={baseForm.description || ''} onChange={(event) => updateBaseForm('description', event.target.value)} placeholder="Descripcion base de la ficha" />
+            <div className="lg:col-span-2">
+              <button
+                type="button"
+                onClick={() => applyBaseSectionToAllEvents('description')}
+                disabled={Boolean(applyingBaseSection)}
+                className="rounded-full border border-brand-500/40 px-4 py-2 text-xs font-bold text-brand-100 hover:border-brand-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {applyingBaseSection === 'description' ? 'Aplicando...' : 'Aplicar descripción a todos los eventos'}
+              </button>
+            </div>
           </div>
 
           <button type="button" onClick={saveBaseProfile} disabled={baseSaving} className="mt-4 rounded-full bg-brand-500 px-5 py-3 text-sm font-bold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60">
