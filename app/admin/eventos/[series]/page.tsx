@@ -1510,7 +1510,7 @@ export default function AdminEventSeriesPage() {
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-500">Editar ficha</p>
               <h2 className="text-2xl font-bold">Datos base y enlaces</h2>
-              <p className="mt-1 text-sm text-slate-400">El cartel de Datos base es independiente. Usa “Aplicar a todos los eventos” solo cuando quieras copiar una sección a todas las fechas.</p>
+              <p className="mt-1 text-sm text-slate-400">El cartel de Datos base es independiente. Usa “Aplicar a todo” solo cuando quieras copiar una sección a todas las fechas.</p>
             </div>
             <button type="button" onClick={closeBaseEditor} className="text-sm font-semibold text-slate-400 hover:text-white">Cerrar</button>
           </div>
@@ -1569,9 +1569,9 @@ export default function AdminEventSeriesPage() {
                 type="button"
                 onClick={() => applyBaseSectionToAllEvents('main')}
                 disabled={Boolean(applyingBaseSection)}
-                className="rounded-full border border-brand-500/40 px-4 py-2 text-xs font-bold text-brand-100 hover:border-brand-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full border border-brand-500/40 px-3 py-1.5 text-[11px] font-bold text-brand-100 hover:border-brand-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {applyingBaseSection === 'main' ? 'Aplicando...' : 'Aplicar datos principales a todos los eventos'}
+                {applyingBaseSection === 'main' ? 'Aplicando...' : 'Aplicar a todo'}
               </button>
             </div>
             <div className="lg:col-span-2">
@@ -1579,9 +1579,9 @@ export default function AdminEventSeriesPage() {
                 type="button"
                 onClick={() => applyBaseSectionToAllEvents('location')}
                 disabled={Boolean(applyingBaseSection)}
-                className="rounded-full border border-brand-500/40 px-4 py-2 text-xs font-bold text-brand-100 hover:border-brand-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full border border-brand-500/40 px-3 py-1.5 text-[11px] font-bold text-brand-100 hover:border-brand-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {applyingBaseSection === 'location' ? 'Aplicando...' : 'Aplicar ubicación a todos los eventos'}
+                {applyingBaseSection === 'location' ? 'Aplicando...' : 'Aplicar a todo'}
               </button>
             </div>
             <input className="input" value={baseForm.website_url || ''} onChange={(event) => updateBaseForm('website_url', event.target.value)} placeholder="Web oficial" />
@@ -1593,9 +1593,9 @@ export default function AdminEventSeriesPage() {
                 type="button"
                 onClick={() => applyBaseSectionToAllEvents('links')}
                 disabled={Boolean(applyingBaseSection)}
-                className="rounded-full border border-brand-500/40 px-4 py-2 text-xs font-bold text-brand-100 hover:border-brand-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full border border-brand-500/40 px-3 py-1.5 text-[11px] font-bold text-brand-100 hover:border-brand-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {applyingBaseSection === 'links' ? 'Aplicando...' : 'Aplicar enlaces a todos los eventos'}
+                {applyingBaseSection === 'links' ? 'Aplicando...' : 'Aplicar a todo'}
               </button>
             </div>
             <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4 lg:col-span-2">
@@ -1626,9 +1626,9 @@ export default function AdminEventSeriesPage() {
                       type="button"
                       onClick={() => applyBaseSectionToAllEvents('cover')}
                       disabled={Boolean(applyingBaseSection)}
-                      className="rounded-full border border-brand-500/40 px-4 py-2 text-xs font-bold text-brand-100 hover:border-brand-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                      className="rounded-full border border-brand-500/40 px-3 py-1.5 text-[11px] font-bold text-brand-100 hover:border-brand-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {applyingBaseSection === 'cover' ? 'Aplicando...' : 'Aplicar cartel a todos los eventos'}
+                      {applyingBaseSection === 'cover' ? 'Aplicando...' : 'Aplicar a todo'}
                     </button>
                   </div>
                   {baseCoverFile && (
@@ -1643,9 +1643,9 @@ export default function AdminEventSeriesPage() {
                 type="button"
                 onClick={() => applyBaseSectionToAllEvents('description')}
                 disabled={Boolean(applyingBaseSection)}
-                className="rounded-full border border-brand-500/40 px-4 py-2 text-xs font-bold text-brand-100 hover:border-brand-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full border border-brand-500/40 px-3 py-1.5 text-[11px] font-bold text-brand-100 hover:border-brand-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {applyingBaseSection === 'description' ? 'Aplicando...' : 'Aplicar descripción a todos los eventos'}
+                {applyingBaseSection === 'description' ? 'Aplicando...' : 'Aplicar a todo'}
               </button>
             </div>
           </div>
