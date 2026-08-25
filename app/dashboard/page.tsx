@@ -1788,6 +1788,7 @@ export default function DashboardPage() {
                 <option value="">Tipo de evento</option>
                 <option>Tardeo</option>
                 <option>Rooftop</option>
+                <option>Terrazas</option>
                 <option>Brunch</option>
                 <option>Fitness Party</option>
                 <option>Afterwork</option>
@@ -1912,6 +1913,7 @@ export default function DashboardPage() {
                 <option value="">Tipo de evento</option>
                 <option>Tardeo</option>
                 <option>Rooftop</option>
+                <option>Terrazas</option>
                 <option>Brunch</option>
                 <option>Fitness Party</option>
                 <option>Afterwork</option>
@@ -2415,6 +2417,7 @@ export default function DashboardPage() {
                   <option value="">Tipo de evento</option>
                   <option>Tardeo</option>
                   <option>Rooftop</option>
+                  <option>Terrazas</option>
                   <option>Brunch</option>
                   <option>Fitness Party</option>
                   <option>Afterwork</option>

@@ -32,7 +32,8 @@ const serperApiKey = process.env.SERPER_API_KEY
 
 const typeKeywords: Record<string, string[]> = {
   Brunch: ['brunch', 'desayuno'],
-  Rooftop: ['rooftop', 'terraza', 'azotea'],
+  Rooftop: ['rooftop', 'azotea'],
+  Terrazas: ['terraza', 'terrazas', 'patio', 'garden'],
   Afterwork: ['afterwork', 'after work', 'networking'],
   'Fitness Party': ['fitness', 'running', 'yoga', 'wellness'],
   Tardeo: ['tardeo', 'tardear', 'fiesta tarde', 'club', 'party'],
@@ -40,7 +41,8 @@ const typeKeywords: Record<string, string[]> = {
 
 const typeSearchTerms: Record<string, string[]> = {
   Tardeo: ['tardeo', 'fiesta tarde', 'tardear'],
-  Rooftop: ['rooftop', 'terraza', 'azotea'],
+  Rooftop: ['rooftop', 'azotea'],
+  Terrazas: ['terraza', 'terrazas', 'terraza madrid eventos', 'tardeo terraza madrid'],
   Brunch: ['brunch'],
   Afterwork: ['afterwork', 'after work'],
   'Fitness Party': ['fitness party', 'wellness party', 'running club'],
@@ -185,6 +187,7 @@ function inferType(platform: ScoutPlatform, text: string) {
   const inferred = inferFromKeywords(text, typeKeywords, '')
   if (inferred) return inferred
   if (platform.best_for.includes('Brunch')) return 'Brunch'
+  if (platform.best_for.includes('Terrazas')) return 'Terrazas'
   if (platform.best_for.includes('Rooftop')) return 'Rooftop'
   return 'Tardeo'
 }
@@ -291,14 +294,14 @@ function buildSearchQueries(platforms: ScoutPlatform[], startDate: string, endDa
     return [`"${day} ${month}"`, `"${day} de ${month}"`, `"${day} ${month} ${year}"`]
   })
   const typeTerms = eventType === 'Todos'
-    ? ['tardeo', 'brunch', 'rooftop', 'afterwork']
+    ? ['tardeo', 'brunch', 'rooftop', 'terrazas', 'afterwork']
     : typeSearchTerms[eventType] || [eventType]
   const radarPlatform: ScoutPlatform = {
     platform: 'Radar web',
     priority: 0,
     source_type: 'web_search',
     search_patterns: [],
-    best_for: eventType === 'Todos' ? ['Tardeo', 'Brunch', 'Rooftop', 'Afterwork'] : [eventType],
+    best_for: eventType === 'Todos' ? ['Tardeo', 'Brunch', 'Rooftop', 'Terrazas', 'Afterwork'] : [eventType],
   }
   const queries: { platform: ScoutPlatform; query: string }[] = []
 
@@ -532,7 +535,7 @@ export async function POST(request: Request) {
       priority: 0,
       source_type: 'web_search',
       search_patterns: [],
-      best_for: eventType === 'Todos' ? ['Tardeo', 'Brunch', 'Rooftop', 'Afterwork'] : [eventType],
+      best_for: eventType === 'Todos' ? ['Tardeo', 'Brunch', 'Rooftop', 'Terrazas', 'Afterwork'] : [eventType],
     }
     const fallbackTerm = eventType === 'Todos' ? 'tardeo' : eventType.toLowerCase()
     const builtQueries = buildSearchQueries(platforms, startDate, endDate, eventType)
@@ -625,7 +628,7 @@ export async function POST(request: Request) {
             ? '/scout-covers/electronica.svg'
             : type === 'Brunch'
               ? '/scout-covers/brunch.svg'
-              : type === 'Rooftop'
+              : type === 'Rooftop' || type === 'Terrazas'
                 ? '/scout-covers/rooftop.svg'
                 : '/scout-covers/tardeo.svg',
           reel_url: null,

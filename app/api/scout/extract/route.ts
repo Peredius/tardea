@@ -470,7 +470,8 @@ function extractRitaReservationEvents(html: string, baseUrl: string, fallback: E
 function inferType(text: string) {
   const lower = text.toLowerCase()
   if (lower.includes('brunch')) return 'Brunch'
-  if (lower.includes('rooftop') || lower.includes('terraza')) return 'Rooftop'
+  if (lower.includes('rooftop') || lower.includes('azotea')) return 'Rooftop'
+  if (lower.includes('terraza') || lower.includes('terrazas')) return 'Terrazas'
   if (lower.includes('afterwork') || lower.includes('after work')) return 'Afterwork'
   if (lower.includes('fitness')) return 'Fitness Party'
   return 'Tardeo'

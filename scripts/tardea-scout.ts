@@ -76,11 +76,12 @@ const defaultConfig: ScoutConfig = {
     end_time: '23:00',
     price_from: 0,
   },
-  allowed_types: ['Tardeo', 'Rooftop', 'Brunch', 'Afterwork'],
+  allowed_types: ['Tardeo', 'Rooftop', 'Terrazas', 'Brunch', 'Afterwork'],
   allowed_music: ['Comercial', 'Indie', 'Electrónica', 'Reguetón', 'Flamenquito', 'Pop', 'Remember', 'Show en directo'],
   cover_by_type: {
     Tardeo: '/scout-covers/tardeo.svg',
     Rooftop: '/scout-covers/rooftop.svg',
+    Terrazas: '/scout-covers/rooftop.svg',
     Brunch: '/scout-covers/brunch.svg',
     Afterwork: '/scout-covers/tardeo.svg',
   },
@@ -90,7 +91,8 @@ const defaultConfig: ScoutConfig = {
   },
   type_keywords: {
     Brunch: ['brunch', 'desayuno', 'rooftop brunch'],
-    Rooftop: ['rooftop', 'terraza', 'azotea'],
+    Rooftop: ['rooftop', 'azotea'],
+    Terrazas: ['terraza', 'terrazas', 'patio', 'garden'],
     Afterwork: ['afterwork', 'jueves', 'after work'],
     Tardeo: ['tardeo', 'tardear', 'fiesta tarde'],
   },

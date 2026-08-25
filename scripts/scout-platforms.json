@@ -8,9 +8,10 @@
       "site:site.fourvenues.com/es Madrid tardeo",
       "site:site.fourvenues.com/es Madrid brunch",
       "site:site.fourvenues.com/es Madrid rooftop",
+      "site:site.fourvenues.com/es Madrid terraza",
       "site:site.fourvenues.com/es Madrid afterwork"
     ],
-    "best_for": ["Tardeo", "Discotecas", "Promotoras", "Rooftop", "Brunch"],
+    "best_for": ["Tardeo", "Discotecas", "Promotoras", "Rooftop", "Terrazas", "Brunch"],
     "signals": ["venta de entradas", "listas", "reservas", "RRPP", "discotecas", "promotores"],
     "scout_strategy": "Alta prioridad. Buscar por URL de evento y cargar manualmente en scout-sources.json. Es una fuente muy alineada con discotecas y promotores.",
     "image_policy": "No copiar imagen. Usar cover provisional hasta aprobacion o reclamacion.",
@@ -24,10 +25,11 @@
     "search_patterns": [
       "site:feverup.com/es/madrid brunch",
       "site:feverup.com/es/madrid rooftop",
+      "site:feverup.com/es/madrid terraza",
       "site:feverup.com/es/madrid afterwork",
       "site:feverup.com/es/madrid tardeo"
     ],
-    "best_for": ["Brunch", "Rooftop", "Afterwork", "Experiencias", "Planes con amigos"],
+    "best_for": ["Brunch", "Rooftop", "Terrazas", "Afterwork", "Experiencias", "Planes con amigos"],
     "signals": ["Brunch", "Rooftops y Terrazas", "Bebidas y Afterwork", "Desde", "local", "fecha"],
     "scout_strategy": "Alta prioridad para planes de tarde, brunch, terraza y afterwork. Revisar categorias de Madrid semanalmente.",
     "image_policy": "No copiar imagen ni texto largo. Usar solo datos basicos y fuente.",
@@ -60,7 +62,7 @@
       "site:entradium.com Madrid terraza",
       "site:entradium.com Madrid afterwork"
     ],
-    "best_for": ["Tardeo", "Fiestas independientes", "Salas medianas", "Eventos recurrentes"],
+    "best_for": ["Tardeo", "Terrazas", "Fiestas independientes", "Salas medianas", "Eventos recurrentes"],
     "signals": ["varias fechas", "organizado por", "politica de acceso", "precio"],
     "scout_strategy": "Alta prioridad para fiestas independientes y eventos con varias fechas. Revisar por busquedas de tardeo + Madrid.",
     "image_policy": "No copiar imagen. Usar fuente y datos basicos.",
@@ -76,7 +78,7 @@
       "site:eventbrite.es Madrid networking afterwork",
       "site:eventbrite.es Madrid brunch"
     ],
-    "best_for": ["Afterwork", "Networking", "Rooftop profesional", "Comunidades"],
+    "best_for": ["Afterwork", "Networking", "Rooftop profesional", "Terrazas", "Comunidades"],
     "signals": ["networking", "rooftop", "comunidad", "entrada gratuita", "aforo limitado"],
     "scout_strategy": "Prioridad media. Muy util para afterworks profesionales, menos para tardeos de fiesta pura.",
     "image_policy": "No copiar imagen. Revisar si el evento encaja con TARDEA antes de importar.",
@@ -93,7 +95,7 @@
       "site:meetup.com Madrid afterwork",
       "site:meetup.com Madrid social drinks"
     ],
-    "best_for": ["Rooftop social", "Afterwork", "Conocer gente", "Comunidades"],
+    "best_for": ["Rooftop social", "Terrazas", "Afterwork", "Conocer gente", "Comunidades"],
     "signals": ["rooftop drinks", "social drinks", "conocer gente", "rango de edad", "asistentes"],
     "scout_strategy": "Prioridad media. Cargar solo eventos claramente publicos y revisar manualmente. Muchos no son tiquetera pura.",
     "image_policy": "No copiar imagen. Tratar como pista editorial.",
@@ -171,10 +173,11 @@
     "base_url": "https://somo.social/",
     "search_patterns": [
       "site:somo.social Madrid rooftop",
+      "site:somo.social Madrid terraza",
       "site:somo.social Madrid afterwork",
       "site:somo.social Madrid social"
     ],
-    "best_for": ["Afterwork", "Rooftop social", "Conocer gente"],
+    "best_for": ["Afterwork", "Rooftop social", "Terrazas", "Conocer gente"],
     "signals": ["afterwork", "rooftop", "social", "buy tickets"],
     "scout_strategy": "Prioridad baja/media. Revisar manualmente porque puede mezclar quedadas sociales y eventos pequenos.",
     "image_policy": "No copiar imagen.",
@@ -188,6 +191,7 @@
     "search_patterns": [
       "site:ticketmaster.es Madrid brunch",
       "site:ticketmaster.es Madrid rooftop",
+      "site:ticketmaster.es Madrid terraza",
       "site:ticketmaster.es Madrid fiesta",
       "site:ticketmaster.es Madrid afterwork"
     ],
@@ -206,9 +210,10 @@
       "site:seetickets.com/es Madrid tardeo",
       "site:seetickets.com/es Madrid brunch",
       "site:seetickets.com/es Madrid rooftop",
+      "site:seetickets.com/es Madrid terraza",
       "site:seetickets.com/es Madrid fiesta"
     ],
-    "best_for": ["Promotoras", "Musica en vivo", "Fiestas", "Experiencias"],
+    "best_for": ["Promotoras", "Musica en vivo", "Fiestas", "Terrazas", "Experiencias"],
     "signals": ["tickets", "venue", "Madrid", "fecha"],
     "scout_strategy": "Prioridad baja/media. Buscar eventos compatibles y revisar fuente antes de importar.",
     "image_policy": "No copiar imagen. Usar cover provisional.",
@@ -225,7 +230,7 @@
       "site:ticketandroll.com Madrid terraza",
       "site:ticketandroll.com Madrid afterwork"
     ],
-    "best_for": ["Eventos independientes", "Promotoras", "Fiestas", "Musica"],
+    "best_for": ["Eventos independientes", "Promotoras", "Fiestas", "Terrazas", "Musica"],
     "signals": ["entradas", "Madrid", "organizador", "fecha"],
     "scout_strategy": "Prioridad media. Buena fuente para promotores independientes si los resultados son publicos.",
     "image_policy": "No copiar imagen. Guardar URL de referencia.",
@@ -239,10 +244,11 @@
     "search_patterns": [
       "site:atrapalo.com Madrid brunch",
       "site:atrapalo.com Madrid rooftop",
+      "site:atrapalo.com Madrid terraza",
       "site:atrapalo.com Madrid experiencias",
       "site:atrapalo.com Madrid afterwork"
     ],
-    "best_for": ["Brunch", "Experiencias", "Planes gastronomicos", "Ocio"],
+    "best_for": ["Brunch", "Terrazas", "Experiencias", "Planes gastronomicos", "Ocio"],
     "signals": ["oferta", "experiencia", "Madrid", "precio"],
     "scout_strategy": "Prioridad baja/media. Usar para brunch, terrazas y experiencias que encajen con planes de tarde.",
     "image_policy": "No copiar imagen. Cover provisional TARDEA.",
@@ -257,6 +263,7 @@
       "site:taquilla.com Madrid tardeo",
       "site:taquilla.com Madrid brunch",
       "site:taquilla.com Madrid rooftop",
+      "site:taquilla.com Madrid terraza",
       "site:taquilla.com Madrid fiesta"
     ],
     "best_for": ["Agregador", "Eventos grandes", "Conciertos", "Experiencias"],
@@ -292,11 +299,12 @@
       "site:instagram.com/reel Madrid tardeo",
       "site:instagram.com/p Madrid brunch",
       "site:instagram.com/reel Madrid rooftop",
+      "site:instagram.com/reel Madrid terraza",
       "site:instagram.com/reel Madrid afterwork",
-      "hashtags: #tardeomadrid #brunchmadrid #rooftopmadrid #afterworkmadrid",
+      "hashtags: #tardeomadrid #brunchmadrid #rooftopmadrid #terrazasmadrid #afterworkmadrid",
       "perfiles de salas, rooftops, promotores y fiestas recurrentes"
     ],
-    "best_for": ["Descubrimiento temprano", "Promotores", "Fiestas nuevas", "Reels"],
+    "best_for": ["Descubrimiento temprano", "Promotores", "Fiestas nuevas", "Terrazas", "Reels"],
     "signals": ["fecha en cartel", "ubicacion", "link en bio", "promotor", "hashtags", "comentarios"],
     "scout_strategy": "Alta prioridad como pista manual. No hacer scraping agresivo; usar post/reel como referencia y meter datos verificados manualmente.",
     "image_policy": "No copiar imagen ni reel sin permiso. Guardar URL de referencia y cover provisional.",
@@ -311,10 +319,11 @@
       "site:tiktok.com Madrid tardeo",
       "site:tiktok.com Madrid brunch",
       "site:tiktok.com Madrid rooftop",
+      "site:tiktok.com Madrid terraza",
       "site:tiktok.com Madrid afterwork",
       "site:tiktok.com #tardeomadrid"
     ],
-    "best_for": ["Descubrimiento social", "Tendencias", "Promotores", "Fiestas nuevas"],
+    "best_for": ["Descubrimiento social", "Tendencias", "Promotores", "Fiestas nuevas", "Terrazas"],
     "signals": ["video publico", "fecha en descripcion", "link en bio", "hashtag", "ubicacion"],
     "scout_strategy": "Usar como radar de tendencia. Confirmar datos en tiquetera o fuente oficial antes de aprobar.",
     "image_policy": "No copiar video ni imagen sin permiso. Guardar URL como referencia y usar cover provisional.",
@@ -329,10 +338,11 @@
       "site:facebook.com/events Madrid tardeo",
       "site:facebook.com/events Madrid brunch",
       "site:facebook.com/events Madrid rooftop",
+      "site:facebook.com/events Madrid terraza",
       "site:facebook.com/events Madrid afterwork",
       "site:facebook.com/events Madrid fiesta"
     ],
-    "best_for": ["Eventos publicos", "Comunidades", "Afterwork", "Fiestas recurrentes"],
+    "best_for": ["Eventos publicos", "Comunidades", "Afterwork", "Terrazas", "Fiestas recurrentes"],
     "signals": ["evento publico", "fecha", "ubicacion", "organizador"],
     "scout_strategy": "Usar como fuente secundaria. Facebook puede ocultar datos; revisar y confirmar antes de publicar.",
     "image_policy": "No copiar imagen. Guardar URL y usar cover provisional.",
@@ -346,9 +356,10 @@
     "search_patterns": [
       "site:[web sala] eventos Madrid",
       "[nombre sala] tardeo Madrid",
-      "[nombre rooftop] brunch Madrid"
+      "[nombre rooftop] brunch Madrid",
+      "[nombre terraza] eventos Madrid"
     ],
-    "best_for": ["Eventos propios", "Rooftop", "Brunch", "Reservas"],
+    "best_for": ["Eventos propios", "Rooftop", "Terrazas", "Brunch", "Reservas"],
     "signals": ["agenda", "reservas", "calendario", "DJ", "menu brunch"],
     "scout_strategy": "Prioridad media. Fuente buena cuando el evento no aparece en tiquetera o tiene venta propia.",
     "image_policy": "No copiar imagen salvo permiso o material oficial cedido.",

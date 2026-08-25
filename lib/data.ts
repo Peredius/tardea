@@ -7,7 +7,7 @@ export type EventItem = {
   date: string;
   startTime: string;
   endTime: string;
-  type: 'Tardeo' | 'Brunch' | 'Rooftop' | 'Afterwork' | 'Fiesta temática';
+  type: 'Tardeo' | 'Brunch' | 'Rooftop' | 'Terrazas' | 'Afterwork' | 'Fiesta temática';
   music: ('Comercial' | 'Electrónica' | 'Reguetón' | 'Pop' | 'Indie' | 'Flamenquito' | 'Remember' | 'Show en directo')[];
   audience: '18-25' | '25-35' | '30+' | 'Mixto';
   priceFrom: number;
@@ -18,7 +18,7 @@ export type EventItem = {
 };
 
 export const areas = ['Salamanca', 'Chamberí', 'Malasaña', 'La Latina', 'Centro', 'Chamartín'];
-export const eventTypes = ['Todos', 'Tardeo', 'Brunch', 'Rooftop', 'Fitness Party', 'Afterwork', 'Fiesta temática'];
+export const eventTypes = ['Todos', 'Tardeo', 'Brunch', 'Rooftop', 'Terrazas', 'Fitness Party', 'Afterwork', 'Fiesta temática'];
 export const musicTypes = ['Todas', 'Comercial', 'Show en directo', 'Electrónica', 'Reguetón', 'Pop', 'Indie', 'Flamenquito', 'Remember'];
 export const audienceTypes = ['Todas', '18-25', '25-35', '30+', 'Mixto'];
 export const priceRanges = ['Todos', 'Gratis', '0-15€', '15-30€', '30€+'];

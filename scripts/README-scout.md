@@ -37,7 +37,7 @@ npm run scout-events -- --dry-run --city=Madrid --limit=5
 
 ## Segmentos recomendados
 
-- Tipo: Tardeo, Rooftop, Brunch, Afterwork.
+- Tipo: Tardeo, Rooftop, Terrazas, Brunch, Afterwork.
 - Musica: Comercial, Indie, Electrónica, Reguetón, Flamenquito, Pop, Remember, Show en directo.
 - Zona: barrio o municipio.
 - Fuente: ticketing, Instagram, website, manual.

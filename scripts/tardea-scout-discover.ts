@@ -50,7 +50,8 @@ type ScoutCandidate = {
 
 const typeKeywords: Record<string, string[]> = {
   Brunch: ['brunch', 'desayuno'],
-  Rooftop: ['rooftop', 'terraza', 'azotea'],
+  Rooftop: ['rooftop', 'azotea'],
+  Terrazas: ['terraza', 'terrazas', 'patio', 'garden'],
   Afterwork: ['afterwork', 'after work', 'networking'],
   Tardeo: ['tardeo', 'tardear', 'fiesta tarde', 'club'],
 }
@@ -105,7 +106,13 @@ function inferFromKeywords(text: string, rules: Record<string, string[]>, fallba
 function inferType(platform: ScoutPlatform, text: string) {
   const inferred = inferFromKeywords(text, typeKeywords, '')
   if (inferred) return inferred
-  return platform.best_for.includes('Brunch') ? 'Brunch' : platform.best_for.includes('Rooftop') ? 'Rooftop' : 'Tardeo'
+  return platform.best_for.includes('Brunch')
+    ? 'Brunch'
+    : platform.best_for.includes('Terrazas')
+      ? 'Terrazas'
+      : platform.best_for.includes('Rooftop')
+        ? 'Rooftop'
+        : 'Tardeo'
 }
 
 function inferMusic(text: string) {

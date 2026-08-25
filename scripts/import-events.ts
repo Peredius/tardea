@@ -31,6 +31,7 @@ const defaultCovers = {
   Tardeo: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80',
   Brunch: 'https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=1200&q=80',
   Rooftop: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1200&q=80',
+  Terrazas: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1200&q=80',
   Afterwork: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=1200&q=80',
 }
 
@@ -297,7 +298,7 @@ function getDateFromUrl(url: string) {
 
 function fallbackCoverForType(type: string) {
   if (type === 'Brunch') return defaultCovers.Brunch
-  if (type === 'Rooftop') return defaultCovers.Rooftop
+  if (type === 'Rooftop' || type === 'Terrazas') return defaultCovers.Rooftop
   if (type === 'Afterwork') return defaultCovers.Afterwork
   return defaultCovers.Tardeo
 }

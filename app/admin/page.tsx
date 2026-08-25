@@ -19,7 +19,7 @@ function generateSlug(title: string, date: string) {
 
 const MUSIC_OPTIONS = ['Comercial', 'Show en directo', 'Electrónica', 'Reguetón', 'Pop', 'Indie', 'Flamenquito', 'Remember']
 const AUDIENCE_OPTIONS = ['18-25', '25-35', '30+', 'Mixto']
-const EVENT_TYPE_OPTIONS = ['Tardeo', 'Rooftop', 'Brunch', 'Afterwork', 'Fitness Party', 'Fiesta']
+const EVENT_TYPE_OPTIONS = ['Tardeo', 'Rooftop', 'Terrazas', 'Brunch', 'Afterwork', 'Fitness Party', 'Fiesta']
 const AREA_OPTIONS = [
   'Madrid',
   'Centro',
@@ -127,7 +127,7 @@ function scoutCoverFor(type: string, music: string) {
   if (music === 'Electrónica') return '/scout-covers/electronica.svg'
   if (music === 'Flamenquito') return '/scout-covers/flamenquito.svg'
   if (type === 'Brunch') return '/scout-covers/brunch.svg'
-  if (type === 'Rooftop') return '/scout-covers/rooftop.svg'
+  if (type === 'Rooftop' || type === 'Terrazas') return '/scout-covers/rooftop.svg'
   return '/scout-covers/tardeo.svg'
 }
 
@@ -2231,6 +2231,7 @@ export default function AdminPage() {
             <option value="">Tipo de evento</option>
             <option>Tardeo</option>
             <option>Rooftop</option>
+            <option>Terrazas</option>
             <option>Brunch</option>
             <option>Fitness Party</option>
             <option>Afterwork</option>
