@@ -351,6 +351,8 @@ export default function AdminPage() {
   const [priceFrom, setPriceFrom] = useState('')
   const [music, setMusic] = useState<string[]>([])
   const [audience, setAudience] = useState('25-35')
+  const [manualExtractUrl, setManualExtractUrl] = useState('')
+  const [manualExtracting, setManualExtracting] = useState(false)
   const [cover, setCover] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState('')
   const [reelUrl, setReelUrl] = useState('')
@@ -1347,7 +1349,7 @@ export default function AdminPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
-    let imageUrl = editingEvent?.cover || ''
+    let imageUrl = editingEvent?.cover || (previewUrl.startsWith('http') ? previewUrl : '')
 
     if (cover) {
       const fileName = `${Date.now()}-${cover.name}`
@@ -1429,6 +1431,7 @@ export default function AdminPage() {
     setAddress('')
     setMapsUrl('')
     setTicketUrl('')
+    setManualExtractUrl('')
     setStartTime('17:00')
     setEndTime('23:00')
     setPriceFrom('')
@@ -1439,6 +1442,86 @@ export default function AdminPage() {
     setReelUrl('')
     setDescription('')
     setPerks('')
+  }
+
+  async function extractManualEventFromUrl() {
+    const url = manualExtractUrl.trim() || ticketUrl.trim()
+
+    if (!url) {
+      setMessage('Pega primero un enlace para extraer informacion')
+      return
+    }
+
+    setManualExtracting(true)
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      const response = await fetch('/api/scout/extract', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token || ''}`,
+        },
+        body: JSON.stringify({ url }),
+      })
+      const data = await response.json()
+
+      if (!response.ok) {
+        setMessage(data.error || 'No se pudo leer el enlace')
+        return
+      }
+
+      const extractedEvents = Array.isArray(data.events) && data.events.length > 0 ? data.events : [data]
+      const extracted = extractedEvents.find((event: any) => event.date) || extractedEvents[0] || data
+      const extractedArea = extracted.area || data.area || ''
+      const musicValue = extracted.music || data.music || ''
+      const musicList = Array.isArray(musicValue)
+        ? musicValue
+        : musicValue
+            .split(',')
+            .map((item: string) => item.trim())
+            .filter(Boolean)
+
+      setTitle(extracted.title || data.title || title)
+      setDescription(extracted.description || data.description || description)
+      setDate(extracted.date || data.date || date)
+      setStartTime(extracted.startTime || extracted.start_time || data.startTime || startTime)
+      setEndTime(extracted.endTime || extracted.end_time || data.endTime || endTime)
+      setType(extracted.type || data.type || type || 'Tardeo')
+      setMusic(musicList.length > 0 ? musicList : music)
+      setVenue(extracted.venue || data.venue || venue)
+      setPriceFrom((extracted.priceFrom || extracted.price_from || data.priceFrom || priceFrom || '').toString())
+      setMapsUrl(extracted.mapsUrl || extracted.maps_url || data.mapsUrl || mapsUrl)
+      setTicketUrl(extracted.sourceUrl || extracted.source_url || data.sourceUrl || url)
+
+      if (extractedArea) {
+        if (AREA_OPTIONS.includes(extractedArea)) {
+          setArea(extractedArea)
+          setCustomArea('')
+        } else {
+          setArea('Otra')
+          setCustomArea(extractedArea)
+        }
+      }
+
+      const extractedCover = extracted.cover || data.cover
+      if (extractedCover) {
+        setPreviewUrl(extractedCover)
+        setCover(null)
+      }
+
+      setMessage(
+        extractedEvents.length > 1
+          ? `${extractedEvents.length} fechas leidas. He rellenado la primera; revisa los datos antes de crear el evento.`
+          : `Informacion extraida de ${data.sourceName || 'la fuente'}. Revisa los datos antes de crear el evento.`
+      )
+    } catch {
+      setMessage('No se pudo leer el enlace')
+    } finally {
+      setManualExtracting(false)
+    }
   }
 
   function loadEventForEdit(event: any) {
@@ -2225,6 +2308,29 @@ export default function AdminPage() {
             Editando: {editingEvent.title}. Si era pendiente, seguira pendiente hasta que pulses Aprobar.
           </div>
         )}
+
+        <div className="mb-5 rounded-2xl border border-brand-500/30 bg-brand-500/10 p-4">
+          <p className="text-sm font-bold text-brand-100">Extraer desde enlace</p>
+          <p className="mt-1 text-xs text-slate-400">
+            Pega una tiquetera, web o Linktree para intentar rellenar el evento automaticamente. Revisa siempre antes de crear.
+          </p>
+          <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_auto]">
+            <input
+              className="input"
+              placeholder="Pega aqui el enlace del evento"
+              value={manualExtractUrl}
+              onChange={(event) => setManualExtractUrl(event.target.value)}
+            />
+            <button
+              type="button"
+              onClick={extractManualEventFromUrl}
+              disabled={manualExtracting}
+              className="rounded-full border border-brand-500/60 px-5 py-3 text-sm font-bold text-white hover:bg-brand-500/15 disabled:opacity-50"
+            >
+              {manualExtracting ? 'Leyendo...' : 'Extraer datos'}
+            </button>
+          </div>
+        </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
           <input className="input lg:col-span-2" placeholder="Nombre del evento" value={title} onChange={(e) => setTitle(e.target.value)} />
