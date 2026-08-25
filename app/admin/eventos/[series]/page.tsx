@@ -388,13 +388,17 @@ export default function AdminEventSeriesPage() {
 
     const profileId = seriesEvents.find((event) => event.event_profile_id)?.event_profile_id
     if (profileId) {
-      const { data: profileData } = await supabase
-        .from('promoter_event_profiles')
-        .select('*')
-        .eq('id', profileId)
-        .maybeSingle()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      const profileResponse = await fetch(`/api/admin/event-profile/update?profileId=${encodeURIComponent(profileId)}`, {
+        headers: {
+          Authorization: `Bearer ${session?.access_token || ''}`,
+        },
+      })
+      const profileData = await profileResponse.json().catch(() => null)
 
-      setEventProfile(profileData || null)
+      setEventProfile(profileResponse.ok && profileData?.profile ? profileData.profile : null)
     } else {
       setEventProfile(null)
     }
@@ -596,58 +600,71 @@ export default function AdminEventSeriesPage() {
       maps_url: baseForm.maps_url || null,
     }
 
-    const profileId = events.find((event) => event.event_profile_id)?.event_profile_id
-    if (profileId) {
-      const profilePayload: Record<string, any> = {
-        name: sharedPayload.title,
-        type: sharedPayload.type,
-        venue_name: baseLocation.venue,
-        area: baseLocation.area,
-        address: baseLocation.address,
-        maps_url: baseLocation.maps_url,
-        music: sharedPayload.music,
-        audience: sharedPayload.audience,
-        price_from: sharedPayload.price_from,
-        website_url: sharedPayload.website_url,
-        instagram_url: sharedPayload.instagram_url,
-        tiktok_url: sharedPayload.tiktok_url,
-        logo_url: coverUrl,
-        banner_url: coverUrl,
-        description: sharedPayload.description,
-        updated_at: new Date().toISOString(),
-      }
+    let profileId = eventProfile?.id || events.find((event) => event.event_profile_id)?.event_profile_id || ''
 
-      let pendingProfilePayload = { ...profilePayload }
-      let profileError = null
+    if (!profileId && mainEvent?.slug) {
+      const resolveResponse = await fetch('/api/event-profile/resolve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: mainEvent.slug, createIfMissing: true }),
+      })
+      const resolveData = await resolveResponse.json().catch(() => null)
 
-      for (let attempt = 0; attempt < 8; attempt += 1) {
-        const result = await supabase
-          .from('promoter_event_profiles')
-          .update(pendingProfilePayload)
-          .eq('id', profileId)
-
-        profileError = result.error
-        if (!profileError) break
-
-        const missingColumn = profileError.message.match(/'([^']+)' column/)?.[1]
-        if (!missingColumn || !profileError.message.includes('schema cache')) break
-
-        const { [missingColumn]: _removed, ...nextPayload } = pendingProfilePayload
-        pendingProfilePayload = nextPayload
-      }
-
-      if (profileError) {
+      if (!resolveResponse.ok || !resolveData?.eventProfileId) {
         setBaseSaving(false)
-        setMessage(`No se pudo guardar la ficha base: ${profileError.message}`)
+        setMessage(resolveData?.error || 'No se pudo preparar la ficha base para guardar.')
         return
       }
 
-      setEventProfile((current: any) => ({
-        ...(current || {}),
-        id: profileId,
-        ...pendingProfilePayload,
-      }))
+      profileId = resolveData.eventProfileId
     }
+
+    if (!profileId) {
+      setBaseSaving(false)
+      setMessage('No se encontro la ficha base para guardar.')
+      return
+    }
+
+    const profilePayload: Record<string, any> = {
+      name: sharedPayload.title,
+      type: sharedPayload.type,
+      venue_name: baseLocation.venue,
+      area: baseLocation.area,
+      address: baseLocation.address,
+      maps_url: baseLocation.maps_url,
+      music: sharedPayload.music,
+      audience: sharedPayload.audience,
+      price_from: sharedPayload.price_from,
+      website_url: sharedPayload.website_url,
+      instagram_url: sharedPayload.instagram_url,
+      tiktok_url: sharedPayload.tiktok_url,
+      logo_url: coverUrl,
+      banner_url: coverUrl,
+      description: sharedPayload.description,
+      updated_at: new Date().toISOString(),
+    }
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    const profileResponse = await fetch('/api/admin/event-profile/update', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session?.access_token || ''}`,
+      },
+      body: JSON.stringify({ profileId, profile: profilePayload }),
+    })
+    const profileData = await profileResponse.json().catch(() => null)
+
+    if (!profileResponse.ok || !profileData?.profile) {
+      setBaseSaving(false)
+      setMessage(profileData?.error ? `No se pudo guardar la ficha base: ${profileData.error}` : 'No se pudo guardar la ficha base.')
+      return
+    }
+
+    setEventProfile(profileData.profile)
 
     const researchIds = researchItems.map((item) => item.id).filter(Boolean)
     if (researchIds.length > 0) {
