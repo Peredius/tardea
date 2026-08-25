@@ -524,13 +524,9 @@ export default function AdminEventSeriesPage() {
       coverUrl = data.publicUrl
     }
 
-    const payload = {
+    const sharedPayload = {
       title: baseForm.title || mainEvent.title,
       promoter_group: baseForm.promoter_group || null,
-      venue: baseForm.venue || null,
-      area: baseForm.area || null,
-      address: baseForm.address || null,
-      maps_url: baseForm.maps_url || null,
       type: baseForm.type || 'Tardeo',
       music: musicList.length ? musicList : ['Comercial'],
       audience: baseForm.audience || 'Mixto',
@@ -544,15 +540,33 @@ export default function AdminEventSeriesPage() {
       profile_reviewed: true,
     }
 
-    if (events.length > 0) {
-      const { error } = await supabase
-        .from('events')
-        .update(payload)
-        .in('id', events.map((event) => event.id))
+    const baseLocation = {
+      venue: baseForm.venue || null,
+      area: baseForm.area || null,
+      address: baseForm.address || null,
+      maps_url: baseForm.maps_url || null,
+    }
 
-      if (error) {
+    if (events.length > 0) {
+      const updates = await Promise.all(
+        events.map((event) =>
+          supabase
+            .from('events')
+            .update({
+              ...sharedPayload,
+              venue: event.venue || baseLocation.venue,
+              area: event.area || baseLocation.area,
+              address: event.address || baseLocation.address,
+              maps_url: event.maps_url || baseLocation.maps_url,
+            })
+            .eq('id', event.id)
+        )
+      )
+      const failed = updates.find((result) => result.error)
+
+      if (failed?.error) {
         setBaseSaving(false)
-        setMessage(`No se pudieron guardar los datos base: ${error.message}`)
+        setMessage(`No se pudieron guardar los datos base: ${failed.error.message}`)
         return
       }
     }
@@ -562,16 +576,16 @@ export default function AdminEventSeriesPage() {
       const { error } = await supabase
         .from('event_research_items')
         .update({
-          title: payload.title,
-          promoter_group: payload.promoter_group,
-          venue: payload.venue,
-          area: payload.area,
-          maps_url: payload.maps_url,
-          type: payload.type,
-          music: payload.music,
-          audience: payload.audience,
-          price_from: payload.price_from,
-          notes: payload.description,
+          title: sharedPayload.title,
+          promoter_group: sharedPayload.promoter_group,
+          venue: baseLocation.venue,
+          area: baseLocation.area,
+          maps_url: baseLocation.maps_url,
+          type: sharedPayload.type,
+          music: sharedPayload.music,
+          audience: sharedPayload.audience,
+          price_from: sharedPayload.price_from,
+          notes: sharedPayload.description,
           profile_reviewed: true,
         })
         .in('id', researchIds)
@@ -583,7 +597,7 @@ export default function AdminEventSeriesPage() {
       }
     }
 
-    const newSeries = getEventSeriesSlug({ title: payload.title, type: payload.type, venue: payload.venue })
+    const newSeries = getEventSeriesSlug({ title: sharedPayload.title, type: sharedPayload.type, venue: baseLocation.venue })
     setIsEditingBase(false)
     setBaseCoverFile(null)
     setBaseCoverPreview('')
@@ -723,10 +737,10 @@ export default function AdminEventSeriesPage() {
       return {
         title: event.title,
         slug: generateSlug(event.title, targetDate),
-        venue: event.venue,
-        area: event.area,
-        address: event.address,
-        maps_url: event.maps_url || null,
+        venue: useTargetDate ? targetEvent.venue : event.venue,
+        area: useTargetDate ? targetEvent.area : event.area,
+        address: useTargetDate ? targetEvent.address : event.address,
+        maps_url: useTargetDate ? targetEvent.maps_url || null : event.maps_url || null,
         source_url: useTargetDate ? targetEvent.source_url || null : event.source_url || null,
         date: targetDate,
         start_time: event.start_time,
@@ -1728,7 +1742,8 @@ export default function AdminEventSeriesPage() {
               <input type="time" className="input" value={editingEvent.start_time || '18:00'} onChange={(event) => updateEditingEvent('start_time', event.target.value)} />
               <input type="time" className="input" value={editingEvent.end_time || '23:00'} onChange={(event) => updateEditingEvent('end_time', event.target.value)} />
             </div>
-            <input className="input lg:col-span-2" value={editingEvent.maps_url || ''} onChange={(event) => updateEditingEvent('maps_url', event.target.value)} placeholder="Google Maps" />
+            <input className="input lg:col-span-2" value={editingEvent.address || ''} onChange={(event) => updateEditingEvent('address', event.target.value)} placeholder="Dirección específica de esta fecha" />
+            <input className="input lg:col-span-2" value={editingEvent.maps_url || ''} onChange={(event) => updateEditingEvent('maps_url', event.target.value)} placeholder="Google Maps de esta fecha" />
             <input className="input lg:col-span-2" value={editingEvent.cover || ''} onChange={(event) => updateEditingEvent('cover', event.target.value)} placeholder="URL cartel" />
             <input
               className="input lg:col-span-2"
@@ -1748,7 +1763,7 @@ export default function AdminEventSeriesPage() {
             />
             <span>
               <span className="block font-bold text-white">Aplicar estos cambios a todas las fechas de esta ficha</span>
-              <span className="mt-1 block text-xs leading-5 text-slate-500">La fecha y el enlace de tiquetera de cada dia se mantienen. Se actualizan datos como hora, precio, lugar, cartel, extras y descripcion.</span>
+              <span className="mt-1 block text-xs leading-5 text-slate-500">La fecha, ubicación, dirección, Google Maps y enlace de tiquetera de cada día se mantienen. Se actualizan datos comunes como hora, precio, cartel, extras y descripción.</span>
             </span>
           </label>
 
