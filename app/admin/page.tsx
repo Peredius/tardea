@@ -26,17 +26,25 @@ const AREA_OPTIONS = [
   'Salamanca',
   'Malasaña',
   'Retiro',
-  'Chamberi',
-  'Gran Via',
+  'Chamberí',
+  'Gran Vía',
   'Ponzano',
   'La Latina',
   'Carabanchel',
   'Chamartín',
-  'Tetuan',
+  'Tetuán',
   'Fuencarral-El Pardo',
   'Fuencarral',
-  'Alcorcon',
-  'Mostoles',
+  'Usera',
+  'Arganzuela',
+  'Chueca',
+  'Hortaleza',
+  'Moncloa-Aravaca',
+  'San Blas-Canillejas',
+  'Alcorcón',
+  'Móstoles',
+  'Rivas',
+  'Rivas-Vaciamadrid',
 ]
 const PRICE_OPTIONS = Array.from({ length: 31 }, (_, index) => index.toString())
 
@@ -151,10 +159,22 @@ function normalizeOptionKey(value: string) {
 function displayAreaName(value: string) {
   const normalized = normalizeOptionKey(value)
   if (normalized === 'chamartin') return 'Chamartín'
+  if (normalized === 'chamberi') return 'Chamberí'
+  if (normalized === 'gran via') return 'Gran Vía'
+  if (normalized === 'tetuan') return 'Tetuán'
+  if (normalized === 'alcorcon') return 'Alcorcón'
+  if (normalized === 'mostoles') return 'Móstoles'
+  if (normalized === 'malasana') return 'Malasaña'
+  if (normalized === 'rivas' || normalized === 'ribas') return 'Rivas'
   return value
 }
 
 const AREA_PRIORITY = AREA_OPTIONS.map(normalizeOptionKey)
+
+function resolveAreaOption(value: string) {
+  const normalized = normalizeOptionKey(displayAreaName(value))
+  return AREA_OPTIONS.find((option) => normalizeOptionKey(option) === normalized) || ''
+}
 
 function sortAreaOptions(values: string[]) {
   return values.slice().sort((first, second) => {
@@ -1497,8 +1517,9 @@ export default function AdminPage() {
       setTicketUrl(extracted.sourceUrl || extracted.source_url || data.sourceUrl || url)
 
       if (extractedArea) {
-        if (AREA_OPTIONS.includes(extractedArea)) {
-          setArea(extractedArea)
+        const matchedArea = resolveAreaOption(extractedArea)
+        if (matchedArea) {
+          setArea(matchedArea)
           setCustomArea('')
         } else {
           setArea('Otra')
@@ -1533,7 +1554,18 @@ export default function AdminPage() {
     setAddress(event.address || '')
     setMapsUrl(event.maps_url || '')
     setTicketUrl(event.source_url || '')
-    setArea(event.area || '')
+    const savedArea = event.area || ''
+    const matchedArea = resolveAreaOption(savedArea)
+    if (savedArea && matchedArea) {
+      setArea(matchedArea)
+      setCustomArea('')
+    } else if (savedArea) {
+      setArea('Otra')
+      setCustomArea(savedArea)
+    } else {
+      setArea('')
+      setCustomArea('')
+    }
     setDate(event.date || '')
     setStartTime(event.start_time || '17:00')
     setEndTime(event.end_time || '23:00')
@@ -2374,9 +2406,11 @@ export default function AdminPage() {
 
           <select className="select" value={area} onChange={(e) => setArea(e.target.value)}>
             <option value="">Zona</option>
-            <option>Centro</option>
-            <option>Salamanca</option>
-            <option>Retiro</option>
+            {AREA_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
             <option value="Otra">Otra</option>
           </select>
 
