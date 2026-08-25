@@ -1389,23 +1389,25 @@ export default function AdminPage() {
       published: editingEvent ? Boolean(editingEvent.published) : true,
     }
 
-    let error
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
 
-    if (editingEvent) {
-      const { error: updateError } = await supabase
-        .from('events')
-        .update(eventData)
-        .eq('id', editingEvent.id)
+    const response = await fetch('/api/admin/events', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session?.access_token || ''}`,
+      },
+      body: JSON.stringify({
+        eventId: editingEvent?.id,
+        event: eventData,
+      }),
+    })
+    const responseData = await response.json().catch(() => null)
 
-      error = updateError
-    } else {
-      const { error: insertError } = await supabase.from('events').insert(eventData)
-      error = insertError
-    }
-
-    if (error) {
-      setMessage('Error al guardar evento')
-      console.error(error)
+    if (!response.ok || !responseData?.event) {
+      setMessage(responseData?.error ? `Error al guardar evento: ${responseData.error}` : 'Error al guardar evento')
       return
     }
 
