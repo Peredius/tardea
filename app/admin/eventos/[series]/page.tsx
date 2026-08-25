@@ -1218,6 +1218,43 @@ export default function AdminEventSeriesPage() {
     )
   }
 
+  function copyBaseInfoToEditingEvent() {
+    if (!editingEventId || !mainEvent) return
+
+    const baseMusic = getMusicList(mainEvent.music)
+    const baseExtras = getEventExtras(mainEvent).join(', ')
+
+    setEvents((current) =>
+      current.map((event) => {
+        if (event.id !== editingEventId) return event
+
+        const copiedEvent = {
+          ...event,
+          title: mainEvent.title || event.title,
+          promoter_group: mainEvent.promoter_group || event.promoter_group || null,
+          type: mainEvent.type || event.type || 'Tardeo',
+          music: baseMusic.length ? baseMusic : getMusicList(event.music),
+          audience: mainEvent.audience || event.audience || 'Mixto',
+          venue: mainEvent.venue || event.venue || '',
+          area: mainEvent.area || event.area || 'Madrid',
+          address: mainEvent.address || event.address || '',
+          maps_url: mainEvent.maps_url || event.maps_url || '',
+          price_from: mainEvent.price_from ?? event.price_from ?? 0,
+          cover: mainEvent.cover || event.cover || '',
+          description: baseDescription || mainEvent.description || event.description || '',
+          website_url: mainEvent.website_url || event.website_url || '',
+          instagram_url: mainEvent.instagram_url || event.instagram_url || '',
+          tiktok_url: mainEvent.tiktok_url || event.tiktok_url || '',
+        }
+
+        return { ...copiedEvent, perks: buildPerksWithExtras(copiedEvent, baseExtras) }
+      })
+    )
+
+    setEditingExtrasDraft(baseExtras)
+    setMessage('Información de datos base copiada en esta fecha. Revisa y guarda cambios.')
+  }
+
   function startEditingEvent(eventId: string) {
     const eventToEdit = events.find((event) => event.id === eventId)
     setApplyEditToSeries(false)
@@ -1684,13 +1721,22 @@ export default function AdminEventSeriesPage() {
 
       {editingEvent && (
         <section className="mt-10 rounded-3xl border border-white/10 bg-slate-900/80 p-5">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-2xl font-bold">Editar fecha</h2>
-            <button type="button" onClick={() => {
-              setApplyEditToSeries(false)
-              setEditingEventId('')
-              setEditingExtrasDraft('')
-            }} className="text-sm font-semibold text-slate-400 hover:text-white">Cerrar</button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={copyBaseInfoToEditingEvent}
+                className="rounded-full border border-brand-500/60 px-4 py-2 text-xs font-bold text-brand-200 hover:bg-brand-500/10 hover:text-white"
+              >
+                Copiar información de datos base
+              </button>
+              <button type="button" onClick={() => {
+                setApplyEditToSeries(false)
+                setEditingEventId('')
+                setEditingExtrasDraft('')
+              }} className="text-sm font-semibold text-slate-400 hover:text-white">Cerrar</button>
+            </div>
           </div>
 
           <div className="grid gap-3 lg:grid-cols-2">
