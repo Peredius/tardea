@@ -569,59 +569,59 @@ export default function AdminEventSeriesPage() {
       maps_url: baseForm.maps_url || null,
     }
 
-    if (events.length > 0) {
-      const updates = await Promise.all(
-        events.map((event) => {
-          const hasCustomDescription = event.description?.trim() && event.description.trim() !== baseDescription
-          return supabase
-            .from('events')
-            .update({
-              ...sharedPayload,
-              venue: event.venue || baseLocation.venue,
-              area: event.area || baseLocation.area,
-              address: event.address || baseLocation.address,
-              maps_url: event.maps_url || baseLocation.maps_url,
-              description: hasCustomDescription ? event.description : sharedPayload.description,
-            })
-            .eq('id', event.id)
-        })
-      )
-      const failed = updates.find((result) => result.error)
-
-      if (failed?.error) {
-        setBaseSaving(false)
-        setMessage(`No se pudieron guardar los datos base: ${failed.error.message}`)
-        return
-      }
-    }
-
     const profileId = events.find((event) => event.event_profile_id)?.event_profile_id
     if (profileId) {
-      const { error } = await supabase
+      const fullProfilePayload = {
+        name: sharedPayload.title,
+        type: sharedPayload.type,
+        venue_name: baseLocation.venue,
+        area: baseLocation.area,
+        address: baseLocation.address,
+        maps_url: baseLocation.maps_url,
+        music: sharedPayload.music,
+        audience: sharedPayload.audience,
+        price_from: sharedPayload.price_from,
+        website_url: sharedPayload.website_url,
+        instagram_url: sharedPayload.instagram_url,
+        tiktok_url: sharedPayload.tiktok_url,
+        logo_url: coverUrl,
+        banner_url: coverUrl,
+        description: sharedPayload.description,
+        updated_at: new Date().toISOString(),
+      }
+
+      const safeProfilePayload = {
+        name: sharedPayload.title,
+        type: sharedPayload.type,
+        venue_name: baseLocation.venue,
+        music: sharedPayload.music,
+        audience: sharedPayload.audience,
+        price_from: sharedPayload.price_from,
+        website_url: sharedPayload.website_url,
+        instagram_url: sharedPayload.instagram_url,
+        tiktok_url: sharedPayload.tiktok_url,
+        logo_url: coverUrl,
+        banner_url: coverUrl,
+        description: sharedPayload.description,
+        updated_at: new Date().toISOString(),
+      }
+
+      let { error } = await supabase
         .from('promoter_event_profiles')
-        .update({
-          name: sharedPayload.title,
-          type: sharedPayload.type,
-          venue_name: baseLocation.venue,
-          area: baseLocation.area,
-          address: baseLocation.address,
-          maps_url: baseLocation.maps_url,
-          music: sharedPayload.music,
-          audience: sharedPayload.audience,
-          price_from: sharedPayload.price_from,
-          website_url: sharedPayload.website_url,
-          instagram_url: sharedPayload.instagram_url,
-          tiktok_url: sharedPayload.tiktok_url,
-          logo_url: coverUrl,
-          banner_url: coverUrl,
-          description: sharedPayload.description,
-          updated_at: new Date().toISOString(),
-        })
+        .update(fullProfilePayload)
         .eq('id', profileId)
+
+      if (error && error.message.includes('schema cache')) {
+        const retry = await supabase
+          .from('promoter_event_profiles')
+          .update(safeProfilePayload)
+          .eq('id', profileId)
+        error = retry.error
+      }
 
       if (error) {
         setBaseSaving(false)
-        setMessage(`Datos guardados en fechas, pero no en la ficha base: ${error.message}`)
+        setMessage(`No se pudo guardar la ficha base: ${error.message}`)
         return
       }
     }
@@ -652,16 +652,11 @@ export default function AdminEventSeriesPage() {
       }
     }
 
-    const newSeries = getEventSeriesSlug({ title: sharedPayload.title, type: sharedPayload.type, venue: baseLocation.venue })
     setIsEditingBase(false)
     setBaseCoverFile(null)
     setBaseCoverPreview('')
     setBaseSaving(false)
     setMessage('Datos base de la ficha guardados. Los carteles de cada fecha no se han cambiado.')
-    if (newSeries !== series) {
-      router.replace(`/admin/eventos/${newSeries}`)
-      return
-    }
     loadEvents()
   }
 
