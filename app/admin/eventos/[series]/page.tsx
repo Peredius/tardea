@@ -571,7 +571,7 @@ export default function AdminEventSeriesPage() {
 
     const profileId = events.find((event) => event.event_profile_id)?.event_profile_id
     if (profileId) {
-      const fullProfilePayload = {
+      const profilePayload: Record<string, any> = {
         name: sharedPayload.title,
         type: sharedPayload.type,
         venue_name: baseLocation.venue,
@@ -590,38 +590,28 @@ export default function AdminEventSeriesPage() {
         updated_at: new Date().toISOString(),
       }
 
-      const safeProfilePayload = {
-        name: sharedPayload.title,
-        type: sharedPayload.type,
-        venue_name: baseLocation.venue,
-        music: sharedPayload.music,
-        audience: sharedPayload.audience,
-        price_from: sharedPayload.price_from,
-        website_url: sharedPayload.website_url,
-        instagram_url: sharedPayload.instagram_url,
-        tiktok_url: sharedPayload.tiktok_url,
-        logo_url: coverUrl,
-        banner_url: coverUrl,
-        description: sharedPayload.description,
-        updated_at: new Date().toISOString(),
-      }
+      let pendingProfilePayload = { ...profilePayload }
+      let profileError = null
 
-      let { error } = await supabase
-        .from('promoter_event_profiles')
-        .update(fullProfilePayload)
-        .eq('id', profileId)
-
-      if (error && error.message.includes('schema cache')) {
-        const retry = await supabase
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        const result = await supabase
           .from('promoter_event_profiles')
-          .update(safeProfilePayload)
+          .update(pendingProfilePayload)
           .eq('id', profileId)
-        error = retry.error
+
+        profileError = result.error
+        if (!profileError) break
+
+        const missingColumn = profileError.message.match(/'([^']+)' column/)?.[1]
+        if (!missingColumn || !profileError.message.includes('schema cache')) break
+
+        const { [missingColumn]: _removed, ...nextPayload } = pendingProfilePayload
+        pendingProfilePayload = nextPayload
       }
 
-      if (error) {
+      if (profileError) {
         setBaseSaving(false)
-        setMessage(`No se pudo guardar la ficha base: ${error.message}`)
+        setMessage(`No se pudo guardar la ficha base: ${profileError.message}`)
         return
       }
     }
