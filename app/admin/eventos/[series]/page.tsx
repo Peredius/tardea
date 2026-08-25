@@ -397,6 +397,11 @@ export default function AdminEventSeriesPage() {
   }, [series])
 
   const mainEvent = events[0] || researchItems[0]
+  const eventDescriptions = useMemo(
+    () => Array.from(new Set(events.map((event) => (event.description || '').trim()).filter(Boolean))),
+    [events]
+  )
+  const baseDescription = (researchItems[0]?.notes || (eventDescriptions.length <= 1 ? eventDescriptions[0] : '') || '').trim()
   const isProfileReviewed = Boolean(mainEvent?.profile_reviewed)
   const isSeriesFeatured = events.some((event) => event.featured)
   const upcomingEvents = useMemo(
@@ -453,7 +458,7 @@ export default function AdminEventSeriesPage() {
       instagram_url: getFirstUrl(mainEvent.instagram_url, instagramUrl),
       tiktok_url: getFirstUrl(mainEvent.tiktok_url, tiktokUrl),
       cover: currentCover,
-      description: mainEvent.description || '',
+      description: baseDescription || mainEvent.description || '',
     })
     setBaseCoverFile(null)
     setBaseCoverPreview(currentCover)
@@ -549,8 +554,9 @@ export default function AdminEventSeriesPage() {
 
     if (events.length > 0) {
       const updates = await Promise.all(
-        events.map((event) =>
-          supabase
+        events.map((event) => {
+          const hasCustomDescription = event.description?.trim() && event.description.trim() !== baseDescription
+          return supabase
             .from('events')
             .update({
               ...sharedPayload,
@@ -558,9 +564,10 @@ export default function AdminEventSeriesPage() {
               area: event.area || baseLocation.area,
               address: event.address || baseLocation.address,
               maps_url: event.maps_url || baseLocation.maps_url,
+              description: hasCustomDescription ? event.description : sharedPayload.description,
             })
             .eq('id', event.id)
-        )
+        })
       )
       const failed = updates.find((result) => result.error)
 
@@ -750,7 +757,7 @@ export default function AdminEventSeriesPage() {
         audience: event.audience,
         price_from: event.price_from ? Number(event.price_from) : 0,
         cover: event.cover,
-        description: event.description,
+        description: useTargetDate ? targetEvent.description || event.description : event.description,
         perks: buildPerks(event),
         website_url: event.website_url || null,
         instagram_url: event.instagram_url || null,
@@ -1313,8 +1320,8 @@ export default function AdminEventSeriesPage() {
               Ver fuente original
             </a>
           )}
-          {mainEvent.description && (
-            <p className="mt-4 text-sm leading-6 text-slate-400">{mainEvent.description}</p>
+          {baseDescription && (
+            <p className="mt-4 text-sm leading-6 text-slate-400">{baseDescription}</p>
           )}
         </aside>
       </section>
@@ -1763,7 +1770,7 @@ export default function AdminEventSeriesPage() {
             />
             <span>
               <span className="block font-bold text-white">Aplicar estos cambios a todas las fechas de esta ficha</span>
-              <span className="mt-1 block text-xs leading-5 text-slate-500">La fecha, ubicación, dirección, Google Maps y enlace de tiquetera de cada día se mantienen. Se actualizan datos comunes como hora, precio, cartel, extras y descripción.</span>
+              <span className="mt-1 block text-xs leading-5 text-slate-500">La fecha, ubicación, dirección, Google Maps, enlace de tiquetera y descripción de cada día se mantienen. Se actualizan datos comunes como hora, precio, cartel y extras.</span>
             </span>
           </label>
 
