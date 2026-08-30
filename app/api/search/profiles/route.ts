@@ -49,6 +49,24 @@ function normalizeSearchKey(value: string | null | undefined) {
     .replace(/[\u0300-\u036f]/g, '')
 }
 
+function getSearchVariants(query: string) {
+  const compactQuery = query.trim().replace(/\s+/g, ' ')
+  const singularQuery = compactQuery
+    .split(' ')
+    .map((word) => (word.length > 3 && word.toLocaleLowerCase('es-ES').endsWith('s') ? word.slice(0, -1) : word))
+    .join(' ')
+  const meaningfulWords = singularQuery
+    .split(' ')
+    .filter((word) => !['el', 'la', 'los', 'las', 'de', 'del', 'y'].includes(normalizeSearchKey(word)))
+
+  return Array.from(new Set([
+    compactQuery,
+    singularQuery,
+    meaningfulWords.join(' '),
+    ...meaningfulWords,
+  ].map((value) => value.trim()).filter((value) => value.length >= 2))).slice(0, 6)
+}
+
 const outsideMadridAreaKeys = new Set(
   [
     'Alcorcón',
@@ -96,41 +114,43 @@ function getSupabaseClients() {
 
 async function runProfileSearch(supabaseClient: SupabaseClient, query: string) {
   const today = new Date().toISOString().split('T')[0]
+  const searchVariants = getSearchVariants(query)
 
   const profileSelect = 'id, name, venue_name, type, logo_url, banner_url'
   const eventSelect = 'id, event_profile_id, slug, title, venue, area, type, date, cover'
 
-  const [{ data: nameMatches }, { data: venueMatches }, { data: typeMatches }] =
-    await Promise.all([
+  const profileMatches = await Promise.all(
+    searchVariants.flatMap((variant) => [
       supabaseClient
         .from('promoter_event_profiles')
         .select(profileSelect)
         .eq('is_active', true)
-        .ilike('name', `%${query}%`)
+        .ilike('name', `%${variant}%`)
         .limit(12),
       supabaseClient
         .from('promoter_event_profiles')
         .select(profileSelect)
         .eq('is_active', true)
-        .ilike('venue_name', `%${query}%`)
+        .ilike('venue_name', `%${variant}%`)
         .limit(12),
       supabaseClient
         .from('promoter_event_profiles')
         .select(profileSelect)
         .eq('is_active', true)
-        .ilike('type', `%${query}%`)
+        .ilike('type', `%${variant}%`)
         .limit(12),
     ])
+  )
 
-  const [{ data: titleEvents }, { data: venueEvents }, { data: areaEvents }, { data: typeEvents }] =
-    await Promise.all([
+  const eventMatchResponses = await Promise.all(
+    searchVariants.flatMap((variant) => [
       supabaseClient
         .from('events')
         .select(eventSelect)
         .eq('published', true)
         .eq('status', 'approved')
         .gte('date', today)
-        .ilike('title', `%${query}%`)
+        .ilike('title', `%${variant}%`)
         .order('date', { ascending: true })
         .limit(30),
       supabaseClient
@@ -139,7 +159,7 @@ async function runProfileSearch(supabaseClient: SupabaseClient, query: string) {
         .eq('published', true)
         .eq('status', 'approved')
         .gte('date', today)
-        .ilike('venue', `%${query}%`)
+        .ilike('venue', `%${variant}%`)
         .order('date', { ascending: true })
         .limit(30),
       supabaseClient
@@ -148,7 +168,7 @@ async function runProfileSearch(supabaseClient: SupabaseClient, query: string) {
         .eq('published', true)
         .eq('status', 'approved')
         .gte('date', today)
-        .ilike('area', `%${query}%`)
+        .ilike('area', `%${variant}%`)
         .order('date', { ascending: true })
         .limit(30),
       supabaseClient
@@ -157,10 +177,11 @@ async function runProfileSearch(supabaseClient: SupabaseClient, query: string) {
         .eq('published', true)
         .eq('status', 'approved')
         .gte('date', today)
-        .ilike('type', `%${query}%`)
+        .ilike('type', `%${variant}%`)
         .order('date', { ascending: true })
         .limit(30),
     ])
+  )
 
   const madridAreaEventsResponse =
     normalizeSearchKey(query) === 'madrid'
@@ -179,10 +200,7 @@ async function runProfileSearch(supabaseClient: SupabaseClient, query: string) {
   )
 
   const eventMatches = uniqueById([
-    ...((titleEvents || []) as SearchEvent[]),
-    ...((venueEvents || []) as SearchEvent[]),
-    ...((areaEvents || []) as SearchEvent[]),
-    ...((typeEvents || []) as SearchEvent[]),
+    ...eventMatchResponses.flatMap((response) => (response.data || []) as SearchEvent[]),
     ...madridCapitalEvents,
   ])
   const profileIdsFromEvents = Array.from(
@@ -198,9 +216,7 @@ async function runProfileSearch(supabaseClient: SupabaseClient, query: string) {
     : { data: [] as EventProfile[] }
 
   const profiles = uniqueById([
-    ...((nameMatches || []) as EventProfile[]),
-    ...((venueMatches || []) as EventProfile[]),
-    ...((typeMatches || []) as EventProfile[]),
+    ...profileMatches.flatMap((response) => (response.data || []) as EventProfile[]),
     ...((profilesFromEvents || []) as EventProfile[]),
   ])
 
@@ -275,7 +291,9 @@ async function runProfileSearch(supabaseClient: SupabaseClient, query: string) {
     }))
     .sort((a, b) => (a.nextDate || '').localeCompare(b.nextDate || ''))
 
-  return uniqueById([...profileResults, ...fallbackEventResults]).slice(0, 8)
+  return uniqueById([...profileResults, ...fallbackEventResults])
+    .sort((a, b) => (a.nextDate || '').localeCompare(b.nextDate || ''))
+    .slice(0, 8)
 }
 
 export async function GET(request: Request) {
