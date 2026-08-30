@@ -391,32 +391,40 @@ export default function AdminEventSeriesPage() {
       return
     }
 
-    const seriesEvents = (data || []).filter((event) => getEventSeriesSlug(event) === series || getLegacyEventSeriesSlug(event) === series)
+    const { data: profileBySlug } = await supabase
+      .from('promoter_event_profiles')
+      .select('*')
+      .in('slug', getProfileSlugCandidates(series))
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    const seriesEvents = (data || []).filter((event) =>
+      (profileBySlug?.id && event.event_profile_id === profileBySlug.id)
+      || getEventSeriesSlug(event) === series
+      || getLegacyEventSeriesSlug(event) === series
+    )
     setEvents(seriesEvents)
 
-    const profileId = seriesEvents.find((event) => event.event_profile_id)?.event_profile_id
+    const profileId = profileBySlug?.id || seriesEvents.find((event) => event.event_profile_id)?.event_profile_id
     if (profileId) {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      const profileResponse = await fetch(`/api/admin/event-profile/update?profileId=${encodeURIComponent(profileId)}`, {
-        headers: {
-          Authorization: `Bearer ${session?.access_token || ''}`,
-        },
-      })
-      const profileData = await profileResponse.json().catch(() => null)
+      if (profileBySlug?.id === profileId) {
+        setEventProfile(profileBySlug)
+      } else {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+        const profileResponse = await fetch(`/api/admin/event-profile/update?profileId=${encodeURIComponent(profileId)}`, {
+          headers: {
+            Authorization: `Bearer ${session?.access_token || ''}`,
+          },
+        })
+        const profileData = await profileResponse.json().catch(() => null)
 
-      setEventProfile(profileResponse.ok && profileData?.profile ? profileData.profile : null)
+        setEventProfile(profileResponse.ok && profileData?.profile ? profileData.profile : null)
+      }
     } else {
-      const { data: profileBySlug } = await supabase
-        .from('promoter_event_profiles')
-        .select('*')
-        .in('slug', getProfileSlugCandidates(series))
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      setEventProfile(profileBySlug || null)
+      setEventProfile(null)
     }
 
     const { data: researchData } = await supabase
