@@ -537,11 +537,12 @@ export default function AdminEventSeriesPage() {
     })
   }
 
-  function handleBaseCoverChange(file: File | null) {
+  async function handleBaseCoverChange(file: File | null) {
     setBaseCoverFile(file)
     if (file) {
       const preview = URL.createObjectURL(file)
       setBaseCoverPreview(preview)
+      await saveBaseProfile(file)
       return
     }
     setBaseCoverPreview(baseForm.cover || '')
@@ -600,11 +601,12 @@ export default function AdminEventSeriesPage() {
     return musicList.length ? musicList : ['Comercial']
   }
 
-  async function uploadBaseCover() {
+  async function uploadBaseCover(fileOverride?: File | null) {
     let coverUrl = baseForm.cover || null
+    const fileToUpload = fileOverride ?? baseCoverFile
 
-    if (baseCoverFile) {
-      const safeName = baseCoverFile.name
+    if (fileToUpload) {
+      const safeName = fileToUpload.name
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
@@ -613,7 +615,7 @@ export default function AdminEventSeriesPage() {
       const fileName = `series/${series}/${Date.now()}-${safeName}`
       const { error: uploadError } = await supabase.storage
         .from('events')
-        .upload(fileName, baseCoverFile, { upsert: true })
+        .upload(fileName, fileToUpload, { upsert: true })
 
       if (uploadError) {
         throw new Error(uploadError.message)
@@ -626,13 +628,13 @@ export default function AdminEventSeriesPage() {
     return coverUrl
   }
 
-  async function saveBaseProfile() {
+  async function saveBaseProfile(fileOverride?: File | null) {
     setBaseSaving(true)
     const musicList = getBaseMusicList()
     let coverUrl = baseForm.cover || null
 
     try {
-      coverUrl = await uploadBaseCover()
+      coverUrl = await uploadBaseCover(fileOverride)
     } catch (error: any) {
       setBaseSaving(false)
       setMessage(`No se pudo subir el cartel base: ${error.message}`)
@@ -751,7 +753,7 @@ export default function AdminEventSeriesPage() {
     setIsEditingBase(false)
     setBaseCoverFile(null)
     setBaseForm((current: any) => ({ ...current, cover: coverUrl }))
-    setBaseCoverPreview('')
+    setBaseCoverPreview(coverUrl || '')
     localStorage.removeItem(getBaseDraftKey())
     setBaseSaving(false)
     setMessage('Datos base de la ficha guardados. Los carteles de cada fecha no se han cambiado.')
@@ -1726,11 +1728,12 @@ export default function AdminEventSeriesPage() {
                   <p className="mt-1 text-xs text-slate-500">Sube el cartel desde tu ordenador. Se guardará como imagen base de la ficha, sin cambiar los carteles de cada fecha.</p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <label className="inline-flex cursor-pointer rounded-full border border-white/10 px-4 py-2 text-xs font-bold text-slate-200 hover:border-brand-500/60">
-                      Subir cartel base
+                      {baseSaving ? 'Guardando cartel...' : 'Subir y guardar cartel'}
                       <input
                         type="file"
                         accept="image/*"
                         className="hidden"
+                        disabled={baseSaving}
                         onChange={(event) => handleBaseCoverChange(event.target.files?.[0] || null)}
                       />
                     </label>
@@ -1762,7 +1765,7 @@ export default function AdminEventSeriesPage() {
             </div>
           </div>
 
-          <button type="button" onClick={saveBaseProfile} disabled={baseSaving} className="mt-4 rounded-full bg-brand-500 px-5 py-3 text-sm font-bold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60">
+          <button type="button" onClick={() => saveBaseProfile()} disabled={baseSaving} className="mt-4 rounded-full bg-brand-500 px-5 py-3 text-sm font-bold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60">
             {baseSaving ? 'Guardando...' : 'Guardar ficha'}
           </button>
         </section>
