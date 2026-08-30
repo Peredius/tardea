@@ -1,13 +1,16 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import {
   Calendar,
   ChevronLeft,
   ChevronRight,
   MapPin,
   Music4,
+  Search,
   Ticket,
+  X,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
@@ -28,6 +31,16 @@ const monthNames = [
 
 const weekDays = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM']
 
+type SearchProfile = {
+  id: string
+  name: string
+  venue_name: string | null
+  area: string | null
+  type: string | null
+  nextDate?: string | null
+  href?: string
+}
+
 function formatDate(year: number, month: number, day: number) {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
@@ -38,6 +51,8 @@ export function Hero() {
   const [currentYear, setCurrentYear] = useState(today.getFullYear())
   const [selectedDates, setSelectedDates] = useState<string[]>([])
   const [eventDates, setEventDates] = useState<string[]>([])
+  const [nameQuery, setNameQuery] = useState('')
+  const [nameResults, setNameResults] = useState<SearchProfile[]>([])
 
   const days = useMemo(() => {
     const firstDay = new Date(currentYear, currentMonth, 1)
@@ -70,6 +85,34 @@ export function Hero() {
 
     loadEventDates()
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function searchProfiles() {
+      const searchTerm = nameQuery.trim()
+
+      if (searchTerm.length < 2) {
+        setNameResults([])
+        return
+      }
+
+      const response = await fetch(`/api/search/profiles?q=${encodeURIComponent(searchTerm)}`, {
+        cache: 'no-store',
+      })
+      const payload = await response.json().catch(() => null)
+
+      if (!cancelled) {
+        setNameResults(response.ok ? payload?.results || [] : [])
+      }
+    }
+
+    searchProfiles()
+
+    return () => {
+      cancelled = true
+    }
+  }, [nameQuery])
 
   function changeMonth(direction: number) {
     const newDate = new Date(currentYear, currentMonth + direction, 1)
@@ -169,6 +212,54 @@ export function Hero() {
           <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-brand-500 to-transparent" />
 
           <div className="relative">
+            <div className="relative mb-3 md:hidden">
+              <div className="flex h-10 items-center gap-2 rounded-full border border-white/10 bg-slate-950/80 px-3">
+                <Search className="h-4 w-4 shrink-0 text-slate-400" />
+                <input
+                  value={nameQuery}
+                  onChange={(event) => setNameQuery(event.target.value)}
+                  placeholder="Buscar por nombre"
+                  className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-white placeholder:text-slate-500 focus:outline-none"
+                />
+                {nameQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNameQuery('')
+                      setNameResults([])
+                    }}
+                    aria-label="Borrar búsqueda"
+                    className="rounded-full p-1 text-slate-400 transition hover:bg-white/10 hover:text-white"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+
+              {nameResults.length > 0 && (
+                <div className="absolute left-0 right-0 top-12 z-20 overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-2xl shadow-black/40">
+                  {nameResults.slice(0, 5).map((profile) => (
+                    <Link
+                      key={profile.id}
+                      href={profile.href || `/eventos/grupo/${profile.id}`}
+                      onClick={() => {
+                        setNameQuery('')
+                        setNameResults([])
+                      }}
+                      className="block border-b border-white/10 px-4 py-3 last:border-b-0 active:bg-white/10"
+                    >
+                      <p className="truncate text-sm font-bold text-white">{profile.name}</p>
+                      <p className="mt-1 truncate text-[11px] text-slate-400">
+                        {[profile.venue_name || profile.area, profile.type, profile.nextDate ? `Próxima ${new Date(profile.nextDate).toLocaleDateString('es-ES')}` : null]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="mb-4 flex items-center justify-between gap-4">
               <div className="rounded-2xl bg-brand-500/20 p-3 text-brand-400 shadow-[0_0_35px_rgba(255,0,102,0.25)]">
                 <Calendar className="h-6 w-6" />

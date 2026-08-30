@@ -42,24 +42,33 @@ const areaCoordinates: Record<string, { lat: number; lng: number }> = {
   Madrid: { lat: 40.4168, lng: -3.7038 },
   Centro: { lat: 40.4168, lng: -3.7038 },
   Salamanca: { lat: 40.427, lng: -3.679 },
+  Malasaña: { lat: 40.426, lng: -3.704 },
   'Gran Via': { lat: 40.42, lng: -3.705 },
   'Gran Vía': { lat: 40.42, lng: -3.705 },
   Ponzano: { lat: 40.441, lng: -3.699 },
   Retiro: { lat: 40.414, lng: -3.676 },
   Chamberí: { lat: 40.434, lng: -3.704 },
   Chamberi: { lat: 40.434, lng: -3.704 },
-  Malasaña: { lat: 40.426, lng: -3.704 },
   'La Latina': { lat: 40.411, lng: -3.708 },
+  Carabanchel: { lat: 40.382, lng: -3.744 },
   Chamartín: { lat: 40.462, lng: -3.676 },
   Tetuán: { lat: 40.459, lng: -3.699 },
   Tetuan: { lat: 40.459, lng: -3.699 },
+  'Fuencarral-El Pardo': { lat: 40.498, lng: -3.709 },
+  Fuencarral: { lat: 40.498, lng: -3.709 },
+  Usera: { lat: 40.383, lng: -3.706 },
+  Arganzuela: { lat: 40.398, lng: -3.693 },
+  Chueca: { lat: 40.422, lng: -3.698 },
+  Hortaleza: { lat: 40.474, lng: -3.642 },
+  'Moncloa-Aravaca': { lat: 40.435, lng: -3.719 },
+  Moncloa: { lat: 40.435, lng: -3.719 },
+  'San Blas-Canillejas': { lat: 40.433, lng: -3.609 },
   Alcorcón: { lat: 40.3468, lng: -3.8278 },
   Alcorcon: { lat: 40.3468, lng: -3.8278 },
   Móstoles: { lat: 40.3223, lng: -3.8649 },
   Mostoles: { lat: 40.3223, lng: -3.8649 },
-  Carabanchel: { lat: 40.382, lng: -3.744 },
-  Moncloa: { lat: 40.435, lng: -3.719 },
-  'Fuencarral-El Pardo': { lat: 40.498, lng: -3.709 },
+  Rivas: { lat: 40.339, lng: -3.519 },
+  'Rivas-Vaciamadrid': { lat: 40.339, lng: -3.519 },
 }
 
 const priorityAreas = [
@@ -69,13 +78,24 @@ const priorityAreas = [
   'Malasaña',
   'Retiro',
   'Chamberí',
-  'Chamberi',
   'Gran Vía',
-  'Gran Via',
   'Ponzano',
   'La Latina',
   'Carabanchel',
   'Chamartín',
+  'Tetuán',
+  'Fuencarral-El Pardo',
+  'Fuencarral',
+  'Usera',
+  'Arganzuela',
+  'Chueca',
+  'Hortaleza',
+  'Moncloa-Aravaca',
+  'San Blas-Canillejas',
+  'Alcorcón',
+  'Móstoles',
+  'Rivas',
+  'Rivas-Vaciamadrid',
 ]
 
 function normalizeAreaKey(value: string) {
@@ -94,6 +114,9 @@ const outsideMadridAreaKeys = new Set(
     'Alcorcon',
     'Móstoles',
     'Mostoles',
+    'Rivas',
+    'Ribas',
+    'Rivas-Vaciamadrid',
     'Getafe',
     'Leganés',
     'Leganes',
@@ -110,6 +133,13 @@ const outsideMadridAreaKeys = new Set(
 function displayAreaName(value: string) {
   const normalized = normalizeAreaKey(value)
   if (normalized === 'chamartin') return 'Chamartín'
+  if (normalized === 'chamberi') return 'Chamberí'
+  if (normalized === 'gran via') return 'Gran Vía'
+  if (normalized === 'tetuan') return 'Tetuán'
+  if (normalized === 'alcorcon') return 'Alcorcón'
+  if (normalized === 'mostoles') return 'Móstoles'
+  if (normalized === 'malasana') return 'Malasaña'
+  if (normalized === 'rivas' || normalized === 'ribas') return 'Rivas'
   return value
 }
 
