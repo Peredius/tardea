@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { findKnownVenueDetails } from '@/lib/venueAutofill'
 
 const MUSIC_OPTIONS = ['Comercial', 'Show en directo', 'Electrónica', 'Reguetón', 'Pop', 'Indie', 'Flamenquito', 'Remember']
 const AUDIENCE_OPTIONS = ['18-25', '25-35', '30+', 'Mixto']
@@ -499,6 +500,22 @@ export default function AdminEventSeriesPage() {
 
   function updateBaseForm(field: string, value: string) {
     setBaseForm((current: any) => ({ ...current, [field]: value }))
+  }
+
+  function updateBaseVenue(value: string) {
+    const details = findKnownVenueDetails(value)
+
+    setBaseForm((current: any) => {
+      if (!details) return { ...current, venue: value }
+
+      return {
+        ...current,
+        venue: details.venue,
+        area: current.area || details.area,
+        address: current.address || details.address,
+        maps_url: current.maps_url || details.mapsUrl,
+      }
+    })
   }
 
   function toggleBaseMusic(style: string) {
@@ -1363,6 +1380,25 @@ export default function AdminEventSeriesPage() {
     )
   }
 
+  function updateEditingVenue(value: string) {
+    const details = findKnownVenueDetails(value)
+
+    setEvents((current) =>
+      current.map((event) => {
+        if (event.id !== editingEventId) return event
+        if (!details) return { ...event, venue: value }
+
+        return {
+          ...event,
+          venue: details.venue,
+          area: event.area || details.area,
+          address: event.address || details.address,
+          maps_url: event.maps_url || details.mapsUrl,
+        }
+      })
+    )
+  }
+
   function toggleEditingMusic(style: string) {
     if (!editingEventId) return
 
@@ -1557,7 +1593,7 @@ export default function AdminEventSeriesPage() {
             <select className="select" value={baseForm.type || 'Tardeo'} onChange={(event) => updateBaseForm('type', event.target.value)}>
               {EVENT_TYPE_OPTIONS.map((option) => <option key={option}>{option}</option>)}
             </select>
-            <input className="input" value={baseForm.venue || ''} onChange={(event) => updateBaseForm('venue', event.target.value)} placeholder="Lugar" />
+            <input className="input" value={baseForm.venue || ''} onChange={(event) => updateBaseVenue(event.target.value)} placeholder="Lugar" />
             <select className="select" value={getAreaSelectValue(baseForm.area || '')} onChange={(event) => updateBaseForm('area', getAreaFromSelect(event.target.value, baseForm.area || ''))}>
               {AREA_OPTIONS.map((option) => <option key={option}>{option}</option>)}
             </select>
@@ -1970,7 +2006,7 @@ export default function AdminEventSeriesPage() {
               {['Mixto', ...AUDIENCE_OPTIONS].map((option) => <option key={option}>{option}</option>)}
             </select>
             <input className="input" value={editingEvent.price_from || ''} onChange={(event) => updateEditingEvent('price_from', event.target.value)} placeholder="Precio desde" />
-            <input className="input" value={editingEvent.venue || ''} onChange={(event) => updateEditingEvent('venue', event.target.value)} placeholder="Lugar" />
+            <input className="input" value={editingEvent.venue || ''} onChange={(event) => updateEditingVenue(event.target.value)} placeholder="Lugar" />
             <select className="select" value={getAreaSelectValue(editingEvent.area || '')} onChange={(event) => updateEditingEvent('area', getAreaFromSelect(event.target.value, editingEvent.area || ''))}>
               {AREA_OPTIONS.map((option) => <option key={option}>{option}</option>)}
             </select>

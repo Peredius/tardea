@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Search, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { findKnownVenueDetails } from '@/lib/venueAutofill'
 
 function generateSlug(title: string, date: string) {
   const cleanTitle = title
@@ -1366,6 +1367,31 @@ export default function AdminPage() {
     fetchEvents()
   }
 
+  function applyKnownVenueDetails(value: string) {
+    const details = findKnownVenueDetails(value)
+    if (!details) return
+
+    setVenue(details.venue)
+    if (!address) setAddress(details.address)
+    if (!mapsUrl) setMapsUrl(details.mapsUrl)
+
+    if (!area) {
+      const matchedArea = resolveAreaOption(details.area)
+      if (matchedArea) {
+        setArea(matchedArea)
+        setCustomArea('')
+      } else {
+        setArea('Otra')
+        setCustomArea(details.area)
+      }
+    }
+  }
+
+  function updateVenue(value: string) {
+    setVenue(value)
+    applyKnownVenueDetails(value)
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
@@ -2425,7 +2451,7 @@ export default function AdminPage() {
           </div>
 
           <input className="input" placeholder="Precio (EUR)" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value)} />
-          <input className="input" placeholder="Lugar" value={venue} onChange={(e) => setVenue(e.target.value)} />
+          <input className="input" placeholder="Lugar" value={venue} onChange={(e) => updateVenue(e.target.value)} />
           <input className="input" placeholder="Direccion" value={address} onChange={(e) => setAddress(e.target.value)} />
           <input className="input" placeholder="Link de Google Maps" value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} />
           <input className="input lg:col-span-2" placeholder="Link de compra / tiquetera" value={ticketUrl} onChange={(e) => setTicketUrl(e.target.value)} />
