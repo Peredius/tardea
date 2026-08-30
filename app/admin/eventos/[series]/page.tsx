@@ -82,6 +82,13 @@ function getLegacyEventSeriesSlug(event: any) {
   return [event.type || 'Tardeo', title || 'evento', venue].filter(Boolean).join('__').toLowerCase()
 }
 
+function getProfileSlugCandidates(series: string) {
+  return Array.from(new Set([
+    series,
+    series.replace(/^[a-z0-9-]+__/, ''),
+  ].filter(Boolean)))
+}
+
 function formatDate(date: string) {
   if (!date) return 'Sin fecha'
   return new Date(date).toLocaleDateString('es-ES', {
@@ -401,7 +408,15 @@ export default function AdminEventSeriesPage() {
 
       setEventProfile(profileResponse.ok && profileData?.profile ? profileData.profile : null)
     } else {
-      setEventProfile(null)
+      const { data: profileBySlug } = await supabase
+        .from('promoter_event_profiles')
+        .select('*')
+        .in('slug', getProfileSlugCandidates(series))
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      setEventProfile(profileBySlug || null)
     }
 
     const { data: researchData } = await supabase
@@ -422,7 +437,29 @@ export default function AdminEventSeriesPage() {
     localStorage.setItem(getBaseDraftKey(), JSON.stringify(baseForm))
   }, [baseForm, isEditingBase, series])
 
-  const mainEvent = events[0] || researchItems[0]
+  const profileAsMainEvent = eventProfile
+    ? {
+        title: eventProfile.name,
+        promoter_group: '',
+        type: eventProfile.type || 'Tardeo',
+        music: eventProfile.music || 'Comercial',
+        audience: eventProfile.audience || 'Mixto',
+        venue: eventProfile.venue_name || '',
+        area: eventProfile.area || 'Madrid',
+        address: eventProfile.address || '',
+        maps_url: eventProfile.maps_url || '',
+        price_from: eventProfile.price_from ?? 0,
+        website_url: eventProfile.website_url || '',
+        source_url: '',
+        instagram_url: eventProfile.instagram_url || '',
+        tiktok_url: eventProfile.tiktok_url || '',
+        cover: eventProfile.logo_url || eventProfile.banner_url || '',
+        description: eventProfile.description || '',
+        profile_reviewed: true,
+        updated_at: eventProfile.updated_at || '',
+      }
+    : null
+  const mainEvent = events[0] || researchItems[0] || profileAsMainEvent
   const profileCover = eventProfile?.logo_url || eventProfile?.banner_url || ''
   const headerCover = profileCover || mainEvent?.cover || ''
   const baseTitle = eventProfile?.name || mainEvent?.title || ''

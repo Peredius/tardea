@@ -409,6 +409,7 @@ export default function AdminPage() {
   const [researchSaving, setResearchSaving] = useState(false)
   const [researchExtractingKey, setResearchExtractingKey] = useState('')
   const [activeResearchDropdown, setActiveResearchDropdown] = useState('')
+  const [eventProfiles, setEventProfiles] = useState<any[]>([])
   const [profileSearchQuery, setProfileSearchQuery] = useState('')
   const [profileTypeFilter, setProfileTypeFilter] = useState('Todos')
   const [profileReviewFilter, setProfileReviewFilter] = useState<'review' | 'created' | 'all'>('created')
@@ -443,6 +444,7 @@ export default function AdminPage() {
 
       fetchEvents()
       fetchResearchRows()
+      fetchEventProfiles()
     }
 
     checkAdmin()
@@ -478,6 +480,21 @@ export default function AdminPage() {
         notes: row.notes || '',
       }))
     )
+  }
+
+  async function fetchEventProfiles() {
+    const { data, error } = await supabase
+      .from('promoter_event_profiles')
+      .select('*')
+      .order('updated_at', { ascending: false })
+
+    if (error) {
+      console.error(error)
+      setEventProfiles([])
+      return
+    }
+
+    setEventProfiles(data || [])
   }
 
   async function fetchEvents() {
@@ -1831,12 +1848,22 @@ export default function AdminPage() {
     new Map(filteredResearchRows.map((row) => [getResearchSeriesKey(row), row])).values()
   )
   const profileSourceRank: Record<string, number> = {
+    Ficha: 0,
     Publicado: 0,
     Pendiente: 1,
     Listado: 2,
     Scout: 3,
   }
   const profileSources = [
+    ...eventProfiles.map((profile) => ({
+      ...profile,
+      title: profile.name,
+      venue: profile.venue_name,
+      source_url: profile.website_url || profile.instagram_url || profile.tiktok_url || '',
+      source_kind: 'Ficha',
+      profile_reviewed: true,
+      source_count: 0,
+    })),
     ...events.map((event) => ({ ...event, source_kind: 'Publicado' })),
     ...pendingEvents.map((event) => ({ ...event, source_kind: 'Pendiente' })),
     ...scoutEvents.map((event) => ({ ...event, source_kind: 'Scout' })),
@@ -1870,12 +1897,14 @@ export default function AdminPage() {
       featured: Boolean(item.featured),
     }
 
-    if (!current || (current.sourceKinds.has('Listado') && item.source_kind !== 'Listado')) {
+    if (!current || item.source_kind === 'Ficha' || (current.sourceKinds.has('Listado') && item.source_kind !== 'Listado')) {
       summary.title = item.title || summary.title
       summary.type = item.type || summary.type
       summary.venue = item.venue || summary.venue
       summary.area = item.area || summary.area
-      summary.slug = getEventSeriesSlug({ title: summary.title, type: summary.type, venue: summary.venue })
+      summary.slug = item.source_kind === 'Ficha' && item.slug
+        ? item.slug
+        : getEventSeriesSlug({ title: summary.title, type: summary.type, venue: summary.venue })
       summary.profileReviewed = Boolean(item.profile_reviewed)
     }
 
@@ -1888,7 +1917,7 @@ export default function AdminPage() {
       summary.updatedAt = itemUpdatedAt
     }
     summary.sourceKinds.add(item.source_kind)
-    summary.count += 1
+    summary.count += item.source_count ?? 1
     profileMap.set(key, summary)
   })
   const profileTypes = ['Todos', ...compactOptions([...EVENT_TYPE_OPTIONS, ...Array.from(profileMap.values()).map((profile) => profile.type || 'Tardeo')])]
