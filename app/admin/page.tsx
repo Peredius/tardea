@@ -265,16 +265,59 @@ function getResearchSeriesKey(row: Partial<ResearchRow>) {
   ].join('__').toLowerCase()
 }
 
-function getProfileIndexKey(item: any) {
-  if (item.source_kind === 'Listado') {
-    return `research:${getResearchSeriesKey(item)}`
+const profileNameFillerWords = new Set([
+  'dj',
+  'session',
+  'sessions',
+  'sunset',
+  'madrid',
+  'tardeo',
+  'club',
+  'rooftop',
+  'terraza',
+  'terrazas',
+  'sky',
+  'bar',
+  'lounge',
+  'the',
+  'el',
+  'la',
+  'los',
+  'las',
+  'de',
+  'del',
+  'y',
+])
+
+function normalizeProfileGroupName(value: string) {
+  return normalizeEventSeriesText(value)
+    .split(' ')
+    .filter((word) => word.length > 1 && !profileNameFillerWords.has(word))
+    .join(' ')
+}
+
+function getProfileGroupName(item: any) {
+  const titleName = normalizeProfileGroupName(item.title || item.name || '')
+  const venueName = normalizeProfileGroupName(item.venue || item.venue_name || '')
+
+  if (titleName && venueName) {
+    const titleWords = new Set(titleName.split(' '))
+    const overlap = venueName.split(' ').filter((word) => titleWords.has(word)).length
+
+    if (titleName.includes(venueName)) return venueName
+    if (venueName.includes(titleName)) return titleName
+    if (overlap > 0) return titleName
   }
 
-  return `event:${getEventSeriesSlug({
-    title: item.title || item.venue || 'evento',
-    type: item.type || 'Tardeo',
-    venue: item.venue || '',
-  })}`
+  return titleName || venueName || normalizeEventSeriesText(item.title || item.name || item.venue || item.venue_name || 'evento') || 'evento'
+}
+
+function getProfileIndexKey(item: any) {
+  return [
+    'profile',
+    normalizeEventSeriesText(item.type || 'Tardeo') || 'tardeo',
+    getProfileGroupName(item),
+  ].join(':')
 }
 
 type AdminTab = 'events' | 'research' | 'create' | 'profiles'
