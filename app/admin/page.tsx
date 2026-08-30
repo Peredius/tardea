@@ -1890,6 +1890,10 @@ export default function AdminPage() {
   const visibleResearchRows = Array.from(
     new Map(filteredResearchRows.map((row) => [getResearchSeriesKey(row), row])).values()
   )
+  const profileResearchRows = researchRows.filter((row) => {
+    const status = compactValue(row.status, 'nuevo').toLowerCase()
+    return !['importado', 'archivado', 'descartado', 'pasado'].includes(status)
+  })
   const profileSourceRank: Record<string, number> = {
     Ficha: 0,
     Publicado: 0,
@@ -1910,7 +1914,7 @@ export default function AdminPage() {
     ...events.map((event) => ({ ...event, source_kind: 'Publicado' })),
     ...pendingEvents.map((event) => ({ ...event, source_kind: 'Pendiente' })),
     ...scoutEvents.map((event) => ({ ...event, source_kind: 'Scout' })),
-    ...researchRows.map((row) => ({ ...row, source_kind: 'Listado' })),
+    ...profileResearchRows.map((row) => ({ ...row, source_kind: 'Listado' })),
   ]
     .filter((item) => item.title || item.venue)
     .sort((a, b) => {
