@@ -156,10 +156,10 @@ export function Hero() {
 
   return (
     <section id="buscador" className="scroll-mt-20 bg-hero-gradient">
-      <div className="container-page grid items-center gap-8 py-10 md:grid-cols-[1.15fr_0.85fr] md:gap-12 md:py-12">
+      <div className="container-page grid items-center gap-7 py-7 md:grid-cols-[1.15fr_0.85fr] md:gap-12 md:py-12">
         <div className="contents md:block">
           
-          <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-white md:text-[56px] md:leading-[1.02]">
+          <h1 className="max-w-3xl text-[2rem] font-bold leading-tight tracking-tight text-white sm:text-4xl md:text-[56px] md:leading-[1.02]">
             Descubre los mejores{' '}
             <span className="text-brand-500">planes de tarde</span> en Madrid.
           </h1>
