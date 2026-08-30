@@ -417,6 +417,11 @@ export default function AdminEventSeriesPage() {
     loadEvents()
   }, [series])
 
+  useEffect(() => {
+    if (!isEditingBase || Object.keys(baseForm).length === 0) return
+    localStorage.setItem(getBaseDraftKey(), JSON.stringify(baseForm))
+  }, [baseForm, isEditingBase, series])
+
   const mainEvent = events[0] || researchItems[0]
   const profileCover = eventProfile?.logo_url || eventProfile?.banner_url || ''
   const headerCover = profileCover || mainEvent?.cover || ''
@@ -471,7 +476,7 @@ export default function AdminEventSeriesPage() {
 
   function openBaseEditor() {
     const currentCover = profileCover || mainEvent.cover || ''
-    setBaseForm({
+    const nextBaseForm = {
       title: eventProfile?.name || mainEvent.title || '',
       promoter_group: mainEvent.promoter_group || '',
       type: eventProfile?.type || mainEvent.type || 'Tardeo',
@@ -492,9 +497,11 @@ export default function AdminEventSeriesPage() {
       tiktok_url: getFirstUrl(eventProfile?.tiktok_url, mainEvent.tiktok_url, tiktokUrl),
       cover: currentCover,
       description: baseDescription || mainEvent.description || '',
-    })
+    }
+    const parsedDraft = readBaseDraft()
+    setBaseForm(parsedDraft || nextBaseForm)
     setBaseCoverFile(null)
-    setBaseCoverPreview(currentCover)
+    setBaseCoverPreview(parsedDraft?.cover || currentCover)
     setIsEditingBase(true)
   }
 
@@ -544,6 +551,43 @@ export default function AdminEventSeriesPage() {
     setIsEditingBase(false)
     setBaseCoverFile(null)
     setBaseCoverPreview('')
+  }
+
+  function getBaseDraftKey() {
+    return `tardea-base-draft:${series}`
+  }
+
+  function readBaseDraft() {
+    try {
+      const savedDraft = localStorage.getItem(getBaseDraftKey())
+      return savedDraft ? JSON.parse(savedDraft) : null
+    } catch {
+      localStorage.removeItem(getBaseDraftKey())
+      return null
+    }
+  }
+
+  async function updateResearchItemsWithSchemaFallback(ids: string[], payload: Record<string, any>) {
+    const cleanPayload = { ...payload }
+    let lastError: any = null
+
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      const { error } = await supabase
+        .from('event_research_items')
+        .update(cleanPayload)
+        .in('id', ids)
+
+      if (!error) return { error: null, appliedPayload: cleanPayload }
+
+      lastError = error
+      const missingColumn = error.message?.match(/Could not find the '([^']+)' column/)?.[1]
+
+      if (!missingColumn || !(missingColumn in cleanPayload)) break
+
+      delete cleanPayload[missingColumn]
+    }
+
+    return { error: lastError, appliedPayload: cleanPayload }
   }
 
   function getBaseMusicList() {
@@ -680,9 +724,9 @@ export default function AdminEventSeriesPage() {
 
     const researchIds = researchItems.map((item) => item.id).filter(Boolean)
     if (researchIds.length > 0) {
-      const { error } = await supabase
-        .from('event_research_items')
-        .update({
+      const { error } = await updateResearchItemsWithSchemaFallback(
+        researchIds,
+        {
           title: sharedPayload.title,
           promoter_group: sharedPayload.promoter_group,
           venue: baseLocation.venue,
@@ -694,8 +738,8 @@ export default function AdminEventSeriesPage() {
           price_from: sharedPayload.price_from,
           notes: sharedPayload.description,
           profile_reviewed: true,
-        })
-        .in('id', researchIds)
+        }
+      )
 
       if (error) {
         setBaseSaving(false)
@@ -708,6 +752,7 @@ export default function AdminEventSeriesPage() {
     setBaseCoverFile(null)
     setBaseForm((current: any) => ({ ...current, cover: coverUrl }))
     setBaseCoverPreview('')
+    localStorage.removeItem(getBaseDraftKey())
     setBaseSaving(false)
     setMessage('Datos base de la ficha guardados. Los carteles de cada fecha no se han cambiado.')
     loadEvents()
