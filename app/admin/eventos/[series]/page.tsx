@@ -636,14 +636,9 @@ export default function AdminEventSeriesPage() {
       profileId = resolveData.eventProfileId
     }
 
-    if (!profileId) {
-      setBaseSaving(false)
-      setMessage('No se encontro la ficha base para guardar.')
-      return
-    }
-
     const profilePayload: Record<string, any> = {
       name: sharedPayload.title,
+      slug: slugify(sharedPayload.title || baseLocation.venue || 'evento'),
       type: sharedPayload.type,
       venue_name: baseLocation.venue,
       area: baseLocation.area,
@@ -671,7 +666,7 @@ export default function AdminEventSeriesPage() {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session?.access_token || ''}`,
       },
-      body: JSON.stringify({ profileId, profile: profilePayload }),
+      body: JSON.stringify({ profileId: profileId || undefined, profile: profilePayload }),
     })
     const profileData = await profileResponse.json().catch(() => null)
 

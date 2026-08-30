@@ -36,7 +36,16 @@ async function assertAdmin(request: Request) {
 
   if (profile?.role !== 'admin') return { error: 'No tienes permisos de admin' }
 
-  return { serviceClient }
+  return { serviceClient, user }
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
 }
 
 async function updateProfileWithSchemaFallback(
@@ -68,6 +77,38 @@ async function updateProfileWithSchemaFallback(
   return { data: null, error: lastError, appliedPayload: cleanPayload }
 }
 
+async function upsertProfileWithSchemaFallback(
+  serviceClient: any,
+  userId: string,
+  payload: Record<string, any>
+) {
+  const cleanPayload: Record<string, any> = {
+    ...payload,
+    user_id: userId,
+    slug: payload.slug || slugify(payload.name || payload.venue_name || 'evento'),
+  }
+  let lastError: any = null
+
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    const { data, error } = await serviceClient
+      .from('promoter_event_profiles')
+      .upsert(cleanPayload, { onConflict: 'user_id,slug' })
+      .select('*')
+      .maybeSingle()
+
+    if (!error) return { data, error: null, appliedPayload: cleanPayload }
+
+    lastError = error
+    const missingColumn = error.message?.match(/Could not find the '([^']+)' column/)?.[1]
+
+    if (!missingColumn || !(missingColumn in cleanPayload)) break
+
+    delete cleanPayload[missingColumn]
+  }
+
+  return { data: null, error: lastError, appliedPayload: cleanPayload }
+}
+
 export async function POST(request: Request) {
   const admin = await assertAdmin(request)
   if ('error' in admin) {
@@ -78,15 +119,13 @@ export async function POST(request: Request) {
     | { profileId?: string; profile?: Record<string, any> }
     | null
 
-  if (!payload?.profileId || !payload.profile) {
+  if (!payload?.profile) {
     return NextResponse.json({ error: 'Falta la ficha para guardar.' }, { status: 400 })
   }
 
-  const { data, error, appliedPayload } = await updateProfileWithSchemaFallback(
-    admin.serviceClient,
-    payload.profileId,
-    payload.profile
-  )
+  const { data, error, appliedPayload } = payload.profileId
+    ? await updateProfileWithSchemaFallback(admin.serviceClient, payload.profileId, payload.profile)
+    : await upsertProfileWithSchemaFallback(admin.serviceClient, admin.user.id, payload.profile)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
