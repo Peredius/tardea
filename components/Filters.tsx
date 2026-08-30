@@ -224,6 +224,13 @@ function groupEventsBySeries(eventList: any[]) {
   return Array.from(groups.values())
 }
 
+const fallbackEventCover =
+  'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
+
+function getSearchEventCover(event: any) {
+  return event.profileCover || event.cover || fallbackEventCover
+}
+
 function getEventCoordinates(event: any) {
   if (typeof event.latitude === 'number' && typeof event.longitude === 'number') {
     return { lat: event.latitude, lng: event.longitude }
@@ -476,6 +483,22 @@ export function Filters() {
         return
       }
 
+      const profileIds = Array.from(
+        new Set((data || []).map((event) => event.event_profile_id).filter(Boolean))
+      )
+      const { data: profileImages } = profileIds.length
+        ? await supabase
+            .from('promoter_event_profiles')
+            .select('id, logo_url, banner_url')
+            .in('id', profileIds)
+        : { data: [] }
+      const profileCoverById = new Map(
+        (profileImages || []).map((profile: any) => [
+          profile.id,
+          profile.logo_url || profile.banner_url || '',
+        ])
+      )
+
       const mappedEvents = data.map((event) => ({
         id: event.id,
         slug: event.slug,
@@ -491,6 +514,7 @@ export function Filters() {
         audience: event.audience,
         priceFrom: event.price_from,
         cover: event.cover,
+        profileCover: event.event_profile_id ? profileCoverById.get(event.event_profile_id) || '' : '',
         mapsUrl: event.maps_url,
         latitude: event.latitude,
         longitude: event.longitude,
@@ -1078,11 +1102,7 @@ export function Filters() {
                   aria-label={`Ver ${event.title}`}
                   className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105 sm:relative sm:h-44 sm:min-h-0 sm:w-full sm:shrink-0"
                   style={{
-                    backgroundImage: `url(${
-                      !isPastEvent && event.cover
-                        ? event.cover
-                      : 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
-                    })`,
+                    backgroundImage: `url(${getSearchEventCover(event)})`,
                   }}
                 />
 
