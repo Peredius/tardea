@@ -313,6 +313,14 @@ function getProfileGroupName(item: any) {
 }
 
 function getProfileIndexKey(item: any) {
+  if (item.source_kind === 'Ficha' && item.id) {
+    return `profile-id:${item.id}`
+  }
+
+  if (item.event_profile_id) {
+    return `profile-id:${item.event_profile_id}`
+  }
+
   return [
     'profile',
     normalizeEventSeriesText(item.type || 'Tardeo') || 'tardeo',
@@ -1270,10 +1278,7 @@ export default function AdminPage() {
   }
 
   async function toggleProfileFeatured(profile: any) {
-    const eventIds = [...events, ...pendingEvents, ...scoutEvents]
-      .filter((event) => getProfileIndexKey({ ...event, source_kind: event.imported_by_agent && event.needs_review ? 'Scout' : 'Publicado' }) === profile.key)
-      .map((event) => event.id)
-      .filter(Boolean)
+    const eventIds = Array.from(profile.eventIds || [])
 
     if (eventIds.length === 0) {
       setMessage('Esta ficha aun no tiene fechas creadas para destacar')
