@@ -463,6 +463,7 @@ export default function AdminEventSeriesPage() {
         tiktok_url: eventProfile.tiktok_url || '',
         cover: eventProfile.logo_url || eventProfile.banner_url || '',
         description: eventProfile.description || '',
+        event_profile_id: eventProfile.id,
         profile_reviewed: true,
         updated_at: eventProfile.updated_at || '',
       }
@@ -1252,6 +1253,7 @@ export default function AdminEventSeriesPage() {
 
         return {
           title,
+          event_profile_id: event.event_profile_id || mainEvent.event_profile_id || eventProfile?.id || null,
           promoter_group: event.promoter_group || mainEvent.promoter_group || null,
           slug,
           venue,
@@ -1361,6 +1363,7 @@ export default function AdminEventSeriesPage() {
 
           return {
             title: baseTitle,
+            event_profile_id: mainEvent.event_profile_id || eventProfile?.id || null,
             promoter_group: mainEvent.promoter_group || data.promoter_group || null,
             slug,
             venue,
