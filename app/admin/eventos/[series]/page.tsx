@@ -246,6 +246,18 @@ function loadCanvasImage(url: string) {
   })
 }
 
+function canUseCoverInCanvas(url: string) {
+  if (!url) return false
+  if (url.startsWith('/') || url.startsWith('blob:') || url.startsWith('data:')) return true
+
+  try {
+    const parsed = new URL(url)
+    return parsed.origin === window.location.origin || parsed.hostname.includes('supabase.co')
+  } catch {
+    return false
+  }
+}
+
 function canvasToBlob(canvas: HTMLCanvasElement) {
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -1127,6 +1139,11 @@ export default function AdminEventSeriesPage() {
 
     if (!baseCover) {
       setMessage('Sube primero un cartel generico en Datos base')
+      return
+    }
+
+    if (!canUseCoverInCanvas(baseCover)) {
+      setMessage('Ese cartel viene de una web externa. Sube el cartel a Datos base de Tardea antes de generar carteles con fecha.')
       return
     }
 
