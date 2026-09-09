@@ -458,7 +458,7 @@ export default function AdminEventSeriesPage() {
         maps_url: eventProfile.maps_url || '',
         price_from: eventProfile.price_from ?? 0,
         website_url: eventProfile.website_url || '',
-        source_url: '',
+        source_url: eventProfile.source_url || '',
         instagram_url: eventProfile.instagram_url || '',
         tiktok_url: eventProfile.tiktok_url || '',
         cover: eventProfile.logo_url || eventProfile.banner_url || '',
@@ -470,7 +470,8 @@ export default function AdminEventSeriesPage() {
     : null
   const mainEvent = events[0] || researchItems[0] || profileAsMainEvent
   const profileCover = eventProfile?.logo_url || eventProfile?.banner_url || ''
-  const headerCover = profileCover || mainEvent?.cover || ''
+  const baseProfileCover = profileCover || profileAsMainEvent?.cover || ''
+  const headerCover = baseProfileCover || mainEvent?.cover || ''
   const baseTitle = eventProfile?.name || mainEvent?.title || ''
   const baseVenue = eventProfile?.venue_name || mainEvent?.venue || ''
   const baseArea = eventProfile?.area || mainEvent?.area || ''
@@ -508,20 +509,26 @@ export default function AdminEventSeriesPage() {
       event.instagram_url,
       event.tiktok_url,
       ...getUrlsFromText(event.description || ''),
-    ]).filter(Boolean) as string[]
-    return Array.from(new Set(urls))
-  }, [events, researchItems])
+    ])
+    const profileUrls = [
+      eventProfile?.source_url,
+      eventProfile?.website_url,
+      eventProfile?.instagram_url,
+      eventProfile?.tiktok_url,
+    ]
+    return Array.from(new Set([...profileUrls, ...urls].filter(Boolean) as string[]))
+  }, [eventProfile, events, researchItems])
   const instagramUrl = relatedUrls.find((url) => getHost(url).includes('instagram.com')) || ''
   const tiktokUrl = relatedUrls.find((url) => getHost(url).includes('tiktok.com')) || ''
-  const ticketUrl = relatedUrls.find(isTicketUrl) || mainEvent?.source_url || ''
+  const ticketUrl = eventProfile?.source_url || relatedUrls.find(isTicketUrl) || mainEvent?.source_url || ''
   const websiteUrl = relatedUrls.find((url) => {
     const host = getHost(url)
     return host && !host.includes('instagram.com') && !host.includes('tiktok.com') && !isTicketUrl(url)
   }) || ''
-  const monitorUrl = getFirstUrl(mainEvent?.website_url, websiteUrl, ticketUrl, mainEvent?.source_url)
+  const monitorUrl = getFirstUrl(ticketUrl, mainEvent?.source_url, mainEvent?.website_url, websiteUrl)
 
   function openBaseEditor() {
-    const currentCover = profileCover || mainEvent.cover || ''
+    const currentCover = baseProfileCover || mainEvent.cover || ''
     const nextBaseForm = {
       title: eventProfile?.name || mainEvent.title || '',
       promoter_group: mainEvent.promoter_group || '',
@@ -538,7 +545,7 @@ export default function AdminEventSeriesPage() {
       maps_url: eventProfile?.maps_url || mainEvent.maps_url || '',
       price_from: (eventProfile?.price_from ?? mainEvent.price_from)?.toString() || '0',
       website_url: getFirstUrl(eventProfile?.website_url, mainEvent.website_url, websiteUrl),
-      source_url: getFirstUrl(mainEvent.source_url, ticketUrl),
+      source_url: getFirstUrl(eventProfile?.source_url, mainEvent.source_url, ticketUrl),
       instagram_url: getFirstUrl(eventProfile?.instagram_url, mainEvent.instagram_url, instagramUrl),
       tiktok_url: getFirstUrl(eventProfile?.tiktok_url, mainEvent.tiktok_url, tiktokUrl),
       cover: currentCover,
@@ -740,6 +747,7 @@ export default function AdminEventSeriesPage() {
       audience: sharedPayload.audience,
       price_from: sharedPayload.price_from,
       website_url: sharedPayload.website_url,
+      source_url: sharedPayload.source_url,
       instagram_url: sharedPayload.instagram_url,
       tiktok_url: sharedPayload.tiktok_url,
       logo_url: coverUrl,
@@ -1114,7 +1122,7 @@ export default function AdminEventSeriesPage() {
   }
 
   async function generateDatedPosters() {
-    const baseCover = mainEvent?.cover
+    const baseCover = baseProfileCover || mainEvent?.cover
     const datedEvents = events.filter((event) => event.date)
 
     if (!baseCover) {
@@ -1238,6 +1246,7 @@ export default function AdminEventSeriesPage() {
     const area = event.area || mainEvent.area || 'Madrid'
     const musicList = getMusicList(event.music || mainEvent.music)
     const reservedSlugs = new Set<string>()
+    const baseDateCover = baseProfileCover || null
     const rowsToInsert = await Promise.all(
       duplicateDates.map(async (date) => {
         const venue = event.venue || mainEvent.venue || 'Pendiente de revisar'
@@ -1268,7 +1277,7 @@ export default function AdminEventSeriesPage() {
           music: musicList.length ? musicList : ['Comercial'],
           audience: event.audience || mainEvent.audience || 'Mixto',
           price_from: event.price_from ? Number(event.price_from) : Number(mainEvent.price_from || 0),
-          cover: event.cover || mainEvent.cover || null,
+          cover: baseDateCover,
           reel_url: event.reel_url || mainEvent.reel_url || null,
           featured: isSeriesFeatured,
           description: event.description || mainEvent.description || event.notes || mainEvent.notes || 'Evento cargado desde ficha interna de TARDEA. Pendiente de revision antes de publicar.',
@@ -1278,7 +1287,7 @@ export default function AdminEventSeriesPage() {
           source_name: event.source_name || mainEvent.source_name || 'Ficha interna',
           external_id: `${sourceUrl || title}-${date}`,
           imported_by_agent: true,
-          image_status: event.image_status || mainEvent.image_status || 'provisional',
+          image_status: baseDateCover ? 'profile_base' : 'provisional',
           needs_review: true,
           website_url: event.website_url || mainEvent.website_url || null,
           instagram_url: event.instagram_url || mainEvent.instagram_url || null,
@@ -1348,6 +1357,7 @@ export default function AdminEventSeriesPage() {
       const baseMusic = getMusicList(mainEvent.music || data.music)
 
       const reservedSlugs = new Set<string>()
+      const baseDateCover = baseProfileCover || null
       const rowsToInsert = await Promise.all(
         newEvents.map(async (event: any) => {
           const venue = event.venue || data.venue || mainEvent.venue || 'Pendiente de revisar'
@@ -1378,7 +1388,7 @@ export default function AdminEventSeriesPage() {
             music: baseMusic.length ? baseMusic : ['Comercial'],
             audience: mainEvent.audience || data.audience || 'Mixto',
             price_from: mainEvent.price_from ? Number(mainEvent.price_from) : Number(data.priceFrom || data.price_from || 0),
-            cover: event.cover || event.image || event.imageUrl || mainEvent.cover || data.cover || null,
+            cover: baseDateCover || event.cover || event.image || event.imageUrl || data.cover || null,
             reel_url: mainEvent.reel_url || null,
             featured: isSeriesFeatured,
             description: mainEvent.description || data.description || 'Evento importado desde enlace. Pendiente de revision antes de publicar.',
@@ -1388,7 +1398,7 @@ export default function AdminEventSeriesPage() {
             source_name: event.sourceName || event.source_name || data.sourceName || data.source_name || 'Fuente externa',
             external_id: `${sourceUrl}-${event.date}`,
             imported_by_agent: true,
-            image_status: mainEvent.image_status || 'provisional',
+            image_status: baseDateCover ? 'profile_base' : 'provisional',
             needs_review: true,
             website_url: mainEvent.website_url || data.website_url || null,
             instagram_url: mainEvent.instagram_url || data.instagram_url || null,
@@ -1537,7 +1547,7 @@ export default function AdminEventSeriesPage() {
           address: mainEvent.address || event.address || '',
           maps_url: mainEvent.maps_url || event.maps_url || '',
           price_from: mainEvent.price_from ?? event.price_from ?? 0,
-          cover: mainEvent.cover || event.cover || '',
+          cover: baseProfileCover || event.cover || '',
           description: baseDescription || mainEvent.description || event.description || '',
           website_url: mainEvent.website_url || event.website_url || '',
           instagram_url: mainEvent.instagram_url || event.instagram_url || '',

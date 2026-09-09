@@ -17,6 +17,7 @@ create table if not exists public.promoter_event_profiles (
   music text[] default '{}',
   audience text,
   price_from numeric default 0,
+  source_url text,
   instagram_url text,
   tiktok_url text,
   website_url text,

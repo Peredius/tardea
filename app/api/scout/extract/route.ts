@@ -13,6 +13,7 @@ type ExtractedEvent = {
   music: string
   venue: string
   area: string
+  address?: string
   priceFrom: string
   mapsUrl: string
   sourceName: string
@@ -534,6 +535,146 @@ function mapsUrlForVenue(venue: string) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${venue} Madrid`)}`
 }
 
+function monthFromUrlFragment(url: URL) {
+  const fragmentQuery = url.hash.includes('?') ? url.hash.slice(url.hash.indexOf('?') + 1) : url.hash.replace(/^#/, '')
+  const fragmentMonth = new URLSearchParams(fragmentQuery).get('date')
+  const searchMonth = url.searchParams.get('date')
+  const month = fragmentMonth || searchMonth || ''
+
+  return /^20\d{2}-(0[1-9]|1[0-2])$/.test(month) ? month : ''
+}
+
+function datesForWeekdayInMonth(month: string, weekday: number) {
+  const [yearValue, monthValue] = month.split('-').map(Number)
+  const date = new Date(Date.UTC(yearValue, monthValue - 1, 1, 12))
+  const dates: string[] = []
+
+  while (date.getUTCMonth() === monthValue - 1) {
+    if (date.getUTCDay() === weekday) {
+      dates.push(date.toISOString().slice(0, 10))
+    }
+    date.setUTCDate(date.getUTCDate() + 1)
+  }
+
+  return dates
+}
+
+function nextMonthKeys(count: number) {
+  const today = todayMadridIso()
+  const [yearValue, monthValue] = today.split('-').map(Number)
+  const months: string[] = []
+
+  for (let index = 0; index < count; index += 1) {
+    const date = new Date(Date.UTC(yearValue, monthValue - 1 + index, 1, 12))
+    months.push(`${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`)
+  }
+
+  return months
+}
+
+function normalizeHourText(value: string) {
+  const match = value.match(/\b([01]?\d|2[0-3])\s*h(?:\s*a\s*([01]?\d|2[0-3])(?::|\.|h)?(\d{2})?h?)?/i)
+  if (!match) return { startTime: '', endTime: '' }
+
+  return {
+    startTime: `${match[1].padStart(2, '0')}:00`,
+    endTime: match[2] ? `${match[2].padStart(2, '0')}:${match[3] || '00'}` : '',
+  }
+}
+
+function extractPompaClubEvents(html: string, sourceUrl: URL, fallback: ExtractedEvent) {
+  if (!/pompaclub\.com/i.test(sourceUrl.hostname)) return []
+
+  const month = monthFromUrlFragment(sourceUrl)
+  const text = stripHtml(html)
+  const lower = text.toLowerCase()
+  const isWeeklySaturday = lower.includes('todos los sabados') || lower.includes('todos los sábados')
+  if (!isWeeklySaturday) return []
+
+  const hourText = normalizeHourText(text)
+  const dates = (month ? [month] : nextMonthKeys(3))
+    .flatMap((monthKey) => datesForWeekdayInMonth(monthKey, 6))
+    .filter(isUpcomingDate)
+  const title = /florida park/i.test(text) ? 'POMPA CLUB' : fallback.title || 'POMPA CLUB'
+  const venue = /florida park/i.test(text) ? 'Florida Park' : fallback.venue
+  const address = text.match(/Paseo de Panama S\/N[^.]*Madrid/i)?.[0] || 'Paseo de Panama S/N. Parque de El Retiro, 28009, Madrid'
+  const description = 'Tardeo en El Retiro con musica indie, pop espanol, ambiente animado y publico de 35 a 45.'
+  const purchaseUrl = pompaTicketSourceUrl(html, sourceUrl) || sourceUrl.toString()
+
+  return dates.map((date) => ({
+    ...fallback,
+    sourceUrl: purchaseUrl,
+    title,
+    description,
+    date,
+    startTime: hourText.startTime || fallback.startTime || '18:00',
+    endTime: hourText.endTime || fallback.endTime || '23:30',
+    type: 'Tardeo',
+    music: 'Indie, Pop',
+    venue,
+    area: 'Retiro',
+    address,
+    priceFrom: inferPrice(text) || fallback.priceFrom || '15',
+    mapsUrl: fallback.mapsUrl || 'https://www.google.com/maps/search/?api=1&query=Florida%20Park%20Madrid',
+    sourceName: 'Pompa Club',
+    confidence: 'high' as const,
+  }))
+}
+
+function pompaTicketSourceUrl(html: string, sourceUrl: URL) {
+  if (!/pompaclub\.com/i.test(sourceUrl.hostname)) return ''
+
+  const fourvenuesLink = html.match(/https?:\/\/(?:site\.)?fourvenues\.com\/[^"'\s<>]+/i)?.[0]
+  if (fourvenuesLink) return decodeHtml(fourvenuesLink)
+
+  if (/pompa-madrid|florida-park|pompa.*florida/i.test(sourceUrl.pathname)) {
+    return 'https://site.fourvenues.com/es/pompa-tardeo-club'
+  }
+
+  return ''
+}
+
+async function extractPompaClubTicketEvents(html: string, sourceUrl: URL, fallback: ExtractedEvent) {
+  const ticketSourceUrl = pompaTicketSourceUrl(html, sourceUrl)
+  if (!ticketSourceUrl) return []
+
+  try {
+    const response = await fetch(ticketSourceUrl, {
+      headers: {
+        'accept-language': 'es-ES,es;q=0.9,en;q=0.7',
+        'user-agent': 'Mozilla/5.0 TARDEA-Admin-Extractor/1.0',
+      },
+      next: { revalidate: 0 },
+    })
+
+    if (!response.ok) {
+      return fallbackEventsFromSearch(new URL(ticketSourceUrl))
+    }
+
+    const ticketHtml = await response.text()
+    const ticketFallback = {
+      ...fallback,
+      sourceUrl: ticketSourceUrl,
+      sourceName: 'Fourvenues',
+      title: fallback.title || 'POMPA CLUB',
+      venue: fallback.venue || 'Florida Park',
+      area: fallback.area || 'Retiro',
+      mapsUrl: fallback.mapsUrl || 'https://www.google.com/maps/search/?api=1&query=Florida%20Park%20Madrid',
+    }
+
+    return extractFourvenuesEvents(ticketHtml, ticketSourceUrl, ticketFallback).map((event) => ({
+      ...event,
+      title: /pompa/i.test(event.title) ? event.title : 'POMPA CLUB',
+      venue: event.venue || 'Florida Park',
+      area: event.area || 'Retiro',
+      sourceName: 'Fourvenues',
+      confidence: 'high' as const,
+    }))
+  } catch {
+    return fallbackEventsFromSearch(new URL(ticketSourceUrl))
+  }
+}
+
 function sourceNameFromUrl(url: string) {
   try {
     const hostname = new URL(url).hostname.replace(/^www\./, '')
@@ -740,14 +881,16 @@ export async function POST(request: Request) {
     data.confidence = usefulFields >= 4 ? 'high' : usefulFields >= 2 ? 'medium' : 'low'
     const linktreeEvents = extractLinktreeEvents(html, parsedUrl.toString(), data)
     const ritaEvents = extractRitaReservationEvents(html, parsedUrl.toString(), data)
+    const pompaTicketEvents = await extractPompaClubTicketEvents(html, parsedUrl, data)
+    const pompaEvents = extractPompaClubEvents(html, parsedUrl, data)
     const fourvenuesEvents = extractFourvenuesEvents(html, parsedUrl.toString(), data)
     const linkedEvents = extractLinkedEvents(html, parsedUrl.toString(), data)
-    const events = linktreeEvents.length > 0 ? linktreeEvents : ritaEvents.length > 0 ? ritaEvents : fourvenuesEvents.length > 0 ? fourvenuesEvents : linkedEvents
+    const events = linktreeEvents.length > 0 ? linktreeEvents : ritaEvents.length > 0 ? ritaEvents : pompaTicketEvents.length > 0 ? pompaTicketEvents : pompaEvents.length > 0 ? pompaEvents : fourvenuesEvents.length > 0 ? fourvenuesEvents : linkedEvents
     const safeData = isUpcomingDate(data.date) ? data : { ...data, date: '' }
 
     return NextResponse.json({
       ...safeData,
-      events: events.length > 1 ? events : [],
+      events,
     })
   } catch (error) {
     console.error('Scout extract error', error)

@@ -6,6 +6,12 @@ alter table public.events
   add column if not exists instagram_url text,
   add column if not exists tiktok_url text;
 
+alter table public.promoter_event_profiles
+  add column if not exists source_url text,
+  add column if not exists website_url text,
+  add column if not exists instagram_url text,
+  add column if not exists tiktok_url text;
+
 grant select
 on public.events
 to anon;
