@@ -135,7 +135,6 @@ function jsonValue(html: string, keys: string[]) {
 }
 
 function findJsonLdEvents(html: string) {
-  const scripts = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)]
   const events: any[] = []
 
   function collect(value: any) {
@@ -153,15 +152,22 @@ function findJsonLdEvents(html: string) {
     }
   }
 
-  scripts.forEach((script) => {
-    try {
-      collect(JSON.parse(script[1].trim()))
-    } catch {
-      // Some ticketing pages include malformed JSON-LD. In that case we fall back to meta tags.
-    }
-  })
+  parseJsonLdDocuments(html).forEach(collect)
 
   return events
+}
+
+function parseJsonLdDocuments(html: string) {
+  const scripts = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)]
+
+  return scripts.flatMap((script) => {
+    try {
+      return [JSON.parse(script[1].trim())]
+    } catch {
+      // Some ticketing pages include malformed JSON-LD. In that case we fall back to meta tags.
+      return []
+    }
+  })
 }
 
 function normalizeDate(value: string) {
@@ -352,6 +358,145 @@ function extractFourvenuesEvents(html: string, baseUrl: string, fallback: Extrac
   })
 
   return onlyUpcomingEvents(Array.from(unique.values())).sort((a, b) => a.date.localeCompare(b.date))
+}
+
+function findWhanClubData(html: string) {
+  const documents = parseJsonLdDocuments(html)
+
+  for (const document of documents) {
+    const graph = Array.isArray(document?.['@graph']) ? document['@graph'] : [document]
+    const club = graph.find((item: any) => {
+      const type = Array.isArray(item?.['@type']) ? item['@type'] : [item?.['@type']]
+      return type.some((value: string) => ['NightClub', 'Organization', 'LocalBusiness'].includes(String(value)))
+    })
+
+    if (club?.subjectOf?.itemListElement) return club
+  }
+
+  return null
+}
+
+function inferWhanArea(address: string, fallbackArea: string) {
+  const lower = address.toLowerCase()
+  if (lower.includes('serrano') || lower.includes('castellana') || lower.includes('salamanca')) return 'Salamanca'
+  if (lower.includes('retiro')) return 'Retiro'
+  if (lower.includes('gran via') || lower.includes('gran vía') || lower.includes('montera') || lower.includes('centro')) return 'Centro'
+  return fallbackArea || 'Madrid'
+}
+
+function cleanWhanTitle(value: string) {
+  return stripHtml(value)
+    .replace(/\s+—\s+.*$/g, '')
+    .replace(/\s+\|\s*WHAN$/i, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function whanDateFromUrl(url: string) {
+  const match = url.match(/\b(20\d{2})-(0?\d|1[0-2])-(0?\d|[12]\d|3[01])\b/)
+  if (!match) return ''
+  return `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`
+}
+
+async function extractWhanEvents(html: string, baseUrl: string, fallback: ExtractedEvent) {
+  if (!/app\.whan\.es/i.test(baseUrl)) return []
+
+  const club = findWhanClubData(html)
+  const list = club?.subjectOf?.itemListElement
+  if (!Array.isArray(list) || list.length === 0) return []
+
+  const clubAddress = typeof club?.address === 'string'
+    ? club.address
+    : [
+        club?.address?.streetAddress,
+        club?.address?.addressLocality,
+        club?.address?.addressRegion,
+      ].filter(Boolean).join(', ')
+  const clubName = cleanWhanTitle(club?.name || fallback.venue || fallback.title)
+  const clubArea = inferWhanArea(clubAddress, fallback.area)
+  const clubMapsUrl = clubAddress ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clubAddress)}` : fallback.mapsUrl
+
+  const detailEvents = await Promise.all(
+    list.slice(0, 40).map(async (item: any) => {
+      const itemUrl = absoluteUrl(item.url || '', baseUrl)
+      if (!itemUrl || !/app\.whan\.es\/event\//i.test(itemUrl)) return null
+
+      try {
+        const response = await fetch(itemUrl, {
+          headers: {
+            'accept-language': 'es-ES,es;q=0.9,en;q=0.7',
+            'user-agent': 'Mozilla/5.0 TARDEA-Admin-Extractor/1.0',
+          },
+          next: { revalidate: 0 },
+        })
+        const detailHtml = response.ok ? await response.text() : ''
+        const jsonLdEvent = detailHtml ? findJsonLdEvents(detailHtml)[0] : null
+        const detail = jsonLdEvent ? eventFromJsonLd(jsonLdEvent) : null
+        const detailTitle = detailHtml
+          ? metaContent(detailHtml, 'og:title') || detail?.title || item.name || fallback.title
+          : item.name || fallback.title
+        const detailDescription = detailHtml
+          ? detail?.description || metaContent(detailHtml, 'og:description') || metaContent(detailHtml, 'description')
+          : ''
+        const address = detail?.address || clubAddress
+        const venue = cleanWhanTitle(detail?.venue || clubName || fallback.venue)
+        const title = cleanWhanTitle(detailTitle) || cleanWhanTitle(item.name || fallback.title)
+        const date = detail?.date || whanDateFromUrl(itemUrl) || inferDate(`${item.name || ''} ${itemUrl}`)
+
+        if (!date || !isUpcomingDate(date) || !title) return null
+
+        return {
+          ...fallback,
+          sourceUrl: itemUrl,
+          cover: detail?.cover || metaContent(detailHtml, 'og:image') || metaContent(detailHtml, 'twitter:image') || fallback.cover,
+          title,
+          description: detailDescription || fallback.description || 'Evento encontrado en Whan. Revisa cartel y enlace antes de publicarlo.',
+          date,
+          startTime: detail?.startTime || fallback.startTime || '17:00',
+          endTime: detail?.endTime || fallback.endTime || '23:30',
+          type: inferType(`${title} ${detailDescription} tardeo`),
+          music: inferMusic(`${title} ${detailDescription}`),
+          venue,
+          area: inferWhanArea(address, clubArea),
+          address,
+          priceFrom: detail?.priceFrom || inferPrice(detailHtml) || fallback.priceFrom || '0',
+          mapsUrl: detail?.mapsUrl || clubMapsUrl,
+          sourceName: 'Whan',
+          confidence: detail ? 'high' as const : 'medium' as const,
+        }
+      } catch {
+        const date = whanDateFromUrl(itemUrl)
+        if (!date || !isUpcomingDate(date)) return null
+
+        return {
+          ...fallback,
+          sourceUrl: itemUrl,
+          title: cleanWhanTitle(item.name || fallback.title),
+          date,
+          startTime: fallback.startTime || '17:00',
+          endTime: fallback.endTime || '23:30',
+          type: 'Tardeo',
+          venue: clubName || fallback.venue,
+          area: clubArea,
+          address: clubAddress,
+          mapsUrl: clubMapsUrl,
+          sourceName: 'Whan',
+          confidence: 'medium' as const,
+        }
+      }
+    })
+  )
+
+  const unique = new Map<string, ExtractedEvent>()
+  detailEvents
+    .filter(Boolean)
+    .forEach((event) => {
+      const item = event as ExtractedEvent
+      const key = `${normalizeEventKey(item.title)}__${normalizeEventKey(item.venue)}__${item.date}`
+      if (!unique.has(key)) unique.set(key, item)
+    })
+
+  return Array.from(unique.values()).sort((a, b) => a.date.localeCompare(b.date))
 }
 
 function extractLinktreeEvents(html: string, baseUrl: string, fallback: ExtractedEvent) {
@@ -780,8 +925,18 @@ async function fallbackEventsFromSearch(url: URL) {
 function eventFromJsonLd(event: any) {
   const location = Array.isArray(event.location) ? event.location[0] : event.location
   const offers = Array.isArray(event.offers) ? event.offers[0] : event.offers
+  const image = Array.isArray(event.image) ? event.image[0] : event.image
+  const address = typeof location?.address === 'string'
+    ? location.address
+    : [
+        location?.address?.streetAddress,
+        location?.address?.addressLocality,
+        location?.address?.addressRegion,
+      ].filter(Boolean).join(', ')
 
   return {
+    sourceUrl: event.url || '',
+    cover: image || '',
     title: event.name || '',
     description: stripHtml(event.description || ''),
     date: normalizeDate(event.startDate || ''),
@@ -789,6 +944,7 @@ function eventFromJsonLd(event: any) {
     endTime: normalizeTime(event.endDate || ''),
     venue: location?.name || '',
     area: location?.address?.addressLocality || location?.address?.addressRegion || 'Madrid',
+    address,
     priceFrom: offers?.lowPrice?.toString() || offers?.price?.toString() || '',
     mapsUrl: location?.hasMap || '',
   }
@@ -896,11 +1052,12 @@ export async function POST(request: Request) {
     data.confidence = usefulFields >= 4 ? 'high' : usefulFields >= 2 ? 'medium' : 'low'
     const linktreeEvents = extractLinktreeEvents(html, parsedUrl.toString(), data)
     const ritaEvents = extractRitaReservationEvents(html, parsedUrl.toString(), data)
+    const whanEvents = await extractWhanEvents(html, parsedUrl.toString(), data)
     const pompaTicketEvents = await extractPompaClubTicketEvents(html, parsedUrl, data)
     const pompaEvents = extractPompaClubEvents(html, parsedUrl, data)
     const fourvenuesEvents = extractFourvenuesEvents(html, parsedUrl.toString(), data)
     const linkedEvents = extractLinkedEvents(html, parsedUrl.toString(), data)
-    const events = linktreeEvents.length > 0 ? linktreeEvents : ritaEvents.length > 0 ? ritaEvents : pompaTicketEvents.length > 0 ? pompaTicketEvents : pompaEvents.length > 0 ? pompaEvents : fourvenuesEvents.length > 0 ? fourvenuesEvents : linkedEvents
+    const events = linktreeEvents.length > 0 ? linktreeEvents : ritaEvents.length > 0 ? ritaEvents : whanEvents.length > 0 ? whanEvents : pompaTicketEvents.length > 0 ? pompaTicketEvents : pompaEvents.length > 0 ? pompaEvents : fourvenuesEvents.length > 0 ? fourvenuesEvents : linkedEvents
     const safeData = isUpcomingDate(data.date) ? data : { ...data, date: '' }
 
     return NextResponse.json({
