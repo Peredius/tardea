@@ -188,6 +188,18 @@ function isUpcomingDate(date: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(date) && date >= todayMadridIso()
 }
 
+function isWithinFutureDays(date: string, days: number) {
+  if (!isUpcomingDate(date)) return false
+
+  const target = new Date(`${date}T12:00:00Z`)
+  const [year, month, day] = todayMadridIso().split('-').map(Number)
+  const today = new Date(Date.UTC(year, month - 1, day, 12))
+  const maxDate = new Date(today)
+  maxDate.setUTCDate(maxDate.getUTCDate() + days)
+
+  return target <= maxDate
+}
+
 function onlyUpcomingEvents(events: ExtractedEvent[]) {
   return events.filter((event) => isUpcomingDate(event.date))
 }
@@ -727,13 +739,16 @@ async function fallbackEventsFromSearch(url: URL) {
 
     const text = `${result.title} ${result.snippet}`
 
-    const date = fourvenuesDateFromUrl(result.link) || inferDate(text) || inferSpanishDateWithYear(text)
+    const urlDate = fourvenuesDateFromUrl(result.link)
+    const explicitTextDate = inferDate(text)
+    const inferredTextDate = /fourvenues\.com/i.test(result.link) ? '' : inferSpanishDateWithYear(text)
+    const date = urlDate || explicitTextDate || inferredTextDate
     const { startTime, endTime } = extractTimes(text)
     const title = titleFromFourvenuesEventUrl(result.link) || cleanEventTitle(result.title.replace(/\|\s*.*$/g, '')) || sourceTitle
     const venue = inferVenue(text, result.link)
     const area = inferAreaFromVenue(venue, text)
 
-    if (!date || !title) continue
+    if (!date || !title || !isWithinFutureDays(date, 120)) continue
 
     events.push({
       sourceUrl: result.link,

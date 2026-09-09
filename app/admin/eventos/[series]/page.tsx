@@ -1348,8 +1348,19 @@ export default function AdminEventSeriesPage() {
       const eventsWithDate = extractedEvents.filter((event: any) => event.date)
       const pastEvents = eventsWithDate.filter((event: any) => !isUpcomingDate(event.date))
       const datedEvents = eventsWithDate.filter((event: any) => isUpcomingDate(event.date))
-      const newEvents = datedEvents.filter((event: any) => !existingDates.has(event.date))
-      const existingEventsToUpdate = datedEvents.filter((event: any) => existingDates.has(event.date) && (event.sourceUrl || event.source_url))
+      const uniqueDatedEvents = Array.from(
+        datedEvents.reduce((map: Map<string, any>, event: any) => {
+          const currentEvent = map.get(event.date)
+          const currentUrl = currentEvent?.sourceUrl || currentEvent?.source_url || ''
+          const nextUrl = event.sourceUrl || event.source_url || ''
+          if (!currentEvent || (!currentUrl && nextUrl) || (currentUrl === url && nextUrl && nextUrl !== url)) {
+            map.set(event.date, event)
+          }
+          return map
+        }, new Map<string, any>()).values()
+      )
+      const newEvents = uniqueDatedEvents.filter((event: any) => !existingDates.has(event.date))
+      const existingEventsToUpdate = uniqueDatedEvents.filter((event: any) => existingDates.has(event.date) && (event.sourceUrl || event.source_url))
 
       const baseTitle = mainEvent.title || data.title || 'Evento pendiente'
       const baseType = mainEvent.type || data.type || 'Tardeo'
