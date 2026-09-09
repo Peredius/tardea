@@ -1241,33 +1241,32 @@ export default function AdminPage() {
     const confirmed = window.confirm(`¿Eliminar la ficha "${profile.title}" y todos sus datos asociados?`)
     if (!confirmed) return
 
-    const eventIds = [...events, ...pendingEvents, ...scoutEvents]
-      .filter((event) => getProfileIndexKey({ ...event, source_kind: event.imported_by_agent && event.needs_review ? 'Scout' : 'Publicado' }) === profile.key)
-      .map((event) => event.id)
-      .filter(Boolean)
-    const researchIds = researchRows
-      .filter((row) => row.id && getProfileIndexKey({ ...row, source_kind: 'Listado' }) === profile.key)
-      .map((row) => row.id)
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+    const response = await fetch('/api/admin/event-profile/delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session?.access_token || ''}`,
+      },
+      body: JSON.stringify({
+        profileIds: Array.from(profile.profileIds || []),
+        eventIds: Array.from(profile.eventIds || []),
+        researchIds: Array.from(profile.researchIds || []),
+      }),
+    })
+    const result = await response.json().catch(() => null)
 
-    if (eventIds.length > 0) {
-      const { error } = await supabase.from('events').delete().in('id', eventIds)
-      if (error) {
-        setMessage(`No se pudo eliminar la ficha: ${error.message}`)
-        return
-      }
-    }
-
-    if (researchIds.length > 0) {
-      const { error } = await supabase.from('event_research_items').delete().in('id', researchIds)
-      if (error) {
-        setMessage(`No se pudo eliminar el listado de la ficha: ${error.message}`)
-        return
-      }
+    if (!response.ok) {
+      setMessage(`No se pudo eliminar la ficha: ${result?.error || 'error desconocido'}`)
+      return
     }
 
     setMessage(`Ficha "${profile.title}" eliminada`)
     fetchEvents()
     fetchResearchRows()
+    fetchEventProfiles()
   }
 
   async function toggleProfileFeatured(profile: any) {
@@ -1942,6 +1941,9 @@ export default function AdminPage() {
       updatedAt: item.updated_at || item.created_at || item.date || '',
       profileReviewed: Boolean(item.profile_reviewed),
       featured: Boolean(item.featured),
+      profileIds: new Set<string>(),
+      eventIds: new Set<string>(),
+      researchIds: new Set<string>(),
     }
 
     if (!current || item.source_kind === 'Ficha' || (current.sourceKinds.has('Listado') && item.source_kind !== 'Listado')) {
@@ -1964,6 +1966,9 @@ export default function AdminPage() {
       summary.updatedAt = itemUpdatedAt
     }
     summary.sourceKinds.add(item.source_kind)
+    if (item.id && item.source_kind === 'Ficha') summary.profileIds.add(item.id)
+    if (item.id && ['Publicado', 'Pendiente', 'Scout'].includes(item.source_kind)) summary.eventIds.add(item.id)
+    if (item.id && item.source_kind === 'Listado') summary.researchIds.add(item.id)
     summary.count += item.source_count ?? 1
     profileMap.set(key, summary)
   })
