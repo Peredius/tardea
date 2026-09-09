@@ -65,6 +65,7 @@ type BulkEventRow = {
   ticketUrl: string
   mapsUrl: string
   description: string
+  cover: string
 }
 
 type ResearchRow = {
@@ -106,6 +107,7 @@ function createBulkRow(values: Partial<BulkEventRow> = {}): BulkEventRow {
     ticketUrl: '',
     mapsUrl: '',
     description: '',
+    cover: '',
     ...rowValues,
   }
 }
@@ -1459,6 +1461,16 @@ export default function AdminPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
+    if (!title.trim()) {
+      setMessage('Pon primero el nombre del evento')
+      return
+    }
+
+    if (!date) {
+      setMessage('Selecciona una fecha antes de crear el evento')
+      return
+    }
+
     let imageUrl = editingEvent?.cover || (previewUrl.startsWith('http') ? previewUrl : '')
 
     if (cover) {
@@ -1623,9 +1635,34 @@ export default function AdminPage() {
         setCover(null)
       }
 
+      if (extractedEvents.length > 1) {
+        const importedRows = extractedEvents
+          .filter((event: any) => event.title && event.date)
+          .map((event: any) => createBulkRow({
+            title: event.title || '',
+            description: event.description || '',
+            date: event.date || '',
+            startTime: event.startTime || event.start_time || '18:00',
+            endTime: event.endTime || event.end_time || '23:00',
+            type: event.type || 'Tardeo',
+            music: Array.isArray(event.music) ? event.music.join(', ') : event.music || 'Comercial',
+            audience: event.audience || 'Mixto',
+            venue: event.venue || '',
+            area: event.area || 'Madrid',
+            priceFrom: (event.priceFrom || event.price_from || '0').toString(),
+            ticketUrl: event.sourceUrl || event.source_url || url,
+            mapsUrl: event.mapsUrl || event.maps_url || '',
+            cover: event.cover || '',
+          }))
+
+        if (importedRows.length > 0) {
+          setBulkRows(importedRows)
+        }
+      }
+
       setMessage(
         extractedEvents.length > 1
-          ? `${extractedEvents.length} fechas leidas. He rellenado la primera; revisa los datos antes de crear el evento.`
+          ? `${extractedEvents.length} fechas leidas. Las he preparado en la tabla para crearlas en revision.`
           : `Informacion extraida de ${data.sourceName || 'la fuente'}. Revisa los datos antes de crear el evento.`
       )
     } catch {
@@ -1768,7 +1805,9 @@ export default function AdminPage() {
       setBulkRows((rows) =>
         rows.map((item) =>
           item.id === rowId
-            ? {
+            ? (Array.isArray(data.events) && data.events.length > 1
+              ? item
+              : {
                 ...item,
                 title: data.title || item.title,
                 description: data.description || item.description,
@@ -1781,13 +1820,41 @@ export default function AdminPage() {
                 area: data.area || item.area,
                 priceFrom: data.priceFrom || item.priceFrom,
                 mapsUrl: data.mapsUrl || item.mapsUrl,
-              }
+                cover: data.cover || item.cover,
+              })
             : item
         )
       )
 
+      if (Array.isArray(data.events) && data.events.length > 1) {
+        const importedRows = data.events
+          .filter((event: any) => event.title && event.date)
+          .map((event: any) => createBulkRow({
+            title: event.title || '',
+            description: event.description || '',
+            date: event.date || '',
+            startTime: event.startTime || event.start_time || '18:00',
+            endTime: event.endTime || event.end_time || '23:00',
+            type: event.type || 'Tardeo',
+            music: Array.isArray(event.music) ? event.music.join(', ') : event.music || 'Comercial',
+            audience: event.audience || 'Mixto',
+            venue: event.venue || '',
+            area: event.area || 'Madrid',
+            priceFrom: (event.priceFrom || event.price_from || '0').toString(),
+            ticketUrl: event.sourceUrl || event.source_url || row.ticketUrl,
+            mapsUrl: event.mapsUrl || event.maps_url || '',
+            cover: event.cover || '',
+          }))
+
+        if (importedRows.length > 0) {
+          setBulkRows(importedRows)
+        }
+      }
+
       setMessage(
-        data.confidence === 'low'
+        Array.isArray(data.events) && data.events.length > 1
+          ? `${data.events.length} eventos leidos. Los he preparado en la tabla para crearlos en revision.`
+          : data.confidence === 'low'
           ? `He leido ${data.sourceName || 'la fuente'}, pero esa pagina da pocos datos. Revisa y completa la fila antes de crear el evento.`
           : `Informacion extraida de ${data.sourceName || 'la fuente'}. Revisala antes de crear el evento.`
       )
@@ -1826,7 +1893,7 @@ export default function AdminPage() {
         music: musicList.length ? musicList : ['Comercial'],
         audience: row.audience || 'Mixto',
         price_from: row.priceFrom ? Number(row.priceFrom) : 0,
-        cover: scoutCoverFor(row.type, musicList[0] || row.music),
+        cover: row.cover || scoutCoverFor(row.type, musicList[0] || row.music),
         reel_url: null,
         featured: false,
         description: row.description || 'Evento cargado desde la tabla editorial de TARDEA. Pendiente de revision antes de publicar.',
@@ -1837,7 +1904,7 @@ export default function AdminPage() {
         source_url: row.ticketUrl || null,
         external_id: row.ticketUrl || row.title + '-' + row.date,
         imported_by_agent: true,
-        image_status: 'provisional',
+        image_status: row.cover ? 'imported' : 'provisional',
         needs_review: true,
       }
     })
