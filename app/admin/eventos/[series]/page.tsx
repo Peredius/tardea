@@ -83,9 +83,24 @@ function getLegacyEventSeriesSlug(event: any) {
 }
 
 function getProfileSlugCandidates(series: string) {
+  const withoutType = series.replace(/^[a-z0-9-]+__/, '')
+
   return Array.from(new Set([
     series,
-    series.replace(/^[a-z0-9-]+__/, ''),
+    series.replace(/__/g, '-'),
+    withoutType,
+    withoutType.replace(/__/g, '-'),
+  ].filter(Boolean)))
+}
+
+function getEventSeriesSlugCandidates(event: any) {
+  return Array.from(new Set([
+    getEventSeriesSlug(event),
+    getLegacyEventSeriesSlug(event),
+    getEventSeriesSlug(event).replace(/__/g, '-'),
+    getLegacyEventSeriesSlug(event).replace(/__/g, '-'),
+    getEventSeriesSlug(event).replace(/^[a-z0-9-]+__/, ''),
+    getLegacyEventSeriesSlug(event).replace(/^[a-z0-9-]+__/, ''),
   ].filter(Boolean)))
 }
 
@@ -411,11 +426,18 @@ export default function AdminEventSeriesPage() {
       .limit(1)
       .maybeSingle()
 
-    const seriesEvents = (data || []).filter((event) =>
-      (profileBySlug?.id && event.event_profile_id === profileBySlug.id)
-      || getEventSeriesSlug(event) === series
-      || getLegacyEventSeriesSlug(event) === series
-    )
+    const routeSeriesCandidates = getProfileSlugCandidates(series)
+    const seriesEvents = (data || []).filter((event) => {
+      const matchesSeriesSlug = getEventSeriesSlugCandidates(event).some((candidate) =>
+        routeSeriesCandidates.includes(candidate)
+      )
+
+      if (profileBySlug?.id) {
+        return event.event_profile_id === profileBySlug.id || (!event.event_profile_id && matchesSeriesSlug)
+      }
+
+      return matchesSeriesSlug
+    })
     setEvents(seriesEvents)
 
     const profileId = profileBySlug?.id || seriesEvents.find((event) => event.event_profile_id)?.event_profile_id

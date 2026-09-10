@@ -129,3 +129,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message || 'No se pudo guardar el evento.' }, { status: 500 })
   }
 }
+
+export async function DELETE(request: Request) {
+  const admin = await assertAdmin(request)
+  if ('error' in admin) {
+    return NextResponse.json({ error: admin.error }, { status: 401 })
+  }
+
+  const payload = (await request.json().catch(() => null)) as
+    | { eventId?: string; eventIds?: string[] }
+    | null
+  const eventIds = Array.from(
+    new Set([...(payload?.eventIds || []), payload?.eventId].filter(Boolean))
+  )
+
+  if (eventIds.length === 0) {
+    return NextResponse.json({ error: 'Falta el evento que quieres eliminar.' }, { status: 400 })
+  }
+
+  const { error } = await admin.serviceClient.from('events').delete().in('id', eventIds)
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({ ok: true, deleted: eventIds.length })
+}

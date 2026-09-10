@@ -16,6 +16,25 @@ function getTokens(value: string) {
     .filter((token) => token.length > 2)
 }
 
+const GENERIC_MATCH_TOKENS = new Set([
+  'afterwork',
+  'brunch',
+  'club',
+  'evento',
+  'eventos',
+  'fiesta',
+  'fiestas',
+  'madrid',
+  'rooftop',
+  'tardeo',
+  'terraza',
+  'terrazas',
+])
+
+function getDistinctiveTokens(value: string) {
+  return getTokens(value).filter((token) => !GENERIC_MATCH_TOKENS.has(token))
+}
+
 function getEventSeriesSlug(event: any) {
   const title = normalizeText(event.title || 'evento')
     .replace(/\b\d{1,2}\s*(?:de\s*)?(?:ene|enero|feb|febrero|mar|marzo|abr|abril|may|mayo|jun|junio|jul|julio|ago|agosto|sep|septiembre|oct|octubre|nov|noviembre|dic|diciembre)\b/gi, ' ')
@@ -102,12 +121,15 @@ function getMatchScore(event: any, profile: any) {
 
   let score = 0
 
+  const eventProfileSlug = normalizeText(getProfileSlug(event))
+
+  if (eventProfileSlug && profileSlug === eventProfileSlug) score += 14
   if (eventTitle && profileName === eventTitle) score += 12
   if (eventTitle && profileName.includes(eventTitle)) score += 8
   if (eventTitle && profileSlug.includes(eventTitle)) score += 6
 
   const profileText = `${profileName} ${profileSlug} ${profileVenue}`
-  const commonTitleTokens = getTokens(eventTitle).filter((token) =>
+  const commonTitleTokens = getDistinctiveTokens(eventTitle).filter((token) =>
     profileText.includes(token)
   )
   score += commonTitleTokens.length * 3
@@ -179,19 +201,6 @@ export async function POST(request: Request) {
       .maybeSingle()
 
     eventProfileId = sameTitleEvent?.event_profile_id || ''
-  }
-
-  if (!eventProfileId && event.venue) {
-    const { data: sameVenueEvent } = await supabaseAdmin
-      .from('events')
-      .select('event_profile_id')
-      .eq('venue', event.venue)
-      .eq('type', event.type || 'Tardeo')
-      .not('event_profile_id', 'is', null)
-      .limit(1)
-      .maybeSingle()
-
-    eventProfileId = sameVenueEvent?.event_profile_id || ''
   }
 
   if (!eventProfileId) {

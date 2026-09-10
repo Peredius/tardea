@@ -2,19 +2,22 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Search, X } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { Plus, Search, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { findKnownVenueDetails } from '@/lib/venueAutofill'
 
-function generateSlug(title: string, date: string) {
-  const cleanTitle = title
+function slugify(value: string) {
+  return value
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
+}
 
+function generateSlug(title: string, date: string) {
+  const cleanTitle = slugify(title)
   return date ? `${cleanTitle}-${date}` : cleanTitle
 }
 
@@ -88,6 +91,19 @@ type ResearchRow = {
   notes: string
 }
 
+type ProfileDraft = {
+  name: string
+  type: string
+  venue: string
+  music: string
+  audience: string
+  description: string
+  websiteUrl: string
+  instagramUrl: string
+  tiktokUrl: string
+  cover: string
+}
+
 function createBulkRow(values: Partial<BulkEventRow> = {}): BulkEventRow {
   const { id: _id, ...rowValues } = values
 
@@ -130,6 +146,22 @@ function createResearchRow(values: Partial<ResearchRow> = {}): ResearchRow {
     maps_url: '',
     status: 'nuevo',
     notes: '',
+    ...values,
+  }
+}
+
+function createProfileDraft(values: Partial<ProfileDraft> = {}): ProfileDraft {
+  return {
+    name: '',
+    type: 'Tardeo',
+    venue: '',
+    music: 'Comercial',
+    audience: 'Mixto',
+    description: '',
+    websiteUrl: '',
+    instagramUrl: '',
+    tiktokUrl: '',
+    cover: '',
     ...values,
   }
 }
@@ -333,7 +365,6 @@ function getProfileIndexKey(item: any) {
 type AdminTab = 'events' | 'research' | 'create' | 'profiles'
 
 function getAdminTabFromPath(pathname: string): AdminTab {
-  if (pathname.endsWith('/admin/listado')) return 'research'
   if (pathname.endsWith('/admin/crear-evento')) return 'create'
   if (pathname.endsWith('/admin/fichas')) return 'profiles'
   return 'events'
@@ -408,6 +439,7 @@ function CompactDropdown({
 
 export default function AdminPage() {
   const pathname = usePathname()
+  const router = useRouter()
   const formRef = useRef<HTMLFormElement | null>(null)
   const bulkSectionRef = useRef<HTMLElement | null>(null)
   const [adminTab, setAdminTab] = useState<AdminTab>(getAdminTabFromPath(pathname))
@@ -468,6 +500,9 @@ export default function AdminPage() {
   const [profileReviewFilter, setProfileReviewFilter] = useState<'review' | 'created' | 'all'>('created')
   const [profileSortMode, setProfileSortMode] = useState<'alphabetical' | 'modified'>('alphabetical')
   const [profileFeaturedSavingKey, setProfileFeaturedSavingKey] = useState('')
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false)
+  const [profileDraft, setProfileDraft] = useState<ProfileDraft>(() => createProfileDraft())
+  const [profileSaving, setProfileSaving] = useState(false)
 
   useEffect(() => {
     setAdminTab(getAdminTabFromPath(pathname))
@@ -548,6 +583,70 @@ export default function AdminPage() {
     }
 
     setEventProfiles(data || [])
+  }
+
+  function updateProfileDraft(field: keyof ProfileDraft, value: string) {
+    setProfileDraft((draft) => ({ ...draft, [field]: value }))
+  }
+
+  async function createEventProfile() {
+    const name = profileDraft.name.trim()
+
+    if (!name) {
+      setMessage('Pon un nombre para crear la ficha')
+      return
+    }
+
+    setProfileSaving(true)
+
+    const musicList = profileDraft.music
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+    const profilePayload = {
+      name,
+      slug: slugify(name),
+      type: profileDraft.type || 'Tardeo',
+      venue_name: profileDraft.venue || null,
+      music: musicList.length ? musicList : ['Comercial'],
+      audience: profileDraft.audience || 'Mixto',
+      description: profileDraft.description || null,
+      website_url: profileDraft.websiteUrl || null,
+      source_url: profileDraft.websiteUrl || null,
+      instagram_url: profileDraft.instagramUrl || null,
+      tiktok_url: profileDraft.tiktokUrl || null,
+      logo_url: profileDraft.cover || null,
+      banner_url: profileDraft.cover || null,
+      is_active: true,
+      updated_at: new Date().toISOString(),
+    }
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+    const response = await fetch('/api/admin/event-profile/update', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session?.access_token || ''}`,
+      },
+      body: JSON.stringify({ profile: profilePayload }),
+    })
+    const result = await response.json().catch(() => null)
+
+    setProfileSaving(false)
+
+    if (!response.ok || !result?.profile) {
+      setMessage(`No se pudo crear la ficha: ${result?.error || 'error desconocido'}`)
+      return
+    }
+
+    setProfileDraft(createProfileDraft())
+    setIsCreatingProfile(false)
+    setProfileReviewFilter('created')
+    setMessage(`Ficha "${result.profile.name}" creada`)
+    fetchEventProfiles()
+    router.push(`/admin/eventos/${result.profile.slug}`)
   }
 
   async function fetchEvents() {
@@ -1279,6 +1378,43 @@ export default function AdminPage() {
     fetchEventProfiles()
   }
 
+  async function deleteEventGroup(group: any) {
+    const eventIds = group.events.map((event: any) => event.id).filter(Boolean)
+
+    if (eventIds.length === 0) {
+      setMessage('No hay fechas para eliminar en este evento')
+      return
+    }
+
+    const confirmed = window.confirm(
+      `¿Eliminar "${group.title}" y ${eventIds.length} fecha${eventIds.length === 1 ? '' : 's'} asociada${eventIds.length === 1 ? '' : 's'}?`
+    )
+    if (!confirmed) return
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    const response = await fetch('/api/admin/events', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session?.access_token || ''}`,
+      },
+      body: JSON.stringify({ eventIds }),
+    })
+    const result = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      setMessage(`No se pudo eliminar el evento: ${result?.error || 'error desconocido'}`)
+      return
+    }
+
+    setMessage(`Evento "${group.title}" eliminado`)
+    fetchEvents()
+    fetchEventProfiles()
+  }
+
   async function toggleProfileFeatured(profile: any) {
     const eventIds = Array.from(profile.eventIds || [])
 
@@ -1873,15 +2009,41 @@ export default function AdminPage() {
       return
     }
 
+    const profileSlugs = Array.from(new Set(
+      validRows
+        .flatMap((row) => [
+          slugify(row.title),
+          getPromoterEventProfileSlug({ title: row.title, type: row.type || 'Tardeo' }),
+        ])
+        .filter(Boolean)
+    ))
+    const { data: matchingProfiles, error: matchingProfilesError } = profileSlugs.length
+      ? await supabase
+          .from('promoter_event_profiles')
+          .select('id, slug')
+          .in('slug', profileSlugs)
+      : { data: [], error: null }
+
+    if (matchingProfilesError) {
+      setMessage(`No se pudieron comprobar las fichas existentes: ${matchingProfilesError.message}`)
+      return
+    }
+
+    const profileIdBySlug = new Map((matchingProfiles || []).map((profile) => [profile.slug, profile.id]))
     const rowsToInsert = validRows.map((row) => {
       const musicList = row.music
         .split(',')
         .map((item) => item.trim())
         .filter(Boolean)
+      const eventProfileSlug = [
+        slugify(row.title),
+        getPromoterEventProfileSlug({ title: row.title, type: row.type || 'Tardeo' }),
+      ].find((slug) => profileIdBySlug.has(slug))
 
       return {
         title: row.title,
         slug: generateSlug(row.title, row.date),
+        event_profile_id: eventProfileSlug ? profileIdBySlug.get(eventProfileSlug) || null : null,
         venue: row.venue || 'Pendiente de revisar',
         area: row.area || 'Madrid',
         address: row.venue || row.area || 'Madrid',
@@ -2145,12 +2307,6 @@ export default function AdminPage() {
           Admin eventos
         </Link>
         <Link
-          href={getAdminTabHref('research')}
-          className={`rounded-full px-4 py-2 text-sm font-bold transition ${adminTab === 'research' ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white'}`}
-        >
-          Listado de eventos
-        </Link>
-        <Link
           href={getAdminTabHref('create')}
           className={`rounded-full px-4 py-2 text-sm font-bold transition ${adminTab === 'create' ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white'}`}
         >
@@ -2175,26 +2331,80 @@ export default function AdminPage() {
               <p className="mt-2 text-sm text-slate-400">Una entrada por evento o marca, ordenada para entrar rapido a sus fechas y datos.</p>
             </div>
 
-            <label className="relative block w-full lg:max-w-sm">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-              <input
-                className="input h-11 rounded-full pl-11 pr-10 text-sm"
-                placeholder="Buscar ficha..."
-                value={profileSearchQuery}
-                onChange={(event) => setProfileSearchQuery(event.target.value)}
-              />
-              {profileSearchQuery && (
+            <div className="flex w-full flex-col gap-2 sm:flex-row lg:max-w-xl">
+              <button
+                type="button"
+                onClick={() => setIsCreatingProfile((current) => !current)}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-brand-500 px-4 text-sm font-bold text-white transition hover:bg-brand-600"
+              >
+                <Plus className="h-4 w-4" />
+                Crear ficha
+              </button>
+              <label className="relative block flex-1">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                <input
+                  className="input h-11 rounded-full pl-11 pr-10 text-sm"
+                  placeholder="Buscar ficha..."
+                  value={profileSearchQuery}
+                  onChange={(event) => setProfileSearchQuery(event.target.value)}
+                />
+                {profileSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setProfileSearchQuery('')}
+                    className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-slate-300 hover:bg-white/15 hover:text-white"
+                    aria-label="Limpiar busqueda"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </label>
+            </div>
+          </div>
+
+          {isCreatingProfile && (
+            <div className="mb-5 border-y border-white/10 py-5">
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                <input className="input" value={profileDraft.name} onChange={(event) => updateProfileDraft('name', event.target.value)} placeholder="Nombre de la ficha" />
+                <select className="select" value={profileDraft.type} onChange={(event) => updateProfileDraft('type', event.target.value)}>
+                  {EVENT_TYPE_OPTIONS.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+                <input className="input" value={profileDraft.venue} onChange={(event) => updateProfileDraft('venue', event.target.value)} placeholder="Sala o venue" />
+                <input className="input" value={profileDraft.music} onChange={(event) => updateProfileDraft('music', event.target.value)} placeholder="Musica" />
+                <select className="select" value={profileDraft.audience} onChange={(event) => updateProfileDraft('audience', event.target.value)}>
+                  {AUDIENCE_OPTIONS.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+                <input className="input" value={profileDraft.websiteUrl} onChange={(event) => updateProfileDraft('websiteUrl', event.target.value)} placeholder="Web o tiquetera" />
+                <input className="input" value={profileDraft.instagramUrl} onChange={(event) => updateProfileDraft('instagramUrl', event.target.value)} placeholder="Instagram" />
+                <input className="input" value={profileDraft.cover} onChange={(event) => updateProfileDraft('cover', event.target.value)} placeholder="URL cartel base" />
+                <textarea className="input min-h-24 md:col-span-2 lg:col-span-4" value={profileDraft.description} onChange={(event) => updateProfileDraft('description', event.target.value)} placeholder="Descripcion breve" />
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => setProfileSearchQuery('')}
-                  className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-slate-300 hover:bg-white/15 hover:text-white"
-                  aria-label="Limpiar busqueda"
+                  onClick={createEventProfile}
+                  disabled={profileSaving}
+                  className="rounded-full bg-brand-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-600 disabled:opacity-60"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  {profileSaving ? 'Creando...' : 'Guardar ficha'}
                 </button>
-              )}
-            </label>
-          </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCreatingProfile(false)
+                    setProfileDraft(createProfileDraft())
+                  }}
+                  className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-white/25 hover:text-white"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="mb-4 flex flex-wrap gap-2">
             {[
@@ -2912,6 +3122,13 @@ export default function AdminPage() {
                         Editar
                       </button>
                     )}
+                    <button
+                      type="button"
+                      className="rounded-full border border-red-400/30 px-2.5 py-1 text-[10px] font-bold text-red-200 hover:border-red-400/70 hover:text-white"
+                      onClick={() => deleteEventGroup(group)}
+                    >
+                      Eliminar
+                    </button>
                   </div>
                 </div>
               )
