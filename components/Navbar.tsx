@@ -107,6 +107,29 @@ export function Navbar() {
     window.location.href = '/'
   }
 
+  function submitSearch() {
+    const searchTerm = query.trim()
+    if (searchTerm.length < 2) return
+
+    localStorage.setItem('searchQuery', searchTerm)
+    setResults([])
+
+    if (window.location.pathname === '/') {
+      window.dispatchEvent(
+        new CustomEvent('tardeaSearchQueryChanged', { detail: { query: searchTerm } })
+      )
+
+      const eventos = document.getElementById('eventos')
+      if (eventos) {
+        const top = eventos.getBoundingClientRect().top + window.scrollY - 76
+        window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' })
+      }
+      return
+    }
+
+    window.location.href = `/?q=${encodeURIComponent(searchTerm)}#eventos`
+  }
+
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/95 backdrop-blur">
       <div className="container-page relative flex min-h-[86px] items-end justify-center gap-2 pb-4 pt-[calc(env(safe-area-inset-top)+14px)] sm:gap-4 md:h-16 md:min-h-0 md:items-center md:justify-between md:py-0">
@@ -127,6 +150,9 @@ export function Navbar() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') submitSearch()
+              }}
               placeholder="Buscar planes..."
               className="w-full bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
             />

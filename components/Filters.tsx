@@ -177,6 +177,39 @@ function normalizeEventSeriesText(value: string) {
     .trim()
 }
 
+function normalizeFilterSearch(value: string | null | undefined) {
+  return (value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+function eventMatchesSearch(event: any, query: string) {
+  const search = normalizeFilterSearch(query)
+  if (search.length < 2) return true
+
+  const haystack = normalizeFilterSearch(
+    [
+      event.title,
+      event.venue,
+      event.area,
+      event.address,
+      event.type,
+      event.description,
+      ...(event.music || []),
+    ]
+      .filter(Boolean)
+      .join(' ')
+  )
+
+  return search
+    .split(' ')
+    .filter(Boolean)
+    .every((word) => haystack.includes(word))
+}
+
 function getEventSeriesKey(event: any) {
   if (event.eventProfileId) return event.eventProfileId
 
@@ -406,6 +439,7 @@ function mapInfoWindowHtml(event: any, userLocation: { lat: number; lng: number 
 export function Filters() {
   const carouselRef = useRef<HTMLDivElement | null>(null)
   const [selectedDates, setSelectedDates] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
 
   const [type, setType] = useState('Todos')
   const [music, setMusic] = useState('Todas')
@@ -454,6 +488,7 @@ export function Filters() {
   }, [])
 
   const activeFilters = [
+    searchQuery.trim().length >= 2 ? `Búsqueda: ${searchQuery.trim()}` : null,
     type !== 'Todos' ? type : null,
     music !== 'Todas' ? music : null,
     audience !== 'Todas' ? audience : null,
@@ -462,11 +497,16 @@ export function Filters() {
   ].filter(Boolean) as string[]
 
   function clearFilters() {
+    setSearchQuery('')
     setType('Todos')
     setMusic('Todas')
     setAudience('Todas')
     setPrice('Todos')
     setArea('Todas')
+
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('searchQuery')
+    }
   }
 
   useEffect(() => {
@@ -531,6 +571,13 @@ export function Filters() {
   }, [])
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const params = new URLSearchParams(window.location.search)
+    const urlQuery = params.get('q') || params.get('search') || ''
+    const storedQuery = localStorage.getItem('searchQuery') || ''
+    setSearchQuery((urlQuery || storedQuery).trim())
+
     function handleSelectedDateChanged(event: Event) {
       const eventDates = (event as CustomEvent<{ selectedDates?: string[] }>).detail?.selectedDates
       if (Array.isArray(eventDates)) {
@@ -538,13 +585,20 @@ export function Filters() {
       }
     }
 
+    function handleSearchQueryChanged(event: Event) {
+      const nextQuery = (event as CustomEvent<{ query?: string }>).detail?.query || ''
+      setSearchQuery(nextQuery.trim())
+    }
+
     window.addEventListener('selectedDateChanged', handleSelectedDateChanged)
+    window.addEventListener('tardeaSearchQueryChanged', handleSearchQueryChanged)
 
     return () => {
       window.removeEventListener(
         'selectedDateChanged',
         handleSelectedDateChanged
       )
+      window.removeEventListener('tardeaSearchQueryChanged', handleSearchQueryChanged)
     }
   }, [])
 
@@ -553,11 +607,14 @@ export function Filters() {
     [dbEvents]
   )
 
+  const hasSearchQuery = searchQuery.trim().length >= 2
+
   const filtered = useMemo(() => {
-    if (selectedDates.length === 0) return []
+    if (selectedDates.length === 0 && !hasSearchQuery) return []
 
     return dbEvents.filter((event) => {
-      if (!selectedDates.includes(event.date)) return false
+      if (selectedDates.length > 0 && !selectedDates.includes(event.date)) return false
+      if (hasSearchQuery && !eventMatchesSearch(event, searchQuery)) return false
       if (type !== 'Todos' && event.type !== type) return false
       if (
         music !== 'Todas' &&
@@ -571,7 +628,7 @@ export function Filters() {
 
       return true
     })
-  }, [area, audience, selectedDates, music, price, type, dbEvents])
+  }, [area, audience, selectedDates, hasSearchQuery, music, price, searchQuery, type, dbEvents])
 
   const groupedFiltered = useMemo(() => groupEventsBySeries(filtered), [filtered])
 
@@ -605,7 +662,7 @@ export function Filters() {
     return featuredEvents.length > 0 ? featuredEvents : fallbackEvents
   }, [dbEvents])
 
-  const eventsForMap = selectedDates.length > 0 ? groupedFiltered : featuredMapEvents
+  const eventsForMap = selectedDates.length > 0 || hasSearchQuery ? groupedFiltered : featuredMapEvents
 
   useEffect(() => {
     if (viewMode !== 'map') return
@@ -780,13 +837,13 @@ export function Filters() {
     )
   }
 
-  if (selectedDates.length === 0 && viewMode !== 'map') {
+  if (selectedDates.length === 0 && !hasSearchQuery && viewMode !== 'map') {
     return <section id="eventos" className="container-page scroll-mt-24 md:scroll-mt-20" />
   }
 
   return (
     <section id="eventos" className="container-page scroll-mt-24 py-6 md:scroll-mt-20">
-      {selectedDates.length > 0 && (
+      {(selectedDates.length > 0 || hasSearchQuery) && (
       <div className="card p-5">
         <button
           type="button"
@@ -800,7 +857,7 @@ export function Filters() {
           </span>
 
           <span className="inline-flex items-center gap-3">
-            {selectedDates.length > 0 && (
+            {(selectedDates.length > 0 || hasSearchQuery) && (
               <span className="text-sm font-semibold text-white">
                 {groupedFiltered.length} encontrados
               </span>
@@ -920,7 +977,7 @@ export function Filters() {
             Filtrador de eventos
           </h2>
 
-          {selectedDates.length > 0 && (
+          {(selectedDates.length > 0 || hasSearchQuery) && (
             <p className="text-sm font-semibold text-white">
               {groupedFiltered.length} eventos encontrados
             </p>
@@ -933,7 +990,7 @@ export function Filters() {
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-3">
             <div className="inline-flex w-fit rounded-full border border-white/10 bg-slate-900/80 p-1">
-              {selectedDates.length > 0 && (
+              {(selectedDates.length > 0 || hasSearchQuery) && (
                 <button
                   type="button"
                   onClick={() => setViewMode('list')}
@@ -961,7 +1018,7 @@ export function Filters() {
               </button>
             </div>
 
-            {viewMode === 'map' && selectedDates.length === 0 && (
+            {viewMode === 'map' && selectedDates.length === 0 && !hasSearchQuery && (
               <p className="text-sm text-slate-400">
                 Estás viendo destacados cercanos. Elige una fecha para buscar más eventos.
               </p>
@@ -1008,7 +1065,7 @@ export function Filters() {
               <div className="absolute left-4 top-4 rounded-2xl border border-white/10 bg-slate-950/85 px-4 py-3 shadow-xl shadow-black/20 backdrop-blur">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-400">Mapa Tardea</p>
                 <p className="mt-1 text-xs text-slate-400">
-                  {eventsForMap.length} evento{eventsForMap.length === 1 ? '' : 's'} {selectedDates.length > 0 ? 'filtrado' : 'destacado'}{eventsForMap.length === 1 ? '' : 's'}
+                  {eventsForMap.length} evento{eventsForMap.length === 1 ? '' : 's'} {selectedDates.length > 0 || hasSearchQuery ? 'filtrado' : 'destacado'}{eventsForMap.length === 1 ? '' : 's'}
                 </p>
               </div>
 
@@ -1074,6 +1131,20 @@ export function Filters() {
               })}
             </div>
           </div>
+        ) : groupedFiltered.length === 0 ? (
+        <div className="mt-8 rounded-[28px] border border-white/10 bg-slate-900/75 p-6 text-center shadow-2xl shadow-black/20">
+          <p className="text-lg font-bold text-white">No hay eventos con esa búsqueda.</p>
+          <p className="mt-2 text-sm leading-6 text-slate-400">
+            Prueba con otra fecha, zona o nombre del plan.
+          </p>
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="mt-5 rounded-full bg-brand-500 px-5 py-2 text-sm font-bold text-white transition hover:bg-brand-600"
+          >
+            Ver otra búsqueda
+          </button>
+        </div>
         ) : (
         <div
           ref={carouselRef}

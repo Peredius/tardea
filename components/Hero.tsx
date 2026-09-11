@@ -154,6 +154,33 @@ export function Hero() {
     }
   }
 
+  function scrollToEvents() {
+    const eventos = document.getElementById('eventos')
+
+    if (eventos) {
+      const headerOffset = window.innerWidth < 768 ? 88 : 76
+      const top =
+        eventos.getBoundingClientRect().top + window.scrollY - headerOffset
+
+      window.scrollTo({
+        top: Math.max(top, 0),
+        behavior: 'smooth',
+      })
+    }
+  }
+
+  function searchByName() {
+    const searchTerm = nameQuery.trim()
+    if (searchTerm.length < 2) return
+
+    localStorage.setItem('searchQuery', searchTerm)
+    window.dispatchEvent(
+      new CustomEvent('tardeaSearchQueryChanged', { detail: { query: searchTerm } })
+    )
+    setNameResults([])
+    scrollToEvents()
+  }
+
   return (
     <section id="buscador" className="scroll-mt-20 bg-hero-gradient">
       <div className="container-page grid items-center gap-7 py-7 md:grid-cols-[1.15fr_0.85fr] md:gap-12 md:py-12">
@@ -218,6 +245,9 @@ export function Hero() {
                 <input
                   value={nameQuery}
                   onChange={(event) => setNameQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') searchByName()
+                  }}
                   placeholder="Buscar por nombre"
                   className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-white placeholder:text-slate-500 focus:outline-none"
                 />
