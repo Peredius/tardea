@@ -1,8 +1,5 @@
 export function isAuthLockdownEnabled() {
-  return (
-    process.env.AUTH_LOCKDOWN_ENABLED === 'true' ||
-    Boolean(process.env.AUTH_ALLOWED_EMAILS?.trim())
-  )
+  return process.env.AUTH_LOCKDOWN_ENABLED === 'true'
 }
 
 export function isAllowedAuthEmail(email?: string | null) {
@@ -16,4 +13,3 @@ export function isAllowedAuthEmail(email?: string | null) {
 
   return allowedEmails.includes(email.trim().toLowerCase())
 }
-
