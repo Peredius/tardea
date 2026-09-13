@@ -25,6 +25,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import { FavoriteButton } from '@/components/FavoriteButton'
 import { canonicalizeMusicList, normalizeMusicKey } from '@/lib/music'
+import { trackEvent } from '@/lib/analytics'
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''
 let googleMapsLoader: Promise<void> | null = null
@@ -811,6 +812,13 @@ export function Filters() {
     if (target.closest('a, button, input, select, textarea')) return
 
     if (activeEventSlug === slug) {
+      trackEvent('event_card_open', {
+        targetType: 'event',
+        targetId: slug,
+        metadata: {
+          source: 'filters_mobile_card',
+        },
+      })
       window.location.href = href
     }
   }
@@ -1171,6 +1179,17 @@ export function Filters() {
                 <Link
                   href={eventHref}
                   aria-label={`Ver ${event.title}`}
+                  onClick={() =>
+                    trackEvent('event_card_open', {
+                      targetType: 'event',
+                      targetId: event.slug,
+                      metadata: {
+                        source: 'filters_cover',
+                        selectedDates,
+                        searchQuery,
+                      },
+                    })
+                  }
                   className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105 sm:relative sm:h-44 sm:min-h-0 sm:w-full sm:shrink-0"
                   style={{
                     backgroundImage: `url(${getSearchEventCover(event)})`,
@@ -1215,7 +1234,21 @@ export function Filters() {
                   </div>
 
                   <div className="mt-3 flex gap-2 sm:mt-auto sm:gap-3 sm:pt-4">
-                    <Link href={eventHref} className="text-sm font-semibold text-brand-500 hover:underline">
+                    <Link
+                      href={eventHref}
+                      onClick={() =>
+                        trackEvent('event_card_open', {
+                          targetType: 'event',
+                          targetId: event.slug,
+                          metadata: {
+                            source: 'filters_text_link',
+                            selectedDates,
+                            searchQuery,
+                          },
+                        })
+                      }
+                      className="text-sm font-semibold text-brand-500 hover:underline"
+                    >
                       Ver evento →
                     </Link>
 

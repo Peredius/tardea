@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { CalendarDays, MapPin } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { FavoriteButton } from '@/components/FavoriteButton'
+import { trackEvent } from '@/lib/analytics'
 
 function normalizeEventSeriesText(value: string) {
   return value
@@ -127,6 +128,13 @@ export function FeaturedEvents() {
     if (target.closest('a, button, input, select, textarea')) return
 
     if (activeEventSlug === slug) {
+      trackEvent('event_card_open', {
+        targetType: 'event',
+        targetId: slug,
+        metadata: {
+          source: 'featured_mobile_card',
+        },
+      })
       window.location.href = `/eventos/${slug}`
     }
   }
@@ -169,6 +177,15 @@ export function FeaturedEvents() {
               <Link
                 href={`/eventos/${event.slug}`}
                 aria-label={`Ver ${event.title}`}
+                onClick={() =>
+                  trackEvent('event_card_open', {
+                    targetType: 'event',
+                    targetId: event.slug,
+                    metadata: {
+                      source: 'featured_cover',
+                    },
+                  })
+                }
                 className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
                 style={{
                   backgroundImage: `url(${event.cover || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80'})`,
@@ -203,7 +220,19 @@ export function FeaturedEvents() {
                   {event.start_time ? ` · ${event.start_time.slice(0, 5)}` : ''}
                 </p>
 
-                <Link href={`/eventos/${event.slug}`} className="mt-3 text-sm font-semibold text-brand-500 hover:underline">
+                <Link
+                  href={`/eventos/${event.slug}`}
+                  onClick={() =>
+                    trackEvent('event_card_open', {
+                      targetType: 'event',
+                      targetId: event.slug,
+                      metadata: {
+                        source: 'featured_text_link',
+                      },
+                    })
+                  }
+                  className="mt-3 text-sm font-semibold text-brand-500 hover:underline"
+                >
                   Ver evento →
                 </Link>
               </div>

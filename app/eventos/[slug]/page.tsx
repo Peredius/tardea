@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
+import { trackEvent } from '@/lib/analytics'
 import { supabase } from '@/lib/supabase'
 
 function WhatsAppIcon({ className = '' }: { className?: string }) {
@@ -251,6 +252,15 @@ export default function EventDetailPage() {
   }, [slug])
 
   async function toggleEventFavorite() {
+    trackEvent('event_detail_favorite_date', {
+      targetType: 'event',
+      targetId: event?.id || slug,
+      metadata: {
+        slug,
+        action: isEventFavorite ? 'remove' : 'add',
+      },
+    })
+
     if (!userId) {
       window.location.href = '/login?type=user'
       return
@@ -290,6 +300,15 @@ export default function EventDetailPage() {
 
   async function toggleProfileFavorite() {
     if (savingProfileFavorite) return
+
+    trackEvent('event_detail_favorite_plan', {
+      targetType: 'event_profile',
+      targetId: eventProfileId || event?.event_profile_id || slug,
+      metadata: {
+        slug,
+        action: isProfileFavorite ? 'remove' : 'add',
+      },
+    })
 
     if (!userId) {
       window.location.href = '/login?type=user'
@@ -366,6 +385,14 @@ export default function EventDetailPage() {
 
   async function openEventProfilePage() {
     if (!event) return
+
+    trackEvent('event_detail_all_dates', {
+      targetType: 'event',
+      targetId: event.id || slug,
+      metadata: {
+        slug,
+      },
+    })
 
     let resolvedProfileId = eventProfileId
     let resolvedSeriesSlug = eventSeriesSlug
@@ -615,7 +642,22 @@ export default function EventDetailPage() {
             </p>
 
             {event.source_url ? (
-              <a href={event.source_url} target="_blank" rel="noopener noreferrer" className="btn-primary mt-6 w-full">
+              <a
+                href={event.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() =>
+                  trackEvent('event_detail_ticket', {
+                    targetType: 'event',
+                    targetId: event.id || slug,
+                    metadata: {
+                      slug,
+                      sourceUrl: event.source_url,
+                    },
+                  })
+                }
+                className="btn-primary mt-6 w-full"
+              >
                 Comprar entradas
               </a>
             ) : (
@@ -627,6 +669,15 @@ export default function EventDetailPage() {
               href={whatsappShareUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() =>
+                trackEvent('event_detail_whatsapp', {
+                  targetType: 'event',
+                  targetId: event.id || slug,
+                  metadata: {
+                    slug,
+                  },
+                })
+              }
               className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-5 py-3 font-semibold text-slate-950 transition hover:bg-[#1fbd5a]"
             >
               <WhatsAppIcon className="h-5 w-5" />

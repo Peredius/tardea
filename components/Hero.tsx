@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { trackEvent } from '@/lib/analytics'
 
 const monthNames = [
   'Enero',
@@ -134,6 +135,14 @@ export function Hero() {
   function searchSelectedDates() {
     if (selectedDates.length === 0) return
 
+    trackEvent('calendar_search', {
+      targetType: 'calendar',
+      metadata: {
+        selectedDates,
+        selectedDatesCount: selectedDates.length,
+      },
+    })
+
     localStorage.setItem('selectedDates', JSON.stringify(selectedDates))
     localStorage.setItem('selectedDate', selectedDates[0])
     window.dispatchEvent(
@@ -172,6 +181,13 @@ export function Hero() {
   function searchByName() {
     const searchTerm = nameQuery.trim()
     if (searchTerm.length < 2) return
+
+    trackEvent('text_search', {
+      targetType: 'hero_search',
+      metadata: {
+        query: searchTerm,
+      },
+    })
 
     localStorage.setItem('searchQuery', searchTerm)
     window.dispatchEvent(

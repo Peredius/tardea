@@ -3,6 +3,7 @@
 import { MouseEvent, useEffect, useState } from 'react'
 import { Heart } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { trackEvent } from '@/lib/analytics'
 
 export function FavoriteButton({
   eventId,
@@ -67,6 +68,14 @@ export function FavoriteButton({
     event.stopPropagation()
 
     if (!eventId && !eventProfileId) return
+
+    trackEvent('favorite_button_toggle', {
+      targetType: eventId ? 'event' : 'event_profile',
+      targetId: eventId || eventProfileId,
+      metadata: {
+        action: isFavorite ? 'remove' : 'add',
+      },
+    })
 
     if (!userId) {
       window.location.href = '/login?type=user'

@@ -6,6 +6,7 @@ import type { User } from '@supabase/supabase-js'
 import { Search, UserRound } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { BrandLogo } from '@/components/BrandLogo'
+import { trackEvent } from '@/lib/analytics'
 
 type SearchProfile = {
   id: string
@@ -113,6 +114,12 @@ export function Navbar() {
 
     localStorage.setItem('searchQuery', searchTerm)
     setResults([])
+    trackEvent('text_search', {
+      targetType: 'navbar_search',
+      metadata: {
+        query: searchTerm,
+      },
+    })
 
     if (window.location.pathname === '/') {
       window.dispatchEvent(
