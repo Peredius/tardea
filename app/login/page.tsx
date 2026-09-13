@@ -451,7 +451,30 @@ function LoginContent() {
               </p>
             </div>
 
-            <div className="mt-8 grid grid-cols-3 gap-3">
+            <div className="mt-6 space-y-3">
+              <button
+                type="button"
+                onClick={() => handleOAuthLogin('google')}
+                className="flex w-full items-center justify-center gap-4 rounded-full bg-white px-5 py-4 text-base font-bold text-slate-950 transition hover:bg-slate-100"
+              >
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-xl font-black text-[#4285F4]">
+                  G
+                </span>
+                Continuar con Google
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowEmailForm(true)}
+                className="flex w-full items-center justify-center gap-4 rounded-full bg-white px-5 py-4 text-base font-bold text-slate-950 transition hover:bg-slate-100"
+              >
+                <Mail className="h-5 w-5" />
+                Continuar con correo
+              </button>
+
+            </div>
+
+            <div className="mt-7 grid grid-cols-3 gap-3">
               {loginPreviewCards.map((event) => {
                 const content = (
                   <>
@@ -493,30 +516,7 @@ function LoginContent() {
               })}
             </div>
 
-            <div className="mt-8 space-y-3">
-              <button
-                type="button"
-                onClick={() => handleOAuthLogin('google')}
-                className="flex w-full items-center justify-center gap-4 rounded-full bg-white px-5 py-4 text-base font-bold text-slate-950 transition hover:bg-slate-100"
-              >
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-xl font-black text-[#4285F4]">
-                  G
-                </span>
-                Continuar con Google
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowEmailForm(true)}
-                className="flex w-full items-center justify-center gap-4 rounded-full bg-white px-5 py-4 text-base font-bold text-slate-950 transition hover:bg-slate-100"
-              >
-                <Mail className="h-5 w-5" />
-                Continuar con correo
-              </button>
-
-            </div>
-
-            <p className="mx-auto mt-6 max-w-sm text-center text-xs leading-5 text-slate-500">
+            <p className="mx-auto mt-5 max-w-sm text-center text-xs leading-5 text-slate-500">
               Al continuar, aceptas las{' '}
               <Link href="/condiciones" className="text-brand-400 hover:underline">
                 condiciones de uso
