@@ -850,9 +850,9 @@ export function Filters() {
   }
 
   return (
-    <section id="eventos" className="container-page scroll-mt-24 py-6 md:scroll-mt-20">
+    <section id="eventos" className="container-page scroll-mt-24 py-4 md:scroll-mt-20 md:py-6">
       {(selectedDates.length > 0 || hasSearchQuery) && (
-      <div className="card p-5">
+      <div className="border-y border-white/10 bg-slate-950/35 py-4 md:border-0 md:bg-transparent md:py-0">
         <button
           type="button"
           onClick={() => setFiltersOpen((current) => !current)}
@@ -995,7 +995,7 @@ export function Filters() {
       )}
 
       <>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-3">
             <div className="inline-flex w-fit rounded-full border border-white/10 bg-slate-900/80 p-1">
               {(selectedDates.length > 0 || hasSearchQuery) && (
@@ -1140,7 +1140,7 @@ export function Filters() {
             </div>
           </div>
         ) : groupedFiltered.length === 0 ? (
-        <div className="mt-8 rounded-[28px] border border-white/10 bg-slate-900/75 p-6 text-center shadow-2xl shadow-black/20">
+        <div className="mt-8 border-y border-white/10 bg-slate-900/45 py-8 text-center md:border md:p-6">
           <p className="text-lg font-bold text-white">No hay eventos con esa búsqueda.</p>
           <p className="mt-2 text-sm leading-6 text-slate-400">
             Prueba con otra fecha, zona o nombre del plan.
@@ -1157,7 +1157,7 @@ export function Filters() {
         <div
           ref={carouselRef}
           onScroll={updateActiveEventFromScroll}
-          className="-mx-5 mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-5 pb-6 pt-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden"
+          className="-mx-5 mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-5 pb-6 pt-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden"
         >
           {groupedFiltered.map((event) => {
             const today = new Date().toISOString().split('T')[0]

@@ -82,6 +82,19 @@ type LoginPreviewEvent = {
   event_profile_id?: string | null
 }
 
+type LoginProfile = {
+  role?: string | null
+  first_name?: string | null
+  last_name?: string | null
+  birth_date?: string | null
+  address?: string | null
+  postal_code?: string | null
+  municipality?: string | null
+  province?: string | null
+  city?: string | null
+  music_preferences?: string[] | null
+}
+
 const FALLBACK_LOGIN_CARDS: LoginPreviewEvent[] = [
   {
     slug: 'tardeo',
@@ -140,6 +153,26 @@ function getLoginEventGroupKey(event: LoginPreviewEvent) {
   return `${event.type || 'Tardeo'}__${normalizedTitle || event.slug}`
 }
 
+function getAuthenticatedAccountPath(profile: LoginProfile | null | undefined) {
+  if (profile?.role === 'admin') return '/admin'
+  if (profile?.role === 'venue') return '/dashboard'
+
+  if (
+    !profile?.first_name ||
+    !profile?.last_name ||
+    !profile?.birth_date ||
+    !profile?.address ||
+    !profile?.postal_code ||
+    !(profile?.municipality || profile?.city) ||
+    !profile?.province ||
+    !profile?.music_preferences?.length
+  ) {
+    return '/cuenta/perfil?first=1'
+  }
+
+  return '/cuenta'
+}
+
 function LoginContent() {
   const searchParams = useSearchParams()
   const type = searchParams.get('type')
@@ -177,6 +210,36 @@ function LoginContent() {
       setLoginFailed(false)
     }
   }, [locked])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function redirectSignedInAccount() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) return
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select(
+          'role, first_name, last_name, birth_date, address, postal_code, municipality, province, city, music_preferences'
+        )
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (!cancelled) {
+        window.location.href = getAuthenticatedAccountPath(profile)
+      }
+    }
+
+    redirectSignedInAccount()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     if (accountType !== 'venue') return
@@ -323,24 +386,7 @@ function LoginContent() {
       .eq('id', user.id)
       .single()
 
-    if (profile?.role === 'admin') {
-      window.location.href = '/admin'
-    } else if (profile?.role === 'venue') {
-      window.location.href = '/dashboard'
-    } else if (
-      !profile?.first_name ||
-      !profile?.last_name ||
-      !profile?.birth_date ||
-      !profile?.address ||
-      !profile?.postal_code ||
-      !(profile?.municipality || profile?.city) ||
-      !profile?.province ||
-      !profile?.music_preferences?.length
-    ) {
-      window.location.href = '/cuenta/perfil?first=1'
-    } else {
-      window.location.href = '/cuenta'
-    }
+    window.location.href = getAuthenticatedAccountPath(profile)
   }
 
   async function sendPasswordRecovery() {

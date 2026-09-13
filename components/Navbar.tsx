@@ -20,12 +20,15 @@ type SearchProfile = {
   href?: string
 }
 
+type AccountRole = 'admin' | 'venue' | 'user' | ''
+
 export function Navbar() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchProfile[]>([])
   const [user, setUser] = useState<User | null>(null)
   const [firstName, setFirstName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
+  const [accountRole, setAccountRole] = useState<AccountRole>('')
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
 
   useEffect(() => {
@@ -61,18 +64,20 @@ export function Navbar() {
       if (!currentUser) {
         setFirstName('')
         setAvatarUrl('')
+        setAccountRole('')
         setAccountMenuOpen(false)
         return
       }
 
       const { data } = await supabase
         .from('profiles')
-        .select('first_name, avatar_url')
+        .select('first_name, avatar_url, role')
         .eq('id', currentUser.id)
         .maybeSingle()
 
       setFirstName(data?.first_name ?? '')
       setAvatarUrl(data?.avatar_url ?? '')
+      setAccountRole((data?.role as AccountRole) ?? 'user')
     }
 
     async function loadUser() {
@@ -104,6 +109,7 @@ export function Navbar() {
     setUser(null)
     setFirstName('')
     setAvatarUrl('')
+    setAccountRole('')
     setAccountMenuOpen(false)
     window.location.href = '/'
   }
@@ -136,6 +142,11 @@ export function Navbar() {
 
     window.location.href = `/?q=${encodeURIComponent(searchTerm)}#eventos`
   }
+
+  const accountHref =
+    accountRole === 'admin' ? '/admin' : accountRole === 'venue' ? '/dashboard' : '/cuenta'
+  const accountMenuLabel =
+    accountRole === 'admin' ? 'Panel admin' : accountRole === 'venue' ? 'Panel promotor' : 'Mi perfil'
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/95 backdrop-blur">
@@ -205,7 +216,7 @@ export function Navbar() {
           {user ? (
             <>
               <Link
-                href="/cuenta"
+                href={accountHref}
                 className="max-w-[92px] truncate text-xs font-semibold text-slate-200 transition hover:text-white sm:max-w-none sm:text-sm"
               >
                 Hola, {firstName || 'usuario'}
@@ -233,11 +244,11 @@ export function Navbar() {
                 {accountMenuOpen && (
                   <div className="absolute right-0 top-12 w-48 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl shadow-black/30">
                     <Link
-                      href="/cuenta"
+                      href={accountHref}
                       onClick={() => setAccountMenuOpen(false)}
                       className="block border-b border-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
                     >
-                      Mi perfil
+                      {accountMenuLabel}
                     </Link>
                     <Link
                       href="/cuenta/perfil"

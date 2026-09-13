@@ -8,6 +8,8 @@ import { usePathname } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 
+type AccountRole = 'admin' | 'venue' | 'user' | ''
+
 const hiddenRoutes = [
   '/admin',
   '/dashboard',
@@ -27,6 +29,7 @@ export function MobileAppNav() {
   const [homeHash, setHomeHash] = useState('')
   const [user, setUser] = useState<User | null>(null)
   const [avatarUrl, setAvatarUrl] = useState('')
+  const [accountRole, setAccountRole] = useState<AccountRole>('')
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -52,16 +55,18 @@ export function MobileAppNav() {
     async function loadUserProfile(currentUser: User | null) {
       if (!currentUser) {
         setAvatarUrl('')
+        setAccountRole('')
         return
       }
 
       const { data } = await supabase
         .from('profiles')
-        .select('avatar_url')
+        .select('avatar_url, role')
         .eq('id', currentUser.id)
         .maybeSingle()
 
       setAvatarUrl(data?.avatar_url ?? '')
+      setAccountRole((data?.role as AccountRole) ?? 'user')
     }
 
     async function loadUser() {
@@ -92,8 +97,15 @@ export function MobileAppNav() {
     return null
   }
 
-  const accountHref = user ? '/cuenta' : '/login?type=user'
   const accountOnlyHref = (href: string) => (user ? href : '/login?type=user')
+  const profileHref = user
+    ? accountRole === 'admin'
+      ? '/admin'
+      : accountRole === 'venue'
+        ? '/dashboard'
+        : '/cuenta?tab=profile'
+    : '/login?type=user'
+  const profileLabel = accountRole === 'admin' ? 'Admin' : accountRole === 'venue' ? 'Panel' : 'Perfil'
   const recommendationsHref = accountOnlyHref('/cuenta?tab=suggestions')
   const isAccount = pathname.startsWith('/cuenta')
   const isRecommendations = Boolean(user && isAccount && activeTab === 'suggestions')
@@ -109,16 +121,20 @@ export function MobileAppNav() {
       >
         <div className="mx-auto grid max-w-md grid-cols-5 bg-black px-2 py-2">
           <MobileNavItem
-            href={accountOnlyHref('/cuenta?tab=profile')}
+            href={profileHref}
             active={isAccount && (!activeTab || activeTab === 'profile')}
-            label="Perfil"
+            label={profileLabel}
             onClick={() => {
-              setActiveTab('profile')
-              window.dispatchEvent(
-                new CustomEvent('tardeaAccountTabChanged', {
-                  detail: { tab: 'profile' },
-                })
-              )
+              if (accountRole === 'admin' || accountRole === 'venue') return
+
+              if (user) {
+                setActiveTab('profile')
+                window.dispatchEvent(
+                  new CustomEvent('tardeaAccountTabChanged', {
+                    detail: { tab: 'profile' },
+                  })
+                )
+              }
             }}
           >
             {avatarUrl ? (
