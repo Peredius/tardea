@@ -476,8 +476,8 @@ export default function EventDetailPage() {
           />
         )}
 
-        <div className="container-page relative py-16 md:py-24">
-          <Link href={backHref} className="btn-secondary mb-8 inline-flex">
+        <div className="container-page relative py-8 md:py-24">
+          <Link href={backHref} className="btn-secondary mb-6 inline-flex md:mb-8">
             <ArrowLeft className="mr-2 h-4 w-4" /> {backLabel}
           </Link>
 
@@ -490,86 +490,98 @@ export default function EventDetailPage() {
           <div className="max-w-3xl">
             <span className="badge mb-4">{event.type}</span>
 
-            <h1 className="text-4xl font-bold tracking-tight md:text-6xl">
+            <h1 className="text-3xl font-bold tracking-tight md:text-6xl">
               {event.title}
             </h1>
 
-            <p className="mt-5 text-lg text-slate-300">
+            <p className="mt-4 text-base leading-7 text-slate-300 md:mt-5 md:text-lg">
               {event.description}
             </p>
           </div>
         </div>
       </section>
 
-      <section className="container-page grid gap-8 py-16 lg:grid-cols-[1.1fr_0.9fr]">
+      <section className="container-page grid gap-8 py-8 md:py-16 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-6">
-          <div className="card p-6">
-            <h2 className="text-2xl font-semibold">Detalles del evento</h2>
+          <div className="rounded-none border-0 bg-transparent p-0 shadow-none backdrop-blur-0 md:rounded-3xl md:border md:border-white/10 md:bg-white/5 md:p-6 md:shadow-soft md:backdrop-blur-sm">
+            <h2 className="text-xl font-semibold md:text-2xl">Detalles del evento</h2>
 
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <CalendarDays className="mb-2 h-5 w-5 text-brand-500" />
-                <p className="font-medium">Fecha</p>
-                <p className="text-sm text-slate-400">
-                  {new Date(event.date).toLocaleDateString('es-ES')}
-                </p>
+            <div className="mt-5 grid gap-0 divide-y divide-white/10 md:mt-6 md:grid-cols-2 md:gap-4 md:divide-y-0">
+              <div className="flex gap-3 py-4 first:pt-0 md:block md:rounded-2xl md:border md:border-white/10 md:bg-white/5 md:p-4">
+                <CalendarDays className="mt-0.5 h-5 w-5 shrink-0 text-brand-500 md:mb-2 md:mt-0" />
+                <div>
+                  <p className="font-medium">Fecha</p>
+                  <p className="text-sm text-slate-400">
+                    {new Date(event.date).toLocaleDateString('es-ES')}
+                  </p>
+                </div>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <Clock3 className="mb-2 h-5 w-5 text-brand-500" />
-                <p className="font-medium">Horario</p>
-                <p className="text-sm text-slate-400">
-                  {event.start_time?.slice(0, 5)} - {event.end_time?.slice(0, 5)}
-                </p>
+              <div className="flex gap-3 py-4 md:block md:rounded-2xl md:border md:border-white/10 md:bg-white/5 md:p-4">
+                <Clock3 className="mt-0.5 h-5 w-5 shrink-0 text-brand-500 md:mb-2 md:mt-0" />
+                <div>
+                  <p className="font-medium">Horario</p>
+                  <p className="text-sm text-slate-400">
+                    {event.start_time?.slice(0, 5)} - {event.end_time?.slice(0, 5)}
+                  </p>
+                </div>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <MapPin className="mb-2 h-5 w-5 text-brand-500" />
-                <p className="font-medium">Ubicación</p>
-                <p className="text-sm text-slate-400">
-                  {event.venue}, {event.address}
-                </p>
+              <div className="flex gap-3 py-4 md:block md:rounded-2xl md:border md:border-white/10 md:bg-white/5 md:p-4">
+                <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-brand-500 md:mb-2 md:mt-0" />
+                <div>
+                  <p className="font-medium">Ubicación</p>
+                  <p className="text-sm text-slate-400">
+                    {event.venue}, {event.address}
+                  </p>
 
-                {event.maps_url && (
-                  <a
-                    href={event.maps_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-3 inline-block text-sm font-medium text-brand-500 hover:underline"
-                  >
-                    Ver en Google Maps →
-                  </a>
-                )}
+                  {event.maps_url && (
+                    <a
+                      href={event.maps_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-block text-sm font-medium text-brand-500 hover:underline md:mt-3"
+                    >
+                      Ver en Google Maps →
+                    </a>
+                  )}
+                </div>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <Euro className="mb-2 h-5 w-5 text-brand-500" />
-                <p className="font-medium">Precio</p>
-                <p className="text-sm text-slate-400">
-                  {event.price_from === 0
-                    ? 'Entrada gratis o con invitación'
-                    : `Desde ${event.price_from}€`}
-                </p>
+              <div className="flex gap-3 py-4 md:block md:rounded-2xl md:border md:border-white/10 md:bg-white/5 md:p-4">
+                <Euro className="mt-0.5 h-5 w-5 shrink-0 text-brand-500 md:mb-2 md:mt-0" />
+                <div>
+                  <p className="font-medium">Precio</p>
+                  <p className="text-sm text-slate-400">
+                    {event.price_from === 0
+                      ? 'Entrada gratis o con invitación'
+                      : `Desde ${event.price_from}€`}
+                  </p>
+                </div>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <Music4 className="mb-2 h-5 w-5 text-brand-500" />
-                <p className="font-medium">Música</p>
-                <p className="text-sm text-slate-400">
-                  {(event.music || []).join(', ')}
-                </p>
+              <div className="flex gap-3 py-4 md:block md:rounded-2xl md:border md:border-white/10 md:bg-white/5 md:p-4">
+                <Music4 className="mt-0.5 h-5 w-5 shrink-0 text-brand-500 md:mb-2 md:mt-0" />
+                <div>
+                  <p className="font-medium">Música</p>
+                  <p className="text-sm text-slate-400">
+                    {(event.music || []).join(', ')}
+                  </p>
+                </div>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <Users className="mb-2 h-5 w-5 text-brand-500" />
-                <p className="font-medium">Público</p>
-                <p className="text-sm text-slate-400">{event.audience}</p>
+              <div className="flex gap-3 py-4 md:block md:rounded-2xl md:border md:border-white/10 md:bg-white/5 md:p-4">
+                <Users className="mt-0.5 h-5 w-5 shrink-0 text-brand-500 md:mb-2 md:mt-0" />
+                <div>
+                  <p className="font-medium">Público</p>
+                  <p className="text-sm text-slate-400">{event.audience}</p>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="card p-6">
-            <h2 className="text-2xl font-semibold">
+          <div className="rounded-none border-0 bg-transparent p-0 shadow-none backdrop-blur-0 md:rounded-3xl md:border md:border-white/10 md:bg-white/5 md:p-6 md:shadow-soft md:backdrop-blur-sm">
+            <h2 className="text-xl font-semibold md:text-2xl">
               Qué hace especial este plan
             </h2>
 
@@ -585,11 +597,11 @@ export default function EventDetailPage() {
 
         <aside className="space-y-6">
           {event.cover && (
-            <div className="card overflow-hidden p-0">
+            <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-soft md:p-0">
               <img
                 src={event.cover}
                 alt={`Cartel de ${event.title}`}
-                className="w-full object-cover"
+                className="max-h-[260px] w-full object-cover object-center md:max-h-none"
               />
             </div>
           )}
