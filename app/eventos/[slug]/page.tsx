@@ -601,7 +601,7 @@ export default function EventDetailPage() {
               <img
                 src={event.cover}
                 alt={`Cartel de ${event.title}`}
-                className="max-h-[260px] w-full object-cover object-center md:max-h-none"
+                className="max-h-[260px] w-full object-cover object-center md:max-h-[420px]"
               />
             </div>
           )}
