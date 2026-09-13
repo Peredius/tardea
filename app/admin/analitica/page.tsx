@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, BarChart3, CalendarDays, Heart, MousePointerClick, Search, Share2, Ticket } from 'lucide-react'
+import { ArrowLeft, BarChart3, CalendarDays, Heart, Mail, MousePointerClick, Search, Share2, Ticket } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 type FunnelRow = {
@@ -22,6 +22,16 @@ type RecentEvent = {
   target_id: string | null
   metadata: Record<string, unknown> | null
   created_at: string
+}
+
+type AnalyticsSummary = {
+  calendar_searches: number
+  calendar_search_users: number
+  text_searches: number
+  event_opens: number
+  whatsapp_clicks: number
+  ticket_clicks: number
+  favorite_clicks: number
 }
 
 const eventLabels: Record<string, string> = {
@@ -51,7 +61,10 @@ function formatDay(value: string) {
 export default function AdminAnalyticsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [emailStatus, setEmailStatus] = useState('')
+  const [sendingEmail, setSendingEmail] = useState(false)
   const [funnel, setFunnel] = useState<FunnelRow[]>([])
+  const [summaries, setSummaries] = useState<Record<string, AnalyticsSummary>>({})
   const [recentEvents, setRecentEvents] = useState<RecentEvent[]>([])
 
   useEffect(() => {
@@ -85,6 +98,7 @@ export default function AdminAnalyticsPage() {
       }
 
       setFunnel(payload?.funnel || [])
+      setSummaries(payload?.summaries || {})
       setRecentEvents(payload?.recentEvents || [])
       setLoading(false)
     }
@@ -92,41 +106,52 @@ export default function AdminAnalyticsPage() {
     loadAnalytics()
   }, [])
 
-  const today = funnel[0]
-  const totals = useMemo(
-    () =>
-      funnel.reduce(
-        (acc, row) => ({
-          calendar_searches: acc.calendar_searches + numberValue(row.calendar_searches),
-          calendar_search_users: acc.calendar_search_users + numberValue(row.calendar_search_users),
-          text_searches: acc.text_searches + numberValue(row.text_searches),
-          event_opens: acc.event_opens + numberValue(row.event_opens),
-          whatsapp_clicks: acc.whatsapp_clicks + numberValue(row.whatsapp_clicks),
-          ticket_clicks: acc.ticket_clicks + numberValue(row.ticket_clicks),
-          favorite_clicks: acc.favorite_clicks + numberValue(row.favorite_clicks),
-        }),
-        {
-          calendar_searches: 0,
-          calendar_search_users: 0,
-          text_searches: 0,
-          event_opens: 0,
-          whatsapp_clicks: 0,
-          ticket_clicks: 0,
-          favorite_clicks: 0,
-        }
-      ),
-    [funnel]
-  )
-
-  const todayCards = [
-    { label: 'Buscan calendario', value: numberValue(today?.calendar_searches), icon: CalendarDays },
-    { label: 'Usuarios calendario', value: numberValue(today?.calendar_search_users), icon: MousePointerClick },
-    { label: 'Buscan texto', value: numberValue(today?.text_searches), icon: Search },
-    { label: 'Abren evento', value: numberValue(today?.event_opens), icon: BarChart3 },
-    { label: 'WhatsApp', value: numberValue(today?.whatsapp_clicks), icon: Share2 },
-    { label: 'Entradas', value: numberValue(today?.ticket_clicks), icon: Ticket },
-    { label: 'Favoritos', value: numberValue(today?.favorite_clicks), icon: Heart },
+  const summaryBlocks = [
+    { label: 'Último día', value: summaries.lastDay },
+    { label: 'Última semana', value: summaries.lastWeek },
+    { label: 'Último mes', value: summaries.lastMonth },
+    { label: 'Totales', value: summaries.total },
   ]
+
+  const metricItems = [
+    { key: 'calendar_searches', label: 'Calendario', icon: CalendarDays },
+    { key: 'calendar_search_users', label: 'Usuarios', icon: MousePointerClick },
+    { key: 'text_searches', label: 'Texto', icon: Search },
+    { key: 'event_opens', label: 'Abren', icon: BarChart3 },
+    { key: 'whatsapp_clicks', label: 'WhatsApp', icon: Share2 },
+    { key: 'ticket_clicks', label: 'Entradas', icon: Ticket },
+    { key: 'favorite_clicks', label: 'Favoritos', icon: Heart },
+  ] as const
+
+  async function sendEmailReport() {
+    setSendingEmail(true)
+    setEmailStatus('')
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session?.access_token) {
+      setEmailStatus('Inicia sesión como admin para enviar el resumen.')
+      setSendingEmail(false)
+      return
+    }
+
+    const response = await fetch('/api/admin/analytics/email', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    })
+    const payload = await response.json().catch(() => null)
+
+    setEmailStatus(
+      response.ok
+        ? `Resumen enviado a ${payload?.to || 'info@tardea.com'}.`
+        : payload?.error || 'No se pudo enviar el resumen.'
+    )
+    setSendingEmail(false)
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -154,40 +179,42 @@ export default function AdminAnalyticsPage() {
 
         {!loading && !error && (
           <>
-            <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">
-              {todayCards.map((item) => {
-                const Icon = item.icon
-
-                return (
-                  <div key={item.label} className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                    <Icon className="h-5 w-5 text-brand-500" />
-                    <p className="mt-3 text-3xl font-black">{item.value}</p>
-                    <p className="mt-1 text-xs font-semibold text-slate-400">{item.label}</p>
-                  </div>
-                )
-              })}
+            <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-4">
+              <button
+                type="button"
+                onClick={sendEmailReport}
+                disabled={sendingEmail}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-600 disabled:opacity-60 md:w-auto"
+              >
+                <Mail className="h-4 w-4" />
+                {sendingEmail ? 'Enviando resumen...' : 'Enviar resumen por email'}
+              </button>
+              {emailStatus && (
+                <p className="mt-3 text-sm font-semibold text-slate-300">{emailStatus}</p>
+              )}
             </div>
 
-            <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-5">
-              <h2 className="text-lg font-bold">Últimos 14 días</h2>
-              <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-                <div>
-                  <p className="text-2xl font-black">{totals.calendar_searches}</p>
-                  <p className="text-xs text-slate-400">Búsquedas calendario</p>
+            <div className="mt-8 grid gap-4 lg:grid-cols-2">
+              {summaryBlocks.map((block) => (
+                <div key={block.label} className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                  <h2 className="text-lg font-black">{block.label}</h2>
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {metricItems.map((item) => {
+                      const Icon = item.icon
+
+                      return (
+                        <div key={item.key} className="rounded-2xl border border-white/10 bg-slate-950/55 p-3">
+                          <Icon className="h-4 w-4 text-brand-500" />
+                          <p className="mt-2 text-2xl font-black">
+                            {numberValue(block.value?.[item.key])}
+                          </p>
+                          <p className="mt-1 text-[11px] font-semibold text-slate-400">{item.label}</p>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-                <div>
-                  <p className="text-2xl font-black">{totals.event_opens}</p>
-                  <p className="text-xs text-slate-400">Eventos abiertos</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-black">{totals.whatsapp_clicks}</p>
-                  <p className="text-xs text-slate-400">WhatsApp</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-black">{totals.ticket_clicks}</p>
-                  <p className="text-xs text-slate-400">Entradas</p>
-                </div>
-              </div>
+              ))}
             </div>
 
             <div className="mt-6 overflow-hidden rounded-3xl border border-white/10 bg-white/5">
