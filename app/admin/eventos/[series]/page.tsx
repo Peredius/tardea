@@ -1225,24 +1225,24 @@ export default function AdminEventSeriesPage() {
         context.fillStyle = gradient
         context.fillRect(0, 0, canvas.width, 420)
 
-        context.fillStyle = 'rgba(244, 63, 94, 0.78)'
-        context.roundRect(270, 255, 540, 88, 26)
+        context.fillStyle = 'rgba(244, 63, 94, 0.96)'
+        context.roundRect(220, 230, 640, 124, 28)
         context.fill()
 
-        context.fillStyle = 'rgba(2, 6, 23, 0.18)'
-        context.roundRect(284, 267, 512, 64, 20)
+        context.fillStyle = 'rgba(2, 6, 23, 0.10)'
+        context.roundRect(238, 246, 604, 92, 22)
         context.fill()
 
         context.fillStyle = '#ffffff'
         context.textAlign = 'center'
         context.textBaseline = 'middle'
-        context.font = '900 25px Arial'
-        context.fillText(formatPosterDate(event.date).toUpperCase(), 540, 290)
+        context.font = '900 38px Arial'
+        context.fillText(formatPosterDate(event.date).toUpperCase(), 540, 284)
 
-        context.font = '800 18px Arial'
+        context.font = '800 22px Arial'
         const timeText = [formatTime(event.start_time), formatTime(event.end_time)].filter(Boolean).join(' - ')
         const typeText = String(event.type || mainEvent.type || 'Evento').toUpperCase()
-        context.fillText([typeText, timeText].filter(Boolean).join(' · '), 540, 318)
+        context.fillText([typeText, timeText].filter(Boolean).join(' · '), 540, 326)
 
         const blob = await canvasToBlob(canvas)
         const fileName = `series/${series}/generated/${event.id}-${Date.now()}.jpg`

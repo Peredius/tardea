@@ -32,26 +32,6 @@ function getFeaturedGroupKey(event: any) {
   return event.event_profile_id || getEventSeriesSlug(event)
 }
 
-function formatFeatureDate(date: string) {
-  if (!date) return ''
-
-  return new Date(date)
-    .toLocaleDateString('es-ES', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-    })
-    .toUpperCase()
-}
-
-function formatFeatureTime(event: any) {
-  const startTime = event.start_time?.slice(0, 5)
-  const endTime = event.end_time?.slice(0, 5)
-  const timeRange = [startTime, endTime].filter(Boolean).join(' - ')
-
-  return [event.type, timeRange].filter(Boolean).join(' · ').toUpperCase()
-}
-
 export function FeaturedEvents() {
   const carouselRef = useRef<HTMLDivElement | null>(null)
   const [featured, setFeatured] = useState<any[]>([])
@@ -218,17 +198,6 @@ export function FeaturedEvents() {
                 eventProfileId={event.event_profile_id}
                 className="absolute right-3 top-3 z-20"
               />
-
-              {event.date && (
-                <div className="pointer-events-none absolute left-1/2 top-5 z-20 w-[184px] -translate-x-1/2 rounded-md bg-brand-500 px-4 py-2 text-center shadow-lg shadow-black/25">
-                  <p className="text-[11px] font-black uppercase leading-none tracking-[0.04em] text-white">
-                    {formatFeatureDate(event.date)}
-                  </p>
-                  <p className="mt-1 text-[7px] font-extrabold uppercase leading-none tracking-[0.08em] text-white/85">
-                    {formatFeatureTime(event)}
-                  </p>
-                </div>
-              )}
 
               <div className="relative z-10 mt-auto flex min-w-0 flex-1 flex-col justify-end self-end p-4">
                 <div className="mb-2 flex flex-wrap gap-1.5 sm:gap-2">
