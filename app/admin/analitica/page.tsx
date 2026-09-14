@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, BarChart3, CalendarDays, Heart, Mail, MousePointerClick, Search, Share2, Ticket } from 'lucide-react'
+import { ArrowLeft, BarChart3, CalendarDays, Heart, Mail, MousePointerClick, RefreshCw, Search, Share2, Ticket } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 type FunnelRow = {
@@ -22,6 +22,36 @@ type RecentEvent = {
   target_id: string | null
   metadata: Record<string, unknown> | null
   created_at: string
+}
+
+type ScannerEvent = {
+  id: string
+  title: string
+  date: string
+  venue: string | null
+  source_url: string | null
+  created_at: string
+  event_profile_id: string | null
+}
+
+type ScannerRunResult = {
+  checkedProfiles: number
+  checkedUrls: number
+  addedCount: number
+  results: Array<{
+    profileId: string
+    profileName: string
+    checkedUrls: string[]
+    found: number
+    skipped: number
+    added: Array<{
+      id: string
+      title: string
+      date: string
+      sourceUrl: string
+    }>
+    error?: string
+  }>
 }
 
 type AnalyticsSummary = {
@@ -63,9 +93,13 @@ export default function AdminAnalyticsPage() {
   const [error, setError] = useState('')
   const [emailStatus, setEmailStatus] = useState('')
   const [sendingEmail, setSendingEmail] = useState(false)
+  const [scannerStatus, setScannerStatus] = useState('')
+  const [scannerRunning, setScannerRunning] = useState(false)
+  const [scannerRun, setScannerRun] = useState<ScannerRunResult | null>(null)
   const [funnel, setFunnel] = useState<FunnelRow[]>([])
   const [summaries, setSummaries] = useState<Record<string, AnalyticsSummary>>({})
   const [recentEvents, setRecentEvents] = useState<RecentEvent[]>([])
+  const [scannerEvents, setScannerEvents] = useState<ScannerEvent[]>([])
 
   useEffect(() => {
     async function loadAnalytics() {
@@ -100,6 +134,7 @@ export default function AdminAnalyticsPage() {
       setFunnel(payload?.funnel || [])
       setSummaries(payload?.summaries || {})
       setRecentEvents(payload?.recentEvents || [])
+      setScannerEvents(payload?.scannerEvents || [])
       setLoading(false)
     }
 
@@ -153,6 +188,56 @@ export default function AdminAnalyticsPage() {
     setSendingEmail(false)
   }
 
+  async function runTicketScanner() {
+    setScannerRunning(true)
+    setScannerStatus('')
+    setScannerRun(null)
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session?.access_token) {
+      setScannerStatus('Inicia sesión como admin para revisar tiqueteras.')
+      setScannerRunning(false)
+      return
+    }
+
+    const response = await fetch('/api/admin/ticket-scanner/run', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    })
+    const payload = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      setScannerStatus(payload?.error || 'No se pudieron revisar las tiqueteras.')
+      setScannerRunning(false)
+      return
+    }
+
+    setScannerRun(payload)
+    setScannerStatus(
+      payload.addedCount > 0
+        ? `${payload.addedCount} fecha${payload.addedCount === 1 ? '' : 's'} nueva${payload.addedCount === 1 ? '' : 's'} añadida${payload.addedCount === 1 ? '' : 's'}.`
+        : 'Revisión terminada: no hay fechas nuevas.'
+    )
+
+    const refreshed = await fetch('/api/admin/analytics?days=14', {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      cache: 'no-store',
+    })
+    const refreshedPayload = await refreshed.json().catch(() => null)
+    if (refreshed.ok) {
+      setScannerEvents(refreshedPayload?.scannerEvents || [])
+    }
+
+    setScannerRunning(false)
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="container-page py-5 md:py-8">
@@ -180,19 +265,77 @@ export default function AdminAnalyticsPage() {
         {!loading && !error && (
           <>
             <div className="mt-5">
-              <button
-                type="button"
-                onClick={sendEmailReport}
-                disabled={sendingEmail}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-500 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-brand-600 disabled:opacity-60 md:w-auto md:text-sm"
-              >
-                <Mail className="h-4 w-4" />
-                {sendingEmail ? 'Enviando resumen...' : 'Enviar resumen por email'}
-              </button>
+              <div className="flex flex-col gap-2 md:flex-row">
+                <button
+                  type="button"
+                  onClick={sendEmailReport}
+                  disabled={sendingEmail}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-500 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-brand-600 disabled:opacity-60 md:w-auto md:text-sm"
+                >
+                  <Mail className="h-4 w-4" />
+                  {sendingEmail ? 'Enviando resumen...' : 'Enviar resumen por email'}
+                </button>
+                <button
+                  type="button"
+                  onClick={runTicketScanner}
+                  disabled={scannerRunning}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-brand-500/50 px-4 py-2.5 text-xs font-bold text-brand-100 transition hover:bg-brand-500/10 disabled:opacity-60 md:w-auto md:text-sm"
+                >
+                  <RefreshCw className={`h-4 w-4 ${scannerRunning ? 'animate-spin' : ''}`} />
+                  {scannerRunning ? 'Revisando tiqueteras...' : 'Revisar tiqueteras'}
+                </button>
+              </div>
               {emailStatus && (
                 <p className="mt-2 text-xs font-semibold text-slate-300">{emailStatus}</p>
               )}
+              {scannerStatus && (
+                <p className="mt-2 text-xs font-semibold text-slate-300">{scannerStatus}</p>
+              )}
             </div>
+
+            {(scannerRun || scannerEvents.length > 0) && (
+              <div className="mt-6">
+                <h2 className="text-sm font-bold md:text-base">Revisión de tiqueteras</h2>
+
+                {scannerRun && (
+                  <div className="mt-2 space-y-2">
+                    {scannerRun.results
+                      .filter((result) => result.added.length > 0 || result.error)
+                      .slice(0, 12)
+                      .map((result) => (
+                        <div key={result.profileId} className="py-2">
+                          <p className="text-sm font-bold text-white">
+                            {result.profileName}
+                            {result.added.length > 0 ? ` · +${result.added.length}` : ''}
+                          </p>
+                          {result.error ? (
+                            <p className="mt-1 text-[11px] text-brand-200 md:text-xs">{result.error}</p>
+                          ) : (
+                            <p className="mt-1 text-[11px] leading-5 text-slate-400 md:text-xs">
+                              {result.added.map((event) => new Date(`${event.date}T12:00:00`).toLocaleDateString('es-ES')).join(' · ')}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+                )}
+
+                {scannerEvents.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-xs font-bold uppercase text-slate-500">Añadidas recientemente</p>
+                    {scannerEvents.slice(0, 12).map((event) => (
+                      <div key={event.id} className="py-2">
+                        <p className="text-sm font-bold">{event.title}</p>
+                        <p className="mt-1 text-[11px] text-slate-400 md:text-xs">
+                          {new Date(`${event.date}T12:00:00`).toLocaleDateString('es-ES')}
+                          {event.venue ? ` · ${event.venue}` : ''}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="mt-6 grid gap-6 lg:grid-cols-2">
               {summaryBlocks.map((block) => (

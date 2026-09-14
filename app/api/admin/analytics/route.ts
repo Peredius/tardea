@@ -66,7 +66,12 @@ export async function GET(request: Request) {
   fromDate.setDate(fromDate.getDate() - days + 1)
   fromDate.setHours(0, 0, 0, 0)
 
-  const [{ data: funnel, error: funnelError }, { data: allFunnel, error: allFunnelError }, { data: events, error: eventsError }] =
+  const [
+    { data: funnel, error: funnelError },
+    { data: allFunnel, error: allFunnelError },
+    { data: events, error: eventsError },
+    { data: scannerEvents, error: scannerEventsError },
+  ] =
     await Promise.all([
       admin.serviceClient
         .from('analytics_daily_funnel')
@@ -83,15 +88,23 @@ export async function GET(request: Request) {
         .gte('created_at', fromDate.toISOString())
         .order('created_at', { ascending: false })
         .limit(80),
+      admin.serviceClient
+        .from('events')
+        .select('id, title, date, venue, source_url, created_at, event_profile_id')
+        .eq('imported_by_agent', true)
+        .gte('created_at', fromDate.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(40),
     ])
 
-  if (funnelError || allFunnelError || eventsError) {
+  if (funnelError || allFunnelError || eventsError || scannerEventsError) {
     return NextResponse.json(
       {
         error:
           funnelError?.message ||
           allFunnelError?.message ||
           eventsError?.message ||
+          scannerEventsError?.message ||
           'No se pudo cargar la analitica.',
       },
       { status: 500 }
@@ -109,5 +122,6 @@ export async function GET(request: Request) {
       total: sumFunnel(allRows),
     },
     recentEvents: events || [],
+    scannerEvents: scannerEvents || [],
   })
 }
