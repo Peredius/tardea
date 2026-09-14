@@ -416,6 +416,26 @@ function formatMapDate(date: string) {
   })
 }
 
+function formatCardDateLabel(date: string) {
+  if (!date) return ''
+
+  return new Date(date)
+    .toLocaleDateString('es-ES', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    })
+    .toUpperCase()
+}
+
+function formatCardDateTime(event: any) {
+  const startTime = event.startTime?.slice(0, 5)
+  const endTime = event.endTime?.slice(0, 5)
+  const timeRange = [startTime, endTime].filter(Boolean).join(' - ')
+
+  return [event.type, timeRange].filter(Boolean).join(' · ').toUpperCase()
+}
+
 function mapInfoWindowHtml(event: any, userLocation: { lat: number; lng: number } | null) {
   const eventUrl = `/eventos/${encodeURIComponent(event.slug)}`
   const routeUrl = googleMapsRouteUrl(event, userLocation)
@@ -1198,9 +1218,21 @@ export function Filters() {
 
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent sm:hidden" />
                 <FavoriteButton
+                  eventId={event.id}
                   eventProfileId={event.eventProfileId}
                   className="absolute right-3 top-3 z-20"
                 />
+
+                {event.date && (
+                  <div className="pointer-events-none absolute left-1/2 top-5 z-20 w-[184px] -translate-x-1/2 rounded-md bg-brand-500 px-4 py-2 text-center shadow-lg shadow-black/25 sm:top-4">
+                    <p className="text-[11px] font-black uppercase leading-none tracking-[0.04em] text-white">
+                      {formatCardDateLabel(event.date)}
+                    </p>
+                    <p className="mt-1 text-[7px] font-extrabold uppercase leading-none tracking-[0.08em] text-white/85">
+                      {formatCardDateTime(event)}
+                    </p>
+                  </div>
+                )}
 
                 <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-end p-4 sm:justify-start">
                   <div className="mb-2 flex flex-wrap gap-1.5 sm:mb-3 sm:gap-2">

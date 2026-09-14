@@ -810,7 +810,28 @@ export default function AdminEventSeriesPage() {
       return
     }
 
-    setEventProfile(profileData.profile)
+    setEventProfile({
+      ...profileData.profile,
+      maps_url: baseLocation.maps_url,
+      price_from: sharedPayload.price_from,
+    })
+
+    const eventIds = events.map((event) => event.id).filter(Boolean)
+    if (eventIds.length > 0) {
+      const { error: eventUpdateError } = await supabase
+        .from('events')
+        .update({
+          maps_url: baseLocation.maps_url,
+          price_from: sharedPayload.price_from,
+        })
+        .in('id', eventIds)
+
+      if (eventUpdateError) {
+        setBaseSaving(false)
+        setMessage(`Ficha guardada, pero no se pudieron guardar Google Maps y precio en las fechas: ${eventUpdateError.message}`)
+        return
+      }
+    }
 
     const researchIds = researchItems.map((item) => item.id).filter(Boolean)
     if (researchIds.length > 0) {
