@@ -16,7 +16,7 @@ const AREA_OPTIONS = [
   'Salamanca',
   'Malasaña',
   'Retiro',
-  'Chamberi',
+  'Chamberí',
   'Gran Via',
   'Ponzano',
   'La Latina',
