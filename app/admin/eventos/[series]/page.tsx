@@ -1192,6 +1192,37 @@ export default function AdminEventSeriesPage() {
     loadEvents()
   }
 
+  async function copyExternalCoverToTardea(url: string, name: string) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    const response = await fetch('/api/admin/copy-cover', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session?.access_token || ''}`,
+      },
+      body: JSON.stringify({
+        url,
+        folder: `series-${series}`,
+        name,
+      }),
+    })
+    const data = await response.json().catch(() => null)
+
+    if (!response.ok || !data?.publicUrl) {
+      throw new Error(data?.error || 'No se pudo copiar el cartel externo a Tardea')
+    }
+
+    return data.publicUrl as string
+  }
+
+  async function getCanvasReadyCover(url: string, name: string) {
+    if (canUseCoverInCanvas(url)) return url
+    return copyExternalCoverToTardea(url, name)
+  }
+
   async function generateDatedPosters() {
     const baseCover = baseProfileCover || mainEvent?.cover
     const datedEvents = events.filter((event) => event.date)
@@ -1201,26 +1232,24 @@ export default function AdminEventSeriesPage() {
       return
     }
 
-    if (!canUseCoverInCanvas(baseCover)) {
-      setMessage('Ese cartel viene de una web externa. Sube el cartel a Datos base de Tardea antes de generar carteles con fecha.')
-      return
-    }
-
     if (datedEvents.length === 0) {
       setMessage('Crea primero alguna fecha para generar carteles')
       return
     }
 
-    const confirmed = window.confirm(`Generar cartel con fecha para ${datedEvents.length} evento${datedEvents.length === 1 ? '' : 's'} usando el cartel base?`)
+    const confirmed = window.confirm(`Generar cartel con fecha para ${datedEvents.length} evento${datedEvents.length === 1 ? '' : 's'}?`)
     if (!confirmed) return
 
     setGeneratingPosters(true)
 
     try {
-      const baseImage = await loadCanvasImage(baseCover)
       const generated: { id: string; cover: string }[] = []
 
       for (const event of datedEvents) {
+        const sourceCover = event.cover || baseCover
+        setMessage(`Preparando cartel de ${formatDate(event.date)}...`)
+        const readyCover = await getCanvasReadyCover(sourceCover, `${event.slug || event.id}-base`)
+        const baseImage = await loadCanvasImage(readyCover)
         const canvas = document.createElement('canvas')
         canvas.width = 1080
         canvas.height = 1920
