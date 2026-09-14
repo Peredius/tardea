@@ -207,20 +207,7 @@ export function Hero() {
             <span className="text-brand-500">planes de tarde</span> en Madrid.
           </h1>
 
-          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300 md:text-lg">
-            Elige cuándo quieres salir, ajusta lo justo y abre el evento que encaja contigo.
-          </p>
-
-          <div className="order-3 mx-auto mt-4 flex w-full max-w-[520px] items-center gap-2 overflow-x-auto text-xs font-bold text-slate-300 md:mx-0 md:max-w-none">
-            {['1. Fecha', '2. Filtros', '3. Evento'].map((step, index) => (
-              <div key={step} className="flex shrink-0 items-center gap-2">
-                <span className={index === 0 ? 'text-brand-500' : ''}>{step}</span>
-                {index < 2 && <span className="h-px w-8 bg-white/20" />}
-              </div>
-            ))}
-          </div>
-
-          <div className="order-4 mx-auto mt-4 grid w-full max-w-[520px] grid-cols-2 gap-x-4 gap-y-5 text-sm text-slate-200 md:mx-0 md:mt-6 md:flex md:max-w-none md:flex-wrap md:gap-5">
+          <div className="order-3 mx-auto mt-2 grid w-full max-w-[520px] grid-cols-2 gap-x-4 gap-y-5 text-sm text-slate-200 md:mx-0 md:mt-6 md:flex md:max-w-none md:flex-wrap md:gap-5">
             <div className="flex min-w-0 items-start gap-2">
               <Calendar className="mt-0.5 h-4 w-4 text-brand-500" />
               <div>
