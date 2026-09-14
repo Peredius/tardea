@@ -1,10 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { ArrowLeft, BarChart3, CalendarDays, FilePlus2, ListChecks } from 'lucide-react'
+import { usePathname } from 'next/navigation'
+import { BarChart3, CalendarDays, FilePlus2, ListChecks, RefreshCw } from 'lucide-react'
 
 const adminItems = [
+  { href: '/admin/revision', label: 'Revisión', icon: RefreshCw, match: '/admin/revision' },
   { href: '/admin/eventos', label: 'Eventos', icon: CalendarDays, match: '/admin/eventos' },
   { href: '/admin/crear-evento', label: 'Crear', icon: FilePlus2, match: '/admin/crear-evento' },
   { href: '/admin/fichas', label: 'Fichas', icon: ListChecks, match: '/admin/fichas' },
@@ -13,7 +14,6 @@ const adminItems = [
 
 export function AdminMobileNav() {
   const pathname = usePathname()
-  const router = useRouter()
 
   return (
     <nav
@@ -21,15 +21,6 @@ export function AdminMobileNav() {
       className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-black pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <div className="mx-auto grid max-w-md grid-cols-5 bg-black px-2 py-2">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="relative flex min-h-14 flex-col items-center justify-center gap-1 text-[10px] font-bold text-slate-400 transition hover:text-white"
-        >
-          <ArrowLeft className="h-5 w-5" />
-          <span>Volver</span>
-        </button>
-
         {adminItems.map((item) => {
           const Icon = item.icon
           const active =
