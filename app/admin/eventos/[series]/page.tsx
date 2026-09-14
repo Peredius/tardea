@@ -586,7 +586,15 @@ export default function AdminEventSeriesPage() {
       description: baseDescription || mainEvent.description || '',
     }
     const parsedDraft = readBaseDraft()
-    setBaseForm(parsedDraft || nextBaseForm)
+    const safeDraft = parsedDraft
+      ? {
+          ...nextBaseForm,
+          ...parsedDraft,
+          maps_url: parsedDraft.maps_url || nextBaseForm.maps_url,
+          price_from: parsedDraft.price_from || nextBaseForm.price_from,
+        }
+      : null
+    setBaseForm(safeDraft || nextBaseForm)
     setBaseCoverFile(null)
     setBaseCoverPreview(parsedDraft?.cover || currentCover)
     setIsEditingBase(true)
@@ -832,6 +840,14 @@ export default function AdminEventSeriesPage() {
         return
       }
     }
+
+    setEvents((currentEvents) =>
+      currentEvents.map((event) => ({
+        ...event,
+        maps_url: baseLocation.maps_url,
+        price_from: sharedPayload.price_from,
+      }))
+    )
 
     const researchIds = researchItems.map((item) => item.id).filter(Boolean)
     if (researchIds.length > 0) {
