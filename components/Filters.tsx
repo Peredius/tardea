@@ -416,6 +416,20 @@ function formatMapDate(date: string) {
   })
 }
 
+function todayMadridIso() {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Madrid',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date())
+
+  const year = parts.find((part) => part.type === 'year')?.value || ''
+  const month = parts.find((part) => part.type === 'month')?.value || ''
+  const day = parts.find((part) => part.type === 'day')?.value || ''
+  return `${year}-${month}-${day}`
+}
+
 function mapInfoWindowHtml(event: any, userLocation: { lat: number; lng: number } | null) {
   const eventUrl = `/eventos/${encodeURIComponent(event.slug)}`
   const routeUrl = googleMapsRouteUrl(event, userLocation)
@@ -512,11 +526,13 @@ export function Filters() {
 
   useEffect(() => {
     async function fetchEvents() {
+      const today = todayMadridIso()
       const { data, error } = await supabase
         .from('events')
         .select('*')
         .eq('published', true)
         .eq('status', 'approved')
+        .gte('date', today)
         .order('date', { ascending: true })
 
       if (error) {
@@ -612,8 +628,10 @@ export function Filters() {
 
   const filtered = useMemo(() => {
     if (selectedDates.length === 0 && !hasSearchQuery) return []
+    const today = todayMadridIso()
 
     return dbEvents.filter((event) => {
+      if (event.date < today) return false
       if (selectedDates.length > 0 && !selectedDates.includes(event.date)) return false
       if (hasSearchQuery && !eventMatchesSearch(event, searchQuery)) return false
       if (type !== 'Todos' && event.type !== type) return false
@@ -634,7 +652,7 @@ export function Filters() {
   const groupedFiltered = useMemo(() => groupEventsBySeries(filtered), [filtered])
 
   const featuredMapEvents = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = todayMadridIso()
     const upcomingEvents = dbEvents.filter((event) => event.date >= today)
     const groups = new Map<string, { nextEvent: any; featured: boolean }>()
 
