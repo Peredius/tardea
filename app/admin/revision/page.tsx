@@ -13,6 +13,9 @@ type ScannerEvent = {
   source_url: string | null
   created_at: string
   event_profile_id: string | null
+  promoter_event_profiles?: {
+    name: string | null
+  } | null
 }
 
 type ScannerRunResult = {
@@ -40,6 +43,26 @@ function formatDate(value: string) {
     day: 'numeric',
     month: 'short',
   })
+}
+
+function formatToday() {
+  return new Intl.DateTimeFormat('es-ES', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date())
+}
+
+function formatCreatedDay(value: string) {
+  return new Intl.DateTimeFormat('es-ES', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(value))
+}
+
+function resultName(event: ScannerEvent) {
+  return event.promoter_event_profiles?.name || event.venue || 'una ficha'
 }
 
 export default function AdminRevisionPage() {
@@ -136,9 +159,9 @@ export default function AdminRevisionPage() {
 
         <div className="mt-5 flex flex-col gap-1.5">
           <p className="text-xs font-bold uppercase text-brand-500">Revisión</p>
-          <h1 className="text-2xl font-black tracking-tight md:text-4xl">Tiqueteras</h1>
+          <h1 className="text-2xl font-black tracking-tight md:text-4xl">Revisión diaria</h1>
           <p className="text-xs leading-5 text-slate-400 md:text-sm">
-            Revisa los enlaces de las fichas y añade automáticamente nuevas fechas futuras sin duplicar.
+            Hoy, {formatToday()}. Aquí verás solo las fechas nuevas encontradas en cada ficha.
           </p>
         </div>
 
@@ -150,7 +173,7 @@ export default function AdminRevisionPage() {
             className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-500 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-brand-600 disabled:opacity-60 md:w-auto md:text-sm"
           >
             <RefreshCw className={`h-4 w-4 ${scannerRunning ? 'animate-spin' : ''}`} />
-            {scannerRunning ? 'Revisando tiqueteras...' : 'Revisar tiqueteras'}
+            {scannerRunning ? 'Revisando enlaces...' : 'Revisar enlaces'}
           </button>
           {scannerStatus && (
             <p className="mt-2 text-xs font-semibold text-slate-300">{scannerStatus}</p>
@@ -164,9 +187,9 @@ export default function AdminRevisionPage() {
           <>
             {scannerRun && (
               <section className="mt-6">
-                <h2 className="text-sm font-bold md:text-base">Resultado de la revisión</h2>
+                <h2 className="text-sm font-bold md:text-base">Resultado de hoy</h2>
                 <p className="mt-1 text-xs text-slate-400">
-                  {scannerRun.checkedProfiles} fichas · {scannerRun.checkedUrls} enlaces revisados
+                  {scannerRun.checkedProfiles} fichas revisadas
                 </p>
                 <div className="mt-2 space-y-2">
                   {scannerRun.results
@@ -175,8 +198,9 @@ export default function AdminRevisionPage() {
                     .map((result) => (
                       <div key={result.profileId} className="py-2">
                         <p className="text-sm font-bold text-white">
-                          {result.profileName}
-                          {result.added.length > 0 ? ` · +${result.added.length}` : ''}
+                          {result.added.length > 0
+                            ? `${result.added.length} fecha${result.added.length === 1 ? '' : 's'} nueva${result.added.length === 1 ? '' : 's'} encontrada${result.added.length === 1 ? '' : 's'} en ${result.profileName}`
+                            : result.profileName}
                         </p>
                         {result.error ? (
                           <p className="mt-1 text-[11px] text-brand-200 md:text-xs">{result.error}</p>
@@ -195,18 +219,19 @@ export default function AdminRevisionPage() {
             )}
 
             <section className="mt-6">
-              <h2 className="text-sm font-bold md:text-base">Añadidas recientemente</h2>
+              <h2 className="text-sm font-bold md:text-base">Últimas revisiones</h2>
               {scannerEvents.length === 0 ? (
-                <p className="mt-2 text-sm text-slate-400">Todavía no hay fechas añadidas por revisión en los últimos 14 días.</p>
+                <p className="mt-2 text-sm text-slate-400">Todavía no hay fechas nuevas encontradas en los últimos 14 días.</p>
               ) : (
                 <div className="mt-2">
                   {scannerEvents.slice(0, 20).map((event) => (
                     <div key={event.id} className="flex items-start justify-between gap-3 py-2">
                       <div>
-                        <p className="text-sm font-bold">{event.title}</p>
+                        <p className="text-sm font-bold">
+                          1 fecha nueva encontrada en {resultName(event)}
+                        </p>
                         <p className="mt-1 text-[11px] text-slate-400 md:text-xs">
-                          {formatDate(event.date)}
-                          {event.venue ? ` · ${event.venue}` : ''}
+                          Revisado el {formatCreatedDay(event.created_at)} · Fecha: {formatDate(event.date)}
                         </p>
                       </div>
                       {event.source_url && (

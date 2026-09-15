@@ -90,7 +90,7 @@ export async function GET(request: Request) {
         .limit(80),
       admin.serviceClient
         .from('events')
-        .select('id, title, date, venue, source_url, created_at, event_profile_id')
+        .select('id, title, date, venue, source_url, created_at, event_profile_id, promoter_event_profiles(name)')
         .eq('imported_by_agent', true)
         .gte('created_at', fromDate.toISOString())
         .order('created_at', { ascending: false })
