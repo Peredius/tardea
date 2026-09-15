@@ -355,6 +355,35 @@ function hasExistingDate(existingEvents: ExistingEvent[], found: FoundTicketEven
   return existingEvents.some((event) => event.date === found.date)
 }
 
+function normalizedMatchText(value: string | null | undefined) {
+  return stripHtml(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
+
+function foundEventMatchesProfile(profile: EventProfile, found: FoundTicketEvent) {
+  const profileName = normalizedMatchText(profile.name || profile.venue_name || '')
+  const text = normalizedMatchText(`${found.title} ${found.sourceUrl} ${found.venue || ''}`)
+
+  if (profileName.includes('fascinado')) {
+    return text.includes('fascinado')
+  }
+
+  if (profileName.includes('ritas autocine') || profileName.includes("rita's autocine")) {
+    return (
+      !text.includes('mirador') &&
+      (text.includes('autocine') ||
+        text.includes('gilda') ||
+        text.includes('oro-viejo') ||
+        text.includes('oro viejo') ||
+        text.includes('arepa'))
+    )
+  }
+
+  return true
+}
+
 function eventPayload(profile: EventProfile, found: FoundTicketEvent, existingEvents: ExistingEvent[]) {
   const referenceEvent =
     existingEvents.find((event) => event.date && event.date >= todayMadridIso()) ||
@@ -455,7 +484,7 @@ export async function runTicketScanner(serviceClient: SupabaseClientLike): Promi
       const foundEvents: FoundTicketEvent[] = []
       for (const source of sources) {
         const extracted = await extractEventsFromUrl(source, profile)
-        foundEvents.push(...extracted)
+        foundEvents.push(...extracted.filter((event) => foundEventMatchesProfile(profile, event)))
       }
 
       const unique = new Map<string, FoundTicketEvent>()
