@@ -592,8 +592,8 @@ export function Filters() {
 
     const params = new URLSearchParams(window.location.search)
     const urlQuery = params.get('q') || params.get('search') || ''
-    const storedQuery = localStorage.getItem('searchQuery') || ''
-    setSearchQuery((urlQuery || storedQuery).trim())
+    setSearchQuery(urlQuery.trim())
+    localStorage.removeItem('searchQuery')
 
     function handleSelectedDateChanged(event: Event) {
       const eventDates = (event as CustomEvent<{ selectedDates?: string[] }>).detail?.selectedDates

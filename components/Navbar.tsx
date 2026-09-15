@@ -118,7 +118,6 @@ export function Navbar() {
     const searchTerm = query.trim()
     if (searchTerm.length < 2) return
 
-    localStorage.setItem('searchQuery', searchTerm)
     setResults([])
     trackEvent('text_search', {
       targetType: 'navbar_search',

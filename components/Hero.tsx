@@ -189,7 +189,6 @@ export function Hero() {
       },
     })
 
-    localStorage.setItem('searchQuery', searchTerm)
     window.dispatchEvent(
       new CustomEvent('tardeaSearchQueryChanged', { detail: { query: searchTerm } })
     )
