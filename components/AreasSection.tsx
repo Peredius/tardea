@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { BadgePercent, CalendarCheck, MapPinned, Music4, Sparkles, UsersRound } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { FavoriteButton } from '@/components/FavoriteButton'
+import { optimizedCoverUrl } from '@/lib/images'
 
 type AreaEvent = {
   id: string
@@ -380,10 +381,11 @@ export function AreasSection() {
                   aria-label={`Ver ${event.title}`}
                   className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105 sm:relative sm:h-44 sm:min-h-0 sm:w-full sm:shrink-0"
                   style={{
-                    backgroundImage: `url(${
+                    backgroundImage: `url(${optimizedCoverUrl(
                       event.cover ||
-                      'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
-                    })`,
+                        'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80',
+                      { width: 640, quality: 70 }
+                    )})`,
                   }}
                 />
 

@@ -26,6 +26,7 @@ import { supabase } from '@/lib/supabase'
 import { FavoriteButton } from '@/components/FavoriteButton'
 import { canonicalizeMusicList, normalizeMusicKey } from '@/lib/music'
 import { trackEvent } from '@/lib/analytics'
+import { optimizedCoverUrl } from '@/lib/images'
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''
 let googleMapsLoader: Promise<void> | null = null
@@ -262,7 +263,10 @@ const fallbackEventCover =
   'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
 
 function getSearchEventCover(event: any) {
-  return event.profileCover || event.cover || fallbackEventCover
+  return optimizedCoverUrl(event.profileCover || event.cover || fallbackEventCover, {
+    width: 640,
+    quality: 70,
+  })
 }
 
 function getEventCoordinates(event: any) {

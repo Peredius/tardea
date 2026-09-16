@@ -7,6 +7,7 @@ import { CalendarDays, MapPin } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { FavoriteButton } from '@/components/FavoriteButton'
 import { trackEvent } from '@/lib/analytics'
+import { optimizedCoverUrl } from '@/lib/images'
 
 function normalizeEventSeriesText(value: string) {
   return value
@@ -188,7 +189,10 @@ export function FeaturedEvents() {
                 }
                 className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
                 style={{
-                  backgroundImage: `url(${event.cover || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80'})`,
+                  backgroundImage: `url(${optimizedCoverUrl(event.cover || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80', {
+                    width: 720,
+                    quality: 72,
+                  })})`,
                 }}
               />
 
