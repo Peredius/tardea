@@ -16,14 +16,6 @@ export function optimizedCoverUrl(
   try {
     const url = new URL(imageUrl)
 
-    if (url.hostname.includes('supabase.co') && url.pathname.includes('/storage/v1/object/public/')) {
-      url.pathname = url.pathname.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/')
-      url.searchParams.set('width', String(width))
-      url.searchParams.set('quality', String(quality))
-      url.searchParams.set('resize', 'cover')
-      return url.toString()
-    }
-
     if (url.hostname.includes('images.unsplash.com')) {
       url.searchParams.set('auto', 'format')
       url.searchParams.set('fit', 'crop')
