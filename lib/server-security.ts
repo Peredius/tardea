@@ -33,7 +33,7 @@ export function checkRateLimit(request: Request, key: string, limit = 30, window
   return { ok: true, remaining: Math.max(limit - current.count, 0) }
 }
 
-export async function requireAdmin(request: Request) {
+export async function requireUser(request: Request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -58,6 +58,15 @@ export async function requireAdmin(request: Request) {
   const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
+
+  return { ok: true as const, serviceClient, user }
+}
+
+export async function requireAdmin(request: Request) {
+  const auth = await requireUser(request)
+  if (!auth.ok) return auth
+
+  const { serviceClient, user } = auth
   const { data: profile } = await serviceClient
     .from('profiles')
     .select('role')

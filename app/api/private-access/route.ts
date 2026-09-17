@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { checkRateLimit } from '@/lib/server-security'
 
 const ACCESS_COOKIE = 'tardea_access'
 
@@ -11,6 +12,14 @@ async function sha256(value: string) {
 }
 
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit(request, 'private-access', 5, 15 * 60_000)
+  if (!rateLimit.ok) {
+    return NextResponse.json(
+      { error: 'Demasiados intentos. Prueba de nuevo más tarde.' },
+      { status: 429 }
+    )
+  }
+
   const sitePassword = process.env.SITE_PASSWORD
 
   if (!sitePassword) {
@@ -19,7 +28,9 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => null)
 
-  if (body?.password !== sitePassword) {
+  const suppliedHash = await sha256(String(body?.password || ''))
+  const expectedHash = await sha256(sitePassword)
+  if (suppliedHash !== expectedHash) {
     return NextResponse.json({ error: 'Invalid password' }, { status: 401 })
   }
 
@@ -27,7 +38,7 @@ export async function POST(request: Request) {
 
   response.cookies.set({
     name: ACCESS_COOKIE,
-    value: await sha256(sitePassword),
+    value: expectedHash,
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',

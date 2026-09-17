@@ -51,6 +51,14 @@ function RegisterContent() {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback?type=${type === 'venue' ? 'venue' : 'user'}`,
+        data: {
+          role: type === 'venue' ? 'venue' : 'user',
+          venueName,
+          marketingConsent,
+        },
+      },
     })
 
     if (error) {
@@ -58,15 +66,14 @@ function RegisterContent() {
       return
     }
 
-    if (data.user) {
+    if (data.session?.access_token) {
       const profileResponse = await fetch('/api/profiles', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${data.session.access_token}`,
         },
         body: JSON.stringify({
-          id: data.user.id,
-          email: data.user.email,
           role: type === 'venue' ? 'venue' : 'user',
           venueName,
           marketingConsent,

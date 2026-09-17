@@ -761,9 +761,22 @@ export default function AdminEventSeriesPage() {
     let profileId = eventProfile?.id || events.find((event) => event.event_profile_id)?.event_profile_id || ''
 
     if (!profileId && mainEvent?.slug) {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        setBaseSaving(false)
+        setMessage('La sesión de administrador ha caducado. Vuelve a iniciar sesión.')
+        return
+      }
+
       const resolveResponse = await fetch('/api/event-profile/resolve', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ slug: mainEvent.slug, createIfMissing: true }),
       })
       const resolveData = await resolveResponse.json().catch(() => null)

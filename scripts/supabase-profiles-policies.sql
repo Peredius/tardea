@@ -98,14 +98,20 @@ create policy "Users can create own profile"
 on public.profiles
 for insert
 to authenticated
-with check (auth.uid() = id);
+with check (
+  auth.uid() = id
+  and role in ('user', 'venue')
+);
 
 create policy "Users can update own profile"
 on public.profiles
 for update
 to authenticated
 using (auth.uid() = id)
-with check (auth.uid() = id);
+with check (
+  auth.uid() = id
+  and role in ('user', 'venue')
+);
 
 alter table public.events enable row level security;
 
@@ -208,14 +214,9 @@ values ('events', 'events', true)
 on conflict (id) do update set public = true;
 
 drop policy if exists "Anyone can read event files" on storage.objects;
+drop policy if exists "Allow uploads 1doady1_0" on storage.objects;
 drop policy if exists "Authenticated users can upload event files" on storage.objects;
 drop policy if exists "Authenticated users can update event files" on storage.objects;
-
-create policy "Anyone can read event files"
-on storage.objects
-for select
-to anon, authenticated
-using (bucket_id = 'events');
 
 create policy "Authenticated users can upload event files"
 on storage.objects

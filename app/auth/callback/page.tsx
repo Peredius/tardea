@@ -61,23 +61,26 @@ function AuthCallbackContent() {
       if (!profile) {
         const fullName = user.user_metadata?.full_name ?? ''
         const [firstName, ...lastNameParts] = fullName.split(' ')
+        const metadata = user.user_metadata || {}
+        const requestedRole = metadata.role === 'venue' ? 'venue' : type
 
         const { data: createdProfile, error: profileError } = await supabase
           .from('profiles')
           .upsert(
             {
               id: user.id,
-              role: type,
-              first_name: type === 'user' ? firstName || null : null,
+              role: requestedRole,
+              first_name: requestedRole === 'user' ? metadata.firstName || firstName || null : null,
               last_name:
-                type === 'user' ? lastNameParts.join(' ') || null : null,
-              venue_name: null,
-              address: null,
-              postal_code: null,
-              municipality: null,
-              province: null,
-              city: null,
-              music_preferences: [],
+                requestedRole === 'user' ? metadata.lastName || lastNameParts.join(' ') || null : null,
+              birth_date: requestedRole === 'user' ? metadata.birthDate || null : null,
+              venue_name: requestedRole === 'venue' ? metadata.venueName || null : null,
+              address: requestedRole === 'user' ? metadata.address || null : null,
+              postal_code: requestedRole === 'user' ? metadata.postalCode || null : null,
+              municipality: requestedRole === 'user' ? metadata.municipality || null : null,
+              province: requestedRole === 'user' ? metadata.province || null : null,
+              city: requestedRole === 'user' ? metadata.municipality || null : null,
+              music_preferences: requestedRole === 'user' && Array.isArray(metadata.musicPrefs) ? metadata.musicPrefs : [],
               area_preferences: [],
             },
             { onConflict: 'id' }
@@ -92,7 +95,7 @@ function AuthCallbackContent() {
           return
         }
 
-        role = createdProfile?.role ?? type
+        role = createdProfile?.role ?? requestedRole
       }
 
       const needsProfile =

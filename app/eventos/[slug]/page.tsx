@@ -323,7 +323,7 @@ export default function EventDetailPage() {
     let resolvedProfileId = eventProfileId
 
     if (!resolvedProfileId) {
-      const resolution = await resolveEventProfileFromServer(event.slug, true)
+      const resolution = await resolveEventProfileFromServer(event.slug, false)
       resolvedProfileId = resolution.eventProfileId
       if (resolvedProfileId) setEventProfileId(resolvedProfileId)
       if (resolution.seriesSlug) setEventSeriesSlug(resolution.seriesSlug)

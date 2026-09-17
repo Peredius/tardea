@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { checkRateLimit, requireAdmin } from '@/lib/server-security'
 
 function normalizeText(value: string) {
   return value
@@ -150,12 +151,22 @@ function getMatchScore(event: any, profile: any) {
 }
 
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit(request, 'event-profile-resolve', 30, 60_000)
+  if (!rateLimit.ok) {
+    return NextResponse.json({ error: 'Demasiadas solicitudes. Espera un minuto.' }, { status: 429 })
+  }
+
   const payload = (await request.json().catch(() => null)) as
     | { slug?: string; createIfMissing?: boolean }
     | null
 
   if (!payload?.slug) {
     return NextResponse.json({ error: 'Falta el evento.' }, { status: 400 })
+  }
+
+  const admin = payload.createIfMissing ? await requireAdmin(request) : null
+  if (payload.createIfMissing && !admin?.ok) {
+    return NextResponse.json({ error: admin?.error || 'No tienes permisos de admin' }, { status: 401 })
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -175,11 +186,16 @@ export async function POST(request: Request) {
     },
   })
 
-  const { data: event, error: eventError } = await supabaseAdmin
+  let eventQuery = supabaseAdmin
     .from('events')
     .select('id, slug, title, venue, area, address, maps_url, type, music, audience, price_from, cover, description, source_url, website_url, instagram_url, tiktok_url, user_id, event_profile_id')
     .eq('slug', payload.slug)
-    .maybeSingle()
+
+  if (!admin?.ok) {
+    eventQuery = eventQuery.eq('published', true).eq('status', 'approved')
+  }
+
+  const { data: event, error: eventError } = await eventQuery.maybeSingle()
 
   if (eventError || !event) {
     return NextResponse.json(
@@ -302,7 +318,7 @@ export async function POST(request: Request) {
     }
   }
 
-  if (eventProfileId && !event.event_profile_id) {
+  if (admin?.ok && eventProfileId && !event.event_profile_id) {
     await supabaseAdmin
       .from('events')
       .update({ event_profile_id: eventProfileId })

@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { isAllowedAuthEmail } from '@/lib/auth-lockdown'
+import { checkRateLimit, requireUser } from '@/lib/server-security'
 
 type ProfilePayload = {
-  id?: string
-  email?: string
   role?: string
   venueName?: string
   firstName?: string
@@ -18,60 +16,50 @@ type ProfilePayload = {
 }
 
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit(request, 'profile-write', 10, 60_000)
+  if (!rateLimit.ok) {
+    return NextResponse.json({ error: 'Demasiados intentos. Espera un minuto.' }, { status: 429 })
+  }
+
+  const auth = await requireUser(request)
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: 401 })
+  }
+
   const payload = (await request.json().catch(() => null)) as ProfilePayload | null
 
-  if (!payload?.id || !payload?.email) {
+  if (!payload) {
     return NextResponse.json(
       { error: 'Faltan datos de la cuenta.' },
       { status: 400 }
     )
   }
 
-  if (!isAllowedAuthEmail(payload.email)) {
+  if (!isAllowedAuthEmail(auth.user.email)) {
     return NextResponse.json(
       { error: 'Próximamente abriremos TARDEA. Ahora mismo estamos en pruebas privadas.' },
       { status: 403 }
     )
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const { data: existingProfile } = await auth.serviceClient
+    .from('profiles')
+    .select('role')
+    .eq('id', auth.user.id)
+    .maybeSingle()
 
-  if (!supabaseUrl || !serviceRoleKey) {
-    return NextResponse.json(
-      { error: 'Falta configurar la clave segura de Supabase.' },
-      { status: 500 }
-    )
-  }
-
-  const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  })
-
-  const { data: authUser, error: authError } =
-    await supabaseAdmin.auth.admin.getUserById(payload.id)
-
-  if (authError || !authUser.user || authUser.user.email !== payload.email) {
-    return NextResponse.json(
-      { error: 'No se pudo validar la cuenta creada.' },
-      { status: 403 }
-    )
-  }
-
-  const role = payload.role === 'venue' ? 'venue' : 'user'
+  const requestedRole = payload.role === 'venue' ? 'venue' : 'user'
+  const role = existingProfile?.role || requestedRole
   const profile: Record<string, unknown> =
     role === 'venue'
       ? {
-          id: payload.id,
+          id: auth.user.id,
           role,
           venue_name: payload.venueName || null,
           area_preferences: [],
         }
       : {
-          id: payload.id,
+          id: auth.user.id,
           role,
           first_name: payload.firstName || null,
           last_name: payload.lastName || null,
@@ -87,7 +75,7 @@ export async function POST(request: Request) {
           area_preferences: [],
         }
 
-  const { error } = await supabaseAdmin
+  const { error } = await auth.serviceClient
     .from('profiles')
     .upsert(profile, { onConflict: 'id' })
 

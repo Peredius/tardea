@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { checkRateLimit } from '@/lib/server-security'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -297,6 +298,11 @@ async function runProfileSearch(supabaseClient: SupabaseClient, query: string) {
 }
 
 export async function GET(request: Request) {
+  const rateLimit = checkRateLimit(request, 'profile-search', 60, 60_000)
+  if (!rateLimit.ok) {
+    return NextResponse.json({ error: 'Demasiadas búsquedas. Espera un minuto.' }, { status: 429 })
+  }
+
   const { searchParams } = new URL(request.url)
   const query = searchParams.get('q')?.trim() || ''
 

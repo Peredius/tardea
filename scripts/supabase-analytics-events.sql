@@ -32,7 +32,8 @@ create policy "analytics_events_no_public_write"
   for insert
   with check (false);
 
-create or replace view public.analytics_daily_flow as
+create or replace view public.analytics_daily_flow
+with (security_invoker = true) as
 select
   created_at::date as day,
   event_name,
@@ -42,7 +43,8 @@ from public.analytics_events
 group by created_at::date, event_name
 order by day desc, event_name asc;
 
-create or replace view public.analytics_daily_funnel as
+create or replace view public.analytics_daily_funnel
+with (security_invoker = true) as
 select
   created_at::date as day,
   count(*) filter (where event_name = 'calendar_search') as calendar_searches,
@@ -55,3 +57,9 @@ select
 from public.analytics_events
 group by created_at::date
 order by day desc;
+
+revoke all on public.analytics_daily_flow from anon, authenticated;
+revoke all on public.analytics_daily_funnel from anon, authenticated;
+
+grant select on public.analytics_daily_flow to service_role;
+grant select on public.analytics_daily_funnel to service_role;

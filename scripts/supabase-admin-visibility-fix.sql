@@ -4,7 +4,7 @@
 create or replace function public.is_tardea_admin()
 returns boolean
 language sql
-security definer
+security invoker
 set search_path = public
 as $$
   select exists (
@@ -15,6 +15,7 @@ as $$
   );
 $$;
 
+revoke execute on function public.is_tardea_admin() from public, anon;
 grant execute on function public.is_tardea_admin() to authenticated;
 
 grant select, insert, update, delete

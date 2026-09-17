@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { checkRateLimit } from '@/lib/server-security'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -31,6 +32,16 @@ function getSupabaseAdmin() {
 }
 
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit(request, 'analytics-events', 120, 60_000)
+  if (!rateLimit.ok) {
+    return NextResponse.json({ error: 'Demasiadas solicitudes.' }, { status: 429 })
+  }
+
+  const contentLength = Number(request.headers.get('content-length') || 0)
+  if (contentLength > 32_000) {
+    return NextResponse.json({ error: 'Solicitud demasiado grande.' }, { status: 413 })
+  }
+
   const supabase = getSupabaseAdmin()
 
   if (!supabase) {
@@ -52,6 +63,10 @@ export async function POST(request: Request) {
     payload?.metadata && typeof payload.metadata === 'object' && !Array.isArray(payload.metadata)
       ? payload.metadata
       : {}
+
+  if (JSON.stringify(metadata).length > 4_000) {
+    return NextResponse.json({ error: 'Datos de analítica demasiado grandes.' }, { status: 413 })
+  }
 
   const { error } = await supabase.from('analytics_events').insert({
     event_name: eventName,

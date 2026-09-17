@@ -431,6 +431,22 @@ function LoginContent() {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback?type=${accountType}`,
+        data: {
+          role: accountType,
+          venueName,
+          firstName,
+          lastName,
+          birthDate,
+          address,
+          postalCode,
+          municipality,
+          province,
+          musicPrefs,
+          marketingConsent,
+        },
+      },
     })
 
     if (error) {
@@ -438,15 +454,14 @@ function LoginContent() {
       return
     }
 
-    if (data.user) {
+    if (data.session?.access_token) {
       const profileResponse = await fetch('/api/profiles', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${data.session.access_token}`,
         },
         body: JSON.stringify({
-          id: data.user.id,
-          email: data.user.email,
           role: accountType,
           venueName,
           firstName,
