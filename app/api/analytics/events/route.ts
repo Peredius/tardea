@@ -17,6 +17,13 @@ const allowedEventNames = new Set([
   'favorite_button_toggle',
 ])
 
+const excludedSearchEmails = new Set([
+  'davidperedagarate@gmail.com',
+  'dapegasa@gmail.com',
+])
+
+const searchEventNames = new Set(['calendar_search', 'text_search'])
+
 function getSupabaseAdmin() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -53,6 +60,20 @@ export async function POST(request: Request) {
 
   if (!allowedEventNames.has(eventName)) {
     return NextResponse.json({ error: 'Evento de analitica no permitido.' }, { status: 400 })
+  }
+
+  const authorization = request.headers.get('authorization') || ''
+  const accessToken = authorization.startsWith('Bearer ')
+    ? authorization.slice('Bearer '.length).trim()
+    : ''
+
+  if (accessToken && searchEventNames.has(eventName)) {
+    const { data } = await supabase.auth.getUser(accessToken)
+    const email = data.user?.email?.trim().toLowerCase()
+
+    if (email && excludedSearchEmails.has(email)) {
+      return NextResponse.json({ ok: true, ignored: true })
+    }
   }
 
   const path = String(payload?.path || '/').slice(0, 300)

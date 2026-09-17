@@ -1,5 +1,7 @@
 'use client'
 
+import { supabase } from '@/lib/supabase'
+
 const SESSION_KEY = 'tardea_analytics_session_id'
 
 export type AnalyticsEventName =
@@ -34,7 +36,11 @@ function getSessionId() {
   return nextSessionId
 }
 
-export function trackEvent(eventName: AnalyticsEventName, payload: TrackPayload = {}) {
+async function sendEvent(eventName: AnalyticsEventName, payload: TrackPayload) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
   if (typeof window === 'undefined') return
 
   const body = JSON.stringify({
@@ -50,10 +56,21 @@ export function trackEvent(eventName: AnalyticsEventName, payload: TrackPayload 
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...(session?.access_token
+        ? { Authorization: `Bearer ${session.access_token}` }
+        : {}),
     },
     body,
     keepalive: true,
   }).catch(() => {
+    // Analytics must never interrupt the user flow.
+  })
+}
+
+export function trackEvent(eventName: AnalyticsEventName, payload: TrackPayload = {}) {
+  if (typeof window === 'undefined') return
+
+  void sendEvent(eventName, payload).catch(() => {
     // Analytics must never interrupt the user flow.
   })
 }
