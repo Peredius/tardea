@@ -534,7 +534,7 @@ export function Filters() {
       const today = todayMadridIso()
       const { data, error } = await supabase
         .from('events')
-        .select('id, slug, title, venue, area, address, date, start_time, end_time, type, music, audience, price_from, cover, maps_url, latitude, longitude, event_profile_id, featured, description, perks')
+        .select('id, slug, title, venue, area, address, date, start_time, end_time, type, music, audience, price_from, cover, maps_url, event_profile_id, featured, description, perks')
         .eq('published', true)
         .eq('status', 'approved')
         .gte('date', today)
@@ -578,8 +578,6 @@ export function Filters() {
         cover: event.cover,
         profileCover: event.event_profile_id ? profileCoverById.get(event.event_profile_id) || '' : '',
         mapsUrl: event.maps_url,
-        latitude: event.latitude,
-        longitude: event.longitude,
         eventProfileId: event.event_profile_id,
         featured: event.featured,
         description: event.description,
