@@ -65,6 +65,23 @@ function formatCreatedDay(value: string) {
   }).format(new Date(value))
 }
 
+function isTodayInMadrid(value: string) {
+  const madridDay = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Madrid',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(value))
+  const todayInMadrid = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Madrid',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date())
+
+  return madridDay === todayInMadrid
+}
+
 function resultName(event: ScannerEvent) {
   return event.promoter_event_profiles?.name || event.venue || 'una ficha'
 }
@@ -106,7 +123,7 @@ export default function AdminRevisionPage() {
       return
     }
 
-    setScannerEvents(payload?.scannerEvents || [])
+    setScannerEvents((payload?.scannerEvents || []).filter((event: ScannerEvent) => isTodayInMadrid(event.created_at)))
     setLoading(false)
   }
 
@@ -258,7 +275,7 @@ export default function AdminRevisionPage() {
             <section className="mt-6">
               <h2 className="text-sm font-bold md:text-base">Propuestas encontradas</h2>
               {scannerEvents.length === 0 ? (
-                <p className="mt-2 text-sm text-slate-400">Todavía no hay fechas nuevas encontradas en los últimos 14 días.</p>
+                <p className="mt-2 text-sm text-slate-400">Todavía no hay fechas nuevas encontradas hoy.</p>
               ) : (
                 <div className="mt-2">
                   {scannerEvents.slice(0, 40).map((event) => (
