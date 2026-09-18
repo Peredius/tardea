@@ -268,8 +268,19 @@ function fallbackEventFromUrl(url: string, profile: EventProfile): FoundTicketEv
   const date = inferSpanishDate(decoded)
   if (!isUpcomingDate(date)) return null
 
+  let title = profile.name || 'Tardeo'
+  try {
+    const pathName = new URL(decoded).pathname.split('/').filter(Boolean).pop() || ''
+    title = pathName
+      .replace(/-20\d{2}-\d{2}-\d{2}.*$/i, '')
+      .replace(/[-_]+/g, ' ')
+      .trim() || title
+  } catch {
+    // Keep the profile name only when the URL cannot be parsed.
+  }
+
   return {
-    title: profile.name || 'Tardeo',
+    title,
     date,
     startTime: '18:00',
     endTime: '23:00',
@@ -306,7 +317,7 @@ async function extractEventsFromUrl(url: string, profile: EventProfile): Promise
       const date = inferSpanishDate(`${match[1]} 2026`)
       if (!isUpcomingDate(date)) return null
       return {
-        title: profile.name || stripHtml(match[2]),
+        title: stripHtml(match[2]),
         date,
         startTime: normalizeTime(match[0], '20:00'),
         endTime: /mirador/i.test(match[0]) ? '00:00' : '23:00',
@@ -381,6 +392,10 @@ function foundEventMatchesProfile(profile: EventProfile, found: FoundTicketEvent
     )
   }
 
+  if (profileName.includes('ritas mirador') || profileName.includes("rita's mirador")) {
+    return text.includes('mirador')
+  }
+
   return true
 }
 
@@ -422,10 +437,10 @@ function eventPayload(profile: EventProfile, found: FoundTicketEvent, existingEv
     source_url: found.sourceUrl,
     source_name: new URL(found.sourceUrl).hostname.replace(/^www\./, ''),
     website_url: found.sourceUrl,
-    status: 'approved',
-    published: true,
-    profile_reviewed: true,
-    needs_review: false,
+    status: 'pending',
+    published: false,
+    profile_reviewed: false,
+    needs_review: true,
     imported_by_agent: true,
     external_id: `ticket-scanner:${profile.id}:${found.date}`,
   }
