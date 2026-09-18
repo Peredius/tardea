@@ -294,10 +294,11 @@ export default function AdminRevisionPage() {
                           href={event.source_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="mt-0.5 shrink-0 text-brand-400 hover:text-brand-300"
+                          className="mt-0.5 inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 text-xs font-bold text-brand-400 hover:border-brand-500/50 hover:text-brand-300"
                           aria-label="Abrir fuente"
                         >
                           <ExternalLink className="h-4 w-4" />
+                          Abrir tiquetera
                         </a>
                       )}
                       </div>

@@ -312,20 +312,22 @@ async function extractEventsFromUrl(url: string, profile: EventProfile): Promise
     .map((link) => fallbackEventFromUrl(link, profile))
     .filter(Boolean) as FoundTicketEvent[]
 
-  const calendarEvents = [...text.matchAll(/Eventos para\s+(\d{1,2}\s+\w+)[\s\S]{0,240}?(RITA(?:'|&#8217;|’)?S MIRADOR|TARDEO|FASCINADO|INDEPENDANCE|RITA LA BAILAORA)[\s\S]{0,120}?(?:Riyadh|Rubicon|Madrid|Bailaora)/gi)]
-    .map((match) => {
-      const date = inferSpanishDate(`${match[1]} 2026`)
-      if (!isUpcomingDate(date)) return null
-      return {
-        title: stripHtml(match[2]),
-        date,
-        startTime: normalizeTime(match[0], '20:00'),
-        endTime: /mirador/i.test(match[0]) ? '00:00' : '23:00',
-        sourceUrl: finalUrl,
-        cover: metaContent(html, 'og:image') || undefined,
-      }
+  const calendarEvents = [...text.matchAll(/Eventos para\s+(\d{1,2}\s+\w+)([\s\S]*?)(?=Eventos para\s+\d{1,2}\s+\w+|$)/gi)]
+    .flatMap((dayMatch) => {
+      const date = inferSpanishDate(`${dayMatch[1]} 2026`)
+      const dayContent = dayMatch[2]
+      if (!isUpcomingDate(date) || /Sin eventos/i.test(dayContent)) return []
+
+      return [...dayContent.matchAll(/(RITA(?:'|&#8217;|’)?S MIRADOR|TARDEO|FASCINADO|INDEPENDANCE|RITA LA BAILAORA)/gi)]
+        .map((eventMatch) => ({
+          title: stripHtml(eventMatch[1]),
+          date,
+          startTime: normalizeTime(dayContent, '20:00'),
+          endTime: /mirador/i.test(eventMatch[1]) ? '00:00' : '23:00',
+          sourceUrl: finalUrl,
+          cover: metaContent(html, 'og:image') || undefined,
+        }))
     })
-    .filter(Boolean) as FoundTicketEvent[]
 
   if (jsonEvents.length || linkEvents.length || calendarEvents.length) {
     const unique = new Map<string, FoundTicketEvent>()
