@@ -27,6 +27,7 @@ import { FavoriteButton } from '@/components/FavoriteButton'
 import { canonicalizeMusicList, normalizeMusicKey } from '@/lib/music'
 import { trackEvent } from '@/lib/analytics'
 import { optimizedCoverUrl } from '@/lib/images'
+import { OptimizedCover } from '@/components/OptimizedCover'
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''
 let googleMapsLoader: Promise<void> | null = null
@@ -533,7 +534,7 @@ export function Filters() {
       const today = todayMadridIso()
       const { data, error } = await supabase
         .from('events')
-        .select('*')
+        .select('id, slug, title, venue, area, address, date, start_time, end_time, type, music, audience, price_from, cover, maps_url, latitude, longitude, event_profile_id, featured, description, perks')
         .eq('published', true)
         .eq('status', 'approved')
         .gte('date', today)
@@ -1212,11 +1213,15 @@ export function Filters() {
                       },
                     })
                   }
-                  className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105 sm:relative sm:h-44 sm:min-h-0 sm:w-full sm:shrink-0"
-                  style={{
-                    backgroundImage: `url(${getSearchEventCover(event)})`,
-                  }}
-                />
+                  className="absolute inset-0 overflow-hidden bg-slate-800 sm:relative sm:h-44 sm:min-h-0 sm:w-full sm:shrink-0"
+                >
+                  <OptimizedCover
+                    src={getSearchEventCover(event)}
+                    alt={`Cartel de ${event.title}`}
+                    sizes="(max-width: 639px) 78vw, (max-width: 1279px) 50vw, 25vw"
+                    className="group-hover:scale-105"
+                  />
+                </Link>
 
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent sm:hidden" />
                 <FavoriteButton

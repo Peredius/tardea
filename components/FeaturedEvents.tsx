@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase'
 import { FavoriteButton } from '@/components/FavoriteButton'
 import { trackEvent } from '@/lib/analytics'
 import { optimizedCoverUrl } from '@/lib/images'
+import { OptimizedCover } from '@/components/OptimizedCover'
 
 function normalizeEventSeriesText(value: string) {
   return value
@@ -44,7 +45,7 @@ export function FeaturedEvents() {
 
       const { data, error } = await supabase
         .from('events')
-        .select('*')
+        .select('id, slug, title, venue, date, start_time, type, cover, event_profile_id, featured')
         .eq('published', true)
         .eq('status', 'approved')
         .gte('date', today)
@@ -162,7 +163,7 @@ export function FeaturedEvents() {
         onScroll={updateActiveEventFromScroll}
         className="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-5 pb-6 pt-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden"
       >
-        {featured.map((event) => (
+        {featured.map((event, index) => (
           <article
             key={event.slug}
             data-event-card
@@ -187,14 +188,19 @@ export function FeaturedEvents() {
                     },
                   })
                 }
-                className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
-                style={{
-                  backgroundImage: `url(${optimizedCoverUrl(event.cover || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80', {
+                className="absolute inset-0 overflow-hidden bg-slate-800"
+              >
+                <OptimizedCover
+                  src={optimizedCoverUrl(event.cover || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80', {
                     width: 720,
                     quality: 72,
-                  })})`,
-                }}
-              />
+                  })}
+                  alt={`Cartel de ${event.title}`}
+                  sizes="(max-width: 639px) 78vw, (max-width: 1279px) 50vw, 25vw"
+                  priority={index === 0}
+                  className="group-hover:scale-105"
+                />
+              </Link>
 
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent" />
               <FavoriteButton

@@ -18,7 +18,8 @@ const contentSecurityPolicy = [
 const nextConfig = {
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'images.unsplash.com' }
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'vligprkqsuscppgnawon.supabase.co' }
     ]
   },
   async headers() {
