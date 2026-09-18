@@ -125,14 +125,30 @@ export function Hero() {
   function selectDate(day: number) {
     const value = formatDate(currentYear, currentMonth, day)
 
-    setSelectedDates((current) =>
-      current.includes(value)
+    setSelectedDates((current) => {
+      const nextDates = current.includes(value)
         ? current.filter((date) => date !== value)
         : [...current, value].sort()
-    )
+
+      localStorage.setItem('selectedDates', JSON.stringify(nextDates))
+
+      if (nextDates.length > 0) {
+        localStorage.setItem('selectedDate', nextDates[0])
+      } else {
+        localStorage.removeItem('selectedDate')
+      }
+
+      window.dispatchEvent(
+        new CustomEvent('selectedDateChanged', {
+          detail: { selectedDates: nextDates },
+        })
+      )
+
+      return nextDates
+    })
   }
 
-  function searchSelectedDates() {
+  function showSelectedDates() {
     if (selectedDates.length === 0) return
 
     trackEvent('calendar_search', {
@@ -143,24 +159,7 @@ export function Hero() {
       },
     })
 
-    localStorage.setItem('selectedDates', JSON.stringify(selectedDates))
-    localStorage.setItem('selectedDate', selectedDates[0])
-    window.dispatchEvent(
-      new CustomEvent('selectedDateChanged', { detail: { selectedDates } })
-    )
-
-    const eventos = document.getElementById('eventos')
-
-    if (eventos) {
-      const headerOffset = window.innerWidth < 768 ? 88 : 76
-      const top =
-        eventos.getBoundingClientRect().top + window.scrollY - headerOffset
-
-      window.scrollTo({
-        top: Math.max(top, 0),
-        behavior: 'smooth',
-      })
-    }
+    scrollToEvents()
   }
 
   function scrollToEvents() {
@@ -322,11 +321,11 @@ export function Hero() {
 
               <button
                 type="button"
-                onClick={searchSelectedDates}
+                onClick={showSelectedDates}
                 disabled={selectedDates.length === 0}
                 className="rounded-full bg-brand-500 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-slate-500 sm:px-4 sm:py-2 sm:text-xs"
               >
-                Buscar
+                Ver resultados
               </button>
             </div>
 
