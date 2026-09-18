@@ -325,7 +325,7 @@ export function Hero() {
                 disabled={selectedDates.length === 0}
                 className="rounded-full bg-brand-500 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-slate-500 sm:px-4 sm:py-2 sm:text-xs"
               >
-                Ver resultados
+                Buscar
               </button>
             </div>
 
