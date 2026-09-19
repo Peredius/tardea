@@ -20,6 +20,9 @@ const allowedEventNames = new Set([
 const excludedSearchEmails = new Set([
   'davidperedagarate@gmail.com',
   'dapegasa@gmail.com',
+  'peredius1@gmail.com',
+  'djdavidpereda@gmail.com',
+  'koderoomescape@gmail.com',
 ])
 
 const searchEventNames = new Set(['calendar_search', 'text_search'])

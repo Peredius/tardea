@@ -115,7 +115,7 @@ export default function AdminAnalyticsPage() {
 
   const metricItems = [
     { key: 'calendar_searches', label: 'Calendario', icon: CalendarDays },
-    { key: 'calendar_search_users', label: 'Usuarios', icon: MousePointerClick },
+    { key: 'calendar_search_users', label: 'Visitantes únicos', icon: MousePointerClick },
     { key: 'text_searches', label: 'Texto', icon: Search },
     { key: 'event_opens', label: 'Abren', icon: BarChart3 },
     { key: 'whatsapp_clicks', label: 'WhatsApp', icon: Share2 },

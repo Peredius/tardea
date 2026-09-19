@@ -4,6 +4,14 @@ import { requireAdmin } from '@/lib/server-security'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+const excludedOwnerEmails = new Set([
+  'davidperedagarate@gmail.com',
+  'dapegasa@gmail.com',
+  'peredius1@gmail.com',
+  'djdavidpereda@gmail.com',
+  'koderoomescape@gmail.com',
+])
+
 function csvCell(value: unknown) {
   const text = Array.isArray(value) ? value.join(', ') : String(value ?? '')
   return `"${text.replace(/"/g, '""')}"`
@@ -46,6 +54,7 @@ export async function GET(request: Request) {
 
   const profileById = new Map((profiles || []).map((profile: any) => [profile.id, profile]))
   const users = authUsers
+    .filter((user) => !excludedOwnerEmails.has((user.email || '').trim().toLowerCase()))
     .map((user) => {
       const profile: any = profileById.get(user.id) || {}
       const metadata = user.user_metadata || {}

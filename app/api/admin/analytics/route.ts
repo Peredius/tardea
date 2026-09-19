@@ -54,6 +54,30 @@ function rowsFrom(rows: FunnelRow[], days: number) {
   return rows.filter((row) => row.day >= fromDay)
 }
 
+type CalendarSession = {
+  session_id: string | null
+  created_at: string
+}
+
+function uniqueCalendarSessions(rows: CalendarSession[], days?: number) {
+  const filtered = days
+    ? rows.filter((row) => row.created_at.slice(0, 10) >= dateKeyDaysAgo(days - 1))
+    : rows
+
+  return new Set(filtered.map((row) => row.session_id).filter(Boolean)).size
+}
+
+function summaryWithUniqueSessions(
+  rows: FunnelRow[],
+  sessions: CalendarSession[],
+  days?: number
+) {
+  return {
+    ...sumFunnel(rows),
+    calendar_search_users: uniqueCalendarSessions(sessions, days),
+  }
+}
+
 export async function GET(request: Request) {
   const admin = await requireAdmin(request)
   if (!admin.ok) {
@@ -71,6 +95,7 @@ export async function GET(request: Request) {
     { data: allFunnel, error: allFunnelError },
     { data: events, error: eventsError },
     { data: scannerEvents, error: scannerEventsError },
+    { data: calendarSessions, error: calendarSessionsError },
   ] =
     await Promise.all([
       admin.serviceClient
@@ -95,9 +120,13 @@ export async function GET(request: Request) {
         .gte('created_at', fromDate.toISOString())
         .order('created_at', { ascending: false })
         .limit(40),
+      admin.serviceClient
+        .from('analytics_events')
+        .select('session_id, created_at')
+        .eq('event_name', 'calendar_search'),
     ])
 
-  if (funnelError || allFunnelError || eventsError || scannerEventsError) {
+  if (funnelError || allFunnelError || eventsError || scannerEventsError || calendarSessionsError) {
     return NextResponse.json(
       {
         error:
@@ -105,6 +134,7 @@ export async function GET(request: Request) {
           allFunnelError?.message ||
           eventsError?.message ||
           scannerEventsError?.message ||
+          calendarSessionsError?.message ||
           'No se pudo cargar la analitica.',
       },
       { status: 500 }
@@ -112,14 +142,15 @@ export async function GET(request: Request) {
   }
 
   const allRows = (allFunnel || []) as FunnelRow[]
+  const sessionRows = (calendarSessions || []) as CalendarSession[]
 
   return NextResponse.json({
     funnel: funnel || [],
     summaries: {
-      lastDay: sumFunnel(rowsFrom(allRows, 1)),
-      lastWeek: sumFunnel(rowsFrom(allRows, 7)),
-      lastMonth: sumFunnel(rowsFrom(allRows, 30)),
-      total: sumFunnel(allRows),
+      lastDay: summaryWithUniqueSessions(rowsFrom(allRows, 1), sessionRows, 1),
+      lastWeek: summaryWithUniqueSessions(rowsFrom(allRows, 7), sessionRows, 7),
+      lastMonth: summaryWithUniqueSessions(rowsFrom(allRows, 30), sessionRows, 30),
+      total: summaryWithUniqueSessions(allRows, sessionRows),
     },
     recentEvents: events || [],
     scannerEvents: scannerEvents || [],

@@ -58,6 +58,26 @@ function rowsFrom(rows: FunnelRow[], days: number) {
   return rows.filter((row) => row.day >= fromDay)
 }
 
+type CalendarSession = {
+  session_id: string | null
+  created_at: string
+}
+
+function withUniqueCalendarSessions(
+  totals: ReturnType<typeof sumFunnel>,
+  sessions: CalendarSession[],
+  days?: number
+) {
+  const filtered = days
+    ? sessions.filter((row) => row.created_at.slice(0, 10) >= dateKeyDaysAgo(days - 1))
+    : sessions
+
+  return {
+    ...totals,
+    calendar_search_users: new Set(filtered.map((row) => row.session_id).filter(Boolean)).size,
+  }
+}
+
 function metricRow(label: string, value: number) {
   return `
     <tr>
@@ -73,7 +93,7 @@ function summaryCard(title: string, totals: ReturnType<typeof sumFunnel>) {
       <h2 style="margin:0 0 8px;color:#ffffff;font-size:18px;">${title}</h2>
       <table style="width:100%;border-collapse:collapse;">
         ${metricRow('Búsquedas en calendario', totals.calendar_searches)}
-        ${metricRow('Usuarios únicos calendario', totals.calendar_search_users)}
+        ${metricRow('Visitantes únicos calendario', totals.calendar_search_users)}
         ${metricRow('Búsquedas por texto', totals.text_searches)}
         ${metricRow('Eventos abiertos', totals.event_opens)}
         ${metricRow('Clics en WhatsApp', totals.whatsapp_clicks)}
@@ -84,11 +104,11 @@ function summaryCard(title: string, totals: ReturnType<typeof sumFunnel>) {
   `
 }
 
-function buildEmailHtml(rows: FunnelRow[]) {
-  const lastDay = sumFunnel(rowsFrom(rows, 1))
-  const lastWeek = sumFunnel(rowsFrom(rows, 7))
-  const lastMonth = sumFunnel(rowsFrom(rows, 30))
-  const totals = sumFunnel(rows)
+function buildEmailHtml(rows: FunnelRow[], sessions: CalendarSession[]) {
+  const lastDay = withUniqueCalendarSessions(sumFunnel(rowsFrom(rows, 1)), sessions, 1)
+  const lastWeek = withUniqueCalendarSessions(sumFunnel(rowsFrom(rows, 7)), sessions, 7)
+  const lastMonth = withUniqueCalendarSessions(sumFunnel(rowsFrom(rows, 30)), sessions, 30)
+  const totals = withUniqueCalendarSessions(sumFunnel(rows), sessions)
   const generatedAt = new Date().toLocaleString('es-ES', {
     dateStyle: 'medium',
     timeStyle: 'short',
@@ -150,16 +170,26 @@ export async function POST(request: Request) {
     )
   }
 
-  const { data, error } = await admin.serviceClient
-    .from('analytics_daily_funnel')
-    .select('*')
-    .order('day', { ascending: false })
+  const [
+    { data, error },
+    { data: sessionData, error: sessionError },
+  ] = await Promise.all([
+    admin.serviceClient
+      .from('analytics_daily_funnel')
+      .select('*')
+      .order('day', { ascending: false }),
+    admin.serviceClient
+      .from('analytics_events')
+      .select('session_id, created_at')
+      .eq('event_name', 'calendar_search'),
+  ])
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error || sessionError) {
+    return NextResponse.json({ error: error?.message || sessionError?.message }, { status: 500 })
   }
 
   const rows = (data || []) as FunnelRow[]
+  const sessions = (sessionData || []) as CalendarSession[]
 
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -171,7 +201,7 @@ export async function POST(request: Request) {
       from: fromEmail,
       to: [toEmail],
       subject: 'Resumen de analítica TARDEA',
-      html: buildEmailHtml(rows),
+      html: buildEmailHtml(rows, sessions),
     }),
   })
 
