@@ -2330,6 +2330,12 @@ export default function AdminPage() {
         >
           Revisión
         </Link>
+        <Link
+          href="/admin/usuarios"
+          className="rounded-full px-4 py-2 text-sm font-bold text-slate-400 transition hover:text-white"
+        >
+          Usuarios
+        </Link>
       </div>
 
       {message && <p className="mb-5 text-sm text-brand-500">{message}</p>}
