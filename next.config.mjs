@@ -22,6 +22,21 @@ const nextConfig = {
       { protocol: 'https', hostname: 'vligprkqsuscppgnawon.supabase.co' }
     ]
   },
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'tardea.com',
+          },
+        ],
+        destination: 'https://www.tardea.com/:path*',
+        permanent: true,
+      },
+    ]
+  },
   async headers() {
     return [
       {
