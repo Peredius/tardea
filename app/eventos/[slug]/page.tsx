@@ -672,7 +672,7 @@ export default function EventDetailPage() {
                     },
                   })
                 }
-                className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-[#14213d] px-5 py-3 font-semibold text-white transition hover:bg-[#1d315c]"
+                className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-[#004DFF] px-5 py-3 font-semibold text-white transition hover:bg-[#003ED1]"
               >
                 Comprar entradas
               </a>
