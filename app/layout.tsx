@@ -7,9 +7,35 @@ import { PwaRegistrar } from '@/components/PwaRegistrar'
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.tardea.com'),
   applicationName: 'TARDEA.',
-  title: 'TARDEA | Buscador de tardeos en Madrid',
+  title: {
+    default: 'Tardeos en Madrid: eventos y planes de tarde | TARDEA',
+    template: '%s | TARDEA',
+  },
   description:
-    'Descubre tardeos, rooftops, brunches y afterworks en Madrid con filtros por fecha, musica, zona, edad y precio.',
+    'Encuentra los mejores tardeos en Madrid: fiestas, rooftops, brunches y afterworks por fecha, música, zona, edad y precio.',
+  alternates: {
+    canonical: '/',
+  },
+  keywords: [
+    'tardeos en Madrid',
+    'tardeo Madrid',
+    'eventos de tarde Madrid',
+    'fiestas de tarde Madrid',
+    'planes de tarde Madrid',
+    'rooftops Madrid',
+    'afterwork Madrid',
+  ],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+  },
   manifest: '/manifest.webmanifest',
   icons: {
     icon: '/tardea-icon.svg',
@@ -25,10 +51,11 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: 'TARDEA | Planes de tarde en Madrid',
+    title: 'Tardeos en Madrid: eventos y planes de tarde | TARDEA',
     description:
       'Encuentra tardeos, rooftops, brunches y afterworks por fecha, musica, zona, edad y precio.',
     siteName: 'TARDEA',
+    url: 'https://www.tardea.com',
     type: 'website',
     locale: 'es_ES',
     images: ['/logotardeaweb.png'],
