@@ -587,23 +587,6 @@ export default function EventDetailPage() {
                         Ver en Google Maps →
                       </a>
                     )}
-                    {instagramUrl && (
-                      <a
-                        href={instagramUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() =>
-                          trackEvent('event_detail_instagram', {
-                            targetType: 'event',
-                            targetId: event.id || slug,
-                            metadata: { slug },
-                          })
-                        }
-                        className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-500 hover:underline"
-                      >
-                        <Instagram className="h-4 w-4" /> Instagram →
-                      </a>
-                    )}
                   </div>
                 </div>
               </div>
@@ -716,6 +699,25 @@ export default function EventDetailPage() {
               <WhatsAppIcon className="h-5 w-5" />
               Compartir por WhatsApp
             </a>
+
+            {instagramUrl && (
+              <a
+                href={instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() =>
+                  trackEvent('event_detail_instagram', {
+                    targetType: 'event',
+                    targetId: event.id || slug,
+                    metadata: { slug },
+                  })
+                }
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#E1306C] px-5 py-3 font-semibold text-white transition hover:bg-[#c82760]"
+              >
+                <Instagram className="h-5 w-5" />
+                Ver Instagram
+              </a>
+            )}
 
             <button
               onClick={toggleEventFavorite}
