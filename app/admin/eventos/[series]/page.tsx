@@ -1256,7 +1256,10 @@ export default function AdminEventSeriesPage() {
     setGeneratingPosters(true)
 
     try {
-      const generated: { id: string; cover: string }[] = []
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (!session?.access_token) throw new Error('La sesion ha caducado. Vuelve a iniciar sesion.')
 
       for (const event of datedEvents) {
         const sourceCover = event.cover || baseCover
@@ -1303,29 +1306,22 @@ export default function AdminEventSeriesPage() {
         context.fillText([typeText, timeText].filter(Boolean).join(' · '), 540, 326)
 
         const blob = await canvasToBlob(canvas)
-        const fileName = `series/${series}/generated/${event.id}-${Date.now()}.jpg`
-        const { error: uploadError } = await supabase.storage
-          .from('events')
-          .upload(fileName, blob, { contentType: 'image/jpeg', upsert: true })
-
-        if (uploadError) throw uploadError
-
-        const { data } = supabase.storage.from('events').getPublicUrl(fileName)
-        generated.push({ id: event.id, cover: data.publicUrl })
+        const formData = new FormData()
+        formData.append('poster', blob, `${event.slug || event.id}.jpg`)
+        formData.append('eventId', event.id)
+        formData.append('series', series)
+        const response = await fetch('/api/admin/generated-poster', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          body: formData,
+        })
+        const data = await response.json().catch(() => null)
+        if (!response.ok) {
+          throw new Error(data?.error || `No se pudo guardar el cartel de ${formatDate(event.date)}`)
+        }
       }
 
-      const updates = await Promise.all(
-        generated.map((poster) =>
-          supabase
-            .from('events')
-            .update({ cover: poster.cover, image_status: 'generated' })
-            .eq('id', poster.id)
-        )
-      )
-      const failed = updates.find((result) => result.error)
-      if (failed?.error) throw failed.error
-
-      setMessage(`${generated.length} cartel${generated.length === 1 ? '' : 'es'} con fecha generado${generated.length === 1 ? '' : 's'}`)
+      setMessage(`${datedEvents.length} cartel${datedEvents.length === 1 ? '' : 'es'} con fecha generado${datedEvents.length === 1 ? '' : 's'}`)
       loadEvents()
     } catch (error: any) {
       setMessage(`No se pudieron generar los carteles: ${error.message || 'revisa que el cartel base este subido a Tardea'}`)

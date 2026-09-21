@@ -9,6 +9,7 @@ import {
   Clock3,
   Euro,
   Heart,
+  Instagram,
   MapPin,
   Music4,
   Sparkles,
@@ -112,6 +113,7 @@ export default function EventDetailPage() {
   const [isEventFavorite, setIsEventFavorite] = useState(false)
   const [isProfileFavorite, setIsProfileFavorite] = useState(false)
   const [eventProfileId, setEventProfileId] = useState('')
+  const [eventProfileInstagramUrl, setEventProfileInstagramUrl] = useState('')
   const [eventSeriesSlug, setEventSeriesSlug] = useState('')
   const [favoriteStatus, setFavoriteStatus] = useState('')
   const [savingProfileFavorite, setSavingProfileFavorite] = useState(false)
@@ -207,6 +209,16 @@ export default function EventDetailPage() {
         }
 
         setEventProfileId(resolvedProfileId)
+
+        if (resolvedProfileId) {
+          const { data: socialProfile } = await supabase
+            .from('promoter_event_profiles')
+            .select('instagram_url')
+            .eq('id', resolvedProfileId)
+            .maybeSingle()
+
+          setEventProfileInstagramUrl(socialProfile?.instagram_url || '')
+        }
       }
 
       const {
@@ -485,6 +497,8 @@ export default function EventDetailPage() {
     )
   }
 
+  const instagramUrl = event.instagram_url || eventProfileInstagramUrl
+
   const eventUrl = `https://tardea.com/eventos/${event.slug ?? slug}`
   const whatsappText = encodeURIComponent(
     `Mira este plan en TARDEA: ${event.title} ${eventUrl}`
@@ -562,16 +576,35 @@ export default function EventDetailPage() {
                     {event.venue}, {event.address}
                   </p>
 
-                  {event.maps_url && (
-                    <a
-                      href={event.maps_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-2 inline-block text-sm font-medium text-brand-500 hover:underline md:mt-3"
-                    >
-                      Ver en Google Maps →
-                    </a>
-                  )}
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 md:mt-3">
+                    {event.maps_url && (
+                      <a
+                        href={event.maps_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-500 hover:underline"
+                      >
+                        Ver en Google Maps →
+                      </a>
+                    )}
+                    {instagramUrl && (
+                      <a
+                        href={instagramUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() =>
+                          trackEvent('event_detail_instagram', {
+                            targetType: 'event',
+                            targetId: event.id || slug,
+                            metadata: { slug },
+                          })
+                        }
+                        className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-500 hover:underline"
+                      >
+                        <Instagram className="h-4 w-4" /> Instagram →
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
 

@@ -40,6 +40,7 @@ const eventLabels: Record<string, string> = {
   event_card_open: 'Abre evento',
   event_detail_whatsapp: 'WhatsApp',
   event_detail_ticket: 'Entradas',
+  event_detail_instagram: 'Instagram',
   event_detail_favorite_date: 'Guarda fecha',
   event_detail_favorite_plan: 'Guarda plan',
   event_detail_all_dates: 'Ver fechas',

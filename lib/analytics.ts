@@ -10,6 +10,7 @@ export type AnalyticsEventName =
   | 'event_card_open'
   | 'event_detail_whatsapp'
   | 'event_detail_ticket'
+  | 'event_detail_instagram'
   | 'event_detail_favorite_date'
   | 'event_detail_favorite_plan'
   | 'event_detail_all_dates'
