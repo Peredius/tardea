@@ -23,6 +23,9 @@ export function Footer() {
           <a href="/tardeos-madrid" className="transition hover:text-white">
             Tardeos en Madrid
           </a>
+          <a href="/tardeos-madrid-fin-de-semana" className="transition hover:text-white">
+            Este fin de semana
+          </a>
           <a href="/aviso-legal" className="transition hover:text-white">
             Aviso legal
           </a>

@@ -174,6 +174,9 @@ export default async function TardeosMadridPage() {
             ambiente y precio antes de elegir tu plan.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
+            <Link href="/tardeos-madrid-fin-de-semana" className="btn-primary">
+              Ver este fin de semana
+            </Link>
             <Link href="/#eventos" className="btn-primary">
               Buscar por fecha y filtros
             </Link>
