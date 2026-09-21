@@ -200,6 +200,9 @@ export function Navbar() {
         </div>
 
         <nav className="hidden gap-6 text-sm text-slate-300 lg:flex">
+          <Link href="/tardeos-madrid" className="hover:text-white">
+            Tardeos Madrid
+          </Link>
           <Link href="/#destacados" className="hover:text-white">
             Destacados
           </Link>

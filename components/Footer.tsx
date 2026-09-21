@@ -20,6 +20,9 @@ export function Footer() {
         <p>© 2026 TARDEA. Todos los derechos reservados.</p>
 
         <div className="flex flex-wrap items-center gap-4">
+          <a href="/tardeos-madrid" className="transition hover:text-white">
+            Tardeos en Madrid
+          </a>
           <a href="/aviso-legal" className="transition hover:text-white">
             Aviso legal
           </a>
