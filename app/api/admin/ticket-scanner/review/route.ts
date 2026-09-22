@@ -25,7 +25,7 @@ export async function POST(request: Request) {
           profile_reviewed: true,
         })
         .eq('id', payload.eventId)
-        .eq('imported_by_agent', true)
+        .like('external_id', 'ticket-scanner:%')
         .eq('needs_review', true)
         .select('id')
         .maybeSingle()
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
         .from('events')
         .delete()
         .eq('id', payload.eventId)
-        .eq('imported_by_agent', true)
+        .like('external_id', 'ticket-scanner:%')
         .eq('needs_review', true)
         .select('id')
         .maybeSingle()

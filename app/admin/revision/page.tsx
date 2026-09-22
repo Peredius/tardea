@@ -161,10 +161,13 @@ export default function AdminRevisionPage() {
     }
 
     setScannerRun(payload)
+    const failed = payload.results?.filter((result: { error?: string }) => result.error).length || 0
     setScannerStatus(
       payload.addedCount > 0
-        ? `${payload.addedCount} fecha${payload.addedCount === 1 ? '' : 's'} nueva${payload.addedCount === 1 ? '' : 's'} enviada${payload.addedCount === 1 ? '' : 's'} a revisión.${payload.email?.sent ? ' Aviso enviado por correo.' : ''}`
-        : 'Revisión terminada: no hay fechas nuevas.'
+        ? `${payload.addedCount} fecha${payload.addedCount === 1 ? '' : 's'} nueva${payload.addedCount === 1 ? '' : 's'} enviada${payload.addedCount === 1 ? '' : 's'} a revisión.${payload.email?.sent ? ' Aviso enviado por correo.' : ''}${failed ? ` ${failed} ficha${failed === 1 ? '' : 's'} sin comprobar.` : ''}`
+        : failed
+          ? `Revisión incompleta: ${failed} ficha${failed === 1 ? '' : 's'} sin comprobar. Consulta los errores debajo.`
+          : 'Revisión terminada: no hay fechas nuevas.'
     )
 
     await loadRecentScannerEvents()
@@ -248,7 +251,6 @@ export default function AdminRevisionPage() {
                 <div className="mt-2 space-y-2">
                   {scannerRun.results
                     .filter((result) => result.added.length > 0 || result.error)
-                    .slice(0, 20)
                     .map((result) => (
                       <div key={result.profileId} className="py-2">
                         <p className="text-sm font-bold text-white">
@@ -257,7 +259,14 @@ export default function AdminRevisionPage() {
                             : result.profileName}
                         </p>
                         {result.error ? (
-                          <p className="mt-1 text-[11px] text-brand-200 md:text-xs">{result.error}</p>
+                          <div className="mt-1 text-[11px] text-brand-200 md:text-xs">
+                            <p>{result.error}</p>
+                            {result.checkedUrls[0] && (
+                              <a href={result.checkedUrls[0]} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 underline">
+                                Abrir fuente <ExternalLink className="h-3 w-3" />
+                              </a>
+                            )}
+                          </div>
                         ) : (
                           <p className="mt-1 text-[11px] leading-5 text-slate-400 md:text-xs">
                             {result.added.map((event) => formatDate(event.date)).join(' · ')}

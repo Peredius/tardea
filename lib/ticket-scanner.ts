@@ -291,12 +291,16 @@ function fallbackEventFromUrl(url: string, profile: EventProfile): FoundTicketEv
 async function fetchHtml(url: string) {
   const response = await fetch(url, {
     redirect: 'follow',
+    signal: AbortSignal.timeout(8000),
     headers: {
       'user-agent': 'Mozilla/5.0 TardeaBot/1.0 (+https://tardea.com)',
       accept: 'text/html,application/xhtml+xml',
     },
   })
   const html = await response.text()
+  if (!response.ok || /<title>Just a moment\.\.\.<\/title>|cf-chl|challenge-platform/i.test(html)) {
+    throw new Error(`No se pudo leer la fuente (${new URL(url).hostname}, HTTP ${response.status}). Revisa sus fechas manualmente.`)
+  }
   return { finalUrl: response.url, html, ok: response.ok }
 }
 
@@ -339,7 +343,8 @@ async function extractEventsFromUrl(url: string, profile: EventProfile): Promise
   }
 
   const fallback = fallbackEventFromUrl(finalUrl, profile)
-  return fallback ? [fallback] : []
+  if (fallback) return [fallback]
+  throw new Error('No se encontraron fechas verificables en el HTML. Puede requerir navegador o revision manual.')
 }
 
 function profileSources(profile: EventProfile, events: ExistingEvent[]) {
@@ -349,7 +354,14 @@ function profileSources(profile: EventProfile, events: ExistingEvent[]) {
     ...events.map((event) => event.source_url),
   ]
     .filter((url): url is string => Boolean(url && /^https?:\/\//i.test(url)))
-    .filter((url) => /whan\.es|fourvenues\.com|entradium\.com|ritas\.es|ritalabailaora\.com|independanceclub\.com/i.test(url))
+    .filter((url) => {
+      try {
+        const host = new URL(url).hostname.replace(/^www\./, '')
+        return !/^(instagram\.com|facebook\.com|tiktok\.com|google\.com|maps\.google\.com|maps\.app\.goo\.gl)$/.test(host)
+      } catch {
+        return false
+      }
+    })
 
   const normalized = urls.map((url) => {
     try {
@@ -361,7 +373,7 @@ function profileSources(profile: EventProfile, events: ExistingEvent[]) {
     }
   })
 
-  return Array.from(new Set(normalized)).slice(0, 8)
+  return Array.from(new Set(normalized)).slice(0, 6)
 }
 
 function hasExistingDate(existingEvents: ExistingEvent[], found: FoundTicketEvent) {
@@ -377,7 +389,7 @@ function normalizedMatchText(value: string | null | undefined) {
 
 function foundEventMatchesProfile(profile: EventProfile, found: FoundTicketEvent) {
   const profileName = normalizedMatchText(profile.name || profile.venue_name || '')
-  const text = normalizedMatchText(`${found.title} ${found.sourceUrl} ${found.venue || ''}`)
+  const text = normalizedMatchText(`${found.title} ${new URL(found.sourceUrl).pathname}`)
 
   if (profileName.includes('fascinado')) {
     return text.includes('fascinado')
@@ -398,7 +410,8 @@ function foundEventMatchesProfile(profile: EventProfile, found: FoundTicketEvent
     return text.includes('mirador')
   }
 
-  return true
+  const tokens = profileName.split(/[^a-z0-9]+/).filter((token) => token.length >= 4 && !['tardeo', 'club', 'madrid', 'fiesta', 'party'].includes(token))
+  return tokens.length > 0 && tokens.some((token) => text.includes(token))
 }
 
 function eventPayload(profile: EventProfile, found: FoundTicketEvent, existingEvents: ExistingEvent[]) {
@@ -481,12 +494,11 @@ export async function runTicketScanner(serviceClient: SupabaseClientLike): Promi
     eventsByProfile.set(event.event_profile_id, [...(eventsByProfile.get(event.event_profile_id) || []), event])
   })
 
-  const results: TicketScannerProfileResult[] = []
+  const results: TicketScannerProfileResult[] = new Array(profiles.length)
 
-  for (const profile of profiles) {
+  async function scanProfile(profile: EventProfile): Promise<TicketScannerProfileResult> {
     const profileEvents = eventsByProfile.get(profile.id) || []
     const sources = profileSources(profile, profileEvents)
-    if (sources.length === 0) continue
 
     const result: TicketScannerProfileResult = {
       profileId: profile.id,
@@ -498,11 +510,21 @@ export async function runTicketScanner(serviceClient: SupabaseClientLike): Promi
     }
 
     try {
-      const foundEvents: FoundTicketEvent[] = []
-      for (const source of sources) {
-        const extracted = await extractEventsFromUrl(source, profile)
-        foundEvents.push(...extracted.filter((event) => foundEventMatchesProfile(profile, event)))
+      if (sources.length === 0) {
+        result.error = 'No hay una fuente publica consultable. Revisa la ficha manualmente y añade la URL de su agenda o tiquetera.'
+        return result
       }
+      const foundEvents: FoundTicketEvent[] = []
+      const sourceErrors: string[] = []
+      for (const source of sources) {
+        try {
+          const extracted = await extractEventsFromUrl(source, profile)
+          foundEvents.push(...extracted.filter((event) => foundEventMatchesProfile(profile, event)))
+        } catch (error: any) {
+          sourceErrors.push(`${new URL(source).hostname}: ${error?.message || 'No se pudo leer la fuente.'}`)
+        }
+      }
+      if (sourceErrors.length) result.error = sourceErrors.join(' · ')
 
       const unique = new Map<string, FoundTicketEvent>()
       foundEvents.forEach((event) => {
@@ -538,8 +560,16 @@ export async function runTicketScanner(serviceClient: SupabaseClientLike): Promi
       result.error = error?.message || 'No se pudo revisar esta ficha.'
     }
 
-    results.push(result)
+    return result
   }
+
+  let nextProfile = 0
+  await Promise.all(Array.from({ length: Math.min(10, profiles.length) }, async () => {
+    while (nextProfile < profiles.length) {
+      const index = nextProfile++
+      results[index] = await scanProfile(profiles[index])
+    }
+  }))
 
   return {
     checkedProfiles: results.length,
