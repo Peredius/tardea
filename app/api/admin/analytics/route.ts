@@ -115,7 +115,7 @@ export async function GET(request: Request) {
         .limit(80),
       admin.serviceClient
         .from('events')
-        .select('id, title, date, venue, source_url, created_at, event_profile_id, status, published, needs_review, external_id, promoter_event_profiles(name)')
+        .select('id, title, date, start_time, end_time, venue, area, address, description, music, audience, price_from, cover, source_url, created_at, event_profile_id, status, published, needs_review, external_id, promoter_event_profiles(name)')
         .like('external_id', 'ticket-scanner:%')
         .gte('created_at', fromDate.toISOString())
         .order('created_at', { ascending: false })
