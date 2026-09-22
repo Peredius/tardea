@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { supabase } from '@/lib/supabase'
+import { eventStructuredData } from '@/lib/event-structured-data'
 
 type EventSeoData = {
   slug: string
@@ -14,6 +15,7 @@ type EventSeoData = {
   address: string | null
   price_from: number | null
   source_url: string | null
+  event_profile_id: string | null
   published: boolean
   status: string
 }
@@ -22,7 +24,7 @@ async function getEvent(slug: string) {
   const { data } = await supabase
     .from('events')
     .select(
-      'slug, title, venue, area, date, start_time, end_time, description, cover, address, price_from, source_url, published, status'
+      'slug, title, venue, area, date, start_time, end_time, description, cover, address, price_from, source_url, event_profile_id, published, status'
     )
     .eq('slug', slug)
     .eq('published', true)
@@ -90,47 +92,21 @@ export default async function EventLayout({
   params: { slug: string }
 }) {
   const event = await getEvent(params.slug)
-
-  const eventJsonLd = event
-    ? {
-        '@context': 'https://schema.org',
-        '@type': 'Event',
-        name: event.title,
-        description: event.description || undefined,
-        image: event.cover ? [event.cover] : undefined,
-        startDate: `${event.date}T${event.start_time || '17:00:00'}+02:00`,
-        endDate: event.end_time ? `${event.date}T${event.end_time}+02:00` : undefined,
-        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-        eventStatus: 'https://schema.org/EventScheduled',
-        location: {
-          '@type': 'Place',
-          name: event.venue || event.area || 'Madrid',
-          address: {
-            '@type': 'PostalAddress',
-            streetAddress: event.address || undefined,
-            addressLocality: 'Madrid',
-            addressCountry: 'ES',
-          },
-        },
-        offers: event.source_url
-          ? {
-              '@type': 'Offer',
-              url: event.source_url,
-              price: event.price_from ?? undefined,
-              priceCurrency: 'EUR',
-              availability: 'https://schema.org/InStock',
-            }
-          : undefined,
-        url: `https://www.tardea.com/eventos/${event.slug}`,
-      }
-    : null
+  const { data: organizer } = event?.event_profile_id
+    ? await supabase
+        .from('promoter_event_profiles')
+        .select('name, website_url')
+        .eq('id', event.event_profile_id)
+        .maybeSingle()
+    : { data: null }
+  const eventJsonLd = event ? eventStructuredData(event, organizer) : null
 
   return (
     <>
       {eventJsonLd && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(eventJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(eventJsonLd).replace(/</g, '\\u003c') }}
         />
       )}
       {children}
