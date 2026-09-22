@@ -318,7 +318,9 @@ export default function AdminRevisionPage() {
                             <p>{[event.venue, event.area, event.address].filter(Boolean).join(' · ')}</p>
                             {event.description && <p className="text-slate-300">{event.description}</p>}
                             <p>{event.music?.length ? event.music.join(', ') : 'Música sin indicar'} · {event.audience || 'Edad sin indicar'} · {event.price_from == null ? 'Precio sin indicar' : `Desde ${event.price_from} €`}</p>
-                            <p className="text-xs text-amber-300">Vista previa: todavía no está publicado.</p>
+                            <p className={`text-xs ${event.published ? 'text-emerald-300' : 'text-amber-300'}`}>
+                              {event.published ? 'Publicado' : 'Pendiente de aprobación: todavía no está publicado.'}
+                            </p>
                           </div>
                         </div>
                       )}
