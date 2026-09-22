@@ -701,23 +701,19 @@ export default function AdminEventSeriesPage() {
     const fileToUpload = fileOverride ?? baseCoverFile
 
     if (fileToUpload) {
-      const safeName = fileToUpload.name
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9.]+/g, '-')
-        .replace(/^-+|-+$/g, '')
-      const fileName = `series/${series}/${Date.now()}-${safeName}`
-      const { error: uploadError } = await supabase.storage
-        .from('events')
-        .upload(fileName, fileToUpload, { upsert: true })
-
-      if (uploadError) {
-        throw new Error(uploadError.message)
-      }
-
-      const { data } = supabase.storage.from('events').getPublicUrl(fileName)
-      coverUrl = data.publicUrl
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) throw new Error('La sesion ha caducado. Vuelve a iniciar sesion.')
+      const form = new FormData()
+      form.append('file', fileToUpload)
+      form.append('series', series)
+      const response = await fetch('/api/admin/upload-cover', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: form,
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'No se pudo subir el cartel.')
+      coverUrl = result.publicUrl
     }
 
     return coverUrl
@@ -1170,28 +1166,26 @@ export default function AdminEventSeriesPage() {
     if (!file) return
 
     setUploadingEventCoverId(event.id)
-    const safeName = file.name
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9.]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-    const fileName = `series/${series}/dates/${event.id}-${Date.now()}-${safeName}`
-
-    const { error: uploadError } = await supabase.storage
-      .from('events')
-      .upload(fileName, file, { upsert: true })
-
-    if (uploadError) {
+    const { data: { session } } = await supabase.auth.getSession()
+    const form = new FormData()
+    form.append('file', file)
+    form.append('series', series)
+    form.append('eventId', event.id)
+    const response = await fetch('/api/admin/upload-cover', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${session?.access_token || ''}` },
+      body: form,
+    })
+    const result = await response.json()
+    if (!response.ok) {
       setUploadingEventCoverId('')
-      setMessage(`No se pudo subir el cartel: ${uploadError.message}`)
+      setMessage(`No se pudo subir el cartel: ${result.error || 'Error de subida'}`)
       return
     }
 
-    const { data } = supabase.storage.from('events').getPublicUrl(fileName)
     const { error } = await supabase
       .from('events')
-      .update({ cover: data.publicUrl })
+      .update({ cover: result.publicUrl })
       .eq('id', event.id)
 
     setUploadingEventCoverId('')
