@@ -401,7 +401,11 @@ export function AreasSection() {
                     {event.type && <span className="badge">{event.type}</span>}
                     <span className="badge">{activeArea.name}</span>
                     <span className="badge">
-                      Desde {event.price_from === 0 ? 'gratis' : `${event.price_from || 0}€`}
+                      {event.price_from == null
+                        ? 'Precio por consultar'
+                        : event.price_from === 0
+                          ? 'Gratis'
+                          : `Desde ${event.price_from}€`}
                     </span>
                   </div>
 

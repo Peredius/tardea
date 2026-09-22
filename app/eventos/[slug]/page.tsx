@@ -596,7 +596,9 @@ export default function EventDetailPage() {
                 <div>
                   <p className="font-medium">Precio</p>
                   <p className="text-sm text-slate-400">
-                    {event.price_from === 0
+                    {event.price_from == null
+                      ? 'Precio por consultar'
+                      : event.price_from === 0
                       ? 'Entrada gratis o con invitación'
                       : `Desde ${event.price_from}€`}
                   </p>
