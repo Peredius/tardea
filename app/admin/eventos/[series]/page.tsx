@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { findKnownVenueDetails } from '@/lib/venueAutofill'
 
-const MUSIC_OPTIONS = ['Comercial', 'Show en directo', 'Electrónica', 'Reguetón', 'Pop', 'Indie', 'Flamenquito', 'Remember']
+const MUSIC_OPTIONS = ['Comercial', 'Show en directo', 'Electrónica', 'Reguetón / Latina', 'Pop', 'Indie', 'Flamenquito', 'Remember']
 const AUDIENCE_OPTIONS = ['18-25', '25-35', '30+', 'Mixto']
 const EVENT_TYPE_OPTIONS = ['Tardeo', 'Rooftop', 'Terrazas', 'Brunch', 'Afterwork', 'Fitness Party']
 const CUSTOM_AREA_OPTION = 'Otra zona'

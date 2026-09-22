@@ -55,7 +55,7 @@ const musicKeywords: Record<string, string[]> = {
   Remember: ['remember', '90s', '2000', 'clasicos', 'clásicos'],
   'Show en directo': ['directo', 'live', 'concierto', 'musica en vivo', 'música en vivo', 'banda', 'actuacion', 'actuación'],
   Pop: ['pop'],
-  Reguetón: ['reggaeton', 'reguetón', 'regueton', 'urbano', 'urban'],
+  'Reguetón / Latina': ['reggaeton', 'reguetón', 'regueton', 'urbano', 'urban', 'latina', 'latino', 'música latina', 'musica latina', 'salsa', 'bachata'],
   Comercial: ['comercial', 'hits', 'tardeo'],
 }
 

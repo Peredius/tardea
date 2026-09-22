@@ -10,7 +10,7 @@ const MUSIC_OPTIONS = [
   'Show en directo',
   'Indie',
   'Electrónica',
-  'Reguetón',
+  'Reguetón / Latina',
   'Flamenquito',
   'Pop',
   'Remember',

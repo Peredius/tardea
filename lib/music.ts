@@ -11,7 +11,9 @@ export function canonicalizeMusic(value: string) {
   const normalized = normalizeMusicKey(value)
 
   if (normalized === 'electronica') return 'Electrónica'
-  if (normalized === 'regueton') return 'Reguetón'
+  if (['regueton', 'reggaeton', 'latina', 'latino', 'musica latina', 'musica latino'].includes(normalized)) {
+    return 'Reguetón / Latina'
+  }
 
   return value.trim()
 }
