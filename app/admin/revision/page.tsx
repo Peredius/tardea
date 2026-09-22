@@ -2,14 +2,23 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, ExternalLink, RefreshCw } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Eye, RefreshCw } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 type ScannerEvent = {
   id: string
   title: string
   date: string
+  start_time: string | null
+  end_time: string | null
   venue: string | null
+  area: string | null
+  address: string | null
+  description: string | null
+  music: string[] | null
+  audience: string | null
+  price_from: number | null
+  cover: string | null
   source_url: string | null
   created_at: string
   event_profile_id: string | null
@@ -29,7 +38,10 @@ type ScannerRunResult = {
   results: Array<{
     profileId: string
     profileName: string
+    profileSlug: string | null
+    provider: string
     checkedUrls: string[]
+    reviewUrls: string[]
     found: number
     skipped: number
     added: Array<{
@@ -94,6 +106,8 @@ export default function AdminRevisionPage() {
   const [scannerRun, setScannerRun] = useState<ScannerRunResult | null>(null)
   const [scannerEvents, setScannerEvents] = useState<ScannerEvent[]>([])
   const [reviewingEventId, setReviewingEventId] = useState('')
+  const [previewEventId, setPreviewEventId] = useState('')
+  const [manualProvider, setManualProvider] = useState('Todas')
 
   async function loadRecentScannerEvents() {
     setLoading(true)
@@ -164,10 +178,10 @@ export default function AdminRevisionPage() {
     const failed = payload.results?.filter((result: { error?: string }) => result.error).length || 0
     setScannerStatus(
       payload.addedCount > 0
-        ? `${payload.addedCount} fecha${payload.addedCount === 1 ? '' : 's'} nueva${payload.addedCount === 1 ? '' : 's'} enviada${payload.addedCount === 1 ? '' : 's'} a revisión.${payload.email?.sent ? ' Aviso enviado por correo.' : ''}${failed ? ` ${failed} ficha${failed === 1 ? '' : 's'} sin comprobar.` : ''}`
+        ? `${payload.addedCount} fecha${payload.addedCount === 1 ? '' : 's'} nueva${payload.addedCount === 1 ? '' : 's'} para aprobar.${payload.email?.sent ? ' Aviso enviado por correo.' : ''}`
         : failed
-          ? `Revisión incompleta: ${failed} ficha${failed === 1 ? '' : 's'} sin comprobar. Consulta los errores debajo.`
-          : 'Revisión terminada: no hay fechas nuevas.'
+          ? 'No hay propuestas automáticas. Quedan fuentes por revisar manualmente.'
+          : 'No hay fechas nuevas en las fuentes comprobadas.'
     )
 
     await loadRecentScannerEvents()
@@ -244,40 +258,9 @@ export default function AdminRevisionPage() {
           <>
             {scannerRun && (
               <section className="mt-6">
-                <h2 className="text-sm font-bold md:text-base">Resultado de hoy</h2>
-                <p className="mt-1 text-xs text-slate-400">
-                  {scannerRun.checkedProfiles} fichas revisadas
+                <p className="text-xs text-slate-400">
+                  {scannerRun.checkedProfiles - scannerRun.results.filter((result) => result.error).length} fichas sin incidencias · {scannerRun.results.filter((result) => result.error).length} para revisar manualmente
                 </p>
-                <div className="mt-2 space-y-2">
-                  {scannerRun.results
-                    .filter((result) => result.added.length > 0 || result.error)
-                    .map((result) => (
-                      <div key={result.profileId} className="py-2">
-                        <p className="text-sm font-bold text-white">
-                          {result.added.length > 0
-                            ? `${result.added.length} fecha${result.added.length === 1 ? '' : 's'} nueva${result.added.length === 1 ? '' : 's'} encontrada${result.added.length === 1 ? '' : 's'} en ${result.profileName}`
-                            : result.profileName}
-                        </p>
-                        {result.error ? (
-                          <div className="mt-1 text-[11px] text-brand-200 md:text-xs">
-                            <p>{result.error}</p>
-                            {result.checkedUrls[0] && (
-                              <a href={result.checkedUrls[0]} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 underline">
-                                Abrir fuente <ExternalLink className="h-3 w-3" />
-                              </a>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="mt-1 text-[11px] leading-5 text-slate-400 md:text-xs">
-                            {result.added.map((event) => formatDate(event.date)).join(' · ')}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  {scannerRun.results.every((result) => result.added.length === 0 && !result.error) && (
-                    <p className="py-2 text-sm text-slate-400">No se han añadido fechas nuevas.</p>
-                  )}
-                </div>
               </section>
             )}
 
@@ -298,6 +281,16 @@ export default function AdminRevisionPage() {
                           Revisado el {formatCreatedDay(event.created_at)} · Fecha: {formatDate(event.date)}
                         </p>
                       </div>
+                      <div className="flex shrink-0 flex-wrap justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewEventId(previewEventId === event.id ? '' : event.id)}
+                        aria-expanded={previewEventId === event.id}
+                        className="mt-0.5 inline-flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 text-xs font-bold text-white hover:border-brand-500/50"
+                      >
+                        <Eye className="h-4 w-4" />
+                        {previewEventId === event.id ? 'Ocultar evento' : 'Ver evento'}
+                      </button>
                       {event.source_url && (
                         <a
                           href={event.source_url}
@@ -311,6 +304,24 @@ export default function AdminRevisionPage() {
                         </a>
                       )}
                       </div>
+                      </div>
+                      {previewEventId === event.id && (
+                        <div className="mt-3 grid gap-4 rounded-lg border border-white/15 bg-white/5 p-4 sm:grid-cols-[minmax(0,160px)_1fr]">
+                          {event.cover ? (
+                            <img src={event.cover} alt={`Cartel de ${event.title}`} className="w-full max-w-40 rounded object-cover" />
+                          ) : (
+                            <div className="flex min-h-32 items-center justify-center rounded bg-white/5 text-xs text-slate-400">Sin cartel</div>
+                          )}
+                          <div className="space-y-2 text-sm text-slate-200">
+                            <p className="font-bold text-white">{event.title}</p>
+                            <p>{formatDate(event.date)} · {event.start_time?.slice(0, 5) || 'Hora sin confirmar'}{event.end_time ? `–${event.end_time.slice(0, 5)}` : ''}</p>
+                            <p>{[event.venue, event.area, event.address].filter(Boolean).join(' · ')}</p>
+                            {event.description && <p className="text-slate-300">{event.description}</p>}
+                            <p>{event.music?.length ? event.music.join(', ') : 'Música sin indicar'} · {event.audience || 'Edad sin indicar'} · {event.price_from == null ? 'Precio sin indicar' : `Desde ${event.price_from} €`}</p>
+                            <p className="text-xs text-amber-300">Vista previa: todavía no está publicado.</p>
+                          </div>
+                        </div>
+                      )}
                       {event.needs_review && !event.published ? (
                         <div className="mt-3 flex gap-2">
                           <button
@@ -338,6 +349,44 @@ export default function AdminRevisionPage() {
                 </div>
               )}
             </section>
+            {scannerRun && scannerRun.results.some((result) => result.error) && (
+              <details className="mt-6 border-t border-white/15 pt-4">
+                <summary className="cursor-pointer text-sm font-bold text-white">
+                  Revisar manualmente ({scannerRun.results.filter((result) => result.error).length})
+                </summary>
+                <div className="mt-4 flex flex-wrap gap-2" aria-label="Filtrar por tiquetera">
+                  {['Todas', ...Array.from(new Set(scannerRun.results.filter((result) => result.error).map((result) => result.provider)))].map((provider) => (
+                    <button
+                      key={provider}
+                      type="button"
+                      onClick={() => setManualProvider(provider)}
+                      aria-pressed={manualProvider === provider}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${manualProvider === provider ? 'border-brand-500 bg-brand-500 text-white' : 'border-white/20 text-slate-300 hover:border-brand-500'}`}
+                    >
+                      {provider} ({scannerRun.results.filter((result) => result.error && (provider === 'Todas' || result.provider === provider)).length})
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-3 divide-y divide-white/10">
+                  {scannerRun.results.filter((result) => result.error && (manualProvider === 'Todas' || result.provider === manualProvider)).map((result) => (
+                    <div key={result.profileId} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                      <div>
+                        <p className="text-sm font-semibold">{result.profileName}</p>
+                        <p className="mt-1 max-w-2xl text-xs text-slate-400">{result.error}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {result.reviewUrls.map((url, index) => (
+                          <a key={url} href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full border border-white/20 px-3 py-1.5 text-xs font-semibold hover:border-brand-500">
+                            <ExternalLink className="h-3 w-3" /> {index === 0 ? 'Abrir fuente' : `Fuente ${index + 1}`}
+                          </a>
+                        ))}
+                        {result.profileSlug && <Link href={`/admin/eventos/${result.profileSlug}`} className="rounded-full border border-white/20 px-3 py-1.5 text-xs font-semibold hover:border-brand-500">Abrir ficha</Link>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
           </>
         )}
       </section>

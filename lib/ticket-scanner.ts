@@ -56,7 +56,10 @@ type CreatedTicketEvent = {
 export type TicketScannerProfileResult = {
   profileId: string
   profileName: string
+  profileSlug: string | null
+  provider: string
   checkedUrls: string[]
+  reviewUrls: string[]
   found: number
   added: CreatedTicketEvent[]
   skipped: number
@@ -376,6 +379,16 @@ function profileSources(profile: EventProfile, events: ExistingEvent[]) {
   return Array.from(new Set(normalized)).slice(0, 6)
 }
 
+function sourceProvider(url: string | null | undefined) {
+  if (!url) return 'Sin fuente'
+  const host = new URL(url).hostname.replace(/^www\./, '')
+  if (host.endsWith('fourvenues.com')) return 'Fourvenues'
+  if (host.endsWith('dice.fm')) return 'DICE'
+  if (host.endsWith('whan.es')) return 'Whan'
+  if (host.endsWith('instagram.com')) return 'Instagram'
+  return 'Otras fuentes'
+}
+
 function hasExistingDate(existingEvents: ExistingEvent[], found: FoundTicketEvent) {
   return existingEvents.some((event) => event.date === found.date)
 }
@@ -484,7 +497,7 @@ async function loadExistingEvents(serviceClient: SupabaseClientLike, profileIds:
   return (data || []) as ExistingEvent[]
 }
 
-export async function runTicketScanner(serviceClient: SupabaseClientLike): Promise<TicketScannerResult> {
+export async function runTicketScanner(serviceClient: SupabaseClientLike, options: { dryRun?: boolean } = {}): Promise<TicketScannerResult> {
   const profiles = await loadProfiles(serviceClient)
   const existingEvents = await loadExistingEvents(serviceClient, profiles.map((profile) => profile.id))
   const eventsByProfile = new Map<string, ExistingEvent[]>()
@@ -503,7 +516,11 @@ export async function runTicketScanner(serviceClient: SupabaseClientLike): Promi
     const result: TicketScannerProfileResult = {
       profileId: profile.id,
       profileName: profile.name || profile.venue_name || 'Ficha sin nombre',
+      profileSlug: profile.slug,
+      provider: sourceProvider(profile.source_url || profile.website_url),
       checkedUrls: sources,
+      reviewUrls: Array.from(new Set([profile.website_url, profile.source_url, ...sources]
+        .filter((url): url is string => Boolean(url && /^https?:\/\//i.test(url))))).slice(0, 3),
       found: 0,
       added: [],
       skipped: 0,
@@ -542,11 +559,13 @@ export async function runTicketScanner(serviceClient: SupabaseClientLike): Promi
           continue
         }
 
-        const { data, error } = await serviceClient
-          .from('events')
-          .insert(eventPayload(profile, found, currentProfileEvents))
-          .select('id,title,date,source_url')
-          .single()
+        const { data, error } = options.dryRun
+          ? { data: { id: `dry-run:${profile.id}:${found.date}`, title: profile.name, date: found.date, source_url: found.sourceUrl }, error: null }
+          : await serviceClient
+            .from('events')
+            .insert(eventPayload(profile, found, currentProfileEvents))
+            .select('id,title,date,source_url')
+            .single()
 
         if (error) throw error
         result.added.push({
