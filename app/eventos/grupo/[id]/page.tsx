@@ -184,8 +184,13 @@ export default function EventGroupPage() {
   }
 
   const title = profile?.name || events[0]?.title || 'Tardeo'
-  const venue = profile?.venue_name || events[0]?.venue
-  const area = profile?.area || events[0]?.area
+  const hasFixedLocation = Boolean(profile?.venue_name || profile?.address)
+  const venue = profile
+    ? hasFixedLocation ? profile.venue_name || events[0]?.venue : null
+    : events[0]?.venue
+  const area = profile
+    ? hasFixedLocation ? profile.area || events[0]?.area : null
+    : events[0]?.area
   const music = canonicalizeMusicList(profile?.music || events[0]?.music || [])
 
   return (

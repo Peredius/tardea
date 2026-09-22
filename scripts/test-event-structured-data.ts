@@ -28,6 +28,10 @@ assert.deepEqual(ticketed.organizer, {
   url: 'https://www.superpopbar.com/tardeo-super-pop',
 })
 assert.equal(ticketed.offers?.price, 12)
+assert.equal(eventStructuredData({
+  ...base,
+  source_url: 'https://bclever.ai/eventos/madrid/premier14nov',
+}, null).offers?.price, 12)
 assert.equal('validFrom' in (ticketed.offers || {}), false)
 assert.equal('performer' in ticketed, false)
 

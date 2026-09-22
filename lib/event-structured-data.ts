@@ -33,7 +33,7 @@ function ticketPage(url: string | null) {
   if (!url) return false
   try {
     const parsed = new URL(url)
-    return parsed.protocol === 'https:' && /\/(?:events?|tickets?)\/[^/]+/i.test(parsed.pathname)
+    return parsed.protocol === 'https:' && /\/(?:events?|eventos|tickets?)\/[^/]+/i.test(parsed.pathname)
   } catch {
     return false
   }
