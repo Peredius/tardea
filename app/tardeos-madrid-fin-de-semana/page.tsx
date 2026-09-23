@@ -4,6 +4,8 @@ import { CalendarDays, Clock3, Euro, MapPin, Music4 } from 'lucide-react'
 import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
 import { optimizedCoverUrl } from '@/lib/images'
+import { audienceTypes, eventTypes, musicTypes, priceRanges } from '@/lib/data'
+import { canonicalizeMusicList, normalizeMusicKey } from '@/lib/music'
 import { supabase } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
@@ -39,6 +41,15 @@ type WeekendEvent = {
   audience: string | null
   price_from: number | null
   cover: string | null
+}
+
+type WeekendFilters = {
+  day?: string
+  type?: string
+  music?: string
+  audience?: string
+  price?: string
+  area?: string
 }
 
 const fallbackCover =
@@ -80,6 +91,20 @@ function formatPrice(value: number | null) {
   return 'Consultar precio'
 }
 
+function matchesPrice(range: string, price: number | null) {
+  if (!range || range === 'Todos') return true
+  if (price === null) return false
+  if (range === 'Gratis') return price === 0
+  if (range === '0-15€') return price > 0 && price <= 15
+  if (range === '15-30€') return price > 15 && price <= 30
+  if (range === '30€+') return price > 30
+  return true
+}
+
+function filterValue(value: string | string[] | undefined) {
+  return typeof value === 'string' ? value : ''
+}
+
 async function getWeekendEvents(friday: string, sunday: string) {
   const { data } = await supabase
     .from('events')
@@ -97,10 +122,35 @@ async function getWeekendEvents(friday: string, sunday: string) {
   return (data || []) as WeekendEvent[]
 }
 
-export default async function WeekendTardeosPage() {
+export default async function WeekendTardeosPage({
+  searchParams,
+}: {
+  searchParams?: Record<string, string | string[] | undefined>
+}) {
   const { friday, sunday } = getWeekendRange()
   const events = await getWeekendEvents(friday, sunday)
-  const groupedEvents = events.reduce<Record<string, WeekendEvent[]>>((groups, event) => {
+  const days = [friday, addDays(friday, 1), sunday]
+  const areas = Array.from(new Set(events.map((event) => event.area).filter((area): area is string => Boolean(area))))
+    .sort((first, second) => first.localeCompare(second, 'es'))
+  const selected: Required<WeekendFilters> = {
+    day: days.includes(filterValue(searchParams?.day)) ? filterValue(searchParams?.day) : '',
+    type: eventTypes.includes(filterValue(searchParams?.type)) ? filterValue(searchParams?.type) : '',
+    music: musicTypes.includes(filterValue(searchParams?.music)) ? filterValue(searchParams?.music) : '',
+    audience: audienceTypes.includes(filterValue(searchParams?.audience)) ? filterValue(searchParams?.audience) : '',
+    price: priceRanges.includes(filterValue(searchParams?.price)) ? filterValue(searchParams?.price) : '',
+    area: areas.includes(filterValue(searchParams?.area)) ? filterValue(searchParams?.area) : '',
+  }
+  const hasActiveFilters = Object.values(selected).some(Boolean)
+  const filteredEvents = events.filter((event) =>
+    (!selected.day || event.date === selected.day) &&
+    (!selected.type || selected.type === 'Todos' || event.type === selected.type) &&
+    (!selected.music || selected.music === 'Todas' || canonicalizeMusicList(event.music).some((item) =>
+      normalizeMusicKey(item) === normalizeMusicKey(selected.music))) &&
+    (!selected.audience || selected.audience === 'Todas' || event.audience === selected.audience) &&
+    matchesPrice(selected.price, event.price_from) &&
+    (!selected.area || event.area === selected.area)
+  )
+  const groupedEvents = filteredEvents.reduce<Record<string, WeekendEvent[]>>((groups, event) => {
     groups[event.date] = [...(groups[event.date] || []), event]
     return groups
   }, {})
@@ -109,7 +159,7 @@ export default async function WeekendTardeosPage() {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     name: 'Tardeos en Madrid este fin de semana',
-    itemListElement: events.map((event, index) => ({
+    itemListElement: filteredEvents.map((event, index) => ({
       '@type': 'ListItem',
       position: index + 1,
       name: event.title,
@@ -126,28 +176,66 @@ export default async function WeekendTardeosPage() {
       <Navbar />
 
       <section className="border-b border-white/10 bg-slate-900/55">
-        <div className="container-page py-12 md:py-16">
+        <div className="container-page py-8 md:py-10">
           <p className="text-sm font-semibold uppercase text-brand-500">Viernes, sábado y domingo</p>
-          <h1 className="mt-3 max-w-5xl text-4xl font-bold text-white md:text-6xl">
+          <h1 className="mt-2 max-w-5xl text-3xl font-bold text-white md:text-4xl">
             Tardeos en Madrid este fin de semana
           </h1>
-          <p className="mt-5 max-w-3xl text-base leading-7 text-slate-300 md:text-lg">
+          <p className="mt-3 max-w-3xl text-base leading-7 text-slate-300">
             Planes publicados del {formatLongDate(friday)} al {formatLongDate(sunday)}, con horarios,
             zonas, música, ambiente y precios para comparar antes de elegir.
           </p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <Link href="#agenda-fin-de-semana" className="btn-primary">
-              Ver la agenda
-            </Link>
-            <Link href="/tardeos-madrid" className="btn-secondary">
-              Ver todos los tardeos
-            </Link>
-          </div>
+          <form action="/tardeos-madrid-fin-de-semana#agenda-fin-de-semana" className="mt-5">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+              <label className="min-w-0 text-sm text-slate-300">
+                Día
+                <select name="day" defaultValue={selected.day} className="select mt-1 w-full">
+                  <option value="">Todos</option>
+                  {days.map((day) => <option key={day} value={day}>{formatLongDate(day)}</option>)}
+                </select>
+              </label>
+              <label className="min-w-0 text-sm text-slate-300">
+                Tipo
+                <select name="type" defaultValue={selected.type} className="select mt-1 w-full">
+                  {eventTypes.map((type) => <option key={type} value={type === 'Todos' ? '' : type}>{type}</option>)}
+                </select>
+              </label>
+              <label className="min-w-0 text-sm text-slate-300">
+                Música
+                <select name="music" defaultValue={selected.music} className="select mt-1 w-full">
+                  {musicTypes.map((music) => <option key={music} value={music === 'Todas' ? '' : music}>{music}</option>)}
+                </select>
+              </label>
+              <label className="min-w-0 text-sm text-slate-300">
+                Edad
+                <select name="audience" defaultValue={selected.audience} className="select mt-1 w-full">
+                  {audienceTypes.map((audience) => <option key={audience} value={audience === 'Todas' ? '' : audience}>{audience}</option>)}
+                </select>
+              </label>
+              <label className="min-w-0 text-sm text-slate-300">
+                Precio
+                <select name="price" defaultValue={selected.price} className="select mt-1 w-full">
+                  {priceRanges.map((price) => <option key={price} value={price === 'Todos' ? '' : price}>{price}</option>)}
+                </select>
+              </label>
+              <label className="min-w-0 text-sm text-slate-300">
+                Zona
+                <select name="area" defaultValue={selected.area} className="select mt-1 w-full">
+                  <option value="">Todas</option>
+                  {areas.map((area) => <option key={area} value={area}>{area}</option>)}
+                </select>
+              </label>
+            </div>
+            <div className="mt-4 flex items-center gap-4">
+              <button type="submit" className="btn-primary">Filtrar</button>
+              {hasActiveFilters && <Link href="/tardeos-madrid-fin-de-semana" className="text-sm text-slate-300 hover:text-white">Limpiar</Link>}
+            </div>
+          </form>
         </div>
       </section>
 
       <section id="agenda-fin-de-semana" className="container-page scroll-mt-24 py-12 md:py-16">
-        {events.length > 0 ? (
+        {filteredEvents.length > 0 ? (
           <div className="space-y-14">
             {Object.entries(groupedEvents).map(([date, dateEvents]) => (
               <section key={date} aria-labelledby={`fecha-${date}`}>
@@ -229,14 +317,15 @@ export default async function WeekendTardeosPage() {
           </div>
         ) : (
           <div className="rounded-lg border border-white/10 bg-slate-900 p-8 md:p-10">
-            <h2 className="text-2xl font-bold text-white">Agenda en actualización</h2>
+            <h2 className="text-2xl font-bold text-white">
+              {events.length > 0 ? 'No hay eventos con estos filtros' : 'Agenda en actualización'}
+            </h2>
             <p className="mt-3 max-w-2xl leading-7 text-slate-400">
-              Todavía no hay eventos publicados para estas fechas. Consulta la agenda completa o
-              vuelve pronto para ver las nuevas incorporaciones.
+              {events.length > 0
+                ? 'Prueba con otros filtros para ver más planes de este fin de semana.'
+                : 'Todavía no hay eventos publicados para estas fechas. Vuelve pronto para ver las nuevas incorporaciones.'}
             </p>
-            <Link href="/tardeos-madrid" className="btn-primary mt-6">
-              Consultar todos los tardeos
-            </Link>
+            {events.length > 0 && <Link href="/tardeos-madrid-fin-de-semana" className="btn-primary mt-6">Limpiar filtros</Link>}
           </div>
         )}
       </section>
