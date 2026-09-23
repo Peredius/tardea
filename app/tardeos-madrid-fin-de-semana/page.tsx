@@ -161,7 +161,7 @@ export default async function WeekendTardeosPage() {
                   </span>
                 </div>
 
-                <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                   {dateEvents.map((event) => (
                     <article
                       key={event.id}
@@ -170,51 +170,55 @@ export default async function WeekendTardeosPage() {
                       <Link
                         href={`/eventos/${event.slug}`}
                         aria-label={`Ver ${event.title}`}
-                        className="block aspect-[16/10] bg-cover bg-center"
+                        className="block aspect-[4/3] bg-cover bg-center"
                         style={{
                           backgroundImage: `url(${optimizedCoverUrl(event.cover || fallbackCover, {
-                            width: 720,
+                            width: 480,
                             quality: 72,
                           })})`,
                         }}
                       />
-                      <div className="p-5">
-                        <div className="flex flex-wrap gap-2">
-                          {event.type && <span className="badge">{event.type}</span>}
-                          {event.area && <span className="badge">{event.area}</span>}
-                          {event.audience && <span className="badge">{event.audience}</span>}
+                      <div className="p-3">
+                        <div className="flex flex-wrap gap-1">
+                          {event.type && <span className="badge max-w-full truncate !px-2 !py-0.5 !text-[10px]">{event.type}</span>}
+                          {event.area && <span className="badge max-w-full truncate !px-2 !py-0.5 !text-[10px]">{event.area}</span>}
+                          {event.audience && <span className="badge max-w-full truncate !px-2 !py-0.5 !text-[10px]">{event.audience}</span>}
                         </div>
-                        <h3 className="mt-4 text-xl font-bold text-white">
+                        <h3 className="mt-2 min-h-10 break-words text-sm font-bold leading-5 text-white">
                           <Link href={`/eventos/${event.slug}`} className="hover:text-brand-500">
                             {event.title}
                           </Link>
                         </h3>
-                        <div className="mt-4 space-y-2 text-sm text-slate-300">
-                          <p className="flex items-center gap-2">
-                            <Clock3 className="h-4 w-4 shrink-0 text-brand-500" />
+                        <div className="mt-2 space-y-1 text-xs text-slate-300">
+                          <p className="flex items-center gap-1.5">
+                            <Clock3 className="h-3.5 w-3.5 shrink-0 text-brand-500" />
                             {event.start_time?.slice(0, 5) || 'Horario por confirmar'}
                             {event.end_time ? ` - ${event.end_time.slice(0, 5)}` : ''}
                           </p>
-                          <p className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 shrink-0 text-brand-500" />
-                            {event.venue || event.area || 'Madrid'}
+                          <p className="flex items-center gap-1.5">
+                            <MapPin className="h-3.5 w-3.5 shrink-0 text-brand-500" />
+                            <span className="truncate" title={event.venue || event.area || 'Madrid'}>
+                              {event.venue || event.area || 'Madrid'}
+                            </span>
                           </p>
-                          <p className="flex items-center gap-2">
-                            <Euro className="h-4 w-4 shrink-0 text-brand-500" />
+                          <p className="flex items-center gap-1.5">
+                            <Euro className="h-3.5 w-3.5 shrink-0 text-brand-500" />
                             {formatPrice(event.price_from)}
                           </p>
                         </div>
                         {(event.music || []).length > 0 && (
-                          <p className="mt-4 flex items-start gap-2 text-sm text-slate-400">
-                            <Music4 className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" />
-                            {(event.music || []).slice(0, 3).join(' · ')}
+                          <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
+                            <Music4 className="h-3.5 w-3.5 shrink-0 text-brand-500" />
+                            <span className="truncate" title={(event.music || []).slice(0, 3).join(' · ')}>
+                              {(event.music || []).slice(0, 3).join(' · ')}
+                            </span>
                           </p>
                         )}
                         <Link
                           href={`/eventos/${event.slug}`}
-                          className="mt-5 inline-flex font-semibold text-brand-500 hover:underline"
+                          className="mt-3 inline-flex text-xs font-semibold text-brand-500 hover:underline"
                         >
-                          Ver ubicación y entradas →
+                          Ver ficha →
                         </Link>
                       </div>
                     </article>
