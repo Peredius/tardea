@@ -80,7 +80,7 @@ const PROVINCE_OPTIONS = [
 ]
 
 const MUSIC_OPTIONS = ['Comercial', 'Show en directo', 'Electrónica', 'Reguetón / Latina', 'Pop', 'Indie', 'Flamenquito', 'Remember']
-const AUDIENCE_OPTIONS = ['+18', '+25', '30+', 'Mixto']
+const AUDIENCE_OPTIONS = ['+18', '+25', '+30', 'Mixto']
 const PROMOTION_PACKAGES = [
   {
     id: 'launch',

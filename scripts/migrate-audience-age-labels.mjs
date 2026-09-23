@@ -9,7 +9,7 @@ const { createClient } = require('@supabase/supabase-js')
 
 const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 const tables = ['events', 'event_templates', 'promoter_event_profiles', 'event_research_items']
-const replacements = [['18-25', '+18'], ['25-35', '+25']]
+const replacements = [['18-25', '+18'], ['25-35', '+25'], ['30+', '+30']]
 
 async function count(table, audience) {
   const { count: total, error } = await db.from(table)

@@ -22,7 +22,7 @@ function generateSlug(title: string, date: string) {
 }
 
 const MUSIC_OPTIONS = ['Comercial', 'Show en directo', 'Electrónica', 'Reguetón / Latina', 'Pop', 'Indie', 'Flamenquito', 'Remember']
-const AUDIENCE_OPTIONS = ['+18', '+25', '30+', 'Mixto']
+const AUDIENCE_OPTIONS = ['+18', '+25', '+30', 'Mixto']
 const EVENT_TYPE_OPTIONS = ['Tardeo', 'Rooftop', 'Terrazas', 'Brunch', 'Afterwork', 'Fitness Party', 'Fiesta']
 const AREA_OPTIONS = [
   'Madrid',

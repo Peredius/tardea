@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { findKnownVenueDetails } from '@/lib/venueAutofill'
 
 const MUSIC_OPTIONS = ['Comercial', 'Show en directo', 'Electrónica', 'Reguetón / Latina', 'Pop', 'Indie', 'Flamenquito', 'Remember']
-const AUDIENCE_OPTIONS = ['+18', '+25', '30+', 'Mixto']
+const AUDIENCE_OPTIONS = ['+18', '+25', '+30', 'Mixto']
 const EVENT_TYPE_OPTIONS = ['Tardeo', 'Rooftop', 'Terrazas', 'Brunch', 'Afterwork', 'Fitness Party']
 const CUSTOM_AREA_OPTION = 'Otra zona'
 const AREA_OPTIONS = [

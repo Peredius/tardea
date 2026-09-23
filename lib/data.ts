@@ -9,7 +9,7 @@ export type EventItem = {
   endTime: string;
   type: 'Tardeo' | 'Brunch' | 'Rooftop' | 'Terrazas' | 'Afterwork' | 'Fiesta temática';
   music: ('Comercial' | 'Electrónica' | 'Reguetón / Latina' | 'Pop' | 'Indie' | 'Flamenquito' | 'Remember' | 'Show en directo')[];
-  audience: '+18' | '+25' | '30+' | 'Mixto';
+  audience: '+18' | '+25' | '+30' | 'Mixto';
   priceFrom: number;
   cover: string;
   featured?: boolean;
@@ -20,7 +20,7 @@ export type EventItem = {
 export const areas = ['Salamanca', 'Chamberí', 'Malasaña', 'La Latina', 'Centro', 'Chamartín'];
 export const eventTypes = ['Todos', 'Tardeo', 'Brunch', 'Rooftop', 'Terrazas', 'Fitness Party', 'Afterwork', 'Fiesta temática'];
 export const musicTypes = ['Todas', 'Comercial', 'Show en directo', 'Electrónica', 'Reguetón / Latina', 'Pop', 'Indie', 'Flamenquito', 'Remember'];
-export const audienceTypes = ['Todas', '+18', '+25', '30+', 'Mixto'];
+export const audienceTypes = ['Todas', '+18', '+25', '+30', 'Mixto'];
 export const priceRanges = ['Todos', 'Gratis', '0-15€', '15-30€', '30€+'];
 
 export const events: EventItem[] = [
@@ -53,7 +53,7 @@ export const events: EventItem[] = [
     endTime: '20:00',
     type: 'Brunch',
     music: ['Electrónica'],
-    audience: '30+',
+    audience: '+30',
     priceFrom: 25,
     cover: 'https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&w=1200&q=80',
     featured: true,
@@ -122,7 +122,7 @@ export const events: EventItem[] = [
     endTime: '21:30',
     type: 'Fiesta temática',
     music: ['Flamenquito'],
-    audience: '30+',
+    audience: '+30',
     priceFrom: 20,
     cover: 'https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?auto=format&fit=crop&w=1200&q=80',
     description: 'Domingos de terraceo con fusión flamenca, formato sofisticado y un público que busca un plan con personalidad.',
