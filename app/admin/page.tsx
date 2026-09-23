@@ -22,7 +22,7 @@ function generateSlug(title: string, date: string) {
 }
 
 const MUSIC_OPTIONS = ['Comercial', 'Show en directo', 'Electrónica', 'Reguetón / Latina', 'Pop', 'Indie', 'Flamenquito', 'Remember']
-const AUDIENCE_OPTIONS = ['18-25', '25-35', '30+', 'Mixto']
+const AUDIENCE_OPTIONS = ['+18', '+25', '30+', 'Mixto']
 const EVENT_TYPE_OPTIONS = ['Tardeo', 'Rooftop', 'Terrazas', 'Brunch', 'Afterwork', 'Fitness Party', 'Fiesta']
 const AREA_OPTIONS = [
   'Madrid',
@@ -456,7 +456,7 @@ export default function AdminPage() {
   const [endTime, setEndTime] = useState('23:00')
   const [priceFrom, setPriceFrom] = useState('')
   const [music, setMusic] = useState<string[]>([])
-  const [audience, setAudience] = useState('25-35')
+  const [audience, setAudience] = useState('+25')
   const [manualExtractUrl, setManualExtractUrl] = useState('')
   const [manualExtracting, setManualExtracting] = useState(false)
   const [cover, setCover] = useState<File | null>(null)
@@ -1694,7 +1694,7 @@ export default function AdminPage() {
     setEndTime('23:00')
     setPriceFrom('')
     setMusic([])
-    setAudience('25-35')
+    setAudience('+25')
     setCover(null)
     setPreviewUrl('')
     setReelUrl('')
@@ -1834,7 +1834,7 @@ export default function AdminPage() {
     setEndTime(event.end_time || '23:00')
     setType(event.type || '')
     setMusic(event.music || [])
-    setAudience(event.audience || '25-35')
+    setAudience(event.audience || '+25')
     setPriceFrom(event.price_from?.toString() || '')
     setPreviewUrl(cleanCover || '')
     setCover(null)

@@ -16,7 +16,7 @@
     "end_time": "23:00",
     "type": "Tardeo",
     "music": ["Comercial"],
-    "audience": "25-35",
+    "audience": "+25",
     "price_from": 0,
     "notes": "Plantilla de ejemplo. Sustituir por una URL real antes de importar."
   },

@@ -9,7 +9,7 @@ export type EventItem = {
   endTime: string;
   type: 'Tardeo' | 'Brunch' | 'Rooftop' | 'Terrazas' | 'Afterwork' | 'Fiesta temática';
   music: ('Comercial' | 'Electrónica' | 'Reguetón / Latina' | 'Pop' | 'Indie' | 'Flamenquito' | 'Remember' | 'Show en directo')[];
-  audience: '18-25' | '25-35' | '30+' | 'Mixto';
+  audience: '+18' | '+25' | '30+' | 'Mixto';
   priceFrom: number;
   cover: string;
   featured?: boolean;
@@ -20,7 +20,7 @@ export type EventItem = {
 export const areas = ['Salamanca', 'Chamberí', 'Malasaña', 'La Latina', 'Centro', 'Chamartín'];
 export const eventTypes = ['Todos', 'Tardeo', 'Brunch', 'Rooftop', 'Terrazas', 'Fitness Party', 'Afterwork', 'Fiesta temática'];
 export const musicTypes = ['Todas', 'Comercial', 'Show en directo', 'Electrónica', 'Reguetón / Latina', 'Pop', 'Indie', 'Flamenquito', 'Remember'];
-export const audienceTypes = ['Todas', '18-25', '25-35', '30+', 'Mixto'];
+export const audienceTypes = ['Todas', '+18', '+25', '30+', 'Mixto'];
 export const priceRanges = ['Todos', 'Gratis', '0-15€', '15-30€', '30€+'];
 
 export const events: EventItem[] = [
@@ -35,7 +35,7 @@ export const events: EventItem[] = [
     endTime: '23:00',
     type: 'Rooftop',
     music: ['Electrónica', 'Pop'],
-    audience: '25-35',
+    audience: '+25',
     priceFrom: 18,
     cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80',
     featured: true,
@@ -71,7 +71,7 @@ export const events: EventItem[] = [
     endTime: '00:00',
     type: 'Tardeo',
     music: ['Comercial'],
-    audience: '18-25',
+    audience: '+18',
     priceFrom: 12,
     cover: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=80',
     description: 'Hits comerciales, reggaetón clásico y ambiente joven en una de las zonas más activas para el tardeo de Madrid.',
@@ -88,7 +88,7 @@ export const events: EventItem[] = [
     endTime: '23:30',
     type: 'Afterwork',
     music: ['Electrónica'],
-    audience: '25-35',
+    audience: '+25',
     priceFrom: 0,
     cover: 'https://images.unsplash.com/photo-1496024840928-4c417adf211d?auto=format&fit=crop&w=1200&q=80',
     description: 'Plan ideal para salir de la oficina y conectar con gente en un formato más relajado, con entrada gratis hasta completar aforo.',
@@ -139,7 +139,7 @@ export const events: EventItem[] = [
   endTime: '23:00',
   type: 'Rooftop',
   music: ['Electrónica'],
-  audience: '25-35',
+  audience: '+25',
   priceFrom: 10,
   cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80',
   featured: true,
@@ -157,7 +157,7 @@ export const events: EventItem[] = [
   endTime: '23:30',
   type: 'Tardeo',
   music: ['Electrónica'],
-  audience: '25-35',
+  audience: '+25',
   priceFrom: 15,
   cover: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80',
   featured: true,
