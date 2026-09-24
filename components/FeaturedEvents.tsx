@@ -42,48 +42,44 @@ export function FeaturedEvents() {
   useEffect(() => {
     async function fetchFeaturedEvents() {
       const today = new Date().toISOString().split('T')[0]
-
-      const { data, error } = await supabase
-        .from('events')
-        .select('id, slug, title, venue, date, start_time, type, cover, event_profile_id, featured')
-        .eq('published', true)
-        .eq('status', 'approved')
-        .gte('date', today)
-        .order('date', { ascending: true })
-        .limit(400)
-
-      if (error) {
-        console.error(error)
-        return
-      }
-
-      const featuredGroups = new Map<string, { nextEvent: any; featured: boolean }>()
-
-      ;(data || []).forEach((event) => {
-        const key = getFeaturedGroupKey(event)
-        const current = featuredGroups.get(key)
-
-        if (!current) {
-          featuredGroups.set(key, {
-            nextEvent: event,
-            featured: Boolean(event.featured),
-          })
+      let eventsToShow: any[] = []
+      try {
+        const response = await fetch('/api/featured', { cache: 'no-store' })
+        if (!response.ok) throw new Error('No se pudieron cargar las posiciones')
+        const positions = (await response.json()).positions as (string | null)[]
+        const results = await Promise.all(positions.filter(Boolean).map((id) => supabase
+          .from('events')
+          .select('id, slug, title, venue, date, start_time, type, cover, event_profile_id')
+          .eq('event_profile_id', id)
+          .eq('published', true)
+          .eq('status', 'approved')
+          .gte('date', today)
+          .order('date', { ascending: true })
+          .limit(1)))
+        const failed = results.find((result) => result.error)
+        if (failed?.error) throw failed.error
+        eventsToShow = results.map((result) => result.data?.[0]).filter(Boolean)
+      } catch (positionsError) {
+        console.error(positionsError)
+        const { data, error } = await supabase.from('events')
+          .select('id, slug, title, venue, date, start_time, type, cover, event_profile_id, featured')
+          .eq('featured', true)
+          .eq('published', true)
+          .eq('status', 'approved')
+          .gte('date', today)
+          .order('date', { ascending: true })
+          .limit(400)
+        if (error) {
+          console.error(error)
           return
         }
-
-        current.featured = Boolean(current.featured || event.featured)
-      })
-
-      const groupedEvents = Array.from(featuredGroups.values())
-      const uniqueFeatured = groupedEvents
-        .filter((group) => group.featured)
-        .map((group) => group.nextEvent)
-        .slice(0, 8)
-      const fallbackEvents = groupedEvents
-        .map((group) => group.nextEvent)
-        .slice(0, 8)
-
-      const eventsToShow = uniqueFeatured.length > 0 ? uniqueFeatured : fallbackEvents
+        const groups = new Map<string, any>()
+        ;(data || []).forEach((event) => {
+          const key = getFeaturedGroupKey(event)
+          if (!groups.has(key)) groups.set(key, event)
+        })
+        eventsToShow = Array.from(groups.values()).slice(0, 5)
+      }
 
       setFeatured(eventsToShow)
       setActiveEventSlug(eventsToShow[0]?.slug || '')
@@ -161,7 +157,7 @@ export function FeaturedEvents() {
       <div
         ref={carouselRef}
         onScroll={updateActiveEventFromScroll}
-        className="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-5 pb-6 pt-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden"
+        className="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-5 pb-6 pt-3 [scrollbar-width:none] sm:mx-0 sm:px-0 xl:grid xl:grid-cols-5 xl:overflow-visible xl:pb-0 xl:pt-0 [&::-webkit-scrollbar]:hidden"
       >
         {featured.map((event, index) => (
           <article
@@ -169,7 +165,7 @@ export function FeaturedEvents() {
             data-event-card
             data-slug={event.slug}
             onClick={(clickEvent) => openActiveEventOnTap(event.slug, clickEvent)}
-            className={`group h-[520px] w-[78vw] max-w-[330px] shrink-0 snap-center overflow-hidden rounded-[28px] border bg-white/5 shadow-2xl shadow-black/30 transition duration-300 ease-out hover:border-brand-500/40 sm:h-auto sm:w-auto sm:max-w-none sm:shrink sm:translate-y-0 sm:scale-100 sm:rounded-3xl sm:opacity-100 ${
+            className={`group h-[520px] w-[78vw] max-w-[330px] shrink-0 snap-center overflow-hidden rounded-[28px] border bg-white/5 shadow-2xl shadow-black/30 transition duration-300 ease-out hover:border-brand-500/40 sm:h-auto sm:w-[220px] sm:translate-y-0 sm:scale-100 sm:rounded-3xl sm:opacity-100 xl:w-auto xl:max-w-none ${
               activeEventSlug === event.slug
                 ? 'border-brand-500/50'
                 : 'border-white/10'
@@ -196,7 +192,7 @@ export function FeaturedEvents() {
                     quality: 72,
                   })}
                   alt={`Cartel de ${event.title}`}
-                  sizes="(max-width: 639px) 78vw, (max-width: 1279px) 50vw, 25vw"
+                  sizes="(max-width: 639px) 78vw, (max-width: 1279px) 220px, 20vw"
                   priority={index === 0}
                   className="group-hover:scale-105"
                 />

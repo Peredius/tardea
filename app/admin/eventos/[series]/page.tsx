@@ -339,7 +339,6 @@ export default function AdminEventSeriesPage() {
   const [applyingBaseSection, setApplyingBaseSection] = useState('')
   const [uploadingEventCoverId, setUploadingEventCoverId] = useState('')
   const [reviewSaving, setReviewSaving] = useState(false)
-  const [featuredSaving, setFeaturedSaving] = useState(false)
   const [applyEditToSeries, setApplyEditToSeries] = useState(false)
   const [approvingAll, setApprovingAll] = useState(false)
   const [generatingPosters, setGeneratingPosters] = useState(false)
@@ -1078,31 +1077,6 @@ export default function AdminEventSeriesPage() {
     loadEvents()
   }
 
-  async function setSeriesFeatured(featured: boolean) {
-    const eventIds = events.map((event) => event.id).filter(Boolean)
-
-    if (eventIds.length === 0) {
-      setMessage('Crea primero al menos una fecha para poder destacar esta ficha')
-      return
-    }
-
-    setFeaturedSaving(true)
-    const { error } = await supabase
-      .from('events')
-      .update({ featured })
-      .in('id', eventIds)
-
-    setFeaturedSaving(false)
-
-    if (error) {
-      setMessage(`No se pudo actualizar destacados: ${error.message}`)
-      return
-    }
-
-    setMessage(featured ? 'Ficha activada en destacados' : 'Ficha quitada de destacados')
-    loadEvents()
-  }
-
   async function updateEvent(event: any) {
     const buildPayload = (targetEvent: any, useTargetDate: boolean) => {
       const targetDate = useTargetDate ? targetEvent.date : event.date
@@ -1763,14 +1737,9 @@ export default function AdminEventSeriesPage() {
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-xl font-bold">Datos base</h2>
             <div className="flex flex-wrap justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setSeriesFeatured(!isSeriesFeatured)}
-                disabled={featuredSaving}
-                className={`rounded-full px-3 py-1.5 text-xs font-bold disabled:opacity-60 ${isSeriesFeatured ? 'bg-brand-500 text-white hover:bg-brand-600' : 'border border-brand-500/40 text-brand-100 hover:border-brand-500 hover:text-white'}`}
-              >
-                {featuredSaving ? 'Guardando' : isSeriesFeatured ? 'Destacado activo' : 'Destacar'}
-              </button>
+              <Link href="/admin/fichas#destacados-admin" className="rounded-full border border-brand-500/40 px-3 py-1.5 text-xs font-bold text-brand-100 hover:border-brand-500 hover:text-white">
+                Ordenar destacados
+              </Link>
               <button
                 type="button"
                 onClick={() => setProfileReviewed(!isProfileReviewed)}

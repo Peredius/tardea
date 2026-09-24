@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Plus, Search, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { AdminFeaturedPositions } from '@/components/AdminFeaturedPositions'
 import { performerInputFromPerks, performerPerksFromInput, withoutEventPerformers } from '@/lib/event-performers'
 import { findKnownVenueDetails } from '@/lib/venueAutofill'
 
@@ -501,7 +502,6 @@ export default function AdminPage() {
   const [profileTypeFilter, setProfileTypeFilter] = useState('Todos')
   const [profileReviewFilter, setProfileReviewFilter] = useState<'review' | 'created' | 'all'>('created')
   const [profileSortMode, setProfileSortMode] = useState<'alphabetical' | 'modified'>('alphabetical')
-  const [profileFeaturedSavingKey, setProfileFeaturedSavingKey] = useState('')
   const [isCreatingProfile, setIsCreatingProfile] = useState(false)
   const [profileDraft, setProfileDraft] = useState<ProfileDraft>(() => createProfileDraft())
   const [profileSaving, setProfileSaving] = useState(false)
@@ -1417,33 +1417,6 @@ export default function AdminPage() {
     fetchEventProfiles()
   }
 
-  async function toggleProfileFeatured(profile: any) {
-    const eventIds = Array.from(profile.eventIds || [])
-
-    if (eventIds.length === 0) {
-      setMessage('Esta ficha aun no tiene fechas creadas para destacar')
-      return
-    }
-
-    const nextFeatured = !profile.featured
-    setProfileFeaturedSavingKey(profile.key)
-
-    const { error } = await supabase
-      .from('events')
-      .update({ featured: nextFeatured })
-      .in('id', eventIds)
-
-    setProfileFeaturedSavingKey('')
-
-    if (error) {
-      setMessage(`No se pudo actualizar destacados: ${error.message}`)
-      return
-    }
-
-    setMessage(nextFeatured ? `Ficha "${profile.title}" activada en destacados` : `Ficha "${profile.title}" quitada de destacados`)
-    fetchEvents()
-  }
-
   async function extractResearchRow(index: number) {
     const row = researchRows[index]
 
@@ -2349,6 +2322,7 @@ export default function AdminPage() {
 
       {adminTab === 'profiles' && (
         <section className="rounded-3xl border border-white/10 bg-slate-900/70 p-5">
+          <AdminFeaturedPositions profiles={eventProfiles} events={events} />
           <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-500">Fichas por evento</p>
@@ -2522,14 +2496,9 @@ export default function AdminPage() {
                     {profile.profileReviewed ? 'Creada' : 'Por revisar'}
                   </span>
                   {profileReviewFilter === 'created' ? (
-                    <button
-                      type="button"
-                      onClick={() => toggleProfileFeatured(profile)}
-                      disabled={profileFeaturedSavingKey === profile.key}
-                      className={`justify-self-start rounded-full px-3 py-1 text-xs font-bold transition disabled:opacity-60 ${profile.featured ? 'bg-brand-500 text-white hover:bg-brand-600' : 'border border-brand-500/40 text-brand-100 hover:border-brand-500 hover:text-white'}`}
-                    >
-                      {profileFeaturedSavingKey === profile.key ? 'Guardando' : profile.featured ? 'Destacada' : 'Destacar'}
-                    </button>
+                    <a href="#destacados-admin" className="text-xs font-semibold text-brand-200 hover:text-white md:justify-self-start">
+                      Ordenar ↑
+                    </a>
                   ) : (
                     <span className="hidden text-xs text-slate-600 md:block">-</span>
                   )}
