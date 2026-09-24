@@ -14,9 +14,12 @@ function serviceClient() {
 }
 
 async function readPositions(db: ReturnType<typeof serviceClient>): Promise<(string | null)[]> {
-  const { data, error } = await db.storage.from('events').download(storagePath)
-  if (!error && data) {
-    const parsed = JSON.parse(await data.text())
+  const publicUrl = db.storage.from('events').getPublicUrl(storagePath).data.publicUrl
+  const fileUrl = new URL(publicUrl)
+  fileUrl.searchParams.set('revision', crypto.randomUUID())
+  const response = await fetch(fileUrl, { cache: 'no-store' })
+  if (response.ok) {
+    const parsed = await response.json()
     if (!Array.isArray(parsed.positions) || parsed.positions.length !== 5) throw new Error('Configuración de destacados no válida')
     const ids = parsed.positions.filter(Boolean)
     if (!ids.length) return parsed.positions
@@ -28,7 +31,7 @@ async function readPositions(db: ReturnType<typeof serviceClient>): Promise<(str
     const active = new Set((events || []).map((event) => event.event_profile_id))
     return parsed.positions.map((id: string | null) => id && active.has(id) ? id : null)
   }
-  if (error && !['404', 'not_found'].includes(String(error.statusCode))) throw error
+  if (response.status !== 404) throw new Error(`No se pudo leer la configuración de destacados (${response.status})`)
 
   const today = new Date().toISOString().slice(0, 10)
   const { data: events, error: eventsError } = await db.from('events')
