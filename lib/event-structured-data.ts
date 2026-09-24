@@ -1,3 +1,5 @@
+import { getEventPerformers } from './event-performers'
+
 export type StructuredEvent = {
   slug: string
   title: string
@@ -11,6 +13,7 @@ export type StructuredEvent = {
   cover: string | null
   price_from: number | null
   source_url: string | null
+  perks?: string[] | null
 }
 
 export type EventOrganizer = {
@@ -55,6 +58,7 @@ export function eventStructuredData(event: StructuredEvent, organizer: EventOrga
     ? nextDay(event.date)
     : event.date
   const hasTicketOffer = ticketPage(event.source_url) && event.price_from !== null && event.price_from > 0
+  const performers = getEventPerformers(event.perks)
 
   return {
     '@context': 'https://schema.org',
@@ -83,6 +87,9 @@ export function eventStructuredData(event: StructuredEvent, organizer: EventOrga
           url: organizerUrl(organizer.website_url),
         }
       : undefined,
+    ...(performers.length > 0
+      ? { performer: performers.map((performer) => ({ '@type': performer.type, name: performer.name })) }
+      : {}),
     offers: hasTicketOffer
       ? {
           '@type': 'Offer',

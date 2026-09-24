@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { performerInputFromPerks, performerPerksFromInput, withoutEventPerformers } from '@/lib/event-performers'
 import { findKnownVenueDetails } from '@/lib/venueAutofill'
 
 const MUSIC_OPTIONS = ['Comercial', 'Show en directo', 'Electrónica', 'Reguetón / Latina', 'Pop', 'Indie', 'Flamenquito', 'Remember']
@@ -209,15 +210,13 @@ function getEventExtras(event: any) {
     ...AUDIENCE_OPTIONS,
   ].filter(Boolean))
 
-  return Array.isArray(event.perks)
-    ? event.perks.filter((item: string) => item && !automaticLabels.has(item))
-    : []
+  return withoutEventPerformers(event.perks).filter((item) => item && !automaticLabels.has(item))
 }
 
 function buildPerks(event: any) {
   const music = getMusicList(event.music)
   const extras = getEventExtras(event)
-  return [event.type, event.area, ...music, ...extras].filter(Boolean)
+  return [event.type, event.area, ...music, ...extras, ...performerPerksFromInput(performerInputFromPerks(event.perks))].filter(Boolean)
 }
 
 function buildPerksWithExtras(event: any, extrasValue: string) {
@@ -227,7 +226,7 @@ function buildPerksWithExtras(event: any, extrasValue: string) {
     .map((item) => item.trim())
     .filter(Boolean)
 
-  return [event.type, event.area, ...music, ...extras].filter(Boolean)
+  return [event.type, event.area, ...music, ...extras, ...performerPerksFromInput(performerInputFromPerks(event.perks))].filter(Boolean)
 }
 
 function getUrlsFromText(text: string) {
@@ -329,6 +328,7 @@ export default function AdminEventSeriesPage() {
   const [message, setMessage] = useState('')
   const [editingEventId, setEditingEventId] = useState('')
   const [editingExtrasDraft, setEditingExtrasDraft] = useState('')
+  const [editingPerformersDraft, setEditingPerformersDraft] = useState('')
   const [duplicateDates, setDuplicateDates] = useState<string[]>([])
   const [calendarMonth, setCalendarMonth] = useState(() => new Date())
   const [isEditingBase, setIsEditingBase] = useState(false)
@@ -1036,6 +1036,7 @@ export default function AdminEventSeriesPage() {
     if (editingEventId === event.id) {
       setEditingEventId('')
       setEditingExtrasDraft('')
+      setEditingPerformersDraft('')
     }
     setMessage(`Fecha eliminada: ${formatDate(event.date)}`)
     loadEvents()
@@ -1157,6 +1158,7 @@ export default function AdminEventSeriesPage() {
 
     setEditingEventId('')
     setEditingExtrasDraft('')
+    setEditingPerformersDraft('')
     setApplyEditToSeries(false)
     setMessage(applyEditToSeries ? 'Cambios aplicados a todas las fechas' : 'Fecha actualizada')
     loadEvents()
@@ -1644,6 +1646,15 @@ export default function AdminEventSeriesPage() {
     )
   }
 
+  function updateEditingPerformers(value: string) {
+    setEditingPerformersDraft(value)
+    setEvents((current) => current.map((event) =>
+      event.id === editingEventId
+        ? { ...event, perks: [...withoutEventPerformers(event.perks), ...performerPerksFromInput(value)] }
+        : event
+    ))
+  }
+
   function copyBaseInfoToEditingEvent() {
     if (!editingEventId || !mainEvent) return
 
@@ -1673,11 +1684,18 @@ export default function AdminEventSeriesPage() {
           tiktok_url: mainEvent.tiktok_url || event.tiktok_url || '',
         }
 
-        return { ...copiedEvent, perks: buildPerksWithExtras(copiedEvent, baseExtras) }
+        return {
+          ...copiedEvent,
+          perks: buildPerksWithExtras({
+            ...copiedEvent,
+            perks: [...withoutEventPerformers(copiedEvent.perks), ...performerPerksFromInput(performerInputFromPerks(mainEvent.perks))],
+          }, baseExtras),
+        }
       })
     )
 
     setEditingExtrasDraft(baseExtras)
+    setEditingPerformersDraft(performerInputFromPerks(mainEvent.perks))
     setMessage('Información de datos base copiada en esta fecha. Revisa y guarda cambios.')
   }
 
@@ -1685,6 +1703,7 @@ export default function AdminEventSeriesPage() {
     const eventToEdit = events.find((event) => event.id === eventId)
     setApplyEditToSeries(false)
     setEditingExtrasDraft(eventToEdit ? getEventExtras(eventToEdit).join(', ') : '')
+    setEditingPerformersDraft(eventToEdit ? performerInputFromPerks(eventToEdit.perks) : '')
     setEditingEventId(eventId)
   }
 
@@ -2212,6 +2231,7 @@ export default function AdminEventSeriesPage() {
                 setApplyEditToSeries(false)
                 setEditingEventId('')
                 setEditingExtrasDraft('')
+                setEditingPerformersDraft('')
               }} className="text-sm font-semibold text-slate-400 hover:text-white">Cerrar</button>
             </div>
           </div>
@@ -2277,9 +2297,15 @@ export default function AdminEventSeriesPage() {
             <input className="input lg:col-span-2" value={editingEvent.cover || ''} onChange={(event) => updateEditingEvent('cover', event.target.value)} placeholder="URL cartel" />
             <input
               className="input lg:col-span-2"
+              value={editingPerformersDraft}
+              onChange={(event) => updateEditingPerformers(event.target.value)}
+              placeholder="Artistas o DJs confirmados, separados por comas"
+            />
+            <input
+              className="input lg:col-span-2"
               value={editingExtrasDraft}
               onChange={(event) => updateEditingExtras(event.target.value)}
-              placeholder="Extras / artistas: DJ invitado, banda, directo, saxofonista..."
+              placeholder="Extras: consumición, banda en directo, saxofonista..."
             />
             <textarea className="input lg:col-span-2" value={editingEvent.description || ''} onChange={(event) => updateEditingEvent('description', event.target.value)} placeholder="Descripcion" />
           </div>

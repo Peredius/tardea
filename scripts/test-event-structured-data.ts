@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { eventStructuredData, type StructuredEvent } from '../lib/event-structured-data'
+import { performerInputFromPerks, performerPerksFromInput, withoutEventPerformers } from '../lib/event-performers'
 
 const base: StructuredEvent = {
   slug: 'tardeo-super-pop-2026-10-30',
@@ -34,6 +35,19 @@ assert.equal(eventStructuredData({
 }, null).offers?.price, 12)
 assert.equal('validFrom' in (ticketed.offers || {}), false)
 assert.equal('performer' in ticketed, false)
+
+const withPerformers = eventStructuredData({
+  ...base,
+  perks: ['Flamenquito', 'Artista: David de Paloma', 'Grupo: Los Kioskos', 'Artista: David de Paloma'],
+}, null)
+assert.deepEqual(withPerformers.performer, [
+  { '@type': 'Person', name: 'David de Paloma' },
+  { '@type': 'PerformingGroup', name: 'Los Kioskos' },
+])
+assert.equal(performerInputFromPerks(['Artista: David de Paloma', 'Grupo: Los Kioskos']), 'David de Paloma, Grupo: Los Kioskos')
+assert.deepEqual(performerPerksFromInput('David de Paloma, Grupo: Los Kioskos'), ['Artista: David de Paloma', 'Grupo: Los Kioskos'])
+assert.deepEqual(performerPerksFromInput('Artista: David de Paloma, Grupo: Los Kioskos'), ['Artista: David de Paloma', 'Grupo: Los Kioskos'])
+assert.deepEqual(withoutEventPerformers(['Artista: David de Paloma', 'Consumición']), ['Consumición'])
 
 const noTicket = eventStructuredData({
   ...base,

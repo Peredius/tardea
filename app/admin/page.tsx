@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Plus, Search, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { performerInputFromPerks, performerPerksFromInput, withoutEventPerformers } from '@/lib/event-performers'
 import { findKnownVenueDetails } from '@/lib/venueAutofill'
 
 function slugify(value: string) {
@@ -465,6 +466,7 @@ export default function AdminPage() {
   const [message, setMessage] = useState('')
   const [description, setDescription] = useState('')
   const [perks, setPerks] = useState('')
+  const [performers, setPerformers] = useState('')
   const [events, setEvents] = useState<any[]>([])
   const [eventListTab, setEventListTab] = useState<'created' | 'past'>('created')
   const [pendingEvents, setPendingEvents] = useState<any[]>([])
@@ -1644,7 +1646,10 @@ export default function AdminPage() {
       reel_url: reelUrl || null,
       featured: false,
       description,
-      perks: perks ? perks.split(',').map((p) => p.trim()) : [],
+      perks: [
+        ...perks.split(',').map((perk) => perk.trim()).filter(Boolean),
+        ...performerPerksFromInput(performers),
+      ],
       status: editingEvent?.status || 'approved',
       published: editingEvent ? Boolean(editingEvent.published) : true,
     }
@@ -1700,6 +1705,7 @@ export default function AdminPage() {
     setReelUrl('')
     setDescription('')
     setPerks('')
+    setPerformers('')
   }
 
   async function extractManualEventFromUrl() {
@@ -1840,7 +1846,8 @@ export default function AdminPage() {
     setCover(null)
     setReelUrl(event.reel_url || '')
     setDescription(event.description || '')
-    setPerks(event.perks?.join(' - ') || '')
+    setPerks(withoutEventPerformers(event.perks).join(', '))
+    setPerformers(performerInputFromPerks(event.perks))
     setAdminTab('create')
     window.history.pushState(null, '', getAdminTabHref('create'))
     window.setTimeout(() => {
@@ -2838,6 +2845,10 @@ export default function AdminPage() {
           <input className="input lg:col-span-2" placeholder="Link de compra / tiquetera" value={ticketUrl} onChange={(e) => setTicketUrl(e.target.value)} />
 
           <textarea className="input min-h-28 lg:col-span-2" placeholder="Descripcion" value={description} onChange={(e) => setDescription(e.target.value)} />
+          <label className="lg:col-span-2 text-sm text-slate-300">
+            Artistas o DJs confirmados
+            <input className="input mt-2" placeholder="Nombre del artista; separa varios con comas" value={performers} onChange={(e) => setPerformers(e.target.value)} />
+          </label>
           <input className="input lg:col-span-2" placeholder="Extras" value={perks} onChange={(e) => setPerks(e.target.value)} />
 
           <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4 lg:col-span-2">

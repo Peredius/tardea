@@ -15,6 +15,7 @@ type EventSeoData = {
   address: string | null
   price_from: number | null
   source_url: string | null
+  perks: string[] | null
   event_profile_id: string | null
   published: boolean
   status: string
@@ -24,7 +25,7 @@ async function getEvent(slug: string) {
   const { data } = await supabase
     .from('events')
     .select(
-      'slug, title, venue, area, date, start_time, end_time, description, cover, address, price_from, source_url, event_profile_id, published, status'
+      'slug, title, venue, area, date, start_time, end_time, description, cover, address, price_from, source_url, perks, event_profile_id, published, status'
     )
     .eq('slug', slug)
     .eq('published', true)
