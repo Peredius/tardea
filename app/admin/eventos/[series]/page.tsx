@@ -32,6 +32,17 @@ const AREA_OPTIONS = [
 ]
 const FIXED_AREA_OPTIONS = AREA_OPTIONS.filter((option) => option !== CUSTOM_AREA_OPTION)
 
+function getMadridDateKey(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Madrid',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date)
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+  return `${values.year}-${values.month}-${values.day}`
+}
+
 function slugify(value: string) {
   return value
     .toLowerCase()
@@ -520,17 +531,18 @@ export default function AdminEventSeriesPage() {
   const baseDescription = (profileDescription || researchItems[0]?.notes || (eventDescriptions.length <= 1 ? eventDescriptions[0] : '') || '').trim()
   const isProfileReviewed = Boolean(eventProfile?.profile_reviewed ?? mainEvent?.profile_reviewed)
   const isSeriesFeatured = events.some((event) => event.featured)
+  const todayDate = getMadridDateKey()
   const upcomingEvents = useMemo(
-    () => events.filter((event) => !event.date || event.date >= new Date().toISOString().slice(0, 10)),
-    [events]
+    () => events.filter((event) => !event.date || event.date >= todayDate),
+    [events, todayDate]
   )
   const pendingEventsInSeries = useMemo(
-    () => events.filter((event) => event.status !== 'approved' || !event.published || event.needs_review),
-    [events]
+    () => upcomingEvents.filter((event) => event.status !== 'approved' || !event.published || event.needs_review),
+    [upcomingEvents]
   )
   const pastEvents = useMemo(
-    () => events.filter((event) => event.date && event.date < new Date().toISOString().slice(0, 10)),
-    [events]
+    () => events.filter((event) => event.date && event.date < todayDate),
+    [events, todayDate]
   )
   const editingEvent = events.find((event) => event.id === editingEventId)
   const existingDates = useMemo(() => new Set(events.map((event) => event.date).filter(Boolean)), [events])
@@ -1720,15 +1732,15 @@ export default function AdminEventSeriesPage() {
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
             <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
               <p className="text-xs text-slate-500">Total fechas</p>
-              <p className="text-3xl font-black">{events.length}</p>
+              <p className="text-3xl font-black">{upcomingEvents.length}</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
               <p className="text-xs text-slate-500">Aprobadas</p>
-              <p className="text-3xl font-black text-emerald-300">{events.filter((event) => event.status === 'approved').length}</p>
+              <p className="text-3xl font-black text-emerald-300">{upcomingEvents.filter((event) => event.status === 'approved').length}</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
               <p className="text-xs text-slate-500">Pendientes</p>
-              <p className="text-3xl font-black text-yellow-300">{events.filter((event) => event.status !== 'approved').length}</p>
+              <p className="text-3xl font-black text-yellow-300">{upcomingEvents.filter((event) => event.status !== 'approved').length}</p>
             </div>
           </div>
         </div>
