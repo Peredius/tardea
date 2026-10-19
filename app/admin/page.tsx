@@ -180,6 +180,17 @@ function formatInputDate(date: Date) {
   return date.toISOString().slice(0, 10)
 }
 
+function getMadridDateKey(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Madrid',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date)
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+  return `${values.year}-${values.month}-${values.day}`
+}
+
 function compactOptions(values: string[]) {
   return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)))
 }
@@ -2063,7 +2074,7 @@ export default function AdminPage() {
     fetchEvents()
   }
 
-  const todayDate = new Date().toISOString().split('T')[0]
+  const todayDate = getMadridDateKey()
   const createdEvents = events.filter((event) => !event.date || event.date >= todayDate)
   const pastEvents = events
     .filter((event) => event.date && event.date < todayDate)
@@ -2183,7 +2194,11 @@ export default function AdminPage() {
     if (item.id && item.source_kind === 'Ficha') summary.profileIds.add(item.id)
     if (item.id && ['Publicado', 'Pendiente', 'Scout'].includes(item.source_kind)) summary.eventIds.add(item.id)
     if (item.id && item.source_kind === 'Listado') summary.researchIds.add(item.id)
-    summary.count += item.source_count ?? 1
+    const countsAsUpcomingEvent =
+      ['Publicado', 'Pendiente', 'Scout'].includes(item.source_kind)
+      && Boolean(item.date)
+      && item.date >= todayDate
+    summary.count += countsAsUpcomingEvent ? (item.source_count ?? 1) : 0
     profileMap.set(key, summary)
   })
   const profileTypes = ['Todos', ...compactOptions([...EVENT_TYPE_OPTIONS, ...Array.from(profileMap.values()).map((profile) => profile.type || 'Tardeo')])]
