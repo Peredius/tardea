@@ -264,7 +264,7 @@ const fallbackEventCover =
   'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=900&q=80'
 
 function getSearchEventCover(event: any) {
-  return optimizedCoverUrl(event.profileCover || event.cover || fallbackEventCover, {
+  return optimizedCoverUrl(event.cover || event.profileCover || fallbackEventCover, {
     width: 640,
     quality: 70,
   })
