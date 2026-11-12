@@ -35,16 +35,19 @@ async function getEvent(slug: string) {
   return data as EventSeoData | null
 }
 
-function eventDescription(event: EventSeoData) {
-  const date = new Date(`${event.date}T12:00:00`).toLocaleDateString('es-ES', {
+function eventDate(event: EventSeoData) {
+  return new Date(`${event.date}T12:00:00`).toLocaleDateString('es-ES', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   })
-  const details = [event.venue, event.area, date].filter(Boolean).join(' · ')
+}
+
+function eventDescription(event: EventSeoData) {
+  const details = [eventDate(event), event.venue, event.area].filter(Boolean).join(' · ')
   const description = event.description?.trim() || `Consulta horario, precio y entradas para ${event.title}.`
 
-  return `${description} ${details}`.slice(0, 160)
+  return `${event.title}: ${details}. ${description}`.slice(0, 160)
 }
 
 export async function generateMetadata({
@@ -61,7 +64,7 @@ export async function generateMetadata({
     }
   }
 
-  const title = `${event.title}${event.venue ? ` en ${event.venue}` : ''}`
+  const title = `${event.title} - ${eventDate(event)}${event.venue ? ` en ${event.venue}` : ''}`
   const canonical = `/eventos/${event.slug}`
   const description = eventDescription(event)
 
