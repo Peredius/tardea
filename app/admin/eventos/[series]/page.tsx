@@ -417,15 +417,24 @@ export default function AdminEventSeriesPage() {
       return
     }
 
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .order('date', { ascending: true })
+    const data: any[] = []
+    const pageSize = 1000
+    for (let offset = 0; ; offset += pageSize) {
+      const { data: page, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('date', { ascending: true })
+        .order('id', { ascending: true })
+        .range(offset, offset + pageSize - 1)
 
-    if (error) {
-      setMessage(`No se pudieron cargar eventos: ${error.message}`)
-      setLoading(false)
-      return
+      if (error) {
+        setMessage(`No se pudieron cargar eventos: ${error.message}`)
+        setLoading(false)
+        return
+      }
+
+      data.push(...(page || []))
+      if (!page || page.length < pageSize) break
     }
 
     const { data: profileBySlug } = await supabase
